@@ -5,12 +5,14 @@
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
-# Let's make this usage on the cluster
+# Let's make this usage on the cluster.
 #SHELL = run-parallel.sh
 
 # Defines the IRST environment variables.
-export IRSTLM ?= /home/larkins/exp/presentation.portage.pipeline/irstlm
-BIN_DIR        = ${IRSTLM}/bin
+# Where is IRSTLM located
+export IRSTLM ?= /home/larkins/sandboxes/irstlm
+# Where are IRSTLM's binaries located
+BIN_DIR = ${IRSTLM}/bin
 
 # What is the level of parallelism.
 PARALLEL ?= 5
@@ -18,10 +20,17 @@ PARALLEL ?= 5
 # What is the order of the required lm.
 ORDER ?= 5
 
+# Most steps require to load all the lm in memory, how many cpus should those jobs use.
+CPUS ?= 2
+
+# What type of lms to build
+LM_TYPES ?= binlm
+
 # What is the corpus' name, extension and what file defines this corpus.
 CORPUS_NAME ?= gigaword
 CORPUS_EXT  ?= .tok.al.gz
 CORPUS_FILE ?= ${CORPUS_NAME}${CORPUS_EXT}
+LM_NAME ?= ${CORPUS_NAME}-kn-${ORDER}g
 
 # Where to find the corpus' file.
 CORPORA_DIR ?= ../../corpora
@@ -44,6 +53,7 @@ vpath %.marked.gz ${CORPORA_DIR}
 
 
 .PHONY: help
+help: SHELL=bash
 help:
 	@echo "please run:"
 	@echo "export PATH=${BIN_DIR}:$$PATH"
@@ -54,21 +64,31 @@ help:
 
 
 .PHONY: all
+all: ${LM_TYPES}
+
+
+
+.PHONY: all_lm
 # All valid/possible LMs
-#all: arpa
-#all: blmt
-#all: quantize
-#all: Qblmt
-all: binlm
+all_lm: arpa
+all_lm: blmt
+all_lm: quantize
+all_lm: Qblmt
+all_lm: binlm
+
+
+
+.PHONY: clean
+clean: SHELL=bash
 
 
 
 # How to clean the language models.
-.PHONY: clean
 clean: clean.logs
 
 # Sometimes we only want to get ride of the logs.
 .PHONY: clean.logs
+clean.logs: SHELL=bash
 clean.logs:
 	${RM} log.*
 
@@ -81,7 +101,7 @@ mark: ${CORPUS_NAME}.marked.gz
 .SECONDARY: ${CORPUS_NAME}.marked.gz
 ${CORPUS_NAME}.marked.gz: ${CORPUS_FILE}
 	echo "  Marking $<"; \
-	zcat $< \
+	zcat -f $< \
 	| add-start-end.sh \
 	| gzip -c \
 	> $@
@@ -89,6 +109,7 @@ ${CORPUS_NAME}.marked.gz: ${CORPUS_FILE}
 clean: clean.mark
 
 .PHONY: clean.mark
+clean.mark: SHELL=bash
 clean.mark:
 	${RM} ${CORPUS_NAME}.marked.gz
 
@@ -101,7 +122,8 @@ irstlm: ${CORPUS_NAME}.ilm.gz
 
 .SECONDARY: ${CORPUS_NAME}.ilm.gz
 %.ilm.gz: %.marked.gz
-	@echo "  Creating IRSTLM $@"; \
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	echo "  Creating IRSTLM $@"; \
 	mkdir -p stat; \
 	IRSTLM=${IRSTLM} ${BUILD_LM_PGM} \
 		-p \
@@ -115,6 +137,7 @@ irstlm: ${CORPUS_NAME}.ilm.gz
 clean: clean.irstlm
 
 .PHONY: clean.irstlm
+clean.irstlm: SHELL=bash
 clean.irstlm:
 	${RM} ${CORPUS_NAME}.ilm.gz
 	${RM} -r stat
@@ -123,11 +146,25 @@ clean.irstlm:
 
 # arpa text compressed format
 .PHONY: arpa
-arpa: ${CORPUS_NAME}.arpalm.gz
+arpa: ${CORPUS_NAME}.lm.gz
 
-.SECONDARY: ${CORPUS_NAME}.arpalm.gz
-%.arpalm.gz: %.ilm.gz
-	@echo "  Creating ARPA text format $@"; \
+.SECONDARY: ${CORPUS_NAME}.lm.gz
+ifdef LM_TOOLKIT_SRI
+%.lm.gz: ${CORPUS_FILE}
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	echo "  Creating ARPA text format $@"; \
+	ngram-count \
+		-interpolate \
+		-kndiscount \
+		-order ${ORDER} \
+		-text $< \
+		-lm $@ \
+	>& log.$(basename $@)
+
+else
+%.lm.gz: %.ilm.gz
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	echo "  Creating ARPA text format $@"; \
 	( compile-lm \
 		--text yes \
 		$< \
@@ -139,12 +176,14 @@ arpa: ${CORPUS_NAME}.arpalm.gz
 	lm_sort_filter.sh -lm $(basename $@) sorted.$@; \
 	rm $(basename $@); \
 	mv sorted.$@ $@
+endif
 
 clean: clean.arpa
 
 .PHONY: clean.arpa
+clean.arpa: SHELL=bash
 clean.arpa:
-	${RM} ${CORPUS_NAME}.arpalm.gz
+	${RM} ${CORPUS_NAME}.lm.gz
 
 
 
@@ -155,6 +194,7 @@ blmt: ${CORPUS_NAME}.blmt
 
 .SECONDARY: ${CORPUS_NAME}.blmt
 %.blmt: %.ilm.gz
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	echo "  Creating bin.ARPA format $@"; \
 	compile-lm \
 		$< \
@@ -164,6 +204,7 @@ blmt: ${CORPUS_NAME}.blmt
 clean: clean.blmt
 
 .PHONY: clean.blmt
+clean.blmt: SHELL=bash
 clean.blmt:
 	${RM} ${CORPUS_NAME}.blmt
 
@@ -174,8 +215,9 @@ clean.blmt:
 quantize: $(CORPUS_NAME).qlm.gz
 
 .SECONDARY: ${CORPUS_NAME}.qlm.gz
-%.qlm: %.arpalm.gz
-	@echo "  qARPA $< to $@"; \
+%.qlm: %.lm.gz
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	echo "  qARPA $< to $@"; \
 	quantize-lm \
 		$< \
 		$@ \
@@ -184,6 +226,7 @@ quantize: $(CORPUS_NAME).qlm.gz
 clean: clean.quantize
 
 .PHONY: clean.quantize
+clean.quantize: SHELL=bash
 clean.quantize:
 	${RM} $(CORPUS_NAME).qlm.gz
 
@@ -195,7 +238,8 @@ Qblmt: ${CORPUS_NAME}.Qblmt
 
 .SECONDARY: ${CORPUS_NAME}.Qblmt
 %.Qblmt: %.qlm.gz
-	@echo "  bin.qARPA $< to $@"; \
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	echo "  bin.qARPA $< to $@"; \
 	compile-lm \
 		$< \
 		$@ \
@@ -204,6 +248,7 @@ Qblmt: ${CORPUS_NAME}.Qblmt
 clean: clean.Qblmt
 
 .PHONY: clean.Qblmt
+clean.Qblmt: SHELL=bash
 clean.Qblmt:
 	${RM} ${CORPUS_NAME}.Qblmt
 
@@ -214,12 +259,13 @@ clean.Qblmt:
 sort_arpa: ${CORPUS_NAME}.lm.sorted.gz
 
 .SECONDARY: ${CORPUS_NAME}.lm.sorted.gz
-%.lm.sorted.gz: %.arpalm.gz
-	lm_sort_filter.sh -lm $< $@ &> log.$(basename $@)
+%.lm.sorted.gz: %.lm.gz
+	lm_sort_filter.sh -lm $< $@ >& log.$(basename $@)
 
 clean: clean.sort_arpa
 
 .PHONY: clean.sort_arpa
+clean.sort_arpa: SHELL=bash
 clean.sort_arpa:
 	${RM} ${CORPUS_NAME}.lm.sorted.gz
 
@@ -230,14 +276,29 @@ clean.sort_arpa:
 binlm: ${CORPUS_NAME}.binlm.gz
 
 .SECONDARY: %.binlm.gz
-%.binlm.gz: %.arpalm.gz
-	lmtext2binlm $< $@ &> log.$(basename $@)
+%.binlm.gz: %.lm.gz
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	lmtext2binlm $< $@ >& log.$(basename $@)
 
 clean: clean.binlm
 
 .PHONY: clean.binlm
+clean.binlm: SHELL=bash
 clean.binlm:
 	${RM} ${CORPUS_NAME}.binlm.gz
+
+
+
+# Pruning ARPA format => ARPA format
+.PHONY: prune
+prune: ${CORPUS_NAME}.plm.gz
+
+.SECONDARY: %.plm.gz
+%.plm.gz: %.lm.gz
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	prune-lm --threshold=1e-6 $< /dev/stdout \
+	| gzip \
+	> $@
 
 
 
@@ -245,6 +306,7 @@ clean.binlm:
 # HELPERS
 # Check if the environment is set
 .PHONY: test
+test: SHELL=bash
 test:
 	env | grep IRSTLM
 
@@ -252,7 +314,7 @@ test:
 
 # How to compress a file.
 %.gz: %
-	echo "  Compressing $< to $@"
+	echo "  Compressing $< to $@"; \
 	cat $< \
 	| gzip \
 	> $@
@@ -263,7 +325,7 @@ test:
 # To keep in case the user calls the scipts with a target that doesn't uses
 # CORPUS_NAME/CORPUS_FILE.
 %.marked.gz: %.gz
-	echo "  Marking $<"
+	echo "  Marking $<"; \
 	zcat $< \
 	| add-start-end.sh \
 	| gzip -c \
@@ -279,4 +341,4 @@ test:
 .PHONY: ppx
 ppx: $(addprefix ppx.irstlm.${CORPUS_NAME}, .lm.gz .blmt .qlm.gz .Qblmt)
 ppx.irstlm.%: ${PPX_TEST_SET} %
-	compile-lm $* --eval=$< &> $(basename $@)
+	compile-lm $* --eval=$< >& $(basename $@)
