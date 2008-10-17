@@ -11,7 +11,7 @@ MAKEFILE_PARAMS ?= Makefile.params
 
 
 # What command to use for lowercasing corpora.
-LOWERCASE ?= "utf8_casemap -c l"
+LOWERCASE ?= utf8_casemap -c l
 
 
 export LC_ALL ?= fr_CA.utf8
