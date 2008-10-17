@@ -1,0 +1,51 @@
+################################################################################
+# User definable variables
+
+# This is the from/source language
+export src_lang ?= en
+# This is the to/target language
+export tgt_lang ?= fr
+
+# Here we specify the stem of the corpora files.
+# files should look like this: <STEM>_<LANGUAGE>.raw
+# i.e. test1_fr.raw
+export TRAIN_LM     ?= train
+export TRAIN_TM     ?= train
+export DEV_COW      ?= dev1
+export DEV_RAT      ?= dev2
+export TEST_SET     ?= test1 test2
+
+# The prefix_root where we can find IRSTLM/bin
+export IRSTLM ?= /home/larkins/exp/presentation.portage.pipeline/irstlm
+
+
+
+################################################################################
+# System defined variables
+# Don't change the following unless you have some specific needs.
+
+# Language extension for phrase table corpora.
+# extension for corpora.
+export langx  ?= .lc
+# extension for compressed corpora.
+export langxz ?= ${langx}.gz
+
+# Language pair for this system.
+export LANGS ?= ${src_lang} ${tgt_lang}
+
+# Define the corpora.
+export TRAIN_SET    ?= ${TRAIN_LM} ${TRAIN_TM}
+export HELDOUT_SET  ?= ${DEV_COW} ${DEV_RAT} ${TEST_SET}
+export CORPORA_SET  ?= ${TRAIN_SET} ${HELDOUT_SET}
+
+# Define what type of phrase table we want to generate.
+export PT_TYPE ?= ibm2_cpt
+
+# Parameters for Makefile.Portage
+export TEMPLATE_DIR    ?= ${WMT_ROOT_DIR}
+export PREFIX_TESTSET  ?= ${TEST_SET}
+export PREFIX_DEV_COW  ?= ${DEV_COW}
+export PREFIX_DEV_RAT  ?= ${DEV_RAT}
+
+# Define the following variable if you want to create forward and backward phrase tables
+#export CPT_BIDIRECTIONAL = 1
