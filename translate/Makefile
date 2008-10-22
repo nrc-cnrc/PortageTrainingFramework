@@ -1,0 +1,281 @@
+#!/usr/bin/make -f
+# vim:noet:ts=3
+
+# Mandatory include: master config file.
+include ../../Makefile.params
+
+# Include the config file.
+MAKEFILE_PARAMS ?= Makefile.params
+-include ${MAKEFILE_PARAMS}
+
+# TODO: Make this Makefile work with run-parallel.sh -c
+# SHELL = run-parallel.sh
+
+# Extensiont of the corpora files
+EXT ?= .tok.al
+
+# Define languages info.
+#SRC_LANG ?= en
+#TGT_LANG ?= fr
+SRCX  ?= _${SRC_LANG}${LANGX}
+TGTX  ?= _${TGT_LANG}${LANGX}
+
+# Define any value to the following variable if you are doing rescoring.
+# If you are rescoring, there are some step that can be skipped to save cpu
+# power :D.
+#DO_RESCORING = 1
+
+# IBM related.
+# TODO: may be this is to deleted.
+SRC_GIVEN_TGT = ${SRC_LANG}_given_${TGT_LANG}
+TGT_GIVEN_SRC = ${TGT_LANG}_given_${SRC_LANG}
+SRC_GIVEN_TGTX = ${SRC_GIVEN_TGT}.gz
+TGT_GIVEN_SRCX = ${TGT_GIVEN_SRC}.gz
+
+# TODO: may be this is to deleted.
+# Locution Script Directory
+#LSD  ?= /home/portage/corpora/Hansard-BT-2007/locutions.script
+
+# What program to use to detokenize.
+DETOKENIZER ?= udetokenize.pl
+
+# Indicates where to find the canoe.ini template.
+DECODING_MODEL_DIR ?= ../decode
+DECODING_MODEL     ?= canoe.ini.cow
+DECODING_MODEL_TEMPLATE ?= ${DECODING_MODEL_DIR}/${DECODING_MODEL}
+
+# Indicates where to find the IBM models.
+IBM_DIR     ?= ../../models/TM
+
+# Will indicate to make where to find the SETs (dev & test & eval)
+CORPORA_DIR ?= ../../corpora
+
+# Indicates what are the test/eval set to be translated after having trained a decoder model and a rescoring model
+PREFIX_TESTSET  ?= test1 test2
+TESTSET          = $(addsuffix _${SRC_LANG}, ${PREFIX_TESTSET})
+
+# Specific PSUB options
+PSUB_OPTS ?= 
+
+# Indicates the nbest list size.
+NBEST_SIZE ?= 1000
+
+# Number of parallel chunks to process.
+PARALLELISM_LEVEL ?= 5
+
+.SECONDARY:
+.SUFFIXES:
+.DELETE_ON_ERROR:
+
+# Threre are two differents vpath for heldout because in the chinese case for example the src_ext != tgt_ext
+vpath %${SRCX} ${CORPORA_DIR}
+vpath %${TGTX} ${CORPORA_DIR}
+vpath ${DECODING_MODEL} ${DECODING_MODEL_DIR}
+
+
+
+.PHONY: all
+all: translate
+
+
+
+# An alias that indicate what/how to translate the test sets.
+.PHONY: translate
+translate: out
+
+# An alias to rescore testset.
+.PHONY: rescore
+rescore: rat
+
+
+
+.PHONY: help
+help: SHELL=bash
+help:
+	@echo "Translate the following testsets: ${TESTSET}"
+	@echo "Possible targets are:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
+	@echo "Most likely you want to do either: make all or make translate."
+
+
+
+# Clean up
+.PHONY: clean
+clean: SHELL=bash
+
+
+
+clean: clean.logs
+
+.PHONY: clean.logs
+clean.logs: SHELL=bash
+clean.logs:
+	-rm log.* run-parallel-logs*
+
+
+
+########################################
+# Create a specific canoe.ini per test set.
+# You could add some specific target if you need to customize a canoe.ini.cow
+# for a particular testset.
+${DECODING_MODEL}.%: ${DECODING_MODEL}
+	cat $< > $@
+	configtool check $@
+#	cat $< \
+#	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
+#	| sed "s/dev-text1/$*/" \
+#	> $@
+
+
+
+########################################
+# Translate testset without rescoring.
+.PHONY: out
+out: $(addsuffix .out, ${PREFIX_TESTSET})
+ifdef DO_RESCORING
+# if we are doing rescoring, we can save us some work by going straight to
+# rescoring and extracting the 1 best instead of calculating it twice.
+%.out: %.rat
+	cp workdir-$*_${SRC_LANG}.al-${NBEST_SIZE}best/1best $@
+else
+%.out: canoe.ini.cow.% %${SRC_EXT}
+	echo "Generating $@"
+	canoe-parallel.sh \
+		-lb \
+		-n ${PARALLELISM_LEVEL} \
+		canoe \
+		-f $< \
+		< $(word 2, $^) \
+		> $@ \
+		2> log.$@
+endif
+
+.PHONY: out.bleu
+out.bleu: $(addsuffix .out.bleu, ${PREFIX_TESTSET})
+%.out.bleu: %.out %${TGT_EXT}
+	@echo "Calculating BLEU for $@"
+	bleumain $^ > $@
+
+.PHONY: out.detok
+out.detok: $(addsuffix .out.detok, ${PREFIX_TESTSET})
+%.out.detok: %.out
+	@echo "Detokenizing $<"
+	${DETOKENIZER} -lang=${TGT_LANG} $< $@
+
+.PHONY: out.detok.bleu
+out.detok.bleu: $(addsuffix .out.detok.bleu, ${PREFIX_TESTSET})
+%.out.detok.bleu: %.out.detok %${TGT_EXT}
+	@echo "Calculating BLEU for $@"
+	cat $(word 2, $+) \
+	| utf8_casemap -c l \
+	| bleumain $< - > $@
+
+clean: clean.trans
+
+.PHONY: clean.trans
+clean.trans: $(foreach f, ${PREFIX_TESTSET}, clean.trans.$f)
+clean.trans.%:
+	-${RM} -f $*.out $*.out.bleu
+	-${RM} -f $*.out.detok $*.out.detok.bleu
+
+
+
+########################################
+# Rescore the testset
+.PHONY: rat
+rat: $(addsuffix .rat, ${PREFIX_TESTSET})
+%.rat: canoe.ini.cow.% rescore-model.rat %${SRC_EXT}
+	@echo "Generating $@"
+	rat.sh \
+		-lb \
+		-n ${PARALLELISM_LEVEL} \
+		trans \
+		-v \
+		-K ${NBEST_SIZE} \
+		-f $+ \
+	>& log.$@
+	mv $*${SRC_EXT}.rat $@
+
+.PHONY: rat.bleu
+rat.bleu: $(addsuffix .rat.bleu, ${PREFIX_TESTSET})
+%.rat.bleu: %.rat %${TGT_EXT}
+	@echo "Calculating BLEU for $@"
+	bleumain $^ > $@
+
+.PHONY: rat.detok
+rat.detok: $(addsuffix .rat.detok, ${PREFIX_TESTSET})
+%.rat.detok: %.rat
+	@echo "Detokenizing $<"
+	${DETOKENIZER} -lang=${TGT_LANG} $< $@
+
+.PHONY: rat.detok.bleu
+rat.detok.bleu: $(addsuffix .rat.detok.bleu, ${PREFIX_TESTSET})
+%.rat.detok.bleu: %.rat.detok %${TGT_EXT}
+	@echo "Calculating BLEU for $@"
+	cat $(word 2, $+) \
+	| utf8_casemap -c l \
+	| bleumain $< - > $@
+
+clean: clean.rescore_trans
+
+.PHONY: clean.rescore_trans
+clean.rescore_trans: $(foreach f, ${PREFIX_TESTSET}, clean.rescore_trans.$f_ch.rule)
+clean.rescore_trans.%:
+	${RM} -rf $*.rat $*.rat.bleu
+	-${RM} -f $*.rat.detok $*.rat.detok.bleu
+
+
+
+########################################
+# TRUECASING
+
+# Where are the models needed for truecasing
+TC_DIR ?= ../models/tc
+
+# Tells make where to find the models needed for truecasing.
+vpath tc-lm% ${TC_DIR}
+vpath tc-map% ${TC_DIR}
+
+.PHONY: tc
+tc: $(addsuffix .out.tc, ${PREFIX_TESTSET})
+tc: $(addsuffix .rat.tc, ${PREFIX_TESTSET})
+%.tc: % tc-lm.${TGT_LANG} tc-map.${TGT_LANG}
+	@echo "TrueCasing $@"
+	truecase.pl \
+		-text=$(word 1, $^) \
+		-lm=$(word 2, $^) \
+		-map=$(word 3, $^) \
+		> $@ 
+
+
+
+########################################
+# HELPERS
+# Check the canoe.ini config file.
+.PHONY: configtool
+configtool: ${DECODING_MODEL_TEMPLATE}
+	configtool check $<
+
+
+
+########################################
+# LINKS THE IBMX MODELS
+# ibm2.ch_given_en.gz ibm2.ch_given_en.pos.gz
+# ibm2.en_given_ch.gz ibm2.en_given_ch.pos.gz
+ibm2.%.gz:
+	ln -sf ${IBM_DIR}/ibm2.*$*.gz ibm2.$*.gz 
+	ln -sf ${IBM_DIR}/ibm2.*$*.pos.gz ibm2.$*.pos.gz
+
+ibm1.%.gz:
+	ln -sf ${IBM_DIR}/ibm1.*$*.gz ibm1.$*.gz 
+
+
+
+# Tries to run all targets in this Makefile mainly to check the syntax of all
+# targets.
+.PHONY: full
+full: out.bleu
+full: out.detok.bleu
+full: rat.bleu
+full: rat.detok.bleu
+full: configtool
