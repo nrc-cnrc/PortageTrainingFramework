@@ -2,9 +2,9 @@
 # User definable variables
 
 # This is the from/source language
-export src_lang ?= en
+export SRC_LANG ?= en
 # This is the to/target language
-export tgt_lang ?= fr
+export TGT_LANG ?= fr
 
 # Here we specify the stem of the corpora files.
 # files should look like this: <STEM>_<LANGUAGE>.raw
@@ -16,7 +16,10 @@ export DEV_RAT      ?= dev2
 export TEST_SET     ?= test1 test2
 
 # The prefix_root where we can find IRSTLM/bin
-export IRSTLM ?= /home/larkins/exp/presentation.portage.pipeline/irstlm
+export IRSTLM ?= /home/larkins/sandBoxes/irstlm
+
+# Uncomment the following line if you have acces to SRILM.
+#LM_TOOLKIT_SRI=1
 
 
 
@@ -26,12 +29,12 @@ export IRSTLM ?= /home/larkins/exp/presentation.portage.pipeline/irstlm
 
 # Language extension for phrase table corpora.
 # extension for corpora.
-export langx  ?= .lc
+export LANGX  ?= .lc
 # extension for compressed corpora.
-export langxz ?= ${langx}.gz
+export LANGXZ ?= ${LANGX}.gz
 
 # Language pair for this system.
-export LANGS ?= ${src_lang} ${tgt_lang}
+export LANGS ?= ${SRC_LANG} ${TGT_LANG}
 
 # Define the corpora.
 export TRAIN_SET    ?= ${TRAIN_LM} ${TRAIN_TM}

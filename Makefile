@@ -5,7 +5,7 @@ MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
 .PHONY: all
-all: expts
+all: translate
 
 
 
@@ -23,11 +23,11 @@ help:
 # Thorough cleaning of everything
 clean:
 	${MAKE} -C corpora clean
-	${MAKE} -C models/LM clean
-	${MAKE} -C models/TM clean
-	${MAKE} -C models/TC clean
-	${MAKE} -C decode clean
-	${MAKE} -C rescore clean
+	${MAKE} -C models/lm clean
+	${MAKE} -C models/tm clean
+	${MAKE} -C models/tc clean
+	${MAKE} -C models/decode clean
+	${MAKE} -C models/rescore clean
 	${MAKE} -C translate clean
 
 

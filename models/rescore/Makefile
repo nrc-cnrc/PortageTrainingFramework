@@ -2,7 +2,7 @@
 # vim:noet:ts=3
 
 # Mandatory include: master config file.
-include ../Makefile.params
+include ../../Makefile.params
 
 # Include the config file.
 MAKEFILE_PARAMS ?= Makefile.params
@@ -24,7 +24,7 @@ SRC_GIVEN_TGTX = ${SRC_GIVEN_TGT}.gz
 TGT_GIVEN_SRCX = ${TGT_GIVEN_SRC}.gz
 
 # Indicates where to find the canoe.ini template
-DECODING_MODEL_DIR ?= ../
+DECODING_MODEL_DIR ?= ../decode
 DECODING_MODEL     ?= canoe.ini.cow
 
 # Indicates where to find the IBM models.
@@ -35,8 +35,8 @@ CORPORA_DIR ?= ../../corpora
 
 # Indicates what prefix/file to use for training a rescoring model
 PREFIX_DEV_RAT  ?= dev2
-DEV_RAT_SRC      = ${PREFIX_DEV_RAT}${SRC_EXT}
-DEV_RAT_TGT      = ${PREFIX_DEV_RAT}${TGT_EXT}
+DEV_RAT_SRC      = ${PREFIX_DEV_RAT}${SRCX}
+DEV_RAT_TGT      = ${PREFIX_DEV_RAT}${TGTX}
 
 # Specific PSUB options
 PSUB_OPTS ?= 
@@ -58,7 +58,7 @@ vpath ${DECODING_MODEL} ${DECODING_MODEL_DIR}
 
 
 .PHONY: all
-all: rescore
+all: train
 
 
 
@@ -83,6 +83,7 @@ clean: SHELL=bash
 clean: clean.logs
 
 .PHONY: clean.logs
+clean.logs: SHELL=bash
 clean.logs:
 	-${RM} log.* run-parallel-logs*
 
@@ -91,14 +92,15 @@ clean.logs:
 ########################################
 # CREATE A RESCORE MODEL
 # requires: a trained canoe.ini model.
-rescore-model: ibm1.${SRC_GIVEN_TGTX} ibm1.${TGT_GIVEN_SRCX}
-rescore-model: ibm2.${SRC_GIVEN_TGTX} ibm2.${TGT_GIVEN_SRCX}
-rescore-model: canoe.ini.cow
+rescore-model.ini: SHELL=bash
+#rescore-model.ini: ibm1.${SRC_GIVEN_TGTX} ibm1.${TGT_GIVEN_SRCX}
+#rescore-model.ini: ibm2.${SRC_GIVEN_TGTX} ibm2.${TGT_GIVEN_SRCX}
+rescore-model.ini: ${DECODING_MODEL}
 	configtool rescore-model:ffvals $< | cut -f 1 -d ' ' > $@
-	echo "IBM2TgtGivenSrc:ibm2.${TGT_GIVEN_SRCX}" >> $@
-	echo "IBM2SrcGivenTgt:ibm2.${SRC_GIVEN_TGTX}" >> $@
-	echo "IBM1WTransTgtGivenSrc:ibm1.${TGT_GIVEN_SRCX}" >> $@
-	echo "IBM1WTransSrcGivenTgt:ibm1.${SRC_GIVEN_TGTX}" >> $@
+	echo "IBM2TgtGivenSrc:${IBM_DIR}/ibm2.${TGT_GIVEN_SRCX}" >> $@
+	echo "IBM2SrcGivenTgt:${IBM_DIR}/ibm2.${SRC_GIVEN_TGTX}" >> $@
+	echo "IBM1WTransTgtGivenSrc:${IBM_DIR}/ibm1.${TGT_GIVEN_SRCX}" >> $@
+	echo "IBM1WTransSrcGivenTgt:${IBM_DIR}/ibm1.${SRC_GIVEN_TGTX}" >> $@
 	echo "LengthFF" >> $@
 	echo "nbestPhrasePostSrc:1#<ffval-wts>#<pfx>" >> $@
 	echo "nbestSentLenPost:1#<ffval-wts>#<pfx>" >> $@
@@ -111,8 +113,8 @@ rescore-model: canoe.ini.cow
 ########################################
 # Train a rescoring model
 .PHONY: train
-train: rescore-model.rat
-rescore-model.rat:  ${DECODING_MODEL}.${DEV_RAT} rescore-model ${DEV_RAT_SRC} ${DEV_RAT_TGT}
+train: rescore-model
+rescore-model:  ${DECODING_MODEL}.${PREFIX_DEV_RAT} rescore-model.ini ${DEV_RAT_SRC} ${DEV_RAT_TGT}
 	RP_PSUB_OPTS="-N $@" \
 	echo "Generating $@"; \
 	rat.sh \
@@ -128,16 +130,18 @@ rescore-model.rat:  ${DECODING_MODEL}.${DEV_RAT} rescore-model ${DEV_RAT_SRC} ${
 .PHONY: clean.rescore_train
 clean.rescore_train: SHELL=bash
 clean.rescore_train:
-	rm -f rescore-model.rat rescore-model
+	${RM} -f rescore-model.rat rescore-model
 
 
 
 ################################################################################
 # HELPERS
-# Check the canoe.ini config file.
+
+#######################################
+# Check the decoding model config file.
 .PHONY: configtool
 configtool: SHELL=bash
-configtool: canoe.ini
+configtool: ${DECODING_MODEL}
 	configtool check $<
 
 

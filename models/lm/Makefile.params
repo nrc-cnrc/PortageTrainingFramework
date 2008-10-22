@@ -1,7 +1,1 @@
-include ../../Makefile.params
-
-# This is the corpus' name and looks like train_fr
-CORPUS_NAME = ${TRAIN_LM}_${tgt_lang}
-
-# This indicates the corpus extension and looks like .tok.al.gz
-CORPUS_EXT = ${langxz}
+# User defines for models/lm/.

@@ -1,6 +1,9 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3
 
+# Mandatory include: master config file.
+include ../../Makefile.params
+
 # Include the config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
@@ -27,10 +30,15 @@ CPUS ?= 2
 LM_TYPES ?= binlm
 
 # What is the corpus' name, extension and what file defines this corpus.
-CORPUS_NAME ?= gigaword
-CORPUS_EXT  ?= .tok.al.gz
+# This is the corpus' name and looks like train_fr
+CORPUS_NAME ?= ${TRAIN_LM}_${TGT_LANG}
+
+# This indicates the corpus extension and looks like .tok.al.gz
+CORPUS_EXT  ?= ${LANGXZ}
+
 CORPUS_FILE ?= ${CORPUS_NAME}${CORPUS_EXT}
-LM_NAME ?= ${CORPUS_NAME}-kn-${ORDER}g
+LM_DESC ?= -kn-${ORDER}g
+LM_NAME ?= ${CORPUS_NAME}${LM_DESC}
 
 # Where to find the corpus' file.
 CORPORA_DIR ?= ../../corpora
@@ -99,8 +107,9 @@ clean.logs:
 mark: ${CORPUS_NAME}.marked.gz
 
 .SECONDARY: ${CORPUS_NAME}.marked.gz
-${CORPUS_NAME}.marked.gz: ${CORPUS_FILE}
-	echo "  Marking $<"; \
+%.marked.gz: %${CORPUS_EXT}
+	RP_PSUB_OPTS="-N $@" \
+	echo "Marking $<"; \
 	zcat -f $< \
 	| add-start-end.sh \
 	| gzip -c \
@@ -118,10 +127,11 @@ clean.mark:
 # iARPA
 # Compressed irstlm format
 .PHONY: irstlm
-irstlm: ${CORPUS_NAME}.ilm.gz
+irstlm: ${LM_NAME}.ilm.gz
 
-.SECONDARY: ${CORPUS_NAME}.ilm.gz
-%.ilm.gz: %.marked.gz
+# Here we've added LM_DESC to strip it out from the marked corpus file name.
+.SECONDARY: ${LM_NAME}.ilm.gz
+%${LM_DESC}.ilm.gz: %.marked.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	echo "  Creating IRSTLM $@"; \
 	mkdir -p stat; \
@@ -139,18 +149,19 @@ clean: clean.irstlm
 .PHONY: clean.irstlm
 clean.irstlm: SHELL=bash
 clean.irstlm:
-	${RM} ${CORPUS_NAME}.ilm.gz
+	${RM} ${LM_NAME}.ilm.gz
 	${RM} -r stat
 
 
 
 # arpa text compressed format
 .PHONY: arpa
-arpa: ${CORPUS_NAME}.lm.gz
+arpa: ${LM_NAME}.lm.gz
 
-.SECONDARY: ${CORPUS_NAME}.lm.gz
+# Here we've added LM_DESC to strip it out from the corpus file name.
+.SECONDARY: ${LM_NAME}.lm.gz
 ifdef LM_TOOLKIT_SRI
-%.lm.gz: ${CORPUS_FILE}
+%${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	echo "  Creating ARPA text format $@"; \
 	ngram-count \
@@ -183,16 +194,16 @@ clean: clean.arpa
 .PHONY: clean.arpa
 clean.arpa: SHELL=bash
 clean.arpa:
-	${RM} ${CORPUS_NAME}.lm.gz
+	${RM} ${LM_NAME}.lm.gz
 
 
 
 # BINAIRY FORMAT
 # arpa bin compressed format
 .PHONY: blmt
-blmt: ${CORPUS_NAME}.blmt
+blmt: ${LM_NAME}.blmt
 
-.SECONDARY: ${CORPUS_NAME}.blmt
+.SECONDARY: ${LM_NAME}.blmt
 %.blmt: %.ilm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	echo "  Creating bin.ARPA format $@"; \
@@ -206,15 +217,15 @@ clean: clean.blmt
 .PHONY: clean.blmt
 clean.blmt: SHELL=bash
 clean.blmt:
-	${RM} ${CORPUS_NAME}.blmt
+	${RM} ${LM_NAME}.blmt
 
 
 
 # qARPA format
 .PHONY: quantize
-quantize: $(CORPUS_NAME).qlm.gz
+quantize: $(LM_NAME).qlm.gz
 
-.SECONDARY: ${CORPUS_NAME}.qlm.gz
+.SECONDARY: ${LM_NAME}.qlm.gz
 %.qlm: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	echo "  qARPA $< to $@"; \
@@ -228,15 +239,15 @@ clean: clean.quantize
 .PHONY: clean.quantize
 clean.quantize: SHELL=bash
 clean.quantize:
-	${RM} $(CORPUS_NAME).qlm.gz
+	${RM} $(LM_NAME).qlm.gz
 
 
 
 # Quantinze binairy
 .PHONY: Qblmt
-Qblmt: ${CORPUS_NAME}.Qblmt
+Qblmt: ${LM_NAME}.Qblmt
 
-.SECONDARY: ${CORPUS_NAME}.Qblmt
+.SECONDARY: ${LM_NAME}.Qblmt
 %.Qblmt: %.qlm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	echo "  bin.qARPA $< to $@"; \
@@ -250,15 +261,15 @@ clean: clean.Qblmt
 .PHONY: clean.Qblmt
 clean.Qblmt: SHELL=bash
 clean.Qblmt:
-	${RM} ${CORPUS_NAME}.Qblmt
+	${RM} ${LM_NAME}.Qblmt
 
 
 
 # Sort the arpa format
 .PHONY: sort_arpa
-sort_arpa: ${CORPUS_NAME}.lm.sorted.gz
+sort_arpa: ${LM_NAME}.lm.sorted.gz
 
-.SECONDARY: ${CORPUS_NAME}.lm.sorted.gz
+.SECONDARY: ${LM_NAME}.lm.sorted.gz
 %.lm.sorted.gz: %.lm.gz
 	lm_sort_filter.sh -lm $< $@ >& log.$(basename $@)
 
@@ -267,13 +278,13 @@ clean: clean.sort_arpa
 .PHONY: clean.sort_arpa
 clean.sort_arpa: SHELL=bash
 clean.sort_arpa:
-	${RM} ${CORPUS_NAME}.lm.sorted.gz
+	${RM} ${LM_NAME}.lm.sorted.gz
 
 
 
 # Portage's bin lm format
 .PHONY: binlm
-binlm: ${CORPUS_NAME}.binlm.gz
+binlm: ${LM_NAME}.binlm.gz
 
 .SECONDARY: %.binlm.gz
 %.binlm.gz: %.lm.gz
@@ -285,13 +296,13 @@ clean: clean.binlm
 .PHONY: clean.binlm
 clean.binlm: SHELL=bash
 clean.binlm:
-	${RM} ${CORPUS_NAME}.binlm.gz
+	${RM} ${LM_NAME}.binlm.gz
 
 
 
 # Pruning ARPA format => ARPA format
 .PHONY: prune
-prune: ${CORPUS_NAME}.plm.gz
+prune: ${LM_NAME}.plm.gz
 
 .SECONDARY: %.plm.gz
 %.plm.gz: %.lm.gz
@@ -321,24 +332,12 @@ test:
 
 
 
-# A more general way of creating a marked corpus.
-# To keep in case the user calls the scipts with a target that doesn't uses
-# CORPUS_NAME/CORPUS_FILE.
-%.marked.gz: %.gz
-	echo "  Marking $<"; \
-	zcat $< \
-	| add-start-end.sh \
-	| gzip -c \
-	> $@
-
-
-
 ################################################################################
 # The following targets are unmaintained and were used for initial testing of
 # irstlm.
 ########################################
 # PERPLEXITY
 .PHONY: ppx
-ppx: $(addprefix ppx.irstlm.${CORPUS_NAME}, .lm.gz .blmt .qlm.gz .Qblmt)
+ppx: $(addprefix ppx.irstlm.${LM_NAME}, .lm.gz .blmt .qlm.gz .Qblmt)
 ppx.irstlm.%: ${PPX_TEST_SET} %
 	compile-lm $* --eval=$< >& $(basename $@)

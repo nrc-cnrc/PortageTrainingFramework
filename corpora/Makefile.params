@@ -1,4 +1,4 @@
-include ../Makefile.params
+# User defines for corpora/.
 
 # Altername lowercasing utf8_casemap is not available.
 #LOWERCASE = LC_ALL=fr_CA.utf8 perl -Mlocale -ne 'use open IO=>qq{:locale}; print(lc())'
