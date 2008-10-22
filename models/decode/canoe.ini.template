@@ -1,0 +1,13 @@
+[ttable-multi-prob]
+  ../models/TM/cpt.ibm2-rf-zn-kn3.train.<SL>2<TL>.gz
+[lmodel-file]
+  ../models/LM/train_<TL>.binlm.gz
+[ttable-limit] 30
+[ttable-threshold] 0
+[stack] 20000
+[beam-threshold] 0.001
+[distortion-limit] 7
+[distortion-model] WordDisplacement
+[segmentation-model] none
+[cube-pruning]
+[bypass-marked]
