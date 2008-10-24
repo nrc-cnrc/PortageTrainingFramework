@@ -2,7 +2,7 @@
 # vim:noet:ts=3
 
 # Mandatory include: master config file.
-include ../../Makefile.params
+include ../Makefile.params
 
 # Include the config file.
 MAKEFILE_PARAMS ?= Makefile.params
@@ -40,15 +40,22 @@ TGT_GIVEN_SRCX = ${TGT_GIVEN_SRC}.gz
 DETOKENIZER ?= udetokenize.pl
 
 # Indicates where to find the canoe.ini template.
-DECODING_MODEL_DIR ?= ../decode
+DECODING_MODEL_DIR ?= ../models/decode
 DECODING_MODEL     ?= canoe.ini.cow
 DECODING_MODEL_TEMPLATE ?= ${DECODING_MODEL_DIR}/${DECODING_MODEL}
+
+# Indidcates where to find the rescoring model.
+RESCORING_MODEL_DIR ?= ../models/rescore
+RESCORING_MODEL     ?= rescore_model
 
 # Indicates where to find the IBM models.
 IBM_DIR     ?= ../../models/TM
 
 # Will indicate to make where to find the SETs (dev & test & eval)
-CORPORA_DIR ?= ../../corpora
+CORPORA_DIR ?= ../corpora
+
+# Where to find the truecasing models.
+TRUECASING_DIR ?= ../models/tc
 
 # Indicates what are the test/eval set to be translated after having trained a decoder model and a rescoring model
 PREFIX_TESTSET  ?= test1 test2
@@ -71,6 +78,9 @@ PARALLELISM_LEVEL ?= 5
 vpath %${SRCX} ${CORPORA_DIR}
 vpath %${TGTX} ${CORPORA_DIR}
 vpath ${DECODING_MODEL} ${DECODING_MODEL_DIR}
+vpath ${RESCORING_MODEL} ${RESCORING_MODEL_DIR}
+vpath ${TRUECASING_LM} ${TRUECASING_DIR}
+vpath ${TRUECASING_MAP} ${TRUECASING_DIR}
 
 
 
@@ -105,6 +115,8 @@ clean: SHELL=bash
 
 
 
+########################################
+# Clean the log files.
 clean: clean.logs
 
 .PHONY: clean.logs
@@ -138,7 +150,7 @@ ifdef DO_RESCORING
 %.out: %.rat
 	cp workdir-$*_${SRC_LANG}.al-${NBEST_SIZE}best/1best $@
 else
-%.out: canoe.ini.cow.% %${SRC_EXT}
+%.out: ${DECODING_MODEL}.% %${SRCX}
 	echo "Generating $@"
 	canoe-parallel.sh \
 		-lb \
@@ -152,7 +164,7 @@ endif
 
 .PHONY: out.bleu
 out.bleu: $(addsuffix .out.bleu, ${PREFIX_TESTSET})
-%.out.bleu: %.out %${TGT_EXT}
+%.out.bleu: %.out %${TGTX}
 	@echo "Calculating BLEU for $@"
 	bleumain $^ > $@
 
@@ -164,7 +176,7 @@ out.detok: $(addsuffix .out.detok, ${PREFIX_TESTSET})
 
 .PHONY: out.detok.bleu
 out.detok.bleu: $(addsuffix .out.detok.bleu, ${PREFIX_TESTSET})
-%.out.detok.bleu: %.out.detok %${TGT_EXT}
+%.out.detok.bleu: %.out.detok %${TGTX}
 	@echo "Calculating BLEU for $@"
 	cat $(word 2, $+) \
 	| utf8_casemap -c l \
@@ -184,7 +196,7 @@ clean.trans.%:
 # Rescore the testset
 .PHONY: rat
 rat: $(addsuffix .rat, ${PREFIX_TESTSET})
-%.rat: canoe.ini.cow.% rescore-model.rat %${SRC_EXT}
+%.rat: ${DECODING_MODEL}.% ${RESCORING_MODEL} %${SRCX}
 	@echo "Generating $@"
 	rat.sh \
 		-lb \
@@ -198,7 +210,7 @@ rat: $(addsuffix .rat, ${PREFIX_TESTSET})
 
 .PHONY: rat.bleu
 rat.bleu: $(addsuffix .rat.bleu, ${PREFIX_TESTSET})
-%.rat.bleu: %.rat %${TGT_EXT}
+%.rat.bleu: %.rat %${TGTX}
 	@echo "Calculating BLEU for $@"
 	bleumain $^ > $@
 
@@ -210,7 +222,7 @@ rat.detok: $(addsuffix .rat.detok, ${PREFIX_TESTSET})
 
 .PHONY: rat.detok.bleu
 rat.detok.bleu: $(addsuffix .rat.detok.bleu, ${PREFIX_TESTSET})
-%.rat.detok.bleu: %.rat.detok %${TGT_EXT}
+%.rat.detok.bleu: %.rat.detok %${TGTX}
 	@echo "Calculating BLEU for $@"
 	cat $(word 2, $+) \
 	| utf8_casemap -c l \
@@ -228,18 +240,12 @@ clean.rescore_trans.%:
 
 ########################################
 # TRUECASING
-
-# Where are the models needed for truecasing
-TC_DIR ?= ../models/tc
-
-# Tells make where to find the models needed for truecasing.
-vpath tc-lm% ${TC_DIR}
-vpath tc-map% ${TC_DIR}
-
 .PHONY: tc
 tc: $(addsuffix .out.tc, ${PREFIX_TESTSET})
+ifdef DO_RESCORING
 tc: $(addsuffix .rat.tc, ${PREFIX_TESTSET})
-%.tc: % tc-lm.${TGT_LANG} tc-map.${TGT_LANG}
+endif
+%.tc: % ${TRUECASING_LM} ${TRUECASING_MAP}
 	@echo "TrueCasing $@"
 	truecase.pl \
 		-text=$(word 1, $^) \

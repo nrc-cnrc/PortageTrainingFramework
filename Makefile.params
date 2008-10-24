@@ -21,6 +21,9 @@ export IRSTLM ?= /home/larkins/sandBoxes/irstlm
 # Uncomment the following line if you have acces to SRILM.
 #LM_TOOLKIT_SRI=1
 
+# Uncomment the following line if you want to do rescoring.
+#DO_RESCORING=1
+
 
 
 ################################################################################
@@ -49,6 +52,10 @@ export TEMPLATE_DIR    ?= ${WMT_ROOT_DIR}
 export PREFIX_TESTSET  ?= ${TEST_SET}
 export PREFIX_DEV_COW  ?= ${DEV_COW}
 export PREFIX_DEV_RAT  ?= ${DEV_RAT}
+
+# Defines the truecasing model filename.
+TRUECASING_MAP ?= ${TRAIN_LM}_${TGT_LANG}.map
+TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-5g.binlm.gz
 
 # Define the following variable if you want to create forward and backward phrase tables
 #export CPT_BIDIRECTIONAL = 1

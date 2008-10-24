@@ -55,7 +55,7 @@ all: lc
 
 # Defines what corpora we need truecased/tokenized for the truecase model.
 .PHONY: tc
-tc: $(addsuffix _${TGT_LANG}.tc, ${TRAIN_TM})
+tc: $(addsuffix _${TGT_LANG}.tc.gz, ${TRAIN_TM})
 
 # Defines what corpora we need in the entire pipeline.
 .PHONY: lc
@@ -74,8 +74,8 @@ clean.%:
 
 
 # Prepares a tokenized version of the target lm for the truecasing.
-%.tc: %.tok
-	cp $< $@
+%.tc.gz: %.tok
+	cat $< | gzip > $@
 
 
 # Constructs a lowercased source corpora.

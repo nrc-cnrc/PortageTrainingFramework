@@ -17,15 +17,6 @@ MAKEFILE_PARAMS ?= Makefile.params
 SRCX  ?= _${SRC_LANG}${LANGX}
 TGTX  ?= _${TGT_LANG}${LANGX}
 
-# TODO: may be this is to deleted.
-SRC_GIVEN_TGT = ${SRC_LANG}_given_${TGT_LANG}
-TGT_GIVEN_SRC = ${TGT_LANG}_given_${SRC_LANG}
-SRC_GIVEN_TGTX = ${SRC_GIVEN_TGT}.gz
-TGT_GIVEN_SRCX = ${TGT_GIVEN_SRC}.gz
-
-# What program to use to detokenize.
-DETOKENIZER ?= udetokenize.pl
-
 # Indicates where to find the canoe.ini template
 TEMPLATE_DIR       ?= ../
 CANOE_INI_TEMPLATE ?= canoe.ini.template

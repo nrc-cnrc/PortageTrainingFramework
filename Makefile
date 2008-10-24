@@ -39,26 +39,43 @@ corpora:
 
 
 .PHONY: models
-models: lms tms
+models: lms tms tc
 
 
 
 .PHONY: lms
-# Create the Language Model (LM)
-lms: lm.${tgt_lang}
+# Create the Language Model (LM).
+lms: lm.${TGT_LANG}
 lm.%: corpora
-	${MAKE} -C models/LM binlm
+	${MAKE} -C models/lm binlm
+
+
+
+.PHONY: tc
+# Create models for truecasing (TC).
+tc:
+	${MAKE} -C models/tc
 
 
 
 .PHONY: tms
-# Create the Translation Model (TM}
+# Create the Translation Model (TM).
 tms: corpora
-	${MAKE} -C models/TM
+	${MAKE} -C models/tm
+
+
+
+.PHONY: train
+# Tune/train the required models.
+train:
+	${MAKE} -C models/decode
+ifdef DO_RESCORING
+	${MAKE} -C models/rescore
+endif
 
 
 
 .PHONY: translate
 # Tune weights and apply them to the test sets
-translate: tms lms
+translate: models train
 	${MAKE} -C translate

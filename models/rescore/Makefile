@@ -26,6 +26,7 @@ TGT_GIVEN_SRCX = ${TGT_GIVEN_SRC}.gz
 # Indicates where to find the canoe.ini template
 DECODING_MODEL_DIR ?= ../decode
 DECODING_MODEL     ?= canoe.ini.cow
+DECODING_MODEL_TEMPLATE ?= ${DECODING_MODEL_DIR}/${DECODING_MODEL}
 
 # Indicates where to find the IBM models.
 IBM_DIR ?= ../TM
@@ -48,6 +49,7 @@ NBEST_SIZE ?= 1000
 PARALLELISM_LEVEL ?= 5
 
 .SECONDARY:
+.SUFFIXES:
 .DELETE_ON_ERROR:
 
 # Threre are two differents vpath for heldout because in the chinese case for example the src_ext != tgt_ext
@@ -95,7 +97,7 @@ clean.logs:
 rescore-model.ini: SHELL=bash
 #rescore-model.ini: ibm1.${SRC_GIVEN_TGTX} ibm1.${TGT_GIVEN_SRCX}
 #rescore-model.ini: ibm2.${SRC_GIVEN_TGTX} ibm2.${TGT_GIVEN_SRCX}
-rescore-model.ini: ${DECODING_MODEL}
+rescore-model.ini: ${DECODING_MODEL_TEMPLATE}
 	configtool rescore-model:ffvals $< | cut -f 1 -d ' ' > $@
 	echo "IBM2TgtGivenSrc:${IBM_DIR}/ibm2.${TGT_GIVEN_SRCX}" >> $@
 	echo "IBM2SrcGivenTgt:${IBM_DIR}/ibm2.${SRC_GIVEN_TGTX}" >> $@
@@ -141,7 +143,7 @@ clean.rescore_train:
 # Check the decoding model config file.
 .PHONY: configtool
 configtool: SHELL=bash
-configtool: ${DECODING_MODEL}
+configtool: ${DECODING_MODEL_TEMPLATE}
 	configtool check $<
 
 
@@ -151,7 +153,7 @@ configtool: ${DECODING_MODEL}
 # You could add some specific target if you need to customize a canoe.ini.cow
 # for a particular testset.
 ${DECODING_MODEL}.%: SHELL=bash
-${DECODING_MODEL}.%: ${DECODING_MODEL}
+${DECODING_MODEL}.%: ${DECODING_MODEL_TEMPLATE}
 	cat $< > $@
 	configtool check $@
 #	cat $< \
