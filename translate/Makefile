@@ -11,45 +11,32 @@ MAKEFILE_PARAMS ?= Makefile.params
 # TODO: Make this Makefile work with run-parallel.sh -c
 # SHELL = run-parallel.sh
 
-# Extensiont of the corpora files
-EXT ?= .tok.al
-
 # Define languages info.
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
 SRCX  ?= _${SRC_LANG}${LANGX}
 TGTX  ?= _${TGT_LANG}${LANGX}
+RULEX ?= _${SRC_LANG}.rule
 
 # Define any value to the following variable if you are doing rescoring.
 # If you are rescoring, there are some step that can be skipped to save cpu
 # power :D.
 #DO_RESCORING = 1
 
-# IBM related.
-# TODO: may be this is to deleted.
-SRC_GIVEN_TGT = ${SRC_LANG}_given_${TGT_LANG}
-TGT_GIVEN_SRC = ${TGT_LANG}_given_${SRC_LANG}
-SRC_GIVEN_TGTX = ${SRC_GIVEN_TGT}.gz
-TGT_GIVEN_SRCX = ${TGT_GIVEN_SRC}.gz
-
-# TODO: may be this is to deleted.
-# Locution Script Directory
-#LSD  ?= /home/portage/corpora/Hansard-BT-2007/locutions.script
-
 # What program to use to detokenize.
 DETOKENIZER ?= udetokenize.pl
 
 # Indicates where to find the canoe.ini template.
-DECODING_MODEL_DIR ?= ../models/decode
-DECODING_MODEL     ?= canoe.ini.cow
+DECODING_MODEL_DIR      ?= ../models/decode
+DECODING_MODEL          ?= canoe.ini.cow
 DECODING_MODEL_TEMPLATE ?= ${DECODING_MODEL_DIR}/${DECODING_MODEL}
 
 # Indidcates where to find the rescoring model.
 RESCORING_MODEL_DIR ?= ../models/rescore
-RESCORING_MODEL     ?= rescore_model
+RESCORING_MODEL     ?= rescore-model
 
 # Indicates where to find the IBM models.
-IBM_DIR     ?= ../../models/TM
+IBM_DIR ?= ../../models/TM
 
 # Will indicate to make where to find the SETs (dev & test & eval)
 CORPORA_DIR ?= ../corpora
@@ -58,8 +45,7 @@ CORPORA_DIR ?= ../corpora
 TRUECASING_DIR ?= ../models/tc
 
 # Indicates what are the test/eval set to be translated after having trained a decoder model and a rescoring model
-PREFIX_TESTSET  ?= test1 test2
-TESTSET          = $(addsuffix _${SRC_LANG}, ${PREFIX_TESTSET})
+TRANSLATE_SET ?= test1 test2
 
 # Specific PSUB options
 PSUB_OPTS ?= 
@@ -74,9 +60,10 @@ PARALLELISM_LEVEL ?= 5
 .SUFFIXES:
 .DELETE_ON_ERROR:
 
-# Threre are two differents vpath for heldout because in the chinese case for example the src_ext != tgt_ext
+# Tells make where to find files that we've made in previous scripts/modules.
 vpath %${SRCX} ${CORPORA_DIR}
 vpath %${TGTX} ${CORPORA_DIR}
+vpath %${RULEX} ${CORPORA_DIR}
 vpath ${DECODING_MODEL} ${DECODING_MODEL_DIR}
 vpath ${RESCORING_MODEL} ${RESCORING_MODEL_DIR}
 vpath ${TRUECASING_LM} ${TRUECASING_DIR}
@@ -85,7 +72,7 @@ vpath ${TRUECASING_MAP} ${TRUECASING_DIR}
 
 
 .PHONY: all
-all: translate
+all: tc
 
 
 
@@ -102,7 +89,7 @@ rescore: rat
 .PHONY: help
 help: SHELL=bash
 help:
-	@echo "Translate the following testsets: ${TESTSET}"
+	@echo "Translate the following testsets: $(addsuffix _${SRC_LANG}, ${TRANSLATE_SET})"
 	@echo "Possible targets are:"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
 	@echo "Most likely you want to do either: make all or make translate."
@@ -143,14 +130,14 @@ ${DECODING_MODEL}.%: ${DECODING_MODEL}
 ########################################
 # Translate testset without rescoring.
 .PHONY: out
-out: $(addsuffix .out, ${PREFIX_TESTSET})
+out: $(addsuffix .out, ${TRANSLATE_SET})
 ifdef DO_RESCORING
 # if we are doing rescoring, we can save us some work by going straight to
 # rescoring and extracting the 1 best instead of calculating it twice.
 %.out: %.rat
 	cp workdir-$*_${SRC_LANG}.al-${NBEST_SIZE}best/1best $@
 else
-%.out: ${DECODING_MODEL}.% %${SRCX}
+%.out: ${DECODING_MODEL}.% %${RULEX}
 	echo "Generating $@"
 	canoe-parallel.sh \
 		-lb \
@@ -163,19 +150,19 @@ else
 endif
 
 .PHONY: out.bleu
-out.bleu: $(addsuffix .out.bleu, ${PREFIX_TESTSET})
+out.bleu: $(addsuffix .out.bleu, ${TRANSLATE_SET})
 %.out.bleu: %.out %${TGTX}
 	@echo "Calculating BLEU for $@"
 	bleumain $^ > $@
 
 .PHONY: out.detok
-out.detok: $(addsuffix .out.detok, ${PREFIX_TESTSET})
+out.detok: $(addsuffix .out.detok, ${TRANSLATE_SET})
 %.out.detok: %.out
 	@echo "Detokenizing $<"
 	${DETOKENIZER} -lang=${TGT_LANG} $< $@
 
 .PHONY: out.detok.bleu
-out.detok.bleu: $(addsuffix .out.detok.bleu, ${PREFIX_TESTSET})
+out.detok.bleu: $(addsuffix .out.detok.bleu, ${TRANSLATE_SET})
 %.out.detok.bleu: %.out.detok %${TGTX}
 	@echo "Calculating BLEU for $@"
 	cat $(word 2, $+) \
@@ -185,7 +172,7 @@ out.detok.bleu: $(addsuffix .out.detok.bleu, ${PREFIX_TESTSET})
 clean: clean.trans
 
 .PHONY: clean.trans
-clean.trans: $(foreach f, ${PREFIX_TESTSET}, clean.trans.$f)
+clean.trans: $(foreach f, ${TRANSLATE_SET}, clean.trans.$f)
 clean.trans.%:
 	-${RM} -f $*.out $*.out.bleu
 	-${RM} -f $*.out.detok $*.out.detok.bleu
@@ -195,8 +182,8 @@ clean.trans.%:
 ########################################
 # Rescore the testset
 .PHONY: rat
-rat: $(addsuffix .rat, ${PREFIX_TESTSET})
-%.rat: ${DECODING_MODEL}.% ${RESCORING_MODEL} %${SRCX}
+rat: $(addsuffix .rat, ${TRANSLATE_SET})
+%.rat: ${DECODING_MODEL}.% ${RESCORING_MODEL} %${SRCX} %${RULEX}
 	@echo "Generating $@"
 	rat.sh \
 		-lb \
@@ -204,24 +191,25 @@ rat: $(addsuffix .rat, ${PREFIX_TESTSET})
 		trans \
 		-v \
 		-K ${NBEST_SIZE} \
-		-f $+ \
+		-msrc $(word 3, $+) \
+		-f $(wordlist 1,2,$+) \
 	>& log.$@
 	mv $*${SRC_EXT}.rat $@
 
 .PHONY: rat.bleu
-rat.bleu: $(addsuffix .rat.bleu, ${PREFIX_TESTSET})
+rat.bleu: $(addsuffix .rat.bleu, ${TRANSLATE_SET})
 %.rat.bleu: %.rat %${TGTX}
 	@echo "Calculating BLEU for $@"
 	bleumain $^ > $@
 
 .PHONY: rat.detok
-rat.detok: $(addsuffix .rat.detok, ${PREFIX_TESTSET})
+rat.detok: $(addsuffix .rat.detok, ${TRANSLATE_SET})
 %.rat.detok: %.rat
 	@echo "Detokenizing $<"
 	${DETOKENIZER} -lang=${TGT_LANG} $< $@
 
 .PHONY: rat.detok.bleu
-rat.detok.bleu: $(addsuffix .rat.detok.bleu, ${PREFIX_TESTSET})
+rat.detok.bleu: $(addsuffix .rat.detok.bleu, ${TRANSLATE_SET})
 %.rat.detok.bleu: %.rat.detok %${TGTX}
 	@echo "Calculating BLEU for $@"
 	cat $(word 2, $+) \
@@ -231,7 +219,7 @@ rat.detok.bleu: $(addsuffix .rat.detok.bleu, ${PREFIX_TESTSET})
 clean: clean.rescore_trans
 
 .PHONY: clean.rescore_trans
-clean.rescore_trans: $(foreach f, ${PREFIX_TESTSET}, clean.rescore_trans.$f_ch.rule)
+clean.rescore_trans: $(foreach f, ${TRANSLATE_SET}, clean.rescore_trans.$f)
 clean.rescore_trans.%:
 	${RM} -rf $*.rat $*.rat.bleu
 	-${RM} -f $*.rat.detok $*.rat.detok.bleu
@@ -241,9 +229,9 @@ clean.rescore_trans.%:
 ########################################
 # TRUECASING
 .PHONY: tc
-tc: $(addsuffix .out.tc, ${PREFIX_TESTSET})
+tc: $(addsuffix .out.tc, ${TRANSLATE_SET})
 ifdef DO_RESCORING
-tc: $(addsuffix .rat.tc, ${PREFIX_TESTSET})
+tc: $(addsuffix .rat.tc, ${TRANSLATE_SET})
 endif
 %.tc: % ${TRUECASING_LM} ${TRUECASING_MAP}
 	@echo "TrueCasing $@"

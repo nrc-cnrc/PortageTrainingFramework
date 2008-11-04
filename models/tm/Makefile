@@ -33,7 +33,7 @@ M ?= 8
 # Already defined in the master config file.
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
-#LANGX    ?= .tok.al
+#LANGX    ?= .lc
 #LANGXZ   ?= ${langx}.gz
 
 # Map source and target language to shorter variable name.
@@ -65,13 +65,16 @@ TRAIN_TM ?= train
 MODEL_DIRECTIONS ?= ${TGT_GIVEN_SRC} ${SRC_GIVEN_TGT}
 
 # Define the following variable if you want to create forward and backward phrase tables
-ifdef CPT_BIDIRECTIONAL
+ifdef BIDIRECTIONAL_SYSTEM
 # To get both directions
 CPT_DIRECTION ?= ${TGT_2_SRCX}
 else
 # To get SRC to TGT direction
 CPT_DIRECTION ?= ${SRC_2_TGTX}
 endif
+
+# This script might produce directory and we want to easily remove them.
+RM = rm -rf
 
 # Allows to search for alignment files in corpus
 vpath %${SRCX} ${CORPORA_DIR}
@@ -80,10 +83,6 @@ vpath %${TGTX} ${CORPORA_DIR}
 
 .SUFFIXES:
 .SECONDARY:
-
-
-.PHONY: all
-all: ${PT_TYPE}
 
 
 ########################################
@@ -96,12 +95,18 @@ help:
 
 
 
+# Define all the work to be done.
+.PHONY: all
+all: ${PT_TYPE}
+
+
+
 ########################################
 # CLEAN-UP
 .PHONY: clean
 clean: SHELL=bash
 clean:
-	$(RM) run-parallel-log* log.* cpt.* ibm?.* jpt.* liang.* hmm.*
+	$(RM) run-parallel-log* log.* run-p.*
 
 
 
@@ -141,6 +146,13 @@ ibm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX}
 		$^ \
 		>& log.$(basename $@)
 
+clean: clean.ibm1
+
+.PHONY: clean.ibm1
+clean.ibm1: SHELL=bash
+clean.ibm1:
+	$(RM) ibm1.*
+
 
 
 ########################################
@@ -174,6 +186,13 @@ ibm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 		$@ \
 		$(wordlist 1, 2, $+) \
 		>& log.$(basename $@)
+
+clean: clean.ibm2
+
+.PHONY: clean.ibm2
+clean.ibm2: SHELL=bash
+clean.ibm2:
+	$(RM) ibm2.*
 
 
 
@@ -209,6 +228,13 @@ hmm.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 		$(wordlist 1, 2, $+) \
 		>& log.$(basename $@)
 
+clean: clean.hmm
+
+.PHONY: clean.hmm
+clean.hmm: SHELL=bash
+clean.hmm:
+	$(RM) hmm.*
+
 
 
 ########################################
@@ -243,6 +269,13 @@ liang.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 		$(wordlist 1, 2, $+) \
 		>& log.$(basename $@)
 
+clean: clean.liang
+
+.PHONY: clean.liang
+clean.liang: SHELL=bash
+clean.liang:
+	$(RM) liang.*
+
 
 
 ################################################################################
@@ -251,6 +284,13 @@ liang.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 jpts: ibm2_jpt
 jpts: hmm_jpt
 jpts: liang_jpt
+
+clean: clean.jpts
+
+.PHONY: clean.jpts
+clean.jpts: SHELL=bash
+clean.jpts:
+	$(RM) jpt.*
 
 ########################################
 # IBM2 JOINT PHRASE TABLES
@@ -320,6 +360,13 @@ ${LIANG_JPT_PREFIX}.%.${JOINTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_
 cpts: ibm2_cpt
 cpts: hmm_cpt
 cpts: liang_cpt
+
+clean: clean.cpts
+
+.PHONY: clean.cpts
+clean.cpts: SHELL=bash
+clean.cpts:
+	$(RM) cpt.*
 
 ########################################
 # IBM CONDITIONAL PHRASE TABLES

@@ -18,7 +18,7 @@ export IRSTLM ?= /home/larkins/sandboxes/irstlm
 BIN_DIR = ${IRSTLM}/bin
 
 # What is the level of parallelism.
-PARALLEL ?= 5
+PARALLELISM_LEVEL ?= 5
 
 # What is the order of the required lm.
 ORDER ?= 5
@@ -37,6 +37,7 @@ CORPUS_NAME ?= ${TRAIN_LM}_${TGT_LANG}
 CORPUS_EXT  ?= ${LANGXZ}
 
 CORPUS_FILE ?= ${CORPUS_NAME}${CORPUS_EXT}
+
 LM_DESC ?= -kn-${ORDER}g
 LM_NAME ?= ${CORPUS_NAME}${LM_DESC}
 
@@ -68,6 +69,7 @@ help:
 	@echo "export IRSTLM=${IRSTLM}"
 	@echo "Then make all"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
+	@echo "Define LM_TOOLKIT_SRI=1 if you have and want to use SRILM instead of IRSTLM."
 
 
 
@@ -106,7 +108,7 @@ clean.logs:
 .PHONY: mark
 mark: ${CORPUS_NAME}.marked.gz
 
-.SECONDARY: ${CORPUS_NAME}.marked.gz
+#.SECONDARY: ${CORPUS_NAME}.marked.gz
 %.marked.gz: %${CORPUS_EXT}
 	RP_PSUB_OPTS="-N $@" \
 	echo "Marking $<"; \
@@ -130,7 +132,7 @@ clean.mark:
 irstlm: ${LM_NAME}.ilm.gz
 
 # Here we've added LM_DESC to strip it out from the marked corpus file name.
-.SECONDARY: ${LM_NAME}.ilm.gz
+#.SECONDARY: ${LM_NAME}.ilm.gz
 %${LM_DESC}.ilm.gz: %.marked.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	echo "  Creating IRSTLM $@"; \
@@ -138,7 +140,7 @@ irstlm: ${LM_NAME}.ilm.gz
 	IRSTLM=${IRSTLM} ${BUILD_LM_PGM} \
 		-p \
 		-n ${ORDER} \
-		-k ${PARALLEL} \
+		-k ${PARALLELISM_LEVEL} \
 		-s kneser-ney \
 		-i "gunzip -c $<" \
 		-o $@ \
@@ -159,7 +161,7 @@ clean.irstlm:
 arpa: ${LM_NAME}.lm.gz
 
 # Here we've added LM_DESC to strip it out from the corpus file name.
-.SECONDARY: ${LM_NAME}.lm.gz
+#.SECONDARY: ${LM_NAME}.lm.gz
 ifdef LM_TOOLKIT_SRI
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -203,7 +205,7 @@ clean.arpa:
 .PHONY: blmt
 blmt: ${LM_NAME}.blmt
 
-.SECONDARY: ${LM_NAME}.blmt
+#.SECONDARY: ${LM_NAME}.blmt
 %.blmt: %.ilm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	echo "  Creating bin.ARPA format $@"; \
@@ -225,7 +227,7 @@ clean.blmt:
 .PHONY: quantize
 quantize: $(LM_NAME).qlm.gz
 
-.SECONDARY: ${LM_NAME}.qlm.gz
+#.SECONDARY: ${LM_NAME}.qlm.gz
 %.qlm: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	echo "  qARPA $< to $@"; \
@@ -247,7 +249,7 @@ clean.quantize:
 .PHONY: Qblmt
 Qblmt: ${LM_NAME}.Qblmt
 
-.SECONDARY: ${LM_NAME}.Qblmt
+#.SECONDARY: ${LM_NAME}.Qblmt
 %.Qblmt: %.qlm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	echo "  bin.qARPA $< to $@"; \
@@ -269,7 +271,7 @@ clean.Qblmt:
 .PHONY: sort_arpa
 sort_arpa: ${LM_NAME}.lm.sorted.gz
 
-.SECONDARY: ${LM_NAME}.lm.sorted.gz
+#.SECONDARY: ${LM_NAME}.lm.sorted.gz
 %.lm.sorted.gz: %.lm.gz
 	lm_sort_filter.sh -lm $< $@ >& log.$(basename $@)
 
@@ -286,7 +288,7 @@ clean.sort_arpa:
 .PHONY: binlm
 binlm: ${LM_NAME}.binlm.gz
 
-.SECONDARY: %.binlm.gz
+#.SECONDARY: %.binlm.gz
 %.binlm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	lmtext2binlm $< $@ >& log.$(basename $@)
@@ -304,7 +306,7 @@ clean.binlm:
 .PHONY: prune
 prune: ${LM_NAME}.plm.gz
 
-.SECONDARY: %.plm.gz
+#.SECONDARY: %.plm.gz
 %.plm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	prune-lm --threshold=1e-6 $< /dev/stdout \
@@ -323,21 +325,17 @@ test:
 
 
 
-# How to compress a file.
-%.gz: %
-	echo "  Compressing $< to $@"; \
-	cat $< \
-	| gzip \
-	> $@
-
-
-
 ################################################################################
 # The following targets are unmaintained and were used for initial testing of
 # irstlm.
 ########################################
 # PERPLEXITY
 .PHONY: ppx
-ppx: $(addprefix ppx.irstlm.${LM_NAME}, .lm.gz .blmt .qlm.gz .Qblmt)
+ppx: ppx.${LM_NAME}
+ppx.${LM_NAME}: ${LM_NAME}.binlm.gz ${PPX_TEST_SET}
+	lm_eval -v -limit $+
+
+.PHONY: ppx.irstlm
+ppx.irstlm: $(addprefix ppx.irstlm.${LM_NAME}, .lm.gz .blmt .qlm.gz .Qblmt)
 ppx.irstlm.%: ${PPX_TEST_SET} %
 	compile-lm $* --eval=$< >& $(basename $@)

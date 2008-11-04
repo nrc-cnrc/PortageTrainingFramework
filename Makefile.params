@@ -9,11 +9,11 @@ export TGT_LANG ?= fr
 # Here we specify the stem of the corpora files.
 # files should look like this: <STEM>_<LANGUAGE>.raw
 # i.e. test1_fr.raw
-export TRAIN_LM     ?= train
-export TRAIN_TM     ?= train
-export DEV_COW      ?= dev1
-export DEV_RAT      ?= dev2
-export TEST_SET     ?= test1 test2
+export TRAIN_LM      ?= train
+export TRAIN_TM      ?= train
+export TUNE_DECODE   ?= dev1
+export TUNE_RESCORE  ?= dev2
+export TRANSLATE_SET ?= test1 test2
 
 # The prefix_root where we can find IRSTLM/bin
 export IRSTLM ?= /home/larkins/sandBoxes/irstlm
@@ -30,32 +30,61 @@ export IRSTLM ?= /home/larkins/sandBoxes/irstlm
 # System defined variables
 # Don't change the following unless you have some specific needs.
 
+# Compress extension.
+GZ ?= .gz
+
+# Raw file's extension.
+export RAWX ?= .raw
+
+# Extension for rule files which must also be source file.
+export RULEX ?= _${SRC_LANG}.rule
+
 # Language extension for phrase table corpora.
-# extension for corpora.
+# Extension for corpora.
 export LANGX  ?= .lc
-# extension for compressed corpora.
-export LANGXZ ?= ${LANGX}.gz
+# Extension for compressed corpora.
+export LANGXZ ?= ${LANGX}${GZ}
 
 # Language pair for this system.
 export LANGS ?= ${SRC_LANG} ${TGT_LANG}
 
 # Define the corpora.
 export TRAIN_SET    ?= ${TRAIN_LM} ${TRAIN_TM}
-export HELDOUT_SET  ?= ${DEV_COW} ${DEV_RAT} ${TEST_SET}
+export HELDOUT_SET  ?= ${TUNE_DECODE} ${TUNE_RESCORE} ${TRANSLATE_SET}
 export CORPORA_SET  ?= ${TRAIN_SET} ${HELDOUT_SET}
 
 # Define what type of phrase table we want to generate.
 export PT_TYPE ?= ibm2_cpt
 
-# Parameters for Makefile.Portage
-export TEMPLATE_DIR    ?= ${WMT_ROOT_DIR}
-export PREFIX_TESTSET  ?= ${TEST_SET}
-export PREFIX_DEV_COW  ?= ${DEV_COW}
-export PREFIX_DEV_RAT  ?= ${DEV_RAT}
+# Define what type of language model we want to generate.
+export LM_TYPES ?= binlm
+
+# Parameters for models/decode/Makefile
+#export TEMPLATE_DIR    ?= ${ROOT_DIR}/models/decode
+export PREFIX_DEV_COW  ?= ${TUNE_DECODE}
+export PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
 
 # Defines the truecasing model filename.
 TRUECASING_MAP ?= ${TRAIN_LM}_${TGT_LANG}.map
-TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-5g.binlm.gz
+TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-3g.binlm${GZ}
 
 # Define the following variable if you want to create forward and backward phrase tables
-#export CPT_BIDIRECTIONAL = 1
+#export BIDIRECTIONAL_SYSTEM = 1
+
+# Indicates where to find the canoe.ini template.
+DECODING_MODEL_DIR      ?= ../models/decode
+DECODING_MODEL          ?= canoe.ini.cow
+DECODING_MODEL_TEMPLATE ?= ${DECODING_MODEL_DIR}/${DECODING_MODEL}
+
+# Indidcates where to find the rescoring model.
+RESCORING_MODEL_DIR ?= ../models/rescore
+RESCORING_MODEL     ?= rescore-model
+
+
+
+########################################
+# HELPERS
+# How to compress a file.
+%.gz: %
+	cat $< | gzip > $@
+

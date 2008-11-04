@@ -18,16 +18,19 @@ SRCX  ?= _${SRC_LANG}${LANGX}
 TGTX  ?= _${TGT_LANG}${LANGX}
 
 # Indicates where to find the canoe.ini template
-TEMPLATE_DIR       ?= ../
+TEMPLATE_DIR       ?= ./
 CANOE_INI_TEMPLATE ?= canoe.ini.template
+
+# Indicates where to find the canoe.ini template.
+DECODING_MODEL ?= canoe.ini.cow
 
 # Will indicate to make where to find the SETs (dev & test & eval)
 CORPORA_DIR ?= ../../corpora
 
 # Indicates what prefix/file to use for training a decoder model
-PREFIX_DEV_COW  ?= dev1
-DEV_COW_SRC      = ${PREFIX_DEV_COW}${SRCX}
-DEV_COW_TGT      = ${PREFIX_DEV_COW}${TGTX}
+TUNE_DECODE     ?= dev1
+TUNE_DECODE_SRC  = ${TUNE_DECODE}${SRCX}
+TUNE_DECODE_TGT  = ${TUNE_DECODE}${TGTX}
 
 # Specific PSUB options
 PSUB_OPTS ?= 
@@ -44,7 +47,7 @@ PARALLELISM_LEVEL ?= 5
 # Threre are two differents vpath for heldout because in the chinese case for example the src_ext != tgt_ext
 vpath %${SRCX} ${CORPORA_DIR}
 vpath %${TGTX} ${CORPORA_DIR}
-vpath canoe.%.template ${TEMPLATE_DIR}
+vpath ${CANOE_INI_TEMPLATE} ${TEMPLATE_DIR}
 
 
 
@@ -56,7 +59,7 @@ all: train
 .PHONY: help
 help: SHELL=bash
 help:
-	@echo "This allows to tune a system."
+	@echo "This script allows to tune a system."
 	@echo "Possible targets are:"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
 	@echo "Most likely you want to do either: make all"
@@ -81,6 +84,7 @@ clean.logs:
 
 ########################################
 # Create canoe.ini from template.
+canoe.ini: SHELL=bash
 canoe.ini: ${CANOE_INI_TEMPLATE}
 	cat $< \
 	| sed -e 's/<SL>/${SRC_LANG}/g' -e 's/<TL>/${TGT_LANG}/g' \
@@ -99,8 +103,8 @@ clean.canoe.ini:
 ########################################
 # Training a decoding model.
 .PHONY: train
-train: canoe.ini.cow
-canoe.ini.cow: canoe.ini ${DEV_COW_SRC} ${DEV_COW_TGT}
+train: ${DECODING_MODEL}
+${DECODING_MODEL}: canoe.ini ${TUNE_DECODE_SRC} ${TUNE_DECODE_TGT}
 	RP_PSUB_OPTS="-N $@" \
 	test -d foos || mkdir foos; \
 	cow.sh \

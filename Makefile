@@ -46,6 +46,9 @@ models: lms tms tc
 .PHONY: lms
 # Create the Language Model (LM).
 lms: lm.${TGT_LANG}
+ifdef BIDIRECTIONAL_SYSTEM
+lms: lm.${SRC_LANG}
+endif
 lm.%: corpora
 	${MAKE} -C models/lm binlm
 
@@ -53,7 +56,7 @@ lm.%: corpora
 
 .PHONY: tc
 # Create models for truecasing (TC).
-tc:
+tc: corpora
 	${MAKE} -C models/tc
 
 
@@ -65,9 +68,9 @@ tms: corpora
 
 
 
-.PHONY: train
-# Tune/train the required models.
-train:
+.PHONY: tune
+# Tune the required models.
+tune: models
 	${MAKE} -C models/decode
 ifdef DO_RESCORING
 	${MAKE} -C models/rescore
@@ -77,5 +80,5 @@ endif
 
 .PHONY: translate
 # Tune weights and apply them to the test sets
-translate: models train
+translate: models tune
 	${MAKE} -C translate

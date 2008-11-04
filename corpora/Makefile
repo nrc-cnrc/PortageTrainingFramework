@@ -24,12 +24,13 @@ export LC_ALL ?= fr_CA.utf8
 RAW_CORPORA_DIR ?= ./
 
 
-# Tells make where to find the raw corpora.
-vpath %.raw ${RAW_CORPORA_DIR}
+# Tells make where to find the raw corpora files.
+vpath %${RAWX} ${RAW_CORPORA_DIR}
 
 
 # Help message
 .PHONY: help
+help: SHELL=bash
 help:
 	echo "This script tokenizes and lowercases all corpora described by CORPORA_SET"
 	echo "Type: make all"
@@ -51,11 +52,11 @@ help:
 .PHONY: all
 all: tc
 all: lc
-#all: rule
+all: rule
 
 # Defines what corpora we need truecased/tokenized for the truecase model.
 .PHONY: tc
-tc: $(addsuffix _${TGT_LANG}.tc.gz, ${TRAIN_TM})
+tc: $(addsuffix _${TGT_LANG}.tc${GZ}, ${TRAIN_TM})
 
 # Defines what corpora we need in the entire pipeline.
 .PHONY: lc
@@ -68,45 +69,41 @@ lc: $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_SET})
 
 # How to clean-up.
 .PHONY: clean
-clean: clean.tok clean.al clean.rule clean${LANGX} clean${LANGXZ}
-clean.%:
-	-${RM} *.$*
-
-
-# Prepares a tokenized version of the target lm for the truecasing.
-%.tc.gz: %.tok
-	cat $< | gzip > $@
+clean:
+	-${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
 
 
 # Constructs a lowercased source corpora.
-%_${SRC_LANG}.tok: %_${SRC_LANG}.raw
-	(file -i $< | egrep -q 'charset=utf-8') || echo "Please convert $< to utf-8"
+%_${SRC_LANG}.tc: %_${SRC_LANG}${RAWX}
+	(file -i $< | egrep -q 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1)
 	cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
 
 # Constructs a lowercased target corpora.
-%_${TGT_LANG}.tok: %_${TGT_LANG}.raw
-	(file -i $< | egrep -q 'charset=utf-8') || echo "Please convert $< to utf-8"
+%_${TGT_LANG}.tc: %_${TGT_LANG}${RAWX}
+	(file -i $< | egrep -q 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1)
 	cat $< | utokenize.pl -noss -lang=${TGT_LANG} > $@
 
 
 # Constructs a lowercased corpora from its tokenized version.
-%${LANGX}: %.tok
+%${LANGX}: %.tc
 	cat $< | ${LOWERCASE} > $@
 
 
 # Add some markup to the source HELDOUT_SET.
+# If you have special markup, this is where you would write your code.
 .PHONY: rule
-rule: $(addsuffix _${SRC_LANG}.rule, ${HELDOUT_SET})
-%.rule: %${LANGX}
+rule: $(addsuffix ${RULEX}, ${HELDOUT_SET})
+%${RULEX}: %_${SRC_LANG}${LANGX}
 	cat $< \
 	| perl -pe 's/([<>\\])/\\$$1/g' \
 	| perl -pe 's/(__ent_[a-zA-Z0-9_]+)/<STAG target="$$1" prob="1.0">$$1<\/STAG>/g' \
 	> $@
 
 
+# Special target to prepare a new translation set.
+test: $(addprefix $(subst _${SRC_LANG},,$(basename ${TRANSLATE_SET})), ${RULEX} _${SRC_LANG}${LANGX})
 
-########################################
-# HELPERS
-# How to compress a file.
-%.gz: %
-	cat $< | gzip > $@
+
+# Special targte to prepare the reference.
+reference: $(addprefix $(subst _${TGT_LANG},,$(basename ${TRANSLATE_SET})),  _${TGT_LANG}${LANGX})
+

@@ -23,9 +23,12 @@ TGT_GIVEN_SRC  = ${TGT_LANG}_given_${SRC_LANG}
 SRC_GIVEN_TGTX = ${SRC_GIVEN_TGT}.gz
 TGT_GIVEN_SRCX = ${TGT_GIVEN_SRC}.gz
 
+# What will be the name of the rescoring model's file.
+RESCORING_MODEL ?= rescore-model
+
 # Indicates where to find the canoe.ini template
-DECODING_MODEL_DIR ?= ../decode
-DECODING_MODEL     ?= canoe.ini.cow
+DECODING_MODEL_DIR      ?= ../decode
+DECODING_MODEL          ?= canoe.ini.cow
 DECODING_MODEL_TEMPLATE ?= ${DECODING_MODEL_DIR}/${DECODING_MODEL}
 
 # Indicates where to find the IBM models.
@@ -35,9 +38,9 @@ IBM_DIR ?= ../TM
 CORPORA_DIR ?= ../../corpora
 
 # Indicates what prefix/file to use for training a rescoring model
-PREFIX_DEV_RAT  ?= dev2
-DEV_RAT_SRC      = ${PREFIX_DEV_RAT}${SRCX}
-DEV_RAT_TGT      = ${PREFIX_DEV_RAT}${TGTX}
+TUNE_RESCORE  ?= dev2
+TUNE_RESCORE_SRC      = ${TUNE_RESCORE}${SRCX}
+TUNE_RESCORE_TGT      = ${TUNE_RESCORE}${TGTX}
 
 # Specific PSUB options
 PSUB_OPTS ?= 
@@ -94,10 +97,11 @@ clean.logs:
 ########################################
 # CREATE A RESCORE MODEL
 # requires: a trained canoe.ini model.
-rescore-model.ini: SHELL=bash
-#rescore-model.ini: ibm1.${SRC_GIVEN_TGTX} ibm1.${TGT_GIVEN_SRCX}
-#rescore-model.ini: ibm2.${SRC_GIVEN_TGTX} ibm2.${TGT_GIVEN_SRCX}
-rescore-model.ini: ${DECODING_MODEL_TEMPLATE}
+# This provides the default rescore-model.ini.
+${RESCORING_MODEL}.ini: SHELL=bash
+#${RESCORING_MODEL}.ini: ibm1.${SRC_GIVEN_TGTX} ibm1.${TGT_GIVEN_SRCX}
+#${RESCORING_MODEL}.ini: ibm2.${SRC_GIVEN_TGTX} ibm2.${TGT_GIVEN_SRCX}
+${RESCORING_MODEL}.ini: ${DECODING_MODEL_TEMPLATE}
 	configtool rescore-model:ffvals $< | cut -f 1 -d ' ' > $@
 	echo "IBM2TgtGivenSrc:${IBM_DIR}/ibm2.${TGT_GIVEN_SRCX}" >> $@
 	echo "IBM2SrcGivenTgt:${IBM_DIR}/ibm2.${SRC_GIVEN_TGTX}" >> $@
@@ -115,8 +119,8 @@ rescore-model.ini: ${DECODING_MODEL_TEMPLATE}
 ########################################
 # Train a rescoring model
 .PHONY: train
-train: rescore-model
-rescore-model:  ${DECODING_MODEL}.${PREFIX_DEV_RAT} rescore-model.ini ${DEV_RAT_SRC} ${DEV_RAT_TGT}
+train: ${RESCORING_MODEL}
+${RESCORING_MODEL}:  ${DECODING_MODEL}.${TUNE_RESCORE} ${RESCORING_MODEL}.ini ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
 	RP_PSUB_OPTS="-N $@" \
 	echo "Generating $@"; \
 	rat.sh \
