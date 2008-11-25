@@ -10,7 +10,7 @@ MAKEFILE_PARAMS ?= Makefile.params
 
 
 # Change default make's shell for a distributed one.
-#SHELL = run-parallel.sh
+SHELL = ${FRAMEWORK_SHELL}
 
 
 # What command to use for lowercasing corpora.
@@ -30,13 +30,14 @@ vpath %${RAWX} ${RAW_CORPORA_DIR}
 
 # Help message
 .PHONY: help
-help: SHELL=bash
+help: SHELL=${GUARD_SHELL}
 help:
 	echo "This script tokenizes and lowercases all corpora described by CORPORA_SET"
 	echo "Type: make all"
 
 
 
+.DELETE_ON_ERROR:
 .SUFFIXES:
 #.SECONDARY:
 
@@ -63,8 +64,9 @@ tc: $(addsuffix _${TGT_LANG}.tc${GZ}, ${TRAIN_TM})
 lc: $(addsuffix _${SRC_LANG}${LANGX}, ${HELDOUT_SET})
 lc: $(addsuffix _${TGT_LANG}${LANGX}, ${HELDOUT_SET})
 # Note that will want to compress the TRAIN_SET for space efficiency.
-lc: $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_SET})
-lc: $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_SET})
+lc: $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_TM})
+lc: $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TM})
+lc: $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
 
 
 # How to clean-up.
@@ -75,12 +77,12 @@ clean:
 
 # Constructs a lowercased source corpora.
 %_${SRC_LANG}.tc: %_${SRC_LANG}${RAWX}
-	(file -i $< | egrep -q 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1)
+	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1)
 	cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
 
 # Constructs a lowercased target corpora.
 %_${TGT_LANG}.tc: %_${TGT_LANG}${RAWX}
-	(file -i $< | egrep -q 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1)
+	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1)
 	cat $< | utokenize.pl -noss -lang=${TGT_LANG} > $@
 
 

@@ -9,7 +9,7 @@ MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
 # Let's make this usage on the cluster.
-#SHELL = run-parallel.sh
+SHELL = ${FRAMEWORK_SHELL}
 
 # Defines the IRST environment variables.
 # Where is IRSTLM located
@@ -62,7 +62,7 @@ vpath %.marked.gz ${CORPORA_DIR}
 
 
 .PHONY: help
-help: SHELL=bash
+help: SHELL=${GUARD_SHELL}
 help:
 	@echo "please run:"
 	@echo "export PATH=${BIN_DIR}:$$PATH"
@@ -70,6 +70,7 @@ help:
 	@echo "Then make all"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
 	@echo "Define LM_TOOLKIT_SRI=1 if you have and want to use SRILM instead of IRSTLM."
+	@echo "Note: you can build some other lm by defining TRAIN_LM=<corpora_prefix>."
 
 
 
@@ -89,7 +90,7 @@ all_lm: binlm
 
 
 .PHONY: clean
-clean: SHELL=bash
+clean: SHELL=${GUARD_SHELL}
 
 
 
@@ -98,7 +99,7 @@ clean: clean.logs
 
 # Sometimes we only want to get ride of the logs.
 .PHONY: clean.logs
-clean.logs: SHELL=bash
+clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
 	${RM} log.*
 
@@ -111,7 +112,7 @@ mark: ${CORPUS_NAME}.marked.gz
 #.SECONDARY: ${CORPUS_NAME}.marked.gz
 %.marked.gz: %${CORPUS_EXT}
 	RP_PSUB_OPTS="-N $@" \
-	echo "Marking $<"; \
+	echo "Marking $<" && \
 	zcat -f $< \
 	| add-start-end.sh \
 	| gzip -c \
@@ -120,7 +121,7 @@ mark: ${CORPUS_NAME}.marked.gz
 clean: clean.mark
 
 .PHONY: clean.mark
-clean.mark: SHELL=bash
+clean.mark: SHELL=${GUARD_SHELL}
 clean.mark:
 	${RM} ${CORPUS_NAME}.marked.gz
 
@@ -135,8 +136,9 @@ irstlm: ${LM_NAME}.ilm.gz
 #.SECONDARY: ${LM_NAME}.ilm.gz
 %${LM_DESC}.ilm.gz: %.marked.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  Creating IRSTLM $@"; \
-	mkdir -p stat; \
+	echo "  Creating IRSTLM $@" && \
+	mkdir -p stat && \
+	(test ! -f $@ || rm $@) && \
 	IRSTLM=${IRSTLM} ${BUILD_LM_PGM} \
 		-p \
 		-n ${ORDER} \
@@ -144,12 +146,13 @@ irstlm: ${LM_NAME}.ilm.gz
 		-s kneser-ney \
 		-i "gunzip -c $<" \
 		-o $@ \
-	&> log.$(basename $@)
+	&> log.$(basename $@) && \
+	rm -r stat
 
 clean: clean.irstlm
 
 .PHONY: clean.irstlm
-clean.irstlm: SHELL=bash
+clean.irstlm: SHELL=${GUARD_SHELL}
 clean.irstlm:
 	${RM} ${LM_NAME}.ilm.gz
 	${RM} -r stat
@@ -165,7 +168,7 @@ arpa: ${LM_NAME}.lm.gz
 ifdef LM_TOOLKIT_SRI
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  Creating ARPA text format $@"; \
+	echo "  Creating ARPA text format $@" && \
 	ngram-count \
 		-interpolate \
 		-kndiscount \
@@ -177,7 +180,7 @@ ifdef LM_TOOLKIT_SRI
 else
 %.lm.gz: %.ilm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  Creating ARPA text format $@"; \
+	echo "  Creating ARPA text format $@" && \
 	( compile-lm \
 		--text yes \
 		$< \
@@ -185,16 +188,16 @@ else
 	| sed -e 's/^\(ngram [0-9]=\) \([0-9][0-9]*\)/\1\2/' -e 's/^\(\\end\\\)/\n\1/' \
 	| egrep -v 'Saving in txt format' \
 	> $(basename $@) ) \
-	&> log.$(basename $@); \
-	lm_sort_filter.sh -lm $(basename $@) sorted.$@; \
-	rm $(basename $@); \
+	&> log.$(basename $@) && \
+	lm_sort_filter.sh -lm $(basename $@) sorted.$@ && \
+	rm $(basename $@) && \
 	mv sorted.$@ $@
 endif
 
 clean: clean.arpa
 
 .PHONY: clean.arpa
-clean.arpa: SHELL=bash
+clean.arpa: SHELL=${GUARD_SHELL}
 clean.arpa:
 	${RM} ${LM_NAME}.lm.gz
 
@@ -208,7 +211,7 @@ blmt: ${LM_NAME}.blmt
 #.SECONDARY: ${LM_NAME}.blmt
 %.blmt: %.ilm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  Creating bin.ARPA format $@"; \
+	echo "  Creating bin.ARPA format $@" && \
 	compile-lm \
 		$< \
 		$@ \
@@ -217,7 +220,7 @@ blmt: ${LM_NAME}.blmt
 clean: clean.blmt
 
 .PHONY: clean.blmt
-clean.blmt: SHELL=bash
+clean.blmt: SHELL=${GUARD_SHELL}
 clean.blmt:
 	${RM} ${LM_NAME}.blmt
 
@@ -230,7 +233,7 @@ quantize: $(LM_NAME).qlm.gz
 #.SECONDARY: ${LM_NAME}.qlm.gz
 %.qlm: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  qARPA $< to $@"; \
+	echo "  qARPA $< to $@" && \
 	quantize-lm \
 		$< \
 		$@ \
@@ -239,7 +242,7 @@ quantize: $(LM_NAME).qlm.gz
 clean: clean.quantize
 
 .PHONY: clean.quantize
-clean.quantize: SHELL=bash
+clean.quantize: SHELL=${GUARD_SHELL}
 clean.quantize:
 	${RM} $(LM_NAME).qlm.gz
 
@@ -252,7 +255,7 @@ Qblmt: ${LM_NAME}.Qblmt
 #.SECONDARY: ${LM_NAME}.Qblmt
 %.Qblmt: %.qlm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  bin.qARPA $< to $@"; \
+	echo "  bin.qARPA $< to $@" && \
 	compile-lm \
 		$< \
 		$@ \
@@ -261,7 +264,7 @@ Qblmt: ${LM_NAME}.Qblmt
 clean: clean.Qblmt
 
 .PHONY: clean.Qblmt
-clean.Qblmt: SHELL=bash
+clean.Qblmt: SHELL=${GUARD_SHELL}
 clean.Qblmt:
 	${RM} ${LM_NAME}.Qblmt
 
@@ -278,7 +281,7 @@ sort_arpa: ${LM_NAME}.lm.sorted.gz
 clean: clean.sort_arpa
 
 .PHONY: clean.sort_arpa
-clean.sort_arpa: SHELL=bash
+clean.sort_arpa: SHELL=${GUARD_SHELL}
 clean.sort_arpa:
 	${RM} ${LM_NAME}.lm.sorted.gz
 
@@ -291,12 +294,12 @@ binlm: ${LM_NAME}.binlm.gz
 #.SECONDARY: %.binlm.gz
 %.binlm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	lmtext2binlm $< $@ >& log.$(basename $@)
+	arpalm2binlm $< $@ >& log.$(basename $@)
 
 clean: clean.binlm
 
 .PHONY: clean.binlm
-clean.binlm: SHELL=bash
+clean.binlm: SHELL=${GUARD_SHELL}
 clean.binlm:
 	${RM} ${LM_NAME}.binlm.gz
 
@@ -319,10 +322,22 @@ prune: ${LM_NAME}.plm.gz
 # HELPERS
 # Check if the environment is set
 .PHONY: test
-test: SHELL=bash
+test: SHELL=${GUARD_SHELL}
 test:
 	env | grep IRSTLM
 
+
+
+# For debugging purpose
+.PHONY: check
+check: SHELL=${GUARD_SHELL}
+check:
+ifdef LM_TOOLKIT_SRI
+	true
+else
+	echo "IRSTLM: ${IRSTLM}"
+	which build-lm.sh
+endif
 
 
 ################################################################################

@@ -13,7 +13,7 @@ MAKEFILE_PARAMS ?= Makefile.params
 
 # TODO: Make sure this Makefile works for Portage's cluster.
 # This will require that run-parallel.sh -c RP_OPTS be functional.
-#SHELL = run-parallel.sh
+SHELL = ${FRAMEWORK_SHELL}
 
 export LANG   = en_CA.utf8
 export LC_ALL = en_CA.utf8
@@ -67,7 +67,7 @@ MODEL_DIRECTIONS ?= ${TGT_GIVEN_SRC} ${SRC_GIVEN_TGT}
 # Define the following variable if you want to create forward and backward phrase tables
 ifdef BIDIRECTIONAL_SYSTEM
 # To get both directions
-CPT_DIRECTION ?= ${TGT_2_SRCX}
+CPT_DIRECTION ?= ${SRC_2_TGTX} ${TGT_2_SRCX}
 else
 # To get SRC to TGT direction
 CPT_DIRECTION ?= ${SRC_2_TGTX}
@@ -81,6 +81,7 @@ vpath %${SRCX} ${CORPORA_DIR}
 vpath %${TGTX} ${CORPORA_DIR}
 
 
+.DELETE_ON_ERROR:
 .SUFFIXES:
 .SECONDARY:
 
@@ -88,7 +89,7 @@ vpath %${TGTX} ${CORPORA_DIR}
 ########################################
 # HELP OPTIONS
 .PHONY: help
-help: SHELL=bash
+help: SHELL=${GUARD_SHELL}
 help:
 	@echo "Available targets are:"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
@@ -104,7 +105,7 @@ all: ${PT_TYPE}
 ########################################
 # CLEAN-UP
 .PHONY: clean
-clean: SHELL=bash
+clean: SHELL=${GUARD_SHELL}
 clean:
 	$(RM) run-parallel-log* log.* run-p.*
 
@@ -149,7 +150,7 @@ ibm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX}
 clean: clean.ibm1
 
 .PHONY: clean.ibm1
-clean.ibm1: SHELL=bash
+clean.ibm1: SHELL=${GUARD_SHELL}
 clean.ibm1:
 	$(RM) ibm1.*
 
@@ -190,7 +191,7 @@ ibm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 clean: clean.ibm2
 
 .PHONY: clean.ibm2
-clean.ibm2: SHELL=bash
+clean.ibm2: SHELL=${GUARD_SHELL}
 clean.ibm2:
 	$(RM) ibm2.*
 
@@ -231,7 +232,7 @@ hmm.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 clean: clean.hmm
 
 .PHONY: clean.hmm
-clean.hmm: SHELL=bash
+clean.hmm: SHELL=${GUARD_SHELL}
 clean.hmm:
 	$(RM) hmm.*
 
@@ -272,7 +273,7 @@ liang.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 clean: clean.liang
 
 .PHONY: clean.liang
-clean.liang: SHELL=bash
+clean.liang: SHELL=${GUARD_SHELL}
 clean.liang:
 	$(RM) liang.*
 
@@ -288,7 +289,7 @@ jpts: liang_jpt
 clean: clean.jpts
 
 .PHONY: clean.jpts
-clean.jpts: SHELL=bash
+clean.jpts: SHELL=${GUARD_SHELL}
 clean.jpts:
 	$(RM) jpt.*
 
@@ -297,7 +298,6 @@ clean.jpts:
 # requires: ibm2 models, source and target corpora.
 IBM2_JPT_PREFIX = jpt.ibm2
 
-#gen-jpt-parallel.sh -n 5 -o $@ GPT \
 .PHONY:  ibm2_jpt
 ibm2_jpt: $(foreach t, ${TRAIN_TM}, ${IBM2_JPT_PREFIX}.$t.${JOINTX})
 ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
@@ -355,7 +355,7 @@ ${LIANG_JPT_PREFIX}.%.${JOINTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_
 
 
 ################################################################################
-# JOINT PHRASE TABLES
+# CONDITIONAL PHRASE TABLES
 .PHONY: cpts
 cpts: ibm2_cpt
 cpts: hmm_cpt
@@ -364,7 +364,7 @@ cpts: liang_cpt
 clean: clean.cpts
 
 .PHONY: clean.cpts
-clean.cpts: SHELL=bash
+clean.cpts: SHELL=${GUARD_SHELL}
 clean.cpts:
 	$(RM) cpt.*
 
@@ -377,6 +377,7 @@ IBM2_CPT_PREFIX=cpt.ibm2${IBM2_SMOOTHERS_DESCRIPTION}
 
 .PHONY:  ibm2_cpt
 ibm2_cpt: $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${IBM2_CPT_PREFIX}.$t.$d))
+
 ${IBM2_CPT_PREFIX}.%.${SRC_2_TGTX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX} ${IBM2_JPT_PREFIX}.%.${JOINTX}
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
@@ -388,9 +389,26 @@ ${IBM2_CPT_PREFIX}.%.${SRC_2_TGTX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_
 		-1 ${SRC} -2 ${TGT} \
 		${IBM2_SMOOTHERS} \
 		-multipr fwd \
-		-o tmp.$(subst .${SRC_2_TGTX},,$@) \
-		-ibm_TGT_GIVEN_SRC  $(filter %${TGT_GIVEN_SRCX}, $+) \
-		-ibm_SRC_GIVEN_TGT  $(filter %${SRC_GIVEN_TGTX}, $+) \
+		-o $(subst .${SRC_2_TGTX},,$@) \
+		-ibm_l2_given_l1  $(filter %${TGT_GIVEN_SRCX}, $+) \
+		-ibm_l1_given_l2  $(filter %${SRC_GIVEN_TGTX}, $+) \
+		$(filter %${JOINT}.gz, $+) \
+		>& log.$(basename $@)
+
+${IBM2_CPT_PREFIX}.%.${TGT_2_SRCX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX} ${IBM2_JPT_PREFIX}.%.${JOINTX}
+	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	echo "Generating $@"; \
+	joint2cond_phrase_tables \
+		-sort \
+		-prune1 100 \
+		-ibm 2 \
+		-v -i -z \
+		-1 ${SRC} -2 ${TGT} \
+		${IBM2_SMOOTHERS} \
+		-multipr rev \
+		-o $(subst .${TGT_2_SRCX},,$@) \
+		-ibm_l2_given_l1  $(filter %${TGT_GIVEN_SRCX}, $+) \
+		-ibm_l1_given_l2  $(filter %${SRC_GIVEN_TGTX}, $+) \
 		$(filter %${JOINT}.gz, $+) \
 		>& log.$(basename $@)
 
@@ -405,6 +423,7 @@ HMM_CPT_PREFIX=cpt.hmm${HMM_SMOOTHERS_DESCRIPTION}
 
 .PHONY:  hmm_cpt
 hmm_cpt: $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${HMM_CPT_PREFIX}.$t.$d))
+
 ${HMM_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGTX} ${HMM_JPT_PREFIX}.%.${JOINTX}
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
@@ -417,8 +436,25 @@ ${HMM_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGT
 		${HMM_SMOOTHERS} \
 		-multipr fwd \
 		-o $(subst .${SRC_2_TGTX}, , $@) \
-		-ibm_TGT_GIVEN_SRC  $(filter %${TGT_GIVEN_SRCX}, $+) \
-		-ibm_SRC_GIVEN_TGT  $(filter %${SRC_GIVEN_TGTX}, $+) \
+		-ibm_l2_given_l1  $(filter %${TGT_GIVEN_SRCX}, $+) \
+		-ibm_l1_given_l2  $(filter %${SRC_GIVEN_TGTX}, $+) \
+		$(filter %${JOINT}.gz, $+) \
+		>& log.$(basename $@)
+
+${HMM_CPT_PREFIX}.%.${TGT_2_SRCX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGTX} ${HMM_JPT_PREFIX}.%.${JOINTX}
+	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	echo "Generating $@"; \
+	joint2cond_phrase_tables \
+		-sort \
+		-prune1 100 \
+		-hmm \
+		-v -i -z \
+		-1 ${SRC} -2 ${TGT} \
+		${HMM_SMOOTHERS} \
+		-multipr rev \
+		-o $(subst .${TGT_2_SRCX}, , $@) \
+		-ibm_l2_given_l1  $(filter %${TGT_GIVEN_SRCX}, $+) \
+		-ibm_l1_given_l2  $(filter %${SRC_GIVEN_TGTX}, $+) \
 		$(filter %${JOINT}.gz, $+) \
 		>& log.$(basename $@)
 
@@ -433,6 +469,7 @@ LIANG_CPT_PREFIX=cpt.liang${LIANG_SMOOTHERS_DESCRIPTION}
 
 .PHONY:  liang_cpt
 liang_cpt: $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${LIANG_CPT_PREFIX}.$t.$d))
+
 ${LIANG_CPT_PREFIX}.%.${SRC_2_TGTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_TGTX}  ${LIANG_JPT_PREFIX}.%.${JOINTX}
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
@@ -445,8 +482,25 @@ ${LIANG_CPT_PREFIX}.%.${SRC_2_TGTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GI
 		${LIANG_SMOOTHERS} \
 		-multipr fwd \
 		-o $(subst .${SRC_2_TGTX}, , $@) \
-		-ibm_TGT_GIVEN_SRC  $(filter %${TGT_GIVEN_SRCX}, $+) \
-		-ibm_SRC_GIVEN_TGT  $(filter %${SRC_GIVEN_TGTX}, $+) \
+		-ibm_l2_given_l1  $(filter %${TGT_GIVEN_SRCX}, $+) \
+		-ibm_l1_given_l2  $(filter %${SRC_GIVEN_TGTX}, $+) \
+		$(filter %${JOINT}.gz, $+) \
+		>& log.$(basename $@)
+
+${LIANG_CPT_PREFIX}.%.${TGT_2_SRCX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_TGTX}  ${LIANG_JPT_PREFIX}.%.${JOINTX}
+	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	echo "Generating $@"; \
+	joint2cond_phrase_tables \
+		-sort \
+		-prune1 100 \
+		-hmm \
+		-v -i -z \
+		-1 ${SRC} -2 ${TGT} \
+		${LIANG_SMOOTHERS} \
+		-multipr rev \
+		-o $(subst .${TGT_2_SRCX}, , $@) \
+		-ibm_l2_given_l1  $(filter %${TGT_GIVEN_SRCX}, $+) \
+		-ibm_l1_given_l2  $(filter %${SRC_GIVEN_TGTX}, $+) \
 		$(filter %${JOINT}.gz, $+) \
 		>& log.$(basename $@)
 

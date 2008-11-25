@@ -9,7 +9,7 @@ MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
 # TODO: Make this Makefile work with run-parallel.sh -c
-# SHELL = run-parallel.sh
+export SHELL = ${FRAMEWORK_SHELL}
 
 # Define languages info.
 #SRC_LANG ?= en
@@ -17,30 +17,36 @@ MAKEFILE_PARAMS ?= Makefile.params
 SRCX  ?= _${SRC_LANG}${LANGX}
 TGTX  ?= _${TGT_LANG}${LANGX}
 
-# TODO: may be this is to deleted.
-SRC_GIVEN_TGT  = ${SRC_LANG}_given_${TGT_LANG}
-TGT_GIVEN_SRC  = ${TGT_LANG}_given_${SRC_LANG}
+# TODO: This may be obsoliete.
+SRC_GIVEN_TGT  = ${TRAIN_TM}.${SRC_LANG}_given_${TGT_LANG}
+TGT_GIVEN_SRC  = ${TRAIN_TM}.${TGT_LANG}_given_${SRC_LANG}
 SRC_GIVEN_TGTX = ${SRC_GIVEN_TGT}.gz
 TGT_GIVEN_SRCX = ${TGT_GIVEN_SRC}.gz
+
+# Indicates where to find all models.
+# This is used to create a symbolic link.
+MODEL_DIR ?= ../../models
 
 # What will be the name of the rescoring model's file.
 RESCORING_MODEL ?= rescore-model
 
+#
+UNTUNED_RESCORING_MODEL ?= ${RESCORING_MODEL}.ini
+
 # Indicates where to find the canoe.ini template
-DECODING_MODEL_DIR      ?= ../decode
-DECODING_MODEL          ?= canoe.ini.cow
-DECODING_MODEL_TEMPLATE ?= ${DECODING_MODEL_DIR}/${DECODING_MODEL}
+DECODING_MODEL_DIR ?= models/decode
+DECODING_MODEL     ?= canoe.ini.cow
 
 # Indicates where to find the IBM models.
-IBM_DIR ?= ../TM
+IBM_DIR ?= models/tm
 
 # Will indicate to make where to find the SETs (dev & test & eval)
 CORPORA_DIR ?= ../../corpora
 
 # Indicates what prefix/file to use for training a rescoring model
-TUNE_RESCORE  ?= dev2
-TUNE_RESCORE_SRC      = ${TUNE_RESCORE}${SRCX}
-TUNE_RESCORE_TGT      = ${TUNE_RESCORE}${TGTX}
+TUNE_RESCORE      ?= dev2
+TUNE_RESCORE_SRC   = ${TUNE_RESCORE}${SRCX}
+TUNE_RESCORE_TGT   = ${TUNE_RESCORE}${TGTX}
 
 # Specific PSUB options
 PSUB_OPTS ?= 
@@ -68,7 +74,7 @@ all: train
 
 
 .PHONY: help
-help: SHELL=bash
+help: SHELL=${GUARD_SHELL}
 help:
 	@echo "Train a rescoring model."
 	@echo "Possible targets are:"
@@ -77,9 +83,18 @@ help:
 
 
 
+# Unfortunately, this script requires setup.
+.PHONY: setup
+setup: SHELL=${GUARD_SHELL}
+setup: symlink
+
+
+
 # Clean up
 .PHONY: clean
-clean: SHELL=bash
+clean: SHELL=${GUARD_SHELL}
+clean:
+	${RM} -r canoe-parallel.* run-p.*
 
 
 
@@ -88,21 +103,37 @@ clean: SHELL=bash
 clean: clean.logs
 
 .PHONY: clean.logs
-clean.logs: SHELL=bash
+clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
 	-${RM} log.* run-parallel-logs*
 
 
 
 ########################################
-# CREATE A RESCORE MODEL
-# requires: a trained canoe.ini model.
+# Check if there is a trained decoding model available
+check_decoding_model: SHELL=${GUARD_SHELL}
+check_decoding_model: setup
+	if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
+		echo "Please run ${DECODING_MODEL_DIR} first!"; \
+		false; \
+	fi
+
+
+
+#${DECODING_MODEL}: SHELL=${GUARD_SHELL}
+#${DECODING_MODEL}: models
+#	@echo "Please run models/decode first!"
+#	@false
+
+
+
+########################################
+# CREATE A DEFAULT RESCORE MODEL
+# requires: a trained decoding model.
 # This provides the default rescore-model.ini.
-${RESCORING_MODEL}.ini: SHELL=bash
-#${RESCORING_MODEL}.ini: ibm1.${SRC_GIVEN_TGTX} ibm1.${TGT_GIVEN_SRCX}
-#${RESCORING_MODEL}.ini: ibm2.${SRC_GIVEN_TGTX} ibm2.${TGT_GIVEN_SRCX}
-${RESCORING_MODEL}.ini: ${DECODING_MODEL_TEMPLATE}
-	configtool rescore-model:ffvals $< | cut -f 1 -d ' ' > $@
+${UNTUNED_RESCORING_MODEL}: SHELL=${GUARD_SHELL}
+${UNTUNED_RESCORING_MODEL}: check_decoding_model
+	configtool rescore-model:ffvals ${DECODING_MODEL_DIR}/${DECODING_MODEL} | cut -f 1 -d ' ' > $@
 	echo "IBM2TgtGivenSrc:${IBM_DIR}/ibm2.${TGT_GIVEN_SRCX}" >> $@
 	echo "IBM2SrcGivenTgt:${IBM_DIR}/ibm2.${SRC_GIVEN_TGTX}" >> $@
 	echo "IBM1WTransTgtGivenSrc:${IBM_DIR}/ibm1.${TGT_GIVEN_SRCX}" >> $@
@@ -120,10 +151,11 @@ ${RESCORING_MODEL}.ini: ${DECODING_MODEL_TEMPLATE}
 # Train a rescoring model
 .PHONY: train
 train: ${RESCORING_MODEL}
-${RESCORING_MODEL}:  ${DECODING_MODEL}.${TUNE_RESCORE} ${RESCORING_MODEL}.ini ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
+
+${RESCORING_MODEL}:  ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
 	RP_PSUB_OPTS="-N $@" \
-	echo "Generating $@"; \
-	rat.sh \
+	echo "Tuning a rescoring model." \
+	&& rat.sh \
 		-lb \
 		-n ${PARALLELISM_LEVEL} \
 		train \
@@ -133,10 +165,35 @@ ${RESCORING_MODEL}:  ${DECODING_MODEL}.${TUNE_RESCORE} ${RESCORING_MODEL}.ini ${
 		-f $+ \
 	>& log.$@
 
+clean: clean.rescore_train
+
 .PHONY: clean.rescore_train
-clean.rescore_train: SHELL=bash
+clean.rescore_train: SHELL=${GUARD_SHELL}
 clean.rescore_train:
-	${RM} -f rescore-model.rat rescore-model
+	${RM} ${RESCORING_MODEL} ${RESCORING_MODEL}.ini
+	${RM} -r gen-features-parallel-output.* workdir-${TUNE_RESCORE_SRC}-${NBEST_SIZE}best
+
+
+
+########################################
+# Create a specific canoe.ini per test set.
+# You could add some specific target if you need to customize a decoding model
+# for a particular testset.
+${DECODING_MODEL}.%: SHELL=${GUARD_SHELL}
+${DECODING_MODEL}.%: check_decoding_model
+	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
+	configtool check $@
+#	cat $< \
+#	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
+#	| sed "s/dev-text1/$*/" \
+#	> $@
+
+clean: clean.decoding.model
+
+.PHONY: clean.decoding.model
+clean.decoding.model: SHELL=${GUARD_SHELL}
+clean.decoding.model:
+	${RM} ${DECODING_MODEL}.*
 
 
 
@@ -146,36 +203,19 @@ clean.rescore_train:
 #######################################
 # Check the decoding model config file.
 .PHONY: configtool
-configtool: SHELL=bash
-configtool: ${DECODING_MODEL_TEMPLATE}
-	configtool check $<
+configtool: SHELL=${GUARD_SHELL}
+configtool: check_decoding_model
+	configtool check ${DECODING_MODEL_DIR}/${DECODING_MODEL}
 
 
 
 ########################################
-# Create a specific canoe.ini per test set.
-# You could add some specific target if you need to customize a canoe.ini.cow
-# for a particular testset.
-${DECODING_MODEL}.%: SHELL=bash
-${DECODING_MODEL}.%: ${DECODING_MODEL_TEMPLATE}
-	cat $< > $@
-	configtool check $@
-#	cat $< \
-#	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
-#	| sed "s/dev-text1/$*/" \
-#	> $@
+# This is mainly a hack to fix the hierachy tree problem inherent to the
+# decoding model content.
+.PHONY: symlink
+symlink: models
 
+models: SHELL=${GUARD_SHELL}
+models:
+	ln -sf ${MODEL_DIR} $@
 
-
-########################################
-# LINKS THE IBMX MODELS
-# ibm2.ch_given_en.gz ibm2.ch_given_en.pos.gz
-# ibm2.en_given_ch.gz ibm2.en_given_ch.pos.gz
-ibm2.%.gz: SHELL=bash
-ibm2.%.gz:
-	ln -sf ${IBM_DIR}/ibm2.*$*.gz ibm2.$*.gz 
-	ln -sf ${IBM_DIR}/ibm2.*$*.pos.gz ibm2.$*.pos.gz
-
-ibm1.%.gz: SHELL=bash
-ibm1.%.gz:
-	ln -sf ${IBM_DIR}/ibm1.*$*.gz ibm1.$*.gz 

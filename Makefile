@@ -5,7 +5,10 @@ MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
 .PHONY: all
+all: tune
+ifneq ($(strip ${TRANSLATE_SET}),)
 all: translate
+endif
 
 
 
@@ -50,7 +53,7 @@ ifdef BIDIRECTIONAL_SYSTEM
 lms: lm.${SRC_LANG}
 endif
 lm.%: corpora
-	${MAKE} -C models/lm binlm
+	${MAKE} -C models/lm all
 
 
 
@@ -82,3 +85,9 @@ endif
 # Tune weights and apply them to the test sets
 translate: models tune
 	${MAKE} -C translate
+
+
+
+.PHONY: check
+check:
+	${MAKE} -C models/lm check

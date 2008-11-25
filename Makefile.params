@@ -16,13 +16,16 @@ export TUNE_RESCORE  ?= dev2
 export TRANSLATE_SET ?= test1 test2
 
 # The prefix_root where we can find IRSTLM/bin
-export IRSTLM ?= /home/larkins/sandBoxes/irstlm
+export IRSTLM ?= /home/larkins/sandboxes/irstlm
 
 # Uncomment the following line if you have acces to SRILM.
 #LM_TOOLKIT_SRI=1
 
 # Uncomment the following line if you want to do rescoring.
 #DO_RESCORING=1
+
+# If you are on a cluster that is run-parallel.sh friendly, define the following
+#USING_CLUSTER=1
 
 
 
@@ -64,6 +67,9 @@ export LM_TYPES ?= binlm
 export PREFIX_DEV_COW  ?= ${TUNE_DECODE}
 export PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
 
+#
+DECODING_MODEL ?= canoe.ini.cow
+
 # Defines the truecasing model filename.
 TRUECASING_MAP ?= ${TRAIN_LM}_${TGT_LANG}.map
 TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-3g.binlm${GZ}
@@ -71,16 +77,20 @@ TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-3g.binlm${GZ}
 # Define the following variable if you want to create forward and backward phrase tables
 #export BIDIRECTIONAL_SYSTEM = 1
 
-# Indicates where to find the canoe.ini template.
-DECODING_MODEL_DIR      ?= ../models/decode
-DECODING_MODEL          ?= canoe.ini.cow
-DECODING_MODEL_TEMPLATE ?= ${DECODING_MODEL_DIR}/${DECODING_MODEL}
-
-# Indidcates where to find the rescoring model.
-RESCORING_MODEL_DIR ?= ../models/rescore
-RESCORING_MODEL     ?= rescore-model
 
 
+
+# If we are lucky enough to have a cluster, will change the shell for certain
+# commands and allow them to run on nodes.
+ifdef USING_CLUSTER
+FRAMEWORK_SHELL = run-parallel.sh
+else
+FRAMEWORK_SHELL = /bin/sh
+endif
+
+# Some commands shouldn't be run with the cluster shell, will use this one
+# instead.
+GUARD_SHELL = /bin/sh
 
 ########################################
 # HELPERS
