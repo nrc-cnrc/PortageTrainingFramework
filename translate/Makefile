@@ -76,12 +76,7 @@ vpath ${TRUECASING_MAP}  ${TRUECASING_DIR}
 
 
 .PHONY: all
-ifeq ($(strip $(wildcard models)),)
-all: setup
-	${MAKE}
-else
-all: tc
-endif
+all: tc.detok
 
 
 
@@ -124,10 +119,11 @@ clean: clean.logs
 .PHONY: clean.logs
 clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
-	-rm log.* run-parallel-logs*
+	${RM} log.* run-parallel-logs*
 
 
 
+.PHONY: check_decoding_model
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model: models
 	if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
@@ -137,6 +133,7 @@ check_decoding_model: models
 
 
 
+.PHONY: check_rescoring_model
 check_rescoring_model: SHELL=${GUARD_SHELL}
 check_rescoring_model: models
 	if [[ ! -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]]; then \
@@ -150,8 +147,8 @@ check_rescoring_model: models
 # Create a specific canoe.ini per test set.
 # You could add some specific target if you need to customize a canoe.ini.cow
 # for a particular testset.
-${DECODING_MODEL}.%: ${DECODING_MODEL}
-	cat ${DECODING_MODEL} > $@
+${DECODING_MODEL}.%: check_decoding_model
+	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
 #	cat $< \
 #	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
@@ -169,7 +166,7 @@ ifdef DO_RESCORING
 # rescoring and extracting the 1 best instead of calculating it twice.
 $(addsuffix .out, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
 %.out: %.rat
-	cp workdir-$*_${SRC_LANG}.al-${NBEST_SIZE}best/1best $@
+	cp workdir-$*${RULEX}-${NBEST_SIZE}best/1best $@
 else
 %.out: ${DECODING_MODEL}.% %${RULEX}
 	echo "Generating $@"
@@ -205,22 +202,22 @@ $(addsuffix .out.detok.bleu, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
 	| utf8_casemap -c l \
 	| bleumain $< - > $@
 
-clean: clean.trans
+clean: clean.translate
 
-.PHONY: clean.trans
-clean.trans: SHELL=${GUARD_SHELL}
-clean.trans: $(foreach f, ${TRANSLATE_SET}, clean.trans.$f)
-clean.trans.%:
-	-${RM} -f $*.out $*.out.bleu
-	-${RM} -f $*.out.detok $*.out.detok.bleu
+.PHONY: clean.translate
+clean.translate: SHELL=${GUARD_SHELL}
+clean.translate: $(foreach f, ${TRANSLATE_SET}, clean.translate.$f)
+clean.translate.%:
+	${RM} $*.out $*.out.bleu
+	${RM} $*.out.detok $*.out.detok.bleu
 
 
 
 ########################################
-# Rescore the testset
+# Rescore the translate_set
 .PHONY: rat
 rat: $(addsuffix .rat, ${TRANSLATE_SET})
-%.rat: ${DECODING_MODEL}.% ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} %${SRCX} %${RULEX}
+%.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} check_rescoring_model
 	echo "Generating $@" \
 	&& rat.sh \
 		-lb \
@@ -229,9 +226,11 @@ rat: $(addsuffix .rat, ${TRANSLATE_SET})
 		-v \
 		-K ${NBEST_SIZE} \
 		-msrc $(word 3, $+) \
-		-f $(wordlist 1,2,$+) \
+		-f $< \
+		${RESCORING_MODEL_DIR}/${RESCORING_MODEL} \
+		$(word 2,$+) \
 	>& log.$@ \
-	&& mv $*${SRC_EXT}.rat $@
+	&& mv $*${RULEX}.rat $@
 
 .PHONY: rat.bleu
 rat.bleu: $(addsuffix .rat.bleu, ${TRANSLATE_SET})
@@ -256,14 +255,15 @@ $(addsuffix .rat.detok.bleu, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
 	| utf8_casemap -c l \
 	| bleumain $< - > $@
 
-clean: clean.rescore_trans
+clean: clean.rescore
 
 .PHONY: clean.rescore_trans
-clean.rescore_trans: SHELL=${GUARD_SHELL}
-clean.rescore_trans: $(foreach f, ${TRANSLATE_SET}, clean.rescore_trans.$f)
-clean.rescore_trans.%:
-	${RM} -rf $*.rat $*.rat.bleu
-	-${RM} -f $*.rat.detok $*.rat.detok.bleu
+clean.rescore: SHELL=${GUARD_SHELL}
+clean.rescore: $(foreach f, ${TRANSLATE_SET}, clean.rescore.$f)
+clean.rescore.%:
+	${RM} $*.rat $*.rat.bleu
+	${RM} $*.rat.detok $*.rat.detok.bleu
+	${RM} -r workdir-$*${RULEX}-${NBEST_SIZE}best
 
 
 
@@ -281,6 +281,27 @@ endif
 		-lm=$(word 2, $^) \
 		-map=$(word 3, $^) \
 		> $@ 
+
+.PHONY: tc.detok
+tc.detok: $(addsuffix .out.tc.detok, ${TRANSLATE_SET})
+ifdef DO_RESCORING
+tc.detok: $(addsuffix .rat.tc.detok, ${TRANSLATE_SET})
+endif
+#$(addsuffix .tc.detok, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+%.tc.detok: %.tc
+	echo "Detokenizing $<"
+	${DETOKENIZER} -lang=${TGT_LANG} $< $@
+
+clean: clean.truecasing
+
+.PHONY: clean.truecasing
+clean.truecasing: SHELL=${GUARD_SHELL}
+clean.truecasing: $(foreach f, ${TRANSLATE_SET}, clean.truecasing.$f.out)
+clean.truecasing: $(foreach f, ${TRANSLATE_SET}, clean.truecasing.$f.rat)
+clean.truecasing.%:
+	${RM} $*.tc
+	${RM} $*.tc.detok
+
 
 
 
