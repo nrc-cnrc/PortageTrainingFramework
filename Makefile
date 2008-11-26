@@ -17,6 +17,12 @@ help:
 	@echo "please run in order for this framework to run properly:"
 	@echo "export PATH=${IRSTLM}/bin:$$PATH"
 	@echo "export IRSTLM=${IRSTLM}"
+	@echo "Your corpora are:"
+	@echo "lm: ${TRAIN_LM}"
+	@echo "tm: ${TRAIN_TM}"
+	@echo "tune decode: ${TUNE_DECODE}"
+	@echo "tune rescore: ${TUNE_RESCORE}"
+	@echo "translate set: ${TRANSLATE_SET}"
 	@echo "Then make all"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
 
