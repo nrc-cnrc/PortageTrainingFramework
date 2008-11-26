@@ -111,6 +111,7 @@ clean.logs:
 
 ########################################
 # Check if there is a trained decoding model available
+.PHONY: check_decoding_model
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model: setup
 	if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
