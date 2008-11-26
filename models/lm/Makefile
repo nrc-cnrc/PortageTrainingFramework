@@ -113,7 +113,7 @@ mark: ${CORPUS_NAME}.marked.gz
 %.marked.gz: %${CORPUS_EXT}
 	RP_PSUB_OPTS="-N $@" \
 	echo "Marking $<" && \
-	zcat -f $< \
+	set -o pipefail; zcat -f $< \
 	| add-start-end.sh \
 	| gzip -c \
 	> $@
