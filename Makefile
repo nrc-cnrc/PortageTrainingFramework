@@ -60,23 +60,23 @@ lm.%: corpora
 .PHONY: tc
 # Create models for truecasing (TC).
 tc: corpora
-	${MAKE} -C models/tc
+	${MAKE} -C models/tc all
 
 
 
 .PHONY: tms
 # Create the Translation Model (TM).
 tms: corpora
-	${MAKE} -C models/tm
+	${MAKE} -C models/tm all
 
 
 
 .PHONY: tune
 # Tune the required models.
 tune: models
-	${MAKE} -C models/decode
+	${MAKE} -C models/decode all
 ifdef DO_RESCORING
-	${MAKE} -C models/rescore
+	${MAKE} -C models/rescore all
 endif
 
 
