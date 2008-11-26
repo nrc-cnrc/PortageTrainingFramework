@@ -97,8 +97,7 @@ clean:
 rule: $(addsuffix ${RULEX}, ${HELDOUT_SET})
 %${RULEX}: %_${SRC_LANG}${LANGX}
 	cat $< \
-	| perl -pe 's/([<>\\])/\\$$1/g' \
-	| perl -pe 's/(__ent_[a-zA-Z0-9_]+)/<STAG target="$$1" prob="1.0">$$1<\/STAG>/g' \
+	| canoe-escapes.pl -add \
 	> $@
 
 
