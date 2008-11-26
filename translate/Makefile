@@ -76,7 +76,19 @@ vpath ${TRUECASING_MAP}  ${TRUECASING_DIR}
 
 
 .PHONY: all
-all: tc.detok
+#all: tc.detok
+all: final_result
+
+
+
+ifdef DO_RESCORING
+FINALX = .rat.tc.detok
+else
+FINALX = .out.tc.detok
+endif
+final_result: $(addsuffix .translation,${TRANSLATE_SET})
+%.translation: %${FINALX}
+	cp $< $@
 
 
 
