@@ -1,0 +1,26 @@
+Technologies langagieres interactives / Interactive Language Technologies
+Institut de technologie de l'information / Institute for Information Technology
+Conseil national de recherches Canada / National Research Council Canada
+Copyright 2008, Sa Majeste la Reine du Chef du Canada
+Copyright 2008, Her Majesty in Right of Canada
+
+Author: Samuel Larkin, with suggestions by George Foster and Eric Joanis
+
+Distributed under specific licensing terms.  Please refer to your signed
+license agreement for details.
+
+
+                  PORTAGEshared experimental framework
+
+
+This experimental framework is intended as a starting point for experiments
+with PORTAGEshared.  It uses recommended settings for a reasonable baseline
+experiment.  In practice, our baseline settings change all the time, at NRC, as
+we continue our research on Statistical Machine Translation, so no framework
+can truly represent the current state of the art.  Nonetheless, we've tried to
+present in this framework our currently recommended practice.
+
+
+Instructions:
+
+Forthcoming
