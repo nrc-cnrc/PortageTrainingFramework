@@ -33,6 +33,22 @@ export IRSTLM ?= /home/larkins/sandboxes/irstlm
 # If you are on a cluster that is run-parallel.sh friendly, define the following
 #USING_CLUSTER=1
 
+# Automatically detects if we are on a cluster.
+ifeq ($(strip $(shell which-test.sh qsub && echo "true")),true)
+   USING_CLUSTER ?= 1
+endif
+ifdef NOCLUSTER
+   USING_CLUSTER =
+endif
+
+
+ifdef USING_CLUSTER
+   PARALLELISM_LEVEL ?= 5
+   $(warn "Running in cluster mode.")
+else
+   PARALLELISM_LEVEL ?= 1
+   $(warn "Running in local mode.")
+endif
 
 
 ################################################################################
