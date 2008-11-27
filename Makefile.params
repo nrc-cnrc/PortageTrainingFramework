@@ -40,15 +40,29 @@ endif
 ifdef NOCLUSTER
    USING_CLUSTER =
 endif
+export USING_CLUSTER
 
 
 ifdef USING_CLUSTER
-   PARALLELISM_LEVEL ?= 5
+   PARALLELISM_LEVEL_LM ?= 5
+   PARALLELISM_LEVEL_TM ?= 5
+   PARALLELISM_LEVEL_TUNE_DECODE  ?= 10
+   PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
+   PARALLELISM_LEVEL_TRANSLATE    ?= 10
    $(warn "Running in cluster mode.")
 else
-   PARALLELISM_LEVEL ?= 1
+   PARALLELISM_LEVEL_LM ?= 1
+   PARALLELISM_LEVEL_TM ?= 1
+   PARALLELISM_LEVEL_TUNE_DECODE  ?= 1
+   PARALLELISM_LEVEL_TUNE_RESCORE ?= 1
+   PARALLELISM_LEVEL_TRANSLATE    ?= 1
    $(warn "Running in local mode.")
 endif
+export PARALLELISM_LEVEL_LM
+export PARALLELISM_LEVEL_TM
+export PARALLELISM_LEVEL_TUNE_DECODE
+export PARALLELISM_LEVEL_TUNE_RESCORE
+export PARALLELISM_LEVEL_TRANSLATE
 
 
 ################################################################################
@@ -56,7 +70,7 @@ endif
 # Don't change the following unless you have some specific needs.
 
 # Compress extension.
-GZ ?= .gz
+export GZ ?= .gz
 
 # Raw file's extension.
 export RAWX ?= .raw
@@ -90,11 +104,11 @@ export PREFIX_DEV_COW  ?= ${TUNE_DECODE}
 export PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
 
 #
-DECODING_MODEL ?= canoe.ini.cow
+export DECODING_MODEL ?= canoe.ini.cow
 
 # Defines the truecasing model filename.
-TRUECASING_MAP ?= ${TRAIN_LM}_${TGT_LANG}.map
-TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-3g.binlm${GZ}
+export TRUECASING_MAP ?= ${TRAIN_LM}_${TGT_LANG}.map
+export TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-3g.binlm${GZ}
 
 # Define the following variable if you want to create forward and backward phrase tables
 #export BIDIRECTIONAL_SYSTEM = 1

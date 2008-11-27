@@ -62,7 +62,7 @@ PSUB_OPTS ?=
 NBEST_SIZE ?= 1000
 
 # Number of parallel chunks to process.
-PARALLELISM_LEVEL ?= 5
+PARALLELISM_LEVEL_TUNE_RESCORE ?= 5
 
 .SECONDARY:
 .SUFFIXES:
@@ -165,7 +165,7 @@ ${RESCORING_MODEL}:  ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL
 	echo "Tuning a rescoring model." \
 	&& rat.sh \
 		-lb \
-		-n ${PARALLELISM_LEVEL} \
+		-n ${PARALLELISM_LEVEL_TUNE_RESCORE} \
 		train \
 		-v \
 		-K ${NBEST_SIZE} \

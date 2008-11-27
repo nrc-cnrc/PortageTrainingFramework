@@ -25,7 +25,7 @@ export IRSTLM ?= /home/larkins/sandboxes/irstlm
 BIN_DIR = ${IRSTLM}/bin
 
 # What is the level of parallelism.
-PARALLELISM_LEVEL ?= 5
+PARALLELISM_LEVEL_LM ?= 5
 
 # What is the order of the required lm.
 ORDER ?= 5
@@ -149,7 +149,7 @@ irstlm: ${LM_NAME}.ilm.gz
 	IRSTLM=${IRSTLM} ${BUILD_LM_PGM} \
 		-p \
 		-n ${ORDER} \
-		-k ${PARALLELISM_LEVEL} \
+		-k ${PARALLELISM_LEVEL_LM} \
 		-s kneser-ney \
 		-i "gunzip -c $<" \
 		-o $@ \

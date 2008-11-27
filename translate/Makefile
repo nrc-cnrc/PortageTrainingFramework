@@ -64,7 +64,7 @@ PSUB_OPTS ?=
 NBEST_SIZE ?= 1000
 
 # Number of parallel chunks to process.
-PARALLELISM_LEVEL ?= 5
+PARALLELISM_LEVEL_TRANSLATE ?= 5
 
 .SECONDARY:
 .SUFFIXES:
@@ -191,7 +191,7 @@ else
 	echo "Generating $@"
 	canoe-parallel.sh \
 		-lb \
-		-n ${PARALLELISM_LEVEL} \
+		-n ${PARALLELISM_LEVEL_TRANSLATE} \
 		canoe \
 		-f $< \
 		< $(word 2, $^) \
@@ -240,7 +240,7 @@ rat: $(addsuffix .rat, ${TRANSLATE_SET})
 	echo "Generating $@" \
 	&& rat.sh \
 		-lb \
-		-n ${PARALLELISM_LEVEL} \
+		-n ${PARALLELISM_LEVEL_TRANSLATE} \
 		trans \
 		-v \
 		-K ${NBEST_SIZE} \

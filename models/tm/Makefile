@@ -37,6 +37,9 @@ CORPORA_DIR ?= ../../corpora
 # Maximum phrase length
 M ?= 8
 
+# What is the level of parallelism.
+PARALLELISM_LEVEL_TM ?= 5
+
 # Already defined in the master config file.
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
@@ -135,7 +138,7 @@ ibm1_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm1.$t.
 ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
-	${CAT} -n 5 -pn 5 \
+	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v \
 		-n1 5 -n2 0 \
 		${IBM1_MODEL_EXTRAS} \
@@ -146,7 +149,7 @@ ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 ibm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX}
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
-	${CAT} -n 5 -pn 5 \
+	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v -r \
 		-n1 5 -n2 0 \
 		${IBM1_MODEL_EXTRAS} \
@@ -172,7 +175,7 @@ ibm2_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm2.$t.
 ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
-	${CAT} -n 5 -pn 5 \
+	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v -m \
 		-n1 0 -n2 5 \
 		-slen 20 -tlen 20 -bksize 20 \
@@ -185,7 +188,7 @@ ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 ibm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
-	${CAT} -n 5 -pn 5 \
+	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v -r \
 		-n1 0 -n2 5 \
 		-slen 20 -tlen 20 -bksize 20 \
@@ -213,7 +216,7 @@ hmm_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm.$t.$d
 hmm.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
-	${CAT} -n 5 -pn 5 \
+	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v  \
 		-n1 0 -n2 5 \
 		-mimic default \
@@ -226,7 +229,7 @@ hmm.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 hmm.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
-	${CAT} -n 5 -pn 5 \
+	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v -r \
 		-n1 0 -n2 5 \
 		-mimic default \
@@ -254,7 +257,7 @@ liang_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, liang.$
 liang.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
-	${CAT} -n 5 -pn 5 \
+	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v \
 		-n1 0 -n2 5 \
 		-mimic liang \
@@ -267,7 +270,7 @@ liang.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 liang.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
-	${CAT} -n 5 -pn 5 \
+	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v -r \
 		-n1 0 -n2 5 \
 		-mimic liang \
@@ -311,7 +314,7 @@ ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGT
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
 	gen-jpt-parallel.sh \
-		-n 5 \
+		-n ${PARALLELISM_LEVEL_TM} \
 		-o $@ \
 		GPT \
 		-v -j -w 1 -m $M -ibm 2 \
@@ -331,7 +334,7 @@ ${HMM_JPT_PREFIX}.%.${JOINTX}:  hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGTX} 
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
 	gen-jpt-parallel.sh \
-		-n 5 \
+		-n ${PARALLELISM_LEVEL_TM} \
 		-o $@ \
 		GPT \
 		-v -j -w 1 -m $M -hmm \
@@ -351,7 +354,7 @@ ${LIANG_JPT_PREFIX}.%.${JOINTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	echo "Generating $@"; \
 	gen-jpt-parallel.sh \
-		-n 5 \
+		-n ${PARALLELISM_LEVEL_TM} \
 		-o $@ \
 		GPT \
 		-v -j -w 1 -m $M -hmm \

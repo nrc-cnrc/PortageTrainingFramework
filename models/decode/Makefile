@@ -52,7 +52,7 @@ PSUB_OPTS ?=
 NBEST_SIZE ?= 1000
 
 # Number of parallel chunks to process.
-PARALLELISM_LEVEL ?= 5
+PARALLELISM_LEVEL_TUNE_DECODE ?= 5
 
 .SECONDARY:
 .DELETE_ON_ERROR:
@@ -122,7 +122,7 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 	mkdir -p foos && \
 	cow.sh \
 		-v \
-		-parallel:"-n ${PARALLELISM_LEVEL}" \
+		-parallel:"-n ${PARALLELISM_LEVEL_TUNE_DECODE}" \
 		-maxiter 15 \
 		-nbest-list-size 100 \
 		-filt \
