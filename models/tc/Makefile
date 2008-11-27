@@ -51,6 +51,7 @@ help: SHELL=${GUARD_SHELL}
 help:
 	@echo "This script build a language model and a map for truecasing."
 	@echo "Define LM_TOOLKIT_SRI=1 if you have and want to use SRILM instead of IRSTLM."
+	@echo "Your corpora: ${TRAIN_LM}.${TCX}"
 	@echo "type: make all"
 
 

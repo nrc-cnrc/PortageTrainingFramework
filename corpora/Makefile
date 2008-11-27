@@ -64,7 +64,7 @@ all: rule
 
 # Defines what corpora we need truecased/tokenized for the truecase model.
 .PHONY: tc
-tc: $(addsuffix _${TGT_LANG}.tc${GZ}, ${TRAIN_TM})
+tc: $(addsuffix _${TGT_LANG}.tc${GZ}, ${TRAIN_LM})
 
 # Defines what corpora we need in the entire pipeline.
 .PHONY: lc
