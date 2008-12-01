@@ -1,7 +1,7 @@
 [ttable-multi-prob]
-  models/tm/cpt.ibm2-rf-zn-kn3.train.<SL>2<TL>.gz
+  <CPTS>
 [lmodel-file]
-  models/lm/train_<TL>-kn-5g.binlm.gz
+  <LMS>
 [ttable-limit] 30
 [ttable-threshold] 0
 [stack] 20000

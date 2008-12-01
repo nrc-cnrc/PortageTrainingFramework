@@ -97,10 +97,14 @@ clean.logs:
 
 ########################################
 # Create canoe.ini from template.
+CPTS ?= $(subst /,\/,$(wildcard models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz))
+LMS  ?= $(subst /,\/,$(wildcard models/lm/*${TGT_LANG}*.binlm.gz))
 ${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}  models
 	cat $< \
 	| sed -e 's/<SL>/${SRC_LANG}/g' -e 's/<TL>/${TGT_LANG}/g' \
+	| sed -e 's/<TRAIN_TM>/${TRAIN_TM}/g' -e 's/<TRAIN_LM>/${TRAIN_LM}/g' \
+	| sed -e "s/<CPTS>/${CPTS}/g" -e "s/<LMS>/${LMS}/g" \
 	> $@
 	configtool check $@
 
