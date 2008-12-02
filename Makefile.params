@@ -30,6 +30,10 @@ export IRSTLM ?= /home/larkins/sandboxes/irstlm
 # Uncomment the following line if you want to do rescoring.
 #DO_RESCORING=1
 
+# If you have ICU installed and have compiled PORTAGE shared with icu,
+# uncomment the following line.
+#ICU=1
+
 # If you are on a cluster that is run-parallel.sh friendly, define the following
 #USING_CLUSTER=1
 
