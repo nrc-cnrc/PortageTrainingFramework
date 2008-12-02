@@ -88,12 +88,12 @@ clean:
 
 # Constructs a lowercased source corpora.
 %_${SRC_LANG}.tc: %_${SRC_LANG}${RAWX}
-	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1)
+	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1); \
 	cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
 
 # Constructs a lowercased target corpora.
 %_${TGT_LANG}.tc: %_${TGT_LANG}${RAWX}
-	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1)
+	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1); \
 	cat $< | utokenize.pl -noss -lang=${TGT_LANG} > $@
 
 
