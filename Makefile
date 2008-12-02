@@ -48,7 +48,7 @@ clean:
 
 
 .PHONY: corpora
-corpora:
+corpora: check_setup
 	${MAKE} -C corpora all
 
 
@@ -100,6 +100,7 @@ translate: models tune
 
 
 
-.PHONY: check
-check:
-	${MAKE} -C models/lm check
+.PHONY: check_setup
+check_setup:
+	${MAKE} -C models/lm check_setup
+
