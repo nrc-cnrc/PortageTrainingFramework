@@ -52,7 +52,7 @@ IBM_DIR ?= models/TM
 CORPORA_DIR ?= ../corpora
 
 # Where to find the truecasing models.
-TRUECASING_DIR ?= models/tc
+TRUECASING_DIR ?= ../models/tc
 
 # Indicates what are the test/eval set to be translated after having trained a decoder model and a rescoring model
 TRANSLATE_SET ?= test1 test2
@@ -77,8 +77,8 @@ vpath %${RULEX} ${CORPORA_DIR}
 
 vpath ${DECODING_MODEL}  ${DECODING_MODEL_DIR}
 vpath ${RESCORING_MODEL} ${RESCORING_MODEL_DIR}
-vpath ${TRUECASING_LM}   ${TRUECASING_DIR} ../models/tc
-vpath ${TRUECASING_MAP}  ${TRUECASING_DIR} ../models/tc
+vpath ${TRUECASING_LM}   ${TRUECASING_DIR}
+vpath ${TRUECASING_MAP}  ${TRUECASING_DIR}
 
 
 
@@ -146,7 +146,7 @@ clean.logs:
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model: models
 	if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
-      echo "Please run ${DECODING_MODEL_DIR} first!"; \
+		echo "Please run ${DECODING_MODEL_DIR} first!"; \
 		false; \
 	fi
 
