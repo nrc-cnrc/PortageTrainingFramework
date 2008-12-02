@@ -128,13 +128,6 @@ check_decoding_model: setup
 
 
 
-#${DECODING_MODEL}: SHELL=${GUARD_SHELL}
-#${DECODING_MODEL}: models
-#	@echo "Please run models/decode first!"
-#	@false
-
-
-
 ########################################
 # CREATE A DEFAULT RESCORE MODEL
 # requires: a trained decoding model.

@@ -96,12 +96,24 @@ clean.logs:
 
 
 ########################################
+# Is the template present?
+.PHONY: check_template
+check_template: SHELL=${GUARD_SHELL}
+check_template:
+	if [[ ! -f ${TEMPLATE_DIR}/${DECODING_MODEL_TEMPLATE} ]]; then \
+		echo "Cannot find this template: ${DECODING_MODEL_TEMPLATE}" >&2; \
+		false; \
+	fi
+
+
+
+########################################
 # Create canoe.ini from template.
 CPTS ?= $(subst /,\/,$(wildcard models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz))
 LMS  ?= $(subst /,\/,$(wildcard models/lm/*${TGT_LANG}*.binlm.gz))
 ${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
-${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}  models
-	cat $< \
+#${UNTUNED_DECODING_MODEL}: check_template  models
+	cat ${TEMPLATE_DIR}/${DECODING_MODEL_TEMPLATE} \
 	| sed -e 's/<SL>/${SRC_LANG}/g' -e 's/<TL>/${TGT_LANG}/g' \
 	| sed -e 's/<TRAIN_TM>/${TRAIN_TM}/g' -e 's/<TRAIN_LM>/${TRAIN_LM}/g' \
 	| sed -e "s/<CPTS>/${CPTS}/g" -e "s/<LMS>/${LMS}/g" \
@@ -161,14 +173,3 @@ models: SHELL=${GUARD_SHELL}
 models:
 	ln -sf ${MODEL_DIR} $@
 
-
-
-########################################
-# Check if the template file is present.
-.PHONY: template
-template: ${DECODING_MODEL_TEMPLATE}
-
-${DECODING_MODEL_TEMPLATE}: SHELL=${GUARD_SHELL}
-${DECODING_MODEL_TEMPLATE}:
-	echo "We can't find this template: $@"
-	false
