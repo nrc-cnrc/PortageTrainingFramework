@@ -88,6 +88,8 @@ all: final_result
 
 
 
+########################################
+# 
 ifdef DO_RESCORING
 FINALX = .rat.tc.detok
 else
@@ -105,11 +107,12 @@ final_result: $(addsuffix .translation,${TRANSLATE_SET})
 setup: symlink
 
 
-# An alias that indicate what/how to translate the test sets.
+# An alias that indicate what/how to translate the translation set without
+# rescoring.
 .PHONY: translate
 translate: out
 
-# An alias to rescore testset.
+# An alias to rescore the translation set.
 .PHONY: rescore
 rescore: rat
 
@@ -142,6 +145,9 @@ clean.logs:
 
 
 
+# Since this makefile doesn't know how to make the decoding model, we can't let
+# make have a target for that file, instead we need a bogus target that will
+# invoke a shell command to do the job.
 .PHONY: check_decoding_model
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model: models
@@ -152,6 +158,9 @@ check_decoding_model: models
 
 
 
+# Since this makefile doesn't know how to make the rescoring model, we can't
+# let make have a target for that file, instead we need a bogus target that
+# will invoke a shell command to do the job.
 .PHONY: check_rescoring_model
 check_rescoring_model: SHELL=${GUARD_SHELL}
 check_rescoring_model: models
@@ -165,7 +174,7 @@ check_rescoring_model: models
 ########################################
 # Create a specific canoe.ini per test set.
 # You could add some specific target if you need to customize a canoe.ini.cow
-# for a particular testset.
+# for a particular file.
 ${DECODING_MODEL}.%: check_decoding_model
 	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
