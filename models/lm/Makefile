@@ -52,8 +52,11 @@ LM_NAME ?= ${CORPUS_NAME}${LM_DESC}
 CORPORA_DIR ?= ../../corpora
 
 # Allows to switch between a cluster distributed way of building the irstlm format.
-#BUILD_LM_PGM ?= build-lm-qsub.sh
+ifdef USING_CLUSTER
+BUILD_LM_PGM ?= build-lm-qsub.sh
+else
 BUILD_LM_PGM ?= build-lm.sh
+endif
 
 # This is to test the perplexity of the language models.
 PPX_TEST_SET ?= test.txt
@@ -117,7 +120,7 @@ clean.logs:
 mark: ${CORPUS_NAME}.marked.gz
 
 #.SECONDARY: ${CORPUS_NAME}.marked.gz
-%.marked.gz: %${CORPUS_EXT}
+%.marked.gz: %${CORPUS_EXT} check_setup
 	RP_PSUB_OPTS="-N $@" \
 	echo "Marking $<" && \
 	set -o pipefail; zcat -f $< \
@@ -336,13 +339,13 @@ test:
 
 
 # For debugging purpose
-.PHONY: check
-check: SHELL=${GUARD_SHELL}
-check:
+.PHONY: check_setup
+check_setup: SHELL=${GUARD_SHELL}
+check_setup:
 ifdef LM_TOOLKIT_SRI
 	true
 else
-	echo "IRSTLM: ${IRSTLM}"
+	test -n $$IRSTLM
 	which build-lm.sh
 endif
 
