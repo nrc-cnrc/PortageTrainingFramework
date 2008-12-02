@@ -72,8 +72,7 @@ clean:
 # Build the truecased lm model using the convinient Makefile from models/lm.
 %-kn-3g.binlm.gz: SHELL=${GUARD_SHELL}
 %-kn-3g.binlm.gz:
-	${MAKE} -f ../lm/Makefile $@ -prd -n
-#	${MAKE} -f ../lm/Makefile ORDER=${ORDER} $@
+	${MAKE} -f ../lm/Makefile $@
 
 
 
