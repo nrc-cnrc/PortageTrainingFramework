@@ -147,7 +147,7 @@ irstlm: ${LM_NAME}.ilm.gz
 %${LM_DESC}.ilm.gz: %.marked.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	echo "  Creating IRSTLM $@" && \
-	mkdir -p stat && \
+	mkdir -p stat.$$$$ && \
 	(test ! -f $@ || rm $@) && \
 	IRSTLM=${IRSTLM} ${BUILD_LM_PGM} \
 		-p \
@@ -157,7 +157,7 @@ irstlm: ${LM_NAME}.ilm.gz
 		-i "gunzip -c $<" \
 		-o $@ \
 	&> log.$(basename $@) && \
-	rm -r stat
+	rm -r stat.$$$$
 
 clean: clean.irstlm
 

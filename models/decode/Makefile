@@ -112,7 +112,7 @@ check_template:
 CPTS ?= $(subst /,\/,$(wildcard models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz))
 LMS  ?= $(subst /,\/,$(wildcard models/lm/*${TGT_LANG}*.binlm.gz))
 ${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
-#${UNTUNED_DECODING_MODEL}: check_template  models
+${UNTUNED_DECODING_MODEL}: check_template  models
 	cat ${TEMPLATE_DIR}/${DECODING_MODEL_TEMPLATE} \
 	| sed -e 's/<SL>/${SRC_LANG}/g' -e 's/<TL>/${TGT_LANG}/g' \
 	| sed -e 's/<TRAIN_TM>/${TRAIN_TM}/g' -e 's/<TRAIN_LM>/${TRAIN_LM}/g' \
