@@ -82,8 +82,10 @@ lc: $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
 
 # How to clean-up.
 .PHONY: clean
+clean: SHELL=${GUARD_SHELL}
 clean:
 	-${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
+	-${RM} run-parallel-logs-*
 
 
 # Constructs a lowercased source corpora.

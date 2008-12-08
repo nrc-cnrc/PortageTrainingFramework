@@ -112,6 +112,7 @@ clean: clean.logs
 clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
 	${RM} log.*
+	${RM} run-parallel-logs-*
 
 
 

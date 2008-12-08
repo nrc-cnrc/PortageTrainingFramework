@@ -66,6 +66,7 @@ clean: SHELL=${GUARD_SHELL}
 clean:
 	-${RM} ${TRUECASING_MAP}
 	${MAKE} -f ../lm/Makefile clean
+	-${RM} run-parallel-logs-*
 
 
 

@@ -183,6 +183,14 @@ ${DECODING_MODEL}.%: check_decoding_model
 #	| sed "s/dev-text1/$*/" \
 #	> $@
 
+clean: clean.decoding.models
+
+.PHONY: clean.decoding.models
+clean.decoding.models: SHELL=${GUARD_SHELL}
+clean.decoding.models: $(foreach f, ${TRANSLATE_SET}, clean.decoding.models.$f)
+clean.decoding.models.%:
+	-${RM} ${DECODING_MODEL}.$*
+
 
 
 ########################################
