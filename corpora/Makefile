@@ -24,7 +24,7 @@ SHELL = ${FRAMEWORK_SHELL}
 ifdef ICU
 LOWERCASE ?= utf8_casemap -c l
 else
-LOWERCASE ?= LC_ALL=en_CA.utf8 perl -Mlocale -ne 'use open IO=>qq{:locale}; print(lc())'
+LOWERCASE ?= lc-utf8.pl
 endif
 
 
