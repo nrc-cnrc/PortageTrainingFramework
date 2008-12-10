@@ -123,8 +123,8 @@ mark: ${CORPUS_NAME}.marked.gz
 
 #.SECONDARY: ${CORPUS_NAME}.marked.gz
 %.marked.gz: %${CORPUS_EXT}
+	_LOCAL=1 echo "Marking $<"
 	RP_PSUB_OPTS="-N $@" \
-	echo "Marking $<" && \
 	set -o pipefail; zcat -f $< \
 	| add-start-end.sh \
 	| gzip -c \
@@ -147,19 +147,18 @@ irstlm: ${LM_NAME}.ilm.gz
 # Here we've added LM_DESC to strip it out from the marked corpus file name.
 #.SECONDARY: ${LM_NAME}.ilm.gz
 %${LM_DESC}.ilm.gz: %.marked.gz
+	_LOCAL=1 echo "  Creating IRSTLM $@"
+	_LOCAL=1 ${RM} $@
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  Creating IRSTLM $@" && \
-	mkdir -p stat.$$$$ && \
-	(test ! -f $@ || rm $@) && \
 	IRSTLM=${IRSTLM} ${BUILD_LM_PGM} \
 		-p \
+		-t stat.$$$$ \
 		-n ${ORDER} \
 		-k ${PARALLELISM_LEVEL_LM} \
 		-s kneser-ney \
 		-i "gunzip -c $<" \
 		-o $@ \
-	&> log.$(basename $@) && \
-	rm -r stat.$$$$
+	&> log.$(basename $@)
 
 clean: clean.irstlm
 
@@ -179,8 +178,8 @@ arpa: ${LM_NAME}.lm.gz
 #.SECONDARY: ${LM_NAME}.lm.gz
 ifdef LM_TOOLKIT_SRI
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
+	_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  Creating ARPA text format $@" && \
 	ngram-count \
 		-interpolate \
 		-kndiscount \
@@ -192,18 +191,18 @@ ifdef LM_TOOLKIT_SRI
 else
 %.lm.gz: %.ilm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  Creating ARPA text format $@" && \
-	( compile-lm \
+	echo "  Creating ARPA text format $@" \
+	&& ( compile-lm \
 		--text yes \
 		$< \
 		/dev/stdout \
 	| sed -e 's/^\(ngram [0-9]=\) \([0-9][0-9]*\)/\1\2/' -e 's/^\(\\end\\\)/\n\1/' \
 	| egrep -v 'Saving in txt format' \
 	> $(basename $@) ) \
-	&> log.$(basename $@) && \
-	lm_sort_filter.sh -lm $(basename $@) sorted.$@ && \
-	rm $(basename $@) && \
-	mv sorted.$@ $@
+	&> log.$(basename $@) \
+	&& lm_sort_filter.sh -lm $(basename $@) sorted.$@ \
+	&& rm $(basename $@) \
+	&& mv sorted.$@ $@
 endif
 
 clean: clean.arpa
@@ -222,8 +221,8 @@ blmt: ${LM_NAME}.blmt
 
 #.SECONDARY: ${LM_NAME}.blmt
 %.blmt: %.ilm.gz
+	_LOCAL=1 echo "  Creating bin.ARPA format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  Creating bin.ARPA format $@" && \
 	compile-lm \
 		$< \
 		$@ \
@@ -244,8 +243,8 @@ quantize: $(LM_NAME).qlm.gz
 
 #.SECONDARY: ${LM_NAME}.qlm.gz
 %.qlm: %.lm.gz
+	_LOCAL=1 echo "  qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  qARPA $< to $@" && \
 	quantize-lm \
 		$< \
 		$@ \
@@ -266,8 +265,8 @@ Qblmt: ${LM_NAME}.Qblmt
 
 #.SECONDARY: ${LM_NAME}.Qblmt
 %.Qblmt: %.qlm.gz
+	_LOCAL=1 echo "  bin.qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  bin.qARPA $< to $@" && \
 	compile-lm \
 		$< \
 		$@ \
