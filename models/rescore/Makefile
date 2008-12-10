@@ -102,6 +102,7 @@ setup: symlink
 clean: SHELL=${GUARD_SHELL}
 clean:
 	${RM} -r canoe-parallel.* run-p.*
+	${RM} models
 
 
 
@@ -219,7 +220,7 @@ symlink: models
 models: SHELL=${GUARD_SHELL}
 models:
 	ln -sf ${MODEL_DIR} $@
-	if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
+	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
 		echo "Please run ${DECODING_MODEL_DIR} first!"; \
 		rm $@; \
 		false; \
