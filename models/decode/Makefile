@@ -82,6 +82,8 @@ help:
 # Clean up
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
+clean:
+	${RM} models
 
 
 
@@ -112,8 +114,8 @@ check_template:
 CPTS ?= $(subst /,\/,$(wildcard models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz))
 LMS  ?= $(subst /,\/,$(wildcard models/lm/*${TGT_LANG}*.binlm.gz))
 ${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
-${UNTUNED_DECODING_MODEL}: check_template  models
-	cat ${TEMPLATE_DIR}/${DECODING_MODEL_TEMPLATE} \
+${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}  models
+	cat $< \
 	| sed -e 's/<SL>/${SRC_LANG}/g' -e 's/<TL>/${TGT_LANG}/g' \
 	| sed -e 's/<TRAIN_TM>/${TRAIN_TM}/g' -e 's/<TRAIN_LM>/${TRAIN_LM}/g' \
 	| sed -e "s/<CPTS>/${CPTS}/g" -e "s/<LMS>/${LMS}/g" \
@@ -134,8 +136,8 @@ clean.canoe.ini:
 .PHONY: train
 train: ${DECODING_MODEL}
 ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TGT}
+	_LOCAL=1 mkdir -p foos
 	RP_PSUB_OPTS="-N tune.decode.model" \
-	mkdir -p foos && \
 	cow.sh \
 		-v \
 		-parallel:"-n ${PARALLELISM_LEVEL_TUNE_DECODE}" \
@@ -145,8 +147,8 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 		-nofloor \
 		-workdir foos \
 		-f $^ \
-		>& log.$@ && \
-	rm -fr foos multi.probs.*.FILT.gz ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
+		>& log.$@
+	_LOCAL=1 rm -fr foos multi.probs.*.FILT.gz ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
 
 clean: clean.cow
 
