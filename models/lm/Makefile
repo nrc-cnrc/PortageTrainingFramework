@@ -113,6 +113,7 @@ clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
 	${RM} log.*
 	${RM} run-parallel-logs-*
+	${RM} -r .logs
 
 
 
@@ -121,7 +122,7 @@ clean.logs:
 mark: ${CORPUS_NAME}.marked.gz
 
 #.SECONDARY: ${CORPUS_NAME}.marked.gz
-%.marked.gz: %${CORPUS_EXT} check_setup
+%.marked.gz: %${CORPUS_EXT}
 	RP_PSUB_OPTS="-N $@" \
 	echo "Marking $<" && \
 	set -o pipefail; zcat -f $< \
