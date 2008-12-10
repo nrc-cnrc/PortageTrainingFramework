@@ -71,7 +71,7 @@ PARALLELISM_LEVEL_TUNE_RESCORE ?= 5
 # Threre are two differents vpath for heldout because in the chinese case for example the src_ext != tgt_ext
 vpath %${SRCX} ${CORPORA_DIR}
 vpath %${TGTX} ${CORPORA_DIR}
-vpath ${DECODING_MODEL} ${DECODING_MODEL_DIR}
+vpath ${DECODING_MODEL} ${DECODING_MODEL_DIR} ../decode
 
 
 
@@ -133,8 +133,8 @@ check_decoding_model: setup
 # requires: a trained decoding model.
 # This provides the default rescore-model.ini.
 ${UNTUNED_RESCORING_MODEL}: SHELL=${GUARD_SHELL}
-${UNTUNED_RESCORING_MODEL}: check_decoding_model
-	configtool rescore-model:ffvals ${DECODING_MODEL_DIR}/${DECODING_MODEL} | cut -f 1 -d ' ' > $@
+${UNTUNED_RESCORING_MODEL}: ${DECODING_MODEL} models
+	configtool rescore-model:ffvals $< | cut -f 1 -d ' ' > $@
 	echo "IBM2TgtGivenSrc:${IBM_DIR}/ibm2.${TGT_GIVEN_SRCX}" >> $@
 	echo "IBM2SrcGivenTgt:${IBM_DIR}/ibm2.${SRC_GIVEN_TGTX}" >> $@
 	echo "IBM1WTransTgtGivenSrc:${IBM_DIR}/ibm1.${TGT_GIVEN_SRCX}" >> $@
@@ -154,9 +154,9 @@ ${UNTUNED_RESCORING_MODEL}: check_decoding_model
 train: ${RESCORING_MODEL}
 
 ${RESCORING_MODEL}:  ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
+	_LOCAL=1 echo "Tuning a rescoring model."
 	RP_PSUB_OPTS="-N $@" \
-	echo "Tuning a rescoring model." \
-	&& rat.sh \
+	rat.sh \
 		-lb \
 		-n ${PARALLELISM_LEVEL_TUNE_RESCORE} \
 		train \
@@ -181,8 +181,8 @@ clean.rescore_train:
 # You could add some specific target if you need to customize a decoding model
 # for a particular testset.
 ${DECODING_MODEL}.%: SHELL=${GUARD_SHELL}
-${DECODING_MODEL}.%: check_decoding_model
-	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
+${DECODING_MODEL}.%: ${DECODING_MODEL} models
+	cat $< > $@
 	configtool check $@
 #	cat $< \
 #	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
@@ -205,8 +205,8 @@ clean.decoding.model:
 # Check the decoding model config file.
 .PHONY: configtool
 configtool: SHELL=${GUARD_SHELL}
-configtool: check_decoding_model
-	configtool check ${DECODING_MODEL_DIR}/${DECODING_MODEL}
+configtool: ${DECODING_MODEL} models
+	configtool check $<
 
 
 
@@ -219,4 +219,9 @@ symlink: models
 models: SHELL=${GUARD_SHELL}
 models:
 	ln -sf ${MODEL_DIR} $@
+	if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
+		echo "Please run ${DECODING_MODEL_DIR} first!"; \
+		rm $@; \
+		false; \
+	fi
 
