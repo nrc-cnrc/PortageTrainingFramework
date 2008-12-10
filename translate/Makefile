@@ -75,8 +75,8 @@ vpath %${SRCX}  ${CORPORA_DIR}
 vpath %${TGTX}  ${CORPORA_DIR}
 vpath %${RULEX} ${CORPORA_DIR}
 
-vpath ${DECODING_MODEL}  ${DECODING_MODEL_DIR}
-vpath ${RESCORING_MODEL} ${RESCORING_MODEL_DIR}
+vpath ${DECODING_MODEL}  ${DECODING_MODEL_DIR}  ../models/decode
+vpath ${RESCORING_MODEL} ${RESCORING_MODEL_DIR} ../models/rescore
 vpath ${TRUECASING_LM}   ${TRUECASING_DIR}
 vpath ${TRUECASING_MAP}  ${TRUECASING_DIR}
 
@@ -175,8 +175,8 @@ check_rescoring_model: models
 # Create a specific canoe.ini per test set.
 # You could add some specific target if you need to customize a canoe.ini.cow
 # for a particular file.
-${DECODING_MODEL}.%: check_decoding_model
-	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
+${DECODING_MODEL}.%: ${DECODING_MODEL} models
+	cat $< > $@
 	configtool check $@
 #	cat $< \
 #	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
@@ -253,7 +253,7 @@ clean.translate.%:
 # Rescore the translate_set
 .PHONY: rat
 rat: $(addsuffix .rat, ${TRANSLATE_SET})
-%.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} check_rescoring_model
+%.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} ${RESCORING_MODEL} models
 	echo "Generating $@" \
 	&& rat.sh \
 		-lb \
@@ -353,6 +353,16 @@ symlink: models
 models: SHELL=${GUARD_SHELL}
 models:
 	ln -sf ${MODEL_DIR} $@
+	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
+		echo "Please run ${DECODING_MODEL_DIR} first!"; \
+		rm $@; \
+		false; \
+	fi
+	@if [[ ! -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]]; then \
+      echo "Please run ${RESCORING_MODEL_DIR} first!"; \
+		rm $@; \
+		false; \
+	fi
 
 
 
