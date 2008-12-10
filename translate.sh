@@ -123,8 +123,8 @@ test -f corpora/$source || cp $full_source corpora/
 
 # And decode
 #make -nt -C corpora ${prefix}_en.rule ${prefix}_en.lc \
-make -C corpora translate TRANSLATE_SET=$prefix \
-&& make -C translate all TRANSLATE_SET=$prefix
+make -C corpora translate TRANSLATE_SET=$prefix 1>&2 \
+&& make -C translate all TRANSLATE_SET=$prefix 1>&2
 if [[ $? -ne 0 ]]; then
    error_exit "Problem while translating $source";
 fi
