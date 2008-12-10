@@ -34,6 +34,15 @@ help:
 
 
 
+.PHONY: doc
+doc: framework-toy.pdf
+
+%.pdf: %.tex
+	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
+	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
+
+
+
 .PHONY: clean
 # Thorough cleaning of everything
 clean:

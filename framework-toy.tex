@@ -1,0 +1,99 @@
+\documentclass[11pt]{article}
+\usepackage{isolatin1}
+\usepackage{xspace}
+
+\newcommand{\phs}{\tild{s}}   % source phrase
+\newcommand{\pht}{\tild{t}}   % target phrase
+% Official typesetting of PORTAGEshared
+\newcommand{\PS}{PORTAGE\emph{shared}\xspace}
+
+\title{A toy experiment using the \PS \\
+       experimental framework}
+\date{}
+\author{Eric Joanis}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+An adaption of George Foster's \emph{Running Portage: A Toy Example} \\
+to Samuel Larkin's experimental framework, updated to reflect recommended usage
+of \PS.
+\end{center}
+
+\begin{center}
+{~} \\ \tiny
+   Technologies langagi{\`e}res interactives /
+      Interactive Language Technologies \\
+   Institut de technologie de l'information /
+      Institute for Information Technology \\
+   Conseil national de recherches Canada /
+      National Research Council Canada \\
+   Copyright \copyright 2008, Sa Majest{\'e} la Reine du Chef du Canada /
+      Her Majesty in Right of Canada
+\end{center}
+
+\section{Introduction}
+
+This document describes how to run a toy experiment using this experimental
+framework from beginning to end.  It is intended as a tutorial in using \PS, as
+well as a starting point for further experiments.  Although the framework
+automates most of the steps described below, we go through them one by one here
+in order to better explain how to use the \PS software suite.
+
+\PS can be viewed as a set of programs for turning a bilingual corpus into a
+translation system.  This document describes this process performed on a
+trivially small data set.  The example is for French to English translation,
+using text from the Hansard corpus.  It is too small for good translation, but
+large enough to give the flavour of a more realistic setup. Running time is
+about XXX.
+
+\subsection{Running the toy experiment}
+
+To begin, you must build or obtain the \PS executables and ensure that they are
+in your path, typically by sourcing the \texttt{SETUP.bash/tcsh} file as
+customized for your environment during installation of \PS.  You should also
+set your environment variable \texttt{\$PORTAGE} to the directory where \PS is
+installed, which is also done by \texttt{SETUP.bash/tcsh}.  Then you must make
+a complete copy of this framework directory hierarchy, because it is designed
+to work in place, creating the models within this hierarchy itself.
+
+For example:
+\begin{verbatim}
+   > cd \$PORTAGE
+   > cp -pr framework toy.experiment
+   > cd toy.experiment
+\end{verbatim}
+All commands provided in the rest of this document are assumed to run in
+toy.experiment or in a subdirectory thereof, which will all be specified
+relative to toy.experiment.
+
+As you work through the example, the commands that you are supposed to type are
+preceded by a prompt, \texttt{>}, and the system's response is not, though
+system output is not always fully reproduced here.  When it is, results
+(especially numbers) may vary a little from the ones shown, due to platform
+differences.
+
+Now you need to drop a sentence aligned parallel corpus into the framework,
+with training, dev and test data.  Ideally you need two dev sets, one for
+tuning decoder weights and one for tuning rescoring weights.  You might skip
+rescoring if speed is a concern, and you could use the same dev set in both
+steps, but for this example we'll use two dev sets.  We often use two or more
+test sets, but this is also optional.
+
+We intentionally did not automate the steps required to create your train, dev
+and test sets, because there is no generic formula that makes sense in all, or
+even most cases.  If your data is chronological, such as news wires, you might
+want to choose dev sets that are dated later than all training data, and test
+sets dated later than all training and dev data.  This is what is most often
+done, but it must done manually.  You could also take a random sample from your
+training data for your dev data, but you run the risk of having dev data that
+is more similar to your training data than to your test data, which might hurt
+translation quality.  Ideally, your dev set should be representative of the
+kind of text you will translate later, such as your test set.
+
+Having said all this, we need these input files to run the example.  
+
+
+
+\end{document}
