@@ -190,19 +190,17 @@ ifdef LM_TOOLKIT_SRI
 
 else
 %.lm.gz: %.ilm.gz
+	_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	echo "  Creating ARPA text format $@" \
-	&& ( compile-lm \
+	compile-lm \
 		--text yes \
 		$< \
-		/dev/stdout \
-	| sed -e 's/^\(ngram [0-9]=\) \([0-9][0-9]*\)/\1\2/' -e 's/^\(\\end\\\)/\n\1/' \
-	| egrep -v 'Saving in txt format' \
-	> $(basename $@) ) \
-	&> log.$(basename $@) \
-	&& lm_sort_filter.sh -lm $(basename $@) sorted.$@ \
-	&& rm $(basename $@) \
-	&& mv sorted.$@ $@
+		$(basename $@) \
+	&> log.$(basename $@)
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	lm_sort_filter.sh -lm $(basename $@) sorted.$@
+	_LOCAL=1 rm $(basename $@)
+	_LOCAL=1 mv sorted.$@ $@
 endif
 
 clean: clean.arpa
