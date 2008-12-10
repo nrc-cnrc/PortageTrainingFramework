@@ -115,7 +115,7 @@ rule: $(addsuffix ${RULEX}, ${HELDOUT_SET})
 
 
 # Special target to prepare a new translation set.
-test: $(addprefix $(subst _${SRC_LANG},,$(basename ${TRANSLATE_SET})), ${RULEX} _${SRC_LANG}${LANGX})
+translate: $(addprefix $(subst _${SRC_LANG},,$(basename ${TRANSLATE_SET})), ${RULEX} _${SRC_LANG}${LANGX})
 
 
 # Special targte to prepare the reference.
