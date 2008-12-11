@@ -94,11 +94,25 @@ tms: corpora
 
 .PHONY: tune
 # Tune the required models.
-tune: models
-	${MAKE} -C models/decode all
 ifdef DO_RESCORING
-	${MAKE} -C models/rescore all
+tune: rat
+else
+tune: cow
 endif
+
+
+
+.PHONY: cow
+# Run COW to tune the decoding model.
+cow: models
+	${MAKE} -C models/decode all
+
+
+
+.PHONY: rat
+# Run RAT to tune the rescoring model.
+rat: cow
+	${MAKE} -C models/rescore all
 
 
 
