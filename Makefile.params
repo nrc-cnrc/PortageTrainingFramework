@@ -15,7 +15,7 @@ export TGT_LANG ?= fr
 # Here we specify the stem of the corpora files.
 # files should look like this: <STEM>_<LANGUAGE>.raw
 # i.e. test1_fr.raw
-export TRAIN_LM      ?= train
+export TRAIN_LM      ?= lm-train
 export TRAIN_TM      ?= train
 export TUNE_DECODE   ?= dev1
 export TUNE_RESCORE  ?= dev2
@@ -29,6 +29,9 @@ export IRSTLM ?= /home/larkins/sandboxes/irstlm
 
 # Uncomment the following line if you want to do rescoring.
 #DO_RESCORING=1
+
+# Train and apply truecassing if this variable is defined.
+DO_TRUECASING=1
 
 # If you have ICU installed and have compiled PORTAGE shared with icu,
 # uncomment the following line.
@@ -77,7 +80,7 @@ export PARALLELISM_LEVEL_TRANSLATE
 export GZ ?= .gz
 
 # Raw file's extension.
-export RAWX ?= .raw
+export ALIGNX ?= .al
 
 # Extension for rule files which must also be source file.
 export RULEX ?= _${SRC_LANG}.rule

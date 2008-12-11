@@ -31,12 +31,12 @@ endif
 export LC_ALL ?= fr_CA.utf8
 
 
-# Where are the raw corpora to process.
-RAW_CORPORA_DIR ?= ./
+# Where are the aligned corpora to process.
+ALIGN_CORPORA_DIR ?= ./
 
 
 # Tells make where to find the raw corpora files.
-vpath %${RAWX} ${RAW_CORPORA_DIR}
+vpath %${ALIGNX} ${ALIGN_CORPORA_DIR}
 
 
 # Help message
@@ -62,9 +62,11 @@ help:
 
 # Defines all that needs to be done by this makefile.
 .PHONY: all
-all: tc
 all: lc
 all: rule
+ifdef DO_TRUECASING
+all: tc
+endif
 
 # Defines what corpora we need truecased/tokenized for the truecase model.
 .PHONY: tc
@@ -89,12 +91,12 @@ clean:
 
 
 # Constructs a lowercased source corpora.
-%_${SRC_LANG}.tc: %_${SRC_LANG}${RAWX}
+%_${SRC_LANG}.tc: %_${SRC_LANG}${ALIGNX}
 	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1); \
 	cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
 
 # Constructs a lowercased target corpora.
-%_${TGT_LANG}.tc: %_${TGT_LANG}${RAWX}
+%_${TGT_LANG}.tc: %_${TGT_LANG}${ALIGNX}
 	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1); \
 	cat $< | utokenize.pl -noss -lang=${TGT_LANG} > $@
 
@@ -109,9 +111,7 @@ clean:
 .PHONY: rule
 rule: $(addsuffix ${RULEX}, ${HELDOUT_SET})
 %${RULEX}: %_${SRC_LANG}${LANGX}
-	cat $< \
-	| canoe-escapes.pl -add \
-	> $@
+	canoe-escapes.pl -add $< > $@
 
 
 # Special target to prepare a new translation set.
