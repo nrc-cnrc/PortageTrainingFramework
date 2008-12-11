@@ -195,12 +195,11 @@ else
 	compile-lm \
 		--text yes \
 		$< \
-		$(basename $@) \
+		unsorted.$(basename $@) \
 	&> log.$(basename $@)
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	lm_sort_filter.sh -lm $(basename $@) sorted.$@
-	_LOCAL=1 rm $(basename $@)
-	_LOCAL=1 mv sorted.$@ $@
+	lm_sort_filter.sh -lm unsorted.$(basename $@) $@
+	_LOCAL=1 rm unsorted.$(basename $@)
 endif
 
 clean: clean.arpa
