@@ -83,18 +83,29 @@ vpath ${TRUECASING_MAP}  ${TRUECASING_DIR}
 
 
 .PHONY: all
-#all: tc.detok
 all: final_result
 
 
 
 ########################################
-# 
+# Depending on the user's input,
+# - should do or not do truecasing;
+# - should do or not rescoring.
 ifdef DO_RESCORING
+ifdef DO_TRUECASING
 FINALX = .rat.tc.detok
 else
-FINALX = .out.tc.detok
+FINALX = .rat.detok
 endif
+else
+ifdef DO_TRUECASING
+FINALX = .out.tc.detok
+else
+FINALX = .out.detok
+endif
+endif
+
+# The final translation depends if we are doing rescoring and/or truecasing.
 final_result: $(addsuffix .translation,${TRANSLATE_SET})
 %.translation: %${FINALX}
 	cp $< $@
@@ -102,9 +113,9 @@ final_result: $(addsuffix .translation,${TRANSLATE_SET})
 
 
 ########################################
-#
+# What is require to setup this module.
 .PHONY: setup
-setup: symlink
+setup: models
 
 
 # An alias that indicate what/how to translate the translation set without
@@ -112,12 +123,13 @@ setup: symlink
 .PHONY: translate
 translate: out
 
-# An alias to rescore the translation set.
+# An alias to translate and rescore the translation set.
 .PHONY: rescore
 rescore: rat
 
 
 
+# This is where we would document this module's help.
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
@@ -145,29 +157,12 @@ clean.logs:
 
 
 
-# Since this makefile doesn't know how to make the decoding model, we can't let
-# make have a target for that file, instead we need a bogus target that will
-# invoke a shell command to do the job.
-.PHONY: check_decoding_model
-check_decoding_model: SHELL=${GUARD_SHELL}
-check_decoding_model: models
-	if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
-		echo "Please run ${DECODING_MODEL_DIR} first!"; \
-		false; \
-	fi
-
-
-
-# Since this makefile doesn't know how to make the rescoring model, we can't
-# let make have a target for that file, instead we need a bogus target that
-# will invoke a shell command to do the job.
-.PHONY: check_rescoring_model
-check_rescoring_model: SHELL=${GUARD_SHELL}
-check_rescoring_model: models
-	if [[ ! -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]]; then \
-      echo "Please run ${RESCORING_MODEL_DIR} first!"; \
-		false; \
-	fi
+########################################
+# If there is no decoding model available, warn the user since we do not know
+# how to make the decoding model in this module.
+${DECODING_MODEL}::
+	echo "Unable to make $@ please run make in models/decode." >&2
+	false
 
 
 
@@ -175,9 +170,10 @@ check_rescoring_model: models
 # Create a specific canoe.ini per test set.
 # You could add some specific target if you need to customize a canoe.ini.cow
 # for a particular file.
-${DECODING_MODEL}.%: ${DECODING_MODEL} models
-	cat $< > $@
+${DECODING_MODEL}.%: models
+	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
+# example: increase the beam threshold and stack size.
 #	cat $< \
 #	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
 #	| sed "s/dev-text1/$*/" \
@@ -225,18 +221,18 @@ $(addsuffix .out.bleu, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
 
 .PHONY: out.detok
 out.detok: $(addsuffix .out.detok, ${TRANSLATE_SET})
-%.out.detok: %.out
-	echo "Detokenizing $<"; \
-	${DETOKENIZER} -lang=${TGT_LANG} $< $@
+$(addsuffix .out.detok, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
 
-.PHONY: out.detok.bleu
-out.detok.bleu: $(addsuffix .out.detok.bleu, ${TRANSLATE_SET})
-$(addsuffix .out.detok.bleu, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
-%.out.detok.bleu: %.out.detok %${TGTX}
-	@echo "Calculating BLEU for $@"
-	cat $(word 2, $+) \
-	| utf8_casemap -c l \
-	| bleumain $< - > $@
+# Invalid, can't compare the detokenized translation with a tokenized and
+# lowercase reference.
+#.PHONY: out.detok.bleu
+#out.detok.bleu: $(addsuffix .out.detok.bleu, ${TRANSLATE_SET})
+#$(addsuffix .out.detok.bleu, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+#%.out.detok.bleu: %.out.detok %${TGTX}
+#	@echo "Calculating BLEU for $@"
+#	cat $(word 2, $+) \
+#	| utf8_casemap -c l \
+#	| bleumain $< - > $@
 
 clean: clean.translate
 
@@ -253,9 +249,9 @@ clean.translate.%:
 # Rescore the translate_set
 .PHONY: rat
 rat: $(addsuffix .rat, ${TRANSLATE_SET})
-%.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} ${RESCORING_MODEL} models
-	echo "Generating $@" \
-	&& rat.sh \
+%.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} models
+	_LOCAL=1 echo "Generating $@"
+	rat.sh \
 		-lb \
 		-n ${PARALLELISM_LEVEL_TRANSLATE} \
 		trans \
@@ -277,19 +273,18 @@ $(addsuffix .rat.bleu, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
 
 .PHONY: rat.detok
 rat.detok: $(addsuffix .rat.detok, ${TRANSLATE_SET})
-#$(addsuffix .rat.detok, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
-%.rat.detok: %.rat
-	echo "Detokenizing $<"
-	${DETOKENIZER} -lang=${TGT_LANG} $< $@
+$(addsuffix .rat.detok, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
 
-.PHONY: rat.detok.bleu
-rat.detok.bleu: $(addsuffix .rat.detok.bleu, ${TRANSLATE_SET})
-$(addsuffix .rat.detok.bleu, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
-%.rat.detok.bleu: %.rat.detok %${TGTX}
-	echo "Calculating BLEU for $@"
-	cat $(word 2, $+) \
-	| utf8_casemap -c l \
-	| bleumain $< - > $@
+# Invalid, can't compare the detokenized translation with a tokenized and
+# lowercase reference.
+#.PHONY: rat.detok.bleu
+#rat.detok.bleu: $(addsuffix .rat.detok.bleu, ${TRANSLATE_SET})
+#$(addsuffix .rat.detok.bleu, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+#%.rat.detok.bleu: %.rat.detok %${TGTX}
+#	echo "Calculating BLEU for $@"
+#	cat $(word 2, $+) \
+#	| utf8_casemap -c l \
+#	| bleumain $< - > $@
 
 clean: clean.rescore
 
@@ -323,10 +318,7 @@ tc.detok: $(addsuffix .out.tc.detok, ${TRANSLATE_SET})
 ifdef DO_RESCORING
 tc.detok: $(addsuffix .rat.tc.detok, ${TRANSLATE_SET})
 endif
-#$(addsuffix .tc.detok, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
-%.tc.detok: %.tc
-	echo "Detokenizing $<"
-	${DETOKENIZER} -lang=${TGT_LANG} $< $@
+$(addsuffix .tc.detok, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
 
 clean: clean.truecasing
 
@@ -345,11 +337,16 @@ clean.truecasing.%:
 # HELPERS
 
 ########################################
+# General detokenizeer.
+%.detok: %
+	echo "Detokenizing $<"
+	${DETOKENIZER} -lang=${TGT_LANG} $< $@
+
+
+
+########################################
 # This is mainly a hack to fix the hierachy tree problem inherent to the
 # decoding model content.
-.PHONY: symlink
-symlink: models
-
 models: SHELL=${GUARD_SHELL}
 models:
 	ln -sf ${MODEL_DIR} $@
@@ -376,6 +373,7 @@ configtool: ${DECODING_MODEL_TEMPLATE}
 
 ########################################
 # LINKS THE IBMX MODELS
+# Obsolete
 # ibm2.ch_given_en.gz ibm2.ch_given_en.pos.gz
 # ibm2.en_given_ch.gz ibm2.en_given_ch.pos.gz
 ibm2.%.gz:

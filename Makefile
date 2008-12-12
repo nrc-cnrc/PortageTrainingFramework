@@ -63,7 +63,10 @@ corpora: check_setup
 
 
 .PHONY: models
-models: lms tms tc
+models: lms tms
+ifdef DO_TRUECASING
+models: tc
+endif
 
 
 
@@ -80,8 +83,13 @@ lm.%: corpora
 
 .PHONY: tc
 # Create models for truecasing (TC).
+ifdef DO_TRUECASING
 tc: corpora
 	${MAKE} -C models/tc all
+else
+tc:
+	echo "Not training the truecasing models." >&2
+endif
 
 
 
