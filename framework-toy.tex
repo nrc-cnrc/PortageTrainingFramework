@@ -56,7 +56,9 @@ customized for your environment during installation of \PS.  You should also
 set your environment variable \texttt{\$PORTAGE} to the directory where \PS is
 installed, which is also done by \texttt{SETUP.bash/tcsh}.  Then you must make
 a complete copy of this framework directory hierarchy, because it is designed
-to work in place, creating the models within this hierarchy itself.
+to work in place, creating the models within this hierarchy itself.  The
+philosophy of this framework is that each experiment is done in a separate copy
+of the framework.
 
 For example:
 \begin{verbatim}
@@ -70,30 +72,169 @@ relative to toy.experiment.
 
 As you work through the example, the commands that you are supposed to type are
 preceded by a prompt, \texttt{>}, and the system's response is not, though
-system output is not always fully reproduced here.  When it is, results
-(especially numbers) may vary a little from the ones shown, due to platform
-differences.
+system output is not always fully reproduced here, for brevity's sake.  When it
+is, results (especially numbers) may vary a little from the ones shown, due to
+platform differences.
 
-Now you need to drop a sentence aligned parallel corpus into the framework,
-with training, dev and test data.  Ideally you need two dev sets, one for
-tuning decoder weights and one for tuning rescoring weights.  You might skip
-rescoring if speed is a concern, and you could use the same dev set in both
-steps, but for this example we'll use two dev sets.  We often use two or more
-test sets, but this is also optional.
+Many of the commands are expressed as {\tt make} targets. This has the
+advantage of requiring less typing, while still allowing you to see the actual
+commands executed by the system, which are always echoed by {\tt make} (and
+which of course you could also type directly). {\tt make} also lets you skip
+steps (except for the first one, since it is done manually).  For example, if
+you are not interested in any steps before decoder weight optimization, you can
+go to section~\ref{COW} and type {\tt make tune} to begin at that point
+(although you will have to wait until the system executes the necessary
+commands to catch up). Here are some other useful make commands:
+\begin{itemize}
+\item {\tt make all} runs all remaining steps at any point.
+\item {\tt make clean} cleans up and returns the directory to its initial state
+\item {\tt make -j} {\em anything} builds the target {\em anything} by running
+      commands in parallel whenever possible. This can be much faster if you
+      have a multiprocessor machine.
+\item {\tt make help} displays some help and the main targets available in the
+      makefile.
+\end{itemize}
 
-We intentionally did not automate the steps required to create your train, dev
-and test sets, because there is no generic formula that makes sense in all, or
-even most cases.  If your data is chronological, such as news wires, you might
-want to choose dev sets that are dated later than all training data, and test
-sets dated later than all training and dev data.  This is what is most often
-done, but it must done manually.  You could also take a random sample from your
-training data for your dev data, but you run the risk of having dev data that
-is more similar to your training data than to your test data, which might hurt
-translation quality.  Ideally, your dev set should be representative of the
-kind of text you will translate later, such as your test set.
+\subsection{Overview of the Process}
 
-Having said all this, we need these input files to run the example.  
+Here is an overview of the \PS process, as described in the following
+sections (section numbers are in brackets):
+\begin{enumerate}
+\item Corpus preparation (\ref{CorpusPreparation}): includes tokenization
+      (\ref{Tokenization}), alignment (\ref{Alignment}), lowercasing
+      (\ref{Lowercasing}), and splitting (\ref{Splitting}).
+\item Model training (\ref{Training}): includes language model (\ref{LM}),
+      translation model (\ref{TM}), truecasing model (\ref{TC}), decoder weight
+      optimization (\ref{COW}), and rescoring model training (\ref{RAT}).
+\item Translating and testing (\ref{TranslatingTesting}): includes
+      translating (\ref{Translating}), truecasing (\ref{Truecasing}) and
+      testing (\ref{Testing}).
+\end{enumerate}
+These steps are fairly standard, but of course there are many variants on the
+sample process illustrated here. For more information, see the Portage HTML
+user documentation. For detailed information on a particular program, run it
+with the {\tt -h} flag.
 
+\section{Corpus Preparation} \label{CorpusPreparation}
+
+Corpus preparation involves converting raw document pairs into tokenized,
+sentence-aligned files in the format expected by Portage.  We provide a
+tokenizer, a sentence aligner and sample corpus pre-processing scripts with
+\PS, which can help you with these steps.  For details, see section \emph{Text
+Processing} in the user manual (found in
+\textt{PORTAGEshared/doc/user-manual.html} on the CD).
+
+\subsection{Splitting the Corpus} \label{Splitting}
+
+The tokenized, sentence-aligned corpus must be split into separate portions
+in order to run experiments. Distinct, non-overlapping sub-corpora are required
+for model training (see section~\ref{Training}), for optimizing decoder weights
+(section~\ref{COW}), for training a rescoring model (section~\ref{RAT}), and
+one  testing (section~\ref{Testing}). Typically, the latter three corpora are
+around 1000 segments each.  If the corpus is chronological, then it is a good
+idea to choose the test corpus from the most recent material, which is likely
+to resemble future text more closely.
+
+Since proper splitting of your corpus needs to take into account the structure
+and nature of your data, we don't perform those steps in this toy experiment.
+Instead, we've provided small sets that can be found here:
+\texttt{PORTAGEshared/test-suite/unit-testing/framework-toy}.  These sets
+are very small to reduce running time, so you should not be surprised when the
+results of this toy experiment are of poor quality.
+
+To drop these sets into the framework, simply copy them (or make symbolic
+links) into your copy's corpora directory:
+\begin{verbatim}
+   > cp $PORTAGE/test-suite/unit-testing/framework-toy/*.al corpora/
+   > wc corpora/*.al
+       100    2115   11589 corpora/dev1_en.al
+       100    2330   13680 corpora/dev1_fr.al
+       100    2095   11462 corpora/dev2_en.al
+       100    2443   13905 corpora/dev2_fr.al
+       100    2379   13292 corpora/test_en.al
+       100    2616   15622 corpora/test_fr.al
+      8992  184569  994516 corpora/train_en.al
+      8992  211240 1194385 corpora/train_fr.al
+     18584  409787 2268451 total
+\end{verbatim}
+
+\subsection{Setting framework parameters} \label{FrameworkParams}
+
+Now you need to tell the framework what you've called your test set, since we
+didn't use the default.  Edit \texttt{Makefile.params} and change the
+\texttt{TRANSLATE\_SET} variable to say
+\texttt{test} instead of \texttt{test1 test2}.
+This variable lists the stem of all your test sets, and the framework
+assumes you have two by default.
+You will also need to set \texttt{TRAIN\_LM} to \texttt{train} instead of
+\texttt{lm-train} since we won't be using a separate corpus to train language
+models with.
+After editing the file:
+\begin{verbatim}
+   > grep "export TRANSLATE_SET" Makefile.params
+   export TRANSLATE_SET ?= test
+   > grep "export TRAIN_LM" Makefile.params
+   export TRAIN_LM      ?= train
+\end{verbatim}
+
+While you're there, you should get familiar with all the variables in the
+\emph{User definable variables} section of this file.  It is where most of the
+configurable behaviours are set, such as whether to do rescoring and/or
+truecasing, what LM toolkit you are using (if any), etc.  
+
+In this toy experiment, we'll use the default value for most parameters, but
+you need to set the \texttt{IRSTLM} variable if you have installed IRSTLM and
+wish to use it, or the \texttt{LM\_TOOLKIT\_SRI} to use SRILM (if your
+licensing requirements permit it).  If you have neither, leave both variables
+undefined; we provide trained language models that you can drop into the
+framework to finish this toy experiment while skipping language model training.
+
+\subsection{Lowercasing and adding escapes}
+
+To reduce data sparseness, we convert all files to lowercase.
+\begin{verbatim}
+   > cd corpora
+   > make lc
+   cat dev1_en.al | lc-utf8.pl > dev1_en.lc
+   [...]
+\end{verbatim}
+
+The decoder, canoe, treats \texttt{<}, \testtt{>} and \texttt{\\} as special
+characters, so we need a copy of the dev and test files with these characters
+escaped, in the source language only.
+
+\begin{verbatim}
+   > make rule
+   canoe-escapes.pl -add dev1_en.lc > dev1_en.rule
+   canoe-escapes.pl -add dev2_en.lc > dev2_en.rule
+   canoe-escapes.pl -add test_en.lc > test_en.rule
+\end{verbatim}
+
+
+
+\section{Training} \label{Training}
+
+This step creates various models and parameter files that are required for
+translation. There are five steps in training: creating a language model,
+creating a truecasing model, creating translation models, optimizing decoder
+weights, and creating a rescoring model.
+
+\subsection{Creating a Language Model} \label{LM}
+
+Portage does not come with programs for language model training. However,
+it accepts models in the widely-used ``DARPA'' format which is produced by popular
+toolkits such as CMU SLM (www.speech.cs.cmu.edu/ SLM\_info.html), SRILM
+(www.speech.sri.com/projects/srilm), or IRSTLM (irstlm.sourceforge.net). Here
+is the SRILM command used to produce the model {\tt train\_en.lm} supplied with
+this example:
+\begin{verbatim}
+   > make lm
+   ngram-count -interpolate -kndiscount1 -kndiscount2 -kndiscount3 \
+      -order 3 -text train_en.al -lm train_en.lm
+\end{verbatim}
+This assumes that the target language is English; for English to French
+translation, a similar command could be used with {\tt train\_fr.al} to create
+a French language model.
 
 
 \end{document}

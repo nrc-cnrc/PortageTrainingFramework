@@ -21,16 +21,20 @@ export TUNE_DECODE   ?= dev1
 export TUNE_RESCORE  ?= dev2
 export TRANSLATE_SET ?= test1 test2
 
-# The prefix_root where we can find IRSTLM/bin
+# The prefix_root where we can find IRSTLM/bin, which must also be on your
+# PATH.
 export IRSTLM ?= /home/larkins/sandboxes/irstlm
 
-# Uncomment the following line if you have acces to SRILM.
+# Uncomment the following line if you have acces to SRILM, in which case its
+# executable scripts and programs should be on your PATH.
 #LM_TOOLKIT_SRI=1
 
-# Uncomment the following line if you want to do rescoring.
-#DO_RESCORING=1
+# Train and apply rescoring if this variable is defined.
+# Comment out to disable rescoring.
+DO_RESCORING=1
 
 # Train and apply truecassing if this variable is defined.
+# Comment out to disable truecasing.
 DO_TRUECASING=1
 
 # If you have ICU installed and have compiled PORTAGE shared with icu,
@@ -123,7 +127,7 @@ export TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-3g.binlm${GZ}
 
 
 
-# If we are lucky enough to have a cluster, will change the shell for certain
+# If we are lucky enough to have a cluster, we'll change the shell for certain
 # commands and allow them to run on nodes.
 ifdef USING_CLUSTER
 FRAMEWORK_SHELL = run-parallel.sh

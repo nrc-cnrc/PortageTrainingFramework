@@ -21,7 +21,7 @@ endif
 .PHONY: help
 help:
 	@echo "please run in order for this framework to run properly:"
-	@echo "export PATH=${IRSTLM}/bin:$$PATH"
+	@echo "export PATH=${IRSTLM}/bin:\$$PATH"
 	@echo "export IRSTLM=${IRSTLM}"
 	@echo "Your corpora are:"
 	@echo "lm: ${TRAIN_LM}"
@@ -30,6 +30,8 @@ help:
 	@echo "tune rescore: ${TUNE_RESCORE}"
 	@echo "translate set: ${TRANSLATE_SET}"
 	@echo "Then make all"
+	@echo
+	@echo "The following are the main targets in this Makefile:"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
 
 

@@ -16,7 +16,7 @@ MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
 
-# Change default make's shell for a distributed one.
+# Change make's default shell to a distributed one, if working on a cluster.
 SHELL = ${FRAMEWORK_SHELL}
 
 
