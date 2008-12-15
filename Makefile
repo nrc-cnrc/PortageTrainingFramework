@@ -10,6 +10,8 @@
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+.SUFFIXES:
+
 .PHONY: all
 all: tune
 ifneq ($(strip ${TRANSLATE_SET}),)
