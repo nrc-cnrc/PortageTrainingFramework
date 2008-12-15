@@ -43,9 +43,11 @@ vpath %${ALIGNX} ${ALIGN_CORPORA_DIR}
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	echo "This script tokenizes and lowercases all corpora described by CORPORA_SET"
-	echo "Type: make all"
-
+	@echo "This script tokenizes and lowercases all corpora described by CORPORA_SET"
+	@echo "Type: make all"
+	@echo
+	@echo "The following are the main targets in this Makefile:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
 
 
 .DELETE_ON_ERROR:
@@ -76,18 +78,10 @@ tc: $(addsuffix _${TGT_LANG}.tc${GZ}, ${TRAIN_LM})
 .PHONY: lc
 lc: $(addsuffix _${SRC_LANG}${LANGX}, ${HELDOUT_SET})
 lc: $(addsuffix _${TGT_LANG}${LANGX}, ${HELDOUT_SET})
-# Note that will want to compress the TRAIN_SET for space efficiency.
+# Note that we'll want to compress the TRAIN_SET for space efficiency.
 lc: $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_TM})
 lc: $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TM})
 lc: $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
-
-
-# How to clean-up.
-.PHONY: clean
-clean: SHELL=${GUARD_SHELL}
-clean:
-	-${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
-	-${RM} run-parallel-logs-*
 
 
 # Constructs a lowercased source corpora.
@@ -120,4 +114,14 @@ translate: $(addprefix $(subst _${SRC_LANG},,$(basename ${TRANSLATE_SET})), ${RU
 
 # Special targte to prepare the reference.
 reference: $(addprefix $(subst _${TGT_LANG},,$(basename ${TRANSLATE_SET})),  _${TGT_LANG}${LANGX})
+
+
+
+# How to clean-up.
+.PHONY: clean
+clean: SHELL=${GUARD_SHELL}
+clean:
+	-${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
+	-${RM} run-parallel-logs-*
+
 
