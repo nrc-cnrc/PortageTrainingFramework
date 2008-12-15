@@ -17,7 +17,7 @@ MAKEFILE_PARAMS ?= Makefile.params
 
 
 # Change make's default shell to a distributed one, if working on a cluster.
-SHELL = ${FRAMEWORK_SHELL}
+SHELL = ${GUARD_SHELL}
 
 
 # What command to use for lowercasing corpora.
@@ -70,41 +70,73 @@ ifdef DO_TRUECASING
 all: tc
 endif
 
+# What the user can expect from this module.
+list_final_output: SHELL=${GUARD_SHELL}
+list_final_output:
+	@echo "Expected final output are:"
+	@echo ${LC}
+	@echo ${RULE}
+	@echo ${TC}
+
 # Defines what corpora we need truecased/tokenized for the truecase model.
 .PHONY: tc
-tc: $(addsuffix _${TGT_LANG}.tc${GZ}, ${TRAIN_LM})
+TC = $(addsuffix _${TGT_LANG}.tc${GZ}, ${TRAIN_LM})
+tc: ${TC}
 
 # Defines what corpora we need in the entire pipeline.
 .PHONY: lc
-lc: $(addsuffix _${SRC_LANG}${LANGX}, ${HELDOUT_SET})
-lc: $(addsuffix _${TGT_LANG}${LANGX}, ${HELDOUT_SET})
-# Note that we'll want to compress the TRAIN_SET for space efficiency.
-lc: $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_TM})
-lc: $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TM})
-lc: $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
+LC += $(addsuffix _${SRC_LANG}${LANGX}, ${HELDOUT_SET})
+LC += $(addsuffix _${TGT_LANG}${LANGX}, ${HELDOUT_SET})
+# Note that will want to compress the TRAIN_SET for space efficiency.
+LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_TM})
+LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TM})
+LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
+lc: ${LC}
 
+
+# Tokenizes source corpora without sentence splitting.
+%_${SRC_LANG}.tc: %_${SRC_LANG}${ALIGNX}
+	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1) \
+	&& cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
+
+# Tokenizes target corpora without sentence splitting.
+%_${TGT_LANG}.tc: %_${TGT_LANG}${ALIGNX}
+	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1) \
+	&& cat $< | utokenize.pl -noss -lang=${TGT_LANG} > $@
+
+
+# Prepare truecased file.
+%.tc: %${ALIGNX}
+	${check_utf8}
+	cp $< $@
 
 # Constructs a lowercased source corpora.
 %_${SRC_LANG}.tc: %_${SRC_LANG}${ALIGNX}
 	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1); \
 	cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
 
-# Constructs a lowercased target corpora.
-%_${TGT_LANG}.tc: %_${TGT_LANG}${ALIGNX}
-	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1); \
-	cat $< | utokenize.pl -noss -lang=${TGT_LANG} > $@
+%.tc${GZ}: %${ALIGNX}${GZ}
+	${check_utf8}
+	cp $< $@
 
 
-# Constructs a lowercased corpora from its tokenized version.
-%${LANGX}: %.tc
+# Constructs a lowercased corpora from its aligned version.
+%${LANGX}: %${ALIGNX}
+	$(check_utf8)
 	cat $< | ${LOWERCASE} > $@
+
+%${LANGXZ}: %${ALIGNX}${GZ}
+	$(check_utf8)
+	zcat $< | ${LOWERCASE} | gzip > $@
 
 
 # Add some markup to the source HELDOUT_SET.
 # If you have special markup, this is where you would write your code.
 .PHONY: rule
-rule: $(addsuffix ${RULEX}, ${HELDOUT_SET})
+RULE = $(addsuffix ${RULEX}, ${HELDOUT_SET})
+rule: ${RULE}
 %${RULEX}: %_${SRC_LANG}${LANGX}
+	$(check_utf8)
 	canoe-escapes.pl -add $< > $@
 
 
@@ -116,6 +148,11 @@ translate: $(addprefix $(subst _${SRC_LANG},,$(basename ${TRANSLATE_SET})), ${RU
 reference: $(addprefix $(subst _${TGT_LANG},,$(basename ${TRANSLATE_SET})),  _${TGT_LANG}${LANGX})
 
 
+# Check if the first dependency is a utf8 file.
+define check_utf8
+(file -Libz $< | egrep -qi 'charset=utf-8|ASCII') || (echo "Please convert $< to utf-8" && exit 1)
+endef
+
 
 # How to clean-up.
 .PHONY: clean
@@ -123,5 +160,4 @@ clean: SHELL=${GUARD_SHELL}
 clean:
 	-${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
 	-${RM} run-parallel-logs-*
-
 
