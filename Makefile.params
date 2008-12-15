@@ -16,10 +16,10 @@ export TGT_LANG ?= fr
 # files should look like this: <STEM>_<LANGUAGE>.raw
 # i.e. test1_fr.raw
 export TRAIN_LM      ?= lm-train
-export TRAIN_TM      ?= train
+export TRAIN_TM      ?= tm-train
 export TUNE_DECODE   ?= dev1
 export TUNE_RESCORE  ?= dev2
-export TRANSLATE_SET ?= test1 test2
+export TEST_SET      ?= test1 test2
 
 # The prefix_root where we can find IRSTLM/bin, which must also be on your
 # PATH.
@@ -100,7 +100,7 @@ export LANGS ?= ${SRC_LANG} ${TGT_LANG}
 
 # Define the corpora.
 export TRAIN_SET    ?= ${TRAIN_LM} ${TRAIN_TM}
-export HELDOUT_SET  ?= ${TUNE_DECODE} ${TUNE_RESCORE} ${TRANSLATE_SET}
+export HELDOUT_SET  ?= ${TUNE_DECODE} ${TUNE_RESCORE} ${TEST_SET}
 export CORPORA_SET  ?= ${TRAIN_SET} ${HELDOUT_SET}
 
 # Define what type of phrase table we want to generate.

@@ -14,7 +14,7 @@ MAKEFILE_PARAMS ?= Makefile.params
 
 .PHONY: all
 all: tune
-ifneq ($(strip ${TRANSLATE_SET}),)
+ifneq ($(strip ${TEST_SET}),)
 all: translate
 endif
 
@@ -30,7 +30,7 @@ help:
 	@echo "tm: ${TRAIN_TM}"
 	@echo "tune decode: ${TUNE_DECODE}"
 	@echo "tune rescore: ${TUNE_RESCORE}"
-	@echo "translate set: ${TRANSLATE_SET}"
+	@echo "test set: ${TEST_SET}"
 	@echo "Then make all"
 	@echo
 	@echo "The following are the main targets in this Makefile:"

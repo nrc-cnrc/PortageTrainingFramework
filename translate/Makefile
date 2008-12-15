@@ -55,7 +55,7 @@ CORPORA_DIR ?= ../corpora
 TRUECASING_DIR ?= ../models/tc
 
 # Indicates what are the test/eval set to be translated after having trained a decoder model and a rescoring model
-TRANSLATE_SET ?= test1 test2
+TEST_SET ?= test1 test2
 
 # Specific PSUB options
 PSUB_OPTS ?= 
@@ -107,7 +107,7 @@ endif
 endif
 
 # The final translation depends if we are doing rescoring and/or truecasing.
-final_result: $(addsuffix .translation,${TRANSLATE_SET})
+final_result: $(addsuffix .translation,${TEST_SET})
 %.translation: %${FINALX}
 	cp $< $@
 
@@ -134,7 +134,7 @@ rescore: rat
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	@echo "Translate the following testsets: $(addsuffix _${SRC_LANG}, ${TRANSLATE_SET})"
+	@echo "Translate the following testsets: $(addsuffix _${SRC_LANG}, ${TEST_SET})"
 	@echo "Possible targets are:"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
 	@echo "Most likely you want to do either: make all or make translate."
@@ -184,7 +184,7 @@ clean: clean.decoding.models
 
 .PHONY: clean.decoding.models
 clean.decoding.models: SHELL=${GUARD_SHELL}
-clean.decoding.models: $(foreach f, ${TRANSLATE_SET}, clean.decoding.models.$f)
+clean.decoding.models: $(foreach f, ${TEST_SET}, clean.decoding.models.$f)
 clean.decoding.models.%:
 	-${RM} ${DECODING_MODEL}.$*
 
@@ -193,11 +193,11 @@ clean.decoding.models.%:
 ########################################
 # Translate translate_set without rescoring.
 .PHONY: out
-out: $(addsuffix .out, ${TRANSLATE_SET})
+out: $(addsuffix .out, ${TEST_SET})
 ifdef DO_RESCORING
 # if we are doing rescoring, we can save us some work by going straight to
 # rescoring and extracting the 1 best instead of calculating it twice.
-$(addsuffix .out, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+$(addsuffix .out, ${TEST_SET}): SHELL=${GUARD_SHELL}
 %.out: %.rat
 	cp workdir-$*${RULEX}-${NBEST_SIZE}best/1best $@
 else
@@ -214,21 +214,21 @@ else
 endif
 
 .PHONY: out.bleu
-out.bleu: $(addsuffix .out.bleu, ${TRANSLATE_SET})
-$(addsuffix .out.bleu, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+out.bleu: $(addsuffix .out.bleu, ${TEST_SET})
+$(addsuffix .out.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
 %.out.bleu: %.out %${TGTX}
 	echo "Calculating BLEU for $@"
 	bleumain $^ > $@
 
 .PHONY: out.detok
-out.detok: $(addsuffix .out.detok, ${TRANSLATE_SET})
-$(addsuffix .out.detok, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+out.detok: $(addsuffix .out.detok, ${TEST_SET})
+$(addsuffix .out.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
 
 # Invalid, can't compare the detokenized translation with a tokenized and
 # lowercase reference.
 #.PHONY: out.detok.bleu
-#out.detok.bleu: $(addsuffix .out.detok.bleu, ${TRANSLATE_SET})
-#$(addsuffix .out.detok.bleu, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+#out.detok.bleu: $(addsuffix .out.detok.bleu, ${TEST_SET})
+#$(addsuffix .out.detok.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
 #%.out.detok.bleu: %.out.detok %${TGTX}
 #	@echo "Calculating BLEU for $@"
 #	cat $(word 2, $+) \
@@ -239,7 +239,7 @@ clean: clean.translate
 
 .PHONY: clean.translate
 clean.translate: SHELL=${GUARD_SHELL}
-clean.translate: $(foreach f, ${TRANSLATE_SET}, clean.translate.$f)
+clean.translate: $(foreach f, ${TEST_SET}, clean.translate.$f)
 clean.translate.%:
 	${RM} $*.out $*.out.bleu
 	${RM} $*.out.detok $*.out.detok.bleu
@@ -249,7 +249,7 @@ clean.translate.%:
 ########################################
 # Rescore the translate_set
 .PHONY: rat
-rat: $(addsuffix .rat, ${TRANSLATE_SET})
+rat: $(addsuffix .rat, ${TEST_SET})
 %.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} models
 	_LOCAL=1 echo "Generating $@"
 	rat.sh \
@@ -266,21 +266,21 @@ rat: $(addsuffix .rat, ${TRANSLATE_SET})
 	&& mv $*${RULEX}.rat $@
 
 .PHONY: rat.bleu
-rat.bleu: $(addsuffix .rat.bleu, ${TRANSLATE_SET})
-$(addsuffix .rat.bleu, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+rat.bleu: $(addsuffix .rat.bleu, ${TEST_SET})
+$(addsuffix .rat.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
 %.rat.bleu: %.rat %${TGTX}
 	echo "Calculating BLEU for $@"
 	bleumain $^ > $@
 
 .PHONY: rat.detok
-rat.detok: $(addsuffix .rat.detok, ${TRANSLATE_SET})
-$(addsuffix .rat.detok, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+rat.detok: $(addsuffix .rat.detok, ${TEST_SET})
+$(addsuffix .rat.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
 
 # Invalid, can't compare the detokenized translation with a tokenized and
 # lowercase reference.
 #.PHONY: rat.detok.bleu
-#rat.detok.bleu: $(addsuffix .rat.detok.bleu, ${TRANSLATE_SET})
-#$(addsuffix .rat.detok.bleu, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+#rat.detok.bleu: $(addsuffix .rat.detok.bleu, ${TEST_SET})
+#$(addsuffix .rat.detok.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
 #%.rat.detok.bleu: %.rat.detok %${TGTX}
 #	echo "Calculating BLEU for $@"
 #	cat $(word 2, $+) \
@@ -291,7 +291,7 @@ clean: clean.rescore
 
 .PHONY: clean.rescore_trans
 clean.rescore: SHELL=${GUARD_SHELL}
-clean.rescore: $(foreach f, ${TRANSLATE_SET}, clean.rescore.$f)
+clean.rescore: $(foreach f, ${TEST_SET}, clean.rescore.$f)
 clean.rescore.%:
 	${RM} $*.rat $*.rat.bleu
 	${RM} $*.rat.detok $*.rat.detok.bleu
@@ -302,9 +302,9 @@ clean.rescore.%:
 ########################################
 # TRUECASING
 .PHONY: tc
-tc: $(addsuffix .out.tc, ${TRANSLATE_SET})
+tc: $(addsuffix .out.tc, ${TEST_SET})
 ifdef DO_RESCORING
-tc: $(addsuffix .rat.tc, ${TRANSLATE_SET})
+tc: $(addsuffix .rat.tc, ${TEST_SET})
 endif
 %.tc: % ${TRUECASING_LM} ${TRUECASING_MAP}
 	@echo "TrueCasing $@"
@@ -315,18 +315,18 @@ endif
 		> $@ 
 
 .PHONY: tc.detok
-tc.detok: $(addsuffix .out.tc.detok, ${TRANSLATE_SET})
+tc.detok: $(addsuffix .out.tc.detok, ${TEST_SET})
 ifdef DO_RESCORING
-tc.detok: $(addsuffix .rat.tc.detok, ${TRANSLATE_SET})
+tc.detok: $(addsuffix .rat.tc.detok, ${TEST_SET})
 endif
-$(addsuffix .tc.detok, ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+$(addsuffix .tc.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
 
 clean: clean.truecasing
 
 .PHONY: clean.truecasing
 clean.truecasing: SHELL=${GUARD_SHELL}
-clean.truecasing: $(foreach f, ${TRANSLATE_SET}, clean.truecasing.$f.out)
-clean.truecasing: $(foreach f, ${TRANSLATE_SET}, clean.truecasing.$f.rat)
+clean.truecasing: $(foreach f, ${TEST_SET}, clean.truecasing.$f.out)
+clean.truecasing: $(foreach f, ${TEST_SET}, clean.truecasing.$f.rat)
 clean.truecasing.%:
 	${RM} $*.tc
 	${RM} $*.tc.detok
