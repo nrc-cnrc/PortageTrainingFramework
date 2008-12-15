@@ -158,6 +158,10 @@ links) into your copy's corpora directory:
      18584  409787 2268451 total
 \end{verbatim}
 
+In your own experiments, the files you need to copy into \texttt{corpora}
+should be in original truecase (if you're using truecasing), tokenized,
+sentence-split and aligned, just like the ones we provide here.
+
 \subsection{Setting framework parameters} \label{FrameworkParams}
 
 Now you need to tell the framework what you've called your test set, since we
@@ -191,7 +195,7 @@ framework to finish this toy experiment while skipping language model training.
 
 \subsection{Lowercasing and adding escapes}
 
-To reduce data sparseness, we convert all files to lowercase.
+To reduce data sparseness, we convert all files to lowercase.  We keep the lowercase and truecase versions separately, because we'll use the truecase version to 
 \begin{verbatim}
    > cd corpora
    > make lc
@@ -200,8 +204,10 @@ To reduce data sparseness, we convert all files to lowercase.
 \end{verbatim}
 
 The decoder, canoe, treats \texttt{<}, \testtt{>} and \texttt{\\} as special
-characters, so we need a copy of the dev and test files with these characters
-escaped, in the source language only.
+characters, in order to support markups for special translation rules.  We
+won't use any markups for this example, but we still need to escape the three
+special characters, in the source language only, since this is only for the
+input to canoe.
 
 \begin{verbatim}
    > make rule
@@ -224,7 +230,9 @@ weights, and creating a rescoring model.
 Portage does not come with programs for language model training. However,
 it accepts models in the widely-used ``DARPA'' format which is produced by popular
 toolkits such as CMU SLM (www.speech.cs.cmu.edu/ SLM\_info.html), SRILM
-(www.speech.sri.com/projects/srilm), or IRSTLM (irstlm.sourceforge.net). Here
+(www.speech.sri.com/projects/srilm), or IRSTLM (irstlm.sourceforge.net).
+
+Here
 is the SRILM command used to produce the model {\tt train\_en.lm} supplied with
 this example:
 \begin{verbatim}
