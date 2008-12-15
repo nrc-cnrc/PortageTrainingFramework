@@ -84,6 +84,7 @@ vpath ${TRUECASING_MAP}  ${TRUECASING_DIR}
 
 .PHONY: all
 all: final_result
+	@echo "Your translations are available in translation/" >&2
 
 
 
