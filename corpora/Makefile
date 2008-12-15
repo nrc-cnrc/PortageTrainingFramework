@@ -95,25 +95,20 @@ lc: ${LC}
 
 
 # Tokenizes source corpora without sentence splitting.
-%_${SRC_LANG}.tc: %_${SRC_LANG}${ALIGNX}
-	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1) \
-	&& cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
+#%_${SRC_LANG}.tc: %_${SRC_LANG}${ALIGNX}
+#	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1) \
+#	&& cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
 
 # Tokenizes target corpora without sentence splitting.
-%_${TGT_LANG}.tc: %_${TGT_LANG}${ALIGNX}
-	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1) \
-	&& cat $< | utokenize.pl -noss -lang=${TGT_LANG} > $@
+#%_${TGT_LANG}.tc: %_${TGT_LANG}${ALIGNX}
+#	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1) \
+#	&& cat $< | utokenize.pl -noss -lang=${TGT_LANG} > $@
 
 
 # Prepare truecased file.
 %.tc: %${ALIGNX}
 	${check_utf8}
 	cp $< $@
-
-# Constructs a lowercased source corpora.
-%_${SRC_LANG}.tc: %_${SRC_LANG}${ALIGNX}
-	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1); \
-	cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
 
 %.tc${GZ}: %${ALIGNX}${GZ}
 	${check_utf8}
