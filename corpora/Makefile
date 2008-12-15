@@ -145,7 +145,7 @@ reference: $(addprefix $(subst _${TGT_LANG},,$(basename ${TRANSLATE_SET})),  _${
 
 # Check if the first dependency is a utf8 file.
 define check_utf8
-(file -Libz $< | egrep -qi 'charset=utf-8|ASCII') || echo "Please convert $< to utf-8"
+(file -Libz $< | egrep -qi 'charset=utf-8|ASCII') || echo "WARNING: Please convert $< to utf-8"
 endef
 
 
