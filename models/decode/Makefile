@@ -21,7 +21,7 @@ export SHELL = ${FRAMEWORK_SHELL}
 # Define languages info.
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
-SRCX  ?= _${SRC_LANG}${LANGX}
+SRCX  ?= ${RULEX}
 TGTX  ?= _${TGT_LANG}${LANGX}
 
 # Untuned decoding model
@@ -58,8 +58,9 @@ PARALLELISM_LEVEL_TUNE_DECODE ?= 5
 .DELETE_ON_ERROR:
 
 # Threre are two differents vpath for heldout because in the chinese case for example the src_ext != tgt_ext
-vpath %${SRCX} ${CORPORA_DIR}
-vpath %${TGTX} ${CORPORA_DIR}
+vpath %${SRCX}  ${CORPORA_DIR}
+vpath %${TGTX}  ${CORPORA_DIR}
+vpath %${RULES} ${CORPORA_DIR}
 vpath ${DECODING_MODEL_TEMPLATE} ${TEMPLATE_DIR}
 
 

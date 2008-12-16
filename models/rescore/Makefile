@@ -54,6 +54,7 @@ CORPORA_DIR ?= ../../corpora
 TUNE_RESCORE      ?= dev2
 TUNE_RESCORE_SRC   = ${TUNE_RESCORE}${SRCX}
 TUNE_RESCORE_TGT   = ${TUNE_RESCORE}${TGTX}
+TUNE_RESCORE_RULE  = ${TUNE_RESCORE}${RULEX}
 
 # Specific PSUB options
 PSUB_OPTS ?= 
@@ -69,8 +70,9 @@ PARALLELISM_LEVEL_TUNE_RESCORE ?= 5
 .DELETE_ON_ERROR:
 
 # Threre are two differents vpath for heldout because in the chinese case for example the src_ext != tgt_ext
-vpath %${SRCX} ${CORPORA_DIR}
-vpath %${TGTX} ${CORPORA_DIR}
+vpath %${SRCX}  ${CORPORA_DIR}
+vpath %${TGTX}  ${CORPORA_DIR}
+vpath %${RULEX} ${CORPORA_DIR}
 vpath ${DECODING_MODEL} ${DECODING_MODEL_DIR} ../decode
 
 
@@ -154,7 +156,7 @@ ${UNTUNED_RESCORING_MODEL}: ${DECODING_MODEL} models
 .PHONY: train
 train: ${RESCORING_MODEL}
 
-${RESCORING_MODEL}:  ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
+${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
 	_LOCAL=1 echo "Tuning a rescoring model."
 	RP_PSUB_OPTS="-N $@" \
 	rat.sh \
@@ -164,7 +166,8 @@ ${RESCORING_MODEL}:  ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL
 		-v \
 		-K ${NBEST_SIZE} \
 		-o $@ \
-		-f $+ \
+		-msrc $< \
+		-f $(wordlist 2,5,$+) \
 	>& log.$@
 
 clean: clean.rescore_train
