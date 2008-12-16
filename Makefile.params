@@ -41,8 +41,14 @@ DO_TRUECASING=1
 # uncomment the following line.
 #ICU=1
 
-# If you are on a cluster that is run-parallel.sh friendly, define the following
+# If you are on a cluster that is run-parallel.sh friendly, define the
+# following to force cluster mode.  You normally don't need to do so, though,
+# since clusters are detected automatically below.
 #USING_CLUSTER=1
+
+# If you are on a cluster but you want to force single computer mode,
+# uncomment the following line:
+#export NOCLUSTER=1
 
 # Automatically detects if we are on a cluster.
 ifeq ($(strip $(shell which-test.sh qsub && echo "true")),true)

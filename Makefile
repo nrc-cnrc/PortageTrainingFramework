@@ -42,7 +42,7 @@ help:
 doc: framework-toy.pdf
 
 %.pdf: %.tex
-	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
+	-TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 
 
