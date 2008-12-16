@@ -33,6 +33,8 @@ of \PS.
       Her Majesty in Right of Canada
 \end{center}
 
+\tableofcontents
+
 \section{Introduction}
 
 This document describes how to run a toy experiment using this experimental
@@ -617,7 +619,7 @@ files for weight tuning:
    mkdir -p foos
    cow.sh -v -parallel:"-n 1" -maxiter 15 -nbest-list-size 100 \
       -filt -nofloor -workdir foos -f canoe.ini
-      ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc \
+      ../../corpora/dev1_fr.rule XXX ../../corpora/dev1_en.lc \
       >& log.canoe.ini.cow
    rm -f -r foos multi.probs.*.FILT.gz canoe.ini.FILT canoe.ini.FILT.cow
 \end{verbatim}
@@ -637,21 +639,21 @@ necessarily increase monotonically, as can be seen in several places in the
 \begin{footnotesize}
 \begin{verbatim}
 > cat rescore-results
-BLEU score: 0.136331   -d 1 -w 0 -lm 1 -tm 1:1:1:1:1:1
-BLEU score: 0.012068   -d -0.110 -w 0.764 -lm 1 -tm -0.762:0.062:0.060:0.091:-0.024:-0.698
-BLEU score: 0.033070   -d 1 -w 0.224 -lm 0.291 -tm -0.173:0.029:0.181:0.001:0.012:-0.117
-BLEU score: 0.138245   -d 0.014 -w 0.118 -lm 1 -tm 0.169:0.159:-0.308:0.143:0.021:-0.036
-BLEU score: 0.162674   -d 0.000 -w 0.168 -lm 1 -tm 0.231:0.028:-0.019:0.035:0.042:0.039
-BLEU score: 0.163946   -d 0.110 -w -0.017 -lm 1 -tm -0.024:0.399:0.055:-0.123:0.115:0.010
-BLEU score: 0.154219   -d 0.562 -w 0.365 -lm 1 -tm 0.019:0.081:-0.017:0.150:-0.007:-0.074
-BLEU score: 0.172699   -d 0.478 -w 0.257 -lm 1 -tm 0.129:0.458:-0.040:0.116:-0.109:-0.014
-BLEU score: 0.174889   -d 0.107 -w 0.332277 -lm 1 -tm 0.247:0.414:-0.033:0.166:-0.109:-0.037
-BLEU score: 0.185839   -d 0.289 -w 0.441 -lm 1 -tm 0.233:0.402:-0.032:0.175:-0.106:-0.051
-BLEU score: 0.187600   -d 0.272 -w 0.351 -lm 1 -tm 0.223:0.388:-0.008:0.161:-0.043:-0.071
-BLEU score: 0.186709   -d 0.429 -w 0.090 -lm 1 -tm 0.156:0.115:-0.066:-0.349:0.227:0.288
-BLEU score: 0.186473   -d 0.133 -w 0.335 -lm 0.508 -tm 0.134:0.224:-0.256:-0.819:0.056:1
-BLEU score: 0.189119   -d 0.221 -w 0.182 -lm 1 -tm 0.049:0.291:-0.038:0.074:0.039:0.028
-BLEU score: 0.191517   -d 0.325 -w 0.103 -lm 1 -tm 0.067:0.318:-0.042:0.102:0.043:0.034
+BLEU score: 0.136568   -d 1 -w 0 -lm 1 -tm 1:1:1:1:1:1 -ftm 1:1:1:1:1:1
+BLEU score: 0.102302   -d 0.040 -w -1 -lm 0.626 -tm 0.02:0.16:-0.17:0.59:-0.11:-0.28 -ftm 0.29:0.19:-0.06:-0.32:0.71:-0.14
+BLEU score: 0.022673   -d 0.062 -w -0.565 -lm 1 -tm 0.06:0.10:-0.00:-0.00:0.07:-0.00 -ftm 0.02:-0.09:-0.00:0.01:-0.00:0.02
+BLEU score: 0.174290   -d 0.084 -w -0.020 -lm 1 -tm 0.13:0.08:-0.01:-0.03:0.08:-0.00 -ftm -0.01:0.00:-0.00:0.06:0.14:-0.12
+BLEU score: 0.083275   -d 0.778 -w 0.415 -lm 1 -tm 0.35:-0.04:-0.01:-0.04:0.03:-0.01 -ftm 0.03:-0.03:-0.00:0.04:-0.01:0.00
+BLEU score: 0.177278   -d 0.221 -w -0.012 -lm 1 -tm 0.15:0.11:-0.00:-0.00:0.01:0.00 -ftm 0.05:0.22:0.01:0.13:-0.01:-0.00
+BLEU score: 0.189677   -d 0.354 -w -0.120 -lm 1 -tm 0.19:0.09:-0.01:-0.01:0.01:-0.17 -ftm 0.04:-0.00:-0.02:0.19:0.10:-0.03
+BLEU score: 0.200537   -d 0.365 -w -0.304 -lm 1 -tm 0.15:0.11:-0.01:-0.01:0.00:-0.14 -ftm 0.03:0.05:-0.03:0.17:0.10:-0.03
+BLEU score: 0.200639   -d 0.364 -w -0.301 -lm 1 -tm 0.15:0.12:-0.01:-0.01:0.01:-0.14 -ftm 0.03:0.05:-0.03:0.17:0.10:-0.03
+BLEU score: 0.200826   -d 0.362 -w -0.299 -lm 1 -tm 0.15:0.12:-0.01:-0.01:0.00:-0.13 -ftm 0.03:0.06:-0.03:0.17:0.10:-0.03
+BLEU score: 0.200826   -d 0.363 -w -0.295 -lm 1 -tm 0.15:0.11:-0.01:-0.01:0.01:-0.13 -ftm 0.03:0.06:-0.03:0.17:0.10:-0.03
+BLEU score: 0.200826   -d 0.364 -w -0.296 -lm 1 -tm 0.15:0.11:-0.01:-0.01:0.01:-0.13 -ftm 0.03:0.06:-0.03:0.17:0.10:-0.03
+BLEU score: 0.200826   -d 0.364 -w -0.296 -lm 1 -tm 0.15:0.11:-0.01:-0.01:0.01:-0.13 -ftm 0.03:0.06:-0.03:0.17:0.09:-0.03
+BLEU score: 0.200826   -d 0.364 -w -0.294 -lm 1 -tm 0.15:0.11:-0.01:-0.01:0.01:-0.14 -ftm 0.03:0.06:-0.03:0.17:0.09:-0.03
+BLEU score: 0.200826   -d 0.363 -w -0.294 -lm 1 -tm 0.15:0.11:-0.01:-0.01:0.01:-0.14 -ftm 0.03:0.06:-0.03:0.17:0.09:-0.03
 \end{verbatim}
 \end{footnotesize}
 When the last iteration still shows an improvement (which is not the case here),
@@ -677,26 +679,26 @@ duplicates the contents of \texttt{canoe.ini}, but adds the optimal weights
 learned on the development corpus:
 \begin{verbatim}
    > cat canoe.ini.cow
-   [ttable-multi-prob] 
-      models/tm/cpt.ibm2-rf-zn-kn3.train.fr2en.gz
-      models/tm/cpt.liang-rf-zn-kn3.train.fr2en.gz
-   [lmodel-file] 
-      models/lm/train_en-kn-5g.binlm.gz
-   [weight-d] 0.3251756728
-   [weight-w] 0.1031407118
-   [weight-l] 1
-   [weight-t] 0.067430:0.318583:-0.042434:0.102543:0.0437634:0.034424
-   XXX [weight-f]
-   [ttable-limit] 30
-   [ttable-threshold] 0
-   [stack] 20000
-   [beam-threshold] 0.001
-   [distortion-limit] 7
-   [distortion-model] 
-      WordDisplacement
-   [segmentation-model] none
-   [bypass-marked]
-   [cube-pruning]
+[ttable-multi-prob] 
+   models/tm/cpt.ibm2-rf-zn-kn3.train.fr2en.gz
+   models/tm/cpt.liang-rf-zn-kn3.train.fr2en.gz
+[lmodel-file] 
+   models/lm/train_en-kn-5g.binlm.gz
+[weight-d] 0.362472415
+[weight-w] -0.2999703884
+[weight-l] 1
+[weight-t] 0.156554:0.120460:-0.012390:-0.018825:0.009940:-0.138515
+[weight-f] 0.031522:0.061217:-0.032945:0.171901:0.101529:-0.034342
+[ttable-limit] 30
+[ttable-threshold] 0
+[stack] 20000
+[beam-threshold] 0.001
+[distortion-limit] 7
+[distortion-model] 
+   WordDisplacement
+[segmentation-model] none
+[bypass-marked]
+[cube-pruning]
 \end{verbatim}
 where the \texttt{weight-} parameters pertain to, respectively, the distortion
 model, the word-length penalty, the language model, the translation models
@@ -731,6 +733,8 @@ between a source sentence and a translation hypothesis. A rescoring model
 consists of a vector of feature weights set so as to optimize translation
 performance when a weighted combination of feature values is used to reorder
 the n-best lists.
+
+\subsubsection{The Input Rescoring Model}
 
 Training is carried out by the \texttt{rat.sh} script. This takes as input a
 rescoring model that specifies which features to use, and it returns optimal
@@ -785,6 +789,50 @@ the feature \texttt{IBM2TgtGivenSrc} using the IBM model
 see a list of all available features, type \texttt{rescore\_train -H}.
 \end{itemize}
 
+\subsubsection{Running RAT (Rescore And Translate)}
 
+Apart from the rescoring model, {\tt rat.sh} needs a source file and one or
+more alternative translations for it (same as {\tt cow.sh}). These may be the
+same files used for {\tt cow.sh}, but it is generally better to use different
+ones, so here we use {\tt dev2}:\footnote{As with \texttt{cow.sh}, you can
+speed this up using parallelism, in this case via the -n option to
+\texttt{rat.sh}, given before the \texttt{train} token (type \texttt{rat.sh -h}
+for details), controlled in this framework via the variable
+\texttt{PARALLELISM\_LEVEL\_TUNE\_RESCORE} in \texttt{Makefile.params}.}
+\begin{verbatim}
+   > make train
+   cat models/decode/canoe.ini.cow > canoe.ini.cow.dev2
+   configtool check canoe.ini.cow.dev2
+   ok
+   Tuning a rescoring model.
+   rat.sh -lb -n 1 train -v -K 1000 -o rescore-model \
+      -msrc XXX \
+      -f canoe.ini.cow.dev2 rescore-model.ini \
+      ../../corpora/dev2_fr.lc ../../corpora/dev2_en.lc \
+      >& log.rescore-model
+\end{verbatim}
+
+The output from \texttt{rat.sh} is written to the file \texttt{rescore-model}:
+\begin{verbatim}
+   > cat rescore-model
+   XXX
+\end{verbatim}
+This is identical to {\tt rescore-model.ini}, except that each feature is now
+assigned a weight. Other by-products created by {\tt rat.sh} are found in the
+working directory \texttt{workdir-dev2\_fr.lc-1000best} and include the nbest
+lists \texttt{1000best.gz}, and the corresponding decoder features
+\texttt{ffvals.gz} and additional features \texttt{ff.*}. All of these files
+are compressed to save space.
+
+\section{Translating and Testing} \label{TranslatingTesting}
+
+\subsection{Translating} \label{Translating}
+
+\subsection{Testing} \label{Testing}
+
+\section{Final Note}
+Because of differences in rounding, optimization, random number generation,
+etc.\ between systems, results may vary on your platform and are shown in this
+document only as a reference for the user.
 
 \end{document}
