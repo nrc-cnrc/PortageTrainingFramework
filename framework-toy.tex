@@ -76,22 +76,22 @@ system output is not always fully reproduced here, for brevity's sake.  When it
 is, results (especially numbers) may vary a little from the ones shown, due to
 platform differences.
 
-Many of the commands are expressed as {\tt make} targets. This has the
+Many of the commands are expressed as \texttt{make} targets. This has the
 advantage of requiring less typing, while still allowing you to see the actual
-commands executed by the system, which are always echoed by {\tt make} (and
-which of course you could also type directly). {\tt make} also lets you skip
+commands executed by the system, which are always echoed by \texttt{make} (and
+which of course you could also type directly). \texttt{make} also lets you skip
 steps (except for the first one, since it is done manually).  For example, if
 you are not interested in any steps before decoder weight optimization, you can
-go to section~\ref{COW} and type {\tt make tune} to begin at that point
+go to section~\ref{COW} and type \texttt{make tune} to begin at that point
 (although you will have to wait until the system executes the necessary
 commands to catch up). Here are some other useful make commands:
 \begin{itemize}
-\item {\tt make all} runs all remaining steps at any point.
-\item {\tt make clean} cleans up and returns the directory to its initial state
-\item {\tt make -j} {\em anything} builds the target {\em anything} by running
+\item \texttt{make all} runs all remaining steps at any point.
+\item \texttt{make clean} cleans up and returns the directory to its initial state
+\item \texttt{make -j} \emph{anything} builds the target \emph{anything} by running
       commands in parallel whenever possible. This can be much faster if you
       have a multiprocessor machine.
-\item {\tt make help} displays some help and the main targets available in the
+\item \texttt{make help} displays some help and the main targets available in the
       makefile.
 \end{itemize}
 
@@ -113,7 +113,7 @@ sections (section numbers are in brackets):
 These steps are fairly standard, but of course there are many variants on the
 sample process illustrated here. For more information, see the Portage HTML
 user documentation. For detailed information on a particular program, run it
-with the {\tt -h} flag.
+with the \texttt{-h} flag.
 
 \section{Corpus Preparation} \label{CorpusPreparation}
 
@@ -450,10 +450,10 @@ translation.  Each of its lines is of the form:
 \begin{verbatim}
    fr ||| en ||| p(fr|en) p(en|fr)
 \end{verbatim}
-where {\tt fr} is a French source phrase, {\tt en} is an English target phrase,
-{\tt p(fr|en)} is the probability that {\tt fr} is the translation of {\tt en},
-and {\tt p(en|fr)} is the probability that {\tt en} is the translation of {\tt
-fr}.
+where \texttt{fr} is a French source phrase, \texttt{en} is an English target
+phrase, \texttt{p(fr|en)} is the probability that \texttt{fr} is the
+translation of \texttt{en}, and \texttt{p(en|fr)} is the probability that
+\texttt{en} is the translation of \texttt{fr}.
 Here are two sample lines from this file:
 \begin{verbatim}
    > zgrep '| proposed regulations |' cpt.ibm2-rf-zn-kn3.train.fr2en.gz 
@@ -508,11 +508,11 @@ conditioned jump parameters, following He (WMT-2006), is sometimes better
 \subsection{Optimizing Decoder Weights} \label{COW}
 
 The language and translation models are the main sources of information used
-for translation, which is performed by the {\tt canoe} decoder. In order to get
+for translation, which is performed by the \texttt{canoe} decoder. In order to get
 reasonable translation quality, the weights on these (and other) sources of
 information need to be tuned. The tuning process is carried out by a script
-called {\tt cow.sh}, which runs {\tt canoe} several times. {\tt cow.sh}
-requires a configuration file for {\tt canoe}, called {\tt canoe.ini} by
+called \texttt{cow.sh}, which runs \texttt{canoe} several times. \texttt{cow.sh}
+requires a configuration file for \texttt{canoe}, called \texttt{canoe.ini} by
 default.
 
 \subsubsection{The Decoder Configuration File: canoe.ini}
@@ -522,25 +522,56 @@ In this framework, we start with a template configuration file,
 \begin{verbatim}
    > cd ../..          # only needed if you were still in models/tm
    > cd models/decode
-   > head -4 canoe.ini.template
+   > head -5 canoe.ini.template
    [ttable-multi-prob]
      <CPTS>
    [lmodel-file]
      <LMS>
+   [weight-f] <FORWARD_WEIGHTS>
 \end{verbatim}
 
 The framework will automatically insert the phrase tables and language models
-generated in the previous steps into the \texttt{canoe.ini} file when it
-creates it. 
+generated in the previous steps into the \texttt{canoe.ini} file when you
+make it.  \texttt{make canoe.ini} will first create a soft link to the models
+directory---this way, all models appear to be relative to the current directly,
+which makes it easier to find them.  We'll create such symlinks everywhere we
+need access to the models.  The command replaces the template parameters
+\texttt{<SL>}, \texttt{<TL>}, \texttt{<TRAIN\_TM>} and, \texttt{<TRAIN\_LM>}
+and \texttt{<CPTS>} by the appropriate values.  XXX document each of these
+tags. XXX
 
+The special token \texttt{<FORWARD\_WEIGHTS>} causes default forward weights inserter
+into the \texttt{canoe.ini}, to be used by \texttt{canoe} and tuned by
+\texttt{cow.sh}.  Unlike other weigths, which are used by default as soon as
+the corresponding model is present, forward weights are disabled by default, so
+the appropriate number of 1's must be inserted into the \texttt{canoe.ini} for
+its \texttt{[weight-f]} parameter.  In this framework, if you don't want to use
+forward weights, remove the \texttt{[weight-f]} line in
+\texttt{canoe.ini.template}.
+
+The final command, \texttt{configtool check canoe.ini}, confirms that the
+\texttt{canoe.ini} file produced is error-free---it check that all parameters
+are compatible and that all models can be found.
 \begin{verbatim}
    > make canoe.ini
+   ln -sf ../../models models
+   cat canoe.ini.template \
+      | sed -e 's/<SL>/fr/g' \
+            -e 's/<TL>/en/g' \
+            -e 's/<TRAIN_TM>/train/g' \
+            -e 's/<TRAIN_LM>/train/g' \
+            -e 's/<CPTS>/models\/tm\/cpt.ibm2-rf-zn-kn3.train.fr2en.gz [...] \
+            -e 's/<LMS>/models\/lm\/train_en-kn-5g.binlm.gz/g' \
+      > canoe.ini
+   configtool check canoe.ini
+   ok
    > cat canoe.ini
    [ttable-multi-prob]
      models/tm/cpt.ibm2-rf-zn-kn3.train.fr2en.gz
      models/tm/cpt.liang-rf-zn-kn3.train.fr2en.gz
    [lmodel-file]
      models/lm/train_en-kn-5g.binlm.gz
+   [weight-f] 1:1:1:1:1:1
    [ttable-limit] 30
    [ttable-threshold] 0
    [stack] 20000
@@ -551,13 +582,16 @@ creates it.
    [cube-pruning]
    [bypass-marked]
 \end{verbatim}
-
-Do not modify \texttt{canoe.ini} directly.  To change the training parameters
-for language models or phrase tables, modify the parameters or Makefiles
-appropriately in \texttt{models/LM} and \texttt{models/TM} and regenerate those
-models.  Be careful, though: the \texttt{canoe.ini} file will include all
-models generated in the same framework, so you should work in different copies
-of the framework if you want to experiment with different training parameters.
+ 
+When using this framework, do not modify \texttt{canoe.ini}
+directly.\footnote{If you're working in a different framework or manually,
+you'll probably set your decoding parameters directly in your canoe.ini.}  To
+change the training parameters for language models or phrase tables, modify the
+parameters or Makefiles appropriately in \texttt{models/LM} and
+\texttt{models/TM} and regenerate those models.  Be careful, though: the
+\texttt{canoe.ini} file will include all models generated in the same
+framework, so you should work in different copies of the framework if you want
+to experiment with different training parameters.
 
 To change the other decoding parameters, modify \texttt{canoe.ini.template} as
 required.  For example, you can add additional language models (trained outside
@@ -569,58 +603,188 @@ to reasonable defaults, but may need to be adjusted depending on the
 speed/quality trade-offs you're willing to make or other models you wish to
 use.
 
-\subsubsection{Running COW}
+\subsubsection{Running COW (Canoe Optimize Weights)}
 
-Besides the configuration file, the other main arguments required by {\tt
-cow.sh} are a directory in which to store temporary files, a source file and
-one or more correct (ie human) translations of the source file.\footnote{This
-example uses only one translation, but when multiple alternative translations
-are available, it can be advantageous to use them.}
-Here we call the temporary directory {\tt foos}, and use the {\tt dev1} files
-for weight tuning:
+Besides the configuration file, the other main arguments required by
+\texttt{cow.sh} are a directory in which to store temporary files, a source
+file and one or more correct (ie human) translations of the source
+file.\footnote{This example uses only one translation, but when multiple
+alternative translations are available, it can be advantageous to use them.}
+Here we call the temporary directory \texttt{foos}, and use the \texttt{dev1}
+files for weight tuning:
 \begin{verbatim}
    > make all
+   mkdir -p foos
    cow.sh -v -parallel:"-n 1" -maxiter 15 -nbest-list-size 100 \
       -filt -nofloor -workdir foos -f canoe.ini
-      ../../corpora/dev1_fr.lc ../../corpora/dev1_en.lc \
+      ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc \
       >& log.canoe.ini.cow
+   rm -f -r foos multi.probs.*.FILT.gz canoe.ini.FILT canoe.ini.FILT.cow
 \end{verbatim}
-Because {\tt cow.sh} takes a while to run\footnote{Running time for {\tt
-cow.sh} can be reduced by executing it in parallel. Do {\tt cow.sh -h} to see
-documentation on this option; modify \texttt{PARALLELISM\_LEVEL\_TUNE\_DECODE}
-in \texttt{Makefile.params} to adjust cow parallelism in this framework.} and
-writes large amounts of logging information, it is usually a good idea to
-redirect all of its output to a log file, as shown here; and also to run it in
-the background (not done here, for compatibility with the {\tt make}
-procedure).  Progress can be monitored by looking at the file {\tt
-rescore-results}, which shows the translation quality (measured by BLEU
-score---see section~\ref{Testing} for a description), as well as the current
-weights, for each iteration. Note that the BLEU score does not necessarily
-increase monotonically, as can be seen in several places in the {\tt
-rescore-results} file obtained with this example:
+Because \texttt{cow.sh} takes a while to run (a good two to three hours in this
+example)\footnote{Running time for \texttt{cow.sh} can be reduced by executing it
+in parallel. Do \texttt{cow.sh -h} to see documentation on this option; modify
+\texttt{PARALLELISM\_LEVEL\_TUNE\_DECODE} in \texttt{Makefile.params} to adjust
+cow parallelism in this framework.} and writes large amounts of logging
+information, it is usually a good idea to redirect all of its output to a log
+file, as shown here; and also to run it in the background (not done here, for
+compatibility with the \texttt{make} procedure).  Progress can be monitored by
+looking at the file \texttt{rescore-results}, which shows the translation quality
+(measured by BLEU score---see section~\ref{Testing} for a description), as well
+as the current weights, for each iteration. Note that the BLEU score does not
+necessarily increase monotonically, as can be seen in several places in the
+\texttt{rescore-results} file obtained with this example:
+\begin{footnotesize}
 \begin{verbatim}
-   > cat rescore-results
-   XXX
+> cat rescore-results
+BLEU score: 0.136331   -d 1 -w 0 -lm 1 -tm 1:1:1:1:1:1
+BLEU score: 0.012068   -d -0.110 -w 0.764 -lm 1 -tm -0.762:0.062:0.060:0.091:-0.024:-0.698
+BLEU score: 0.033070   -d 1 -w 0.224 -lm 0.291 -tm -0.173:0.029:0.181:0.001:0.012:-0.117
+BLEU score: 0.138245   -d 0.014 -w 0.118 -lm 1 -tm 0.169:0.159:-0.308:0.143:0.021:-0.036
+BLEU score: 0.162674   -d 0.000 -w 0.168 -lm 1 -tm 0.231:0.028:-0.019:0.035:0.042:0.039
+BLEU score: 0.163946   -d 0.110 -w -0.017 -lm 1 -tm -0.024:0.399:0.055:-0.123:0.115:0.010
+BLEU score: 0.154219   -d 0.562 -w 0.365 -lm 1 -tm 0.019:0.081:-0.017:0.150:-0.007:-0.074
+BLEU score: 0.172699   -d 0.478 -w 0.257 -lm 1 -tm 0.129:0.458:-0.040:0.116:-0.109:-0.014
+BLEU score: 0.174889   -d 0.107 -w 0.332277 -lm 1 -tm 0.247:0.414:-0.033:0.166:-0.109:-0.037
+BLEU score: 0.185839   -d 0.289 -w 0.441 -lm 1 -tm 0.233:0.402:-0.032:0.175:-0.106:-0.051
+BLEU score: 0.187600   -d 0.272 -w 0.351 -lm 1 -tm 0.223:0.388:-0.008:0.161:-0.043:-0.071
+BLEU score: 0.186709   -d 0.429 -w 0.090 -lm 1 -tm 0.156:0.115:-0.066:-0.349:0.227:0.288
+BLEU score: 0.186473   -d 0.133 -w 0.335 -lm 0.508 -tm 0.134:0.224:-0.256:-0.819:0.056:1
+BLEU score: 0.189119   -d 0.221 -w 0.182 -lm 1 -tm 0.049:0.291:-0.038:0.074:0.039:0.028
+BLEU score: 0.191517   -d 0.325 -w 0.103 -lm 1 -tm 0.067:0.318:-0.042:0.102:0.043:0.034
 \end{verbatim}
+\end{footnotesize}
+When the last iteration still shows an improvement (which is not the case here),
+it is sometimes a sign that we should have allowed \texttt{cow.sh} to run more
+iterations, by setting the \texttt{-maxiter} option to a higher value.  Here,
+it looks like we achieved convergence after ten iterations.  You will notice
+that there are six weights after \texttt{-tm}: three for the backward
+probability estimates in the phrase table created using IBM2 models, and three
+for the phrase table created using HMM models.  For the same reason, there are
+six weights after \texttt{-ftm}.
 
-The output from {\tt cow.sh} is written to the file {\tt canoe.ini.cow}
-(assuming the original configuration file was called {\tt canoe.ini}). This
-duplicates the contents of {\tt canoe.ini}, but adds the optimal weights
+While \texttt{cow.sh} is working, it is saving a lot of information in your
+temporary work directory, which are automatically cleaned up afterwards in this
+framework if no errors were encountered.  The large temporary files are seldom
+of any use afterwards, except for troubleshooting, so there is no point in
+keeping them.  If you would like to inspect them, possibly to see the n-best
+lists or other files used by \texttt{cow.sh}, you can remove the \texttt{rm}
+command executed after \texttt{cow.sh} in \texttt{Makefile}.
+
+The output from \texttt{cow.sh} is written to the file \texttt{canoe.ini.cow}
+(assuming the original configuration file was called \texttt{canoe.ini}). This
+duplicates the contents of \texttt{canoe.ini}, but adds the optimal weights
 learned on the development corpus:
 \begin{verbatim}
    > cat canoe.ini.cow
-   XXX
+   [ttable-multi-prob] 
+      models/tm/cpt.ibm2-rf-zn-kn3.train.fr2en.gz
+      models/tm/cpt.liang-rf-zn-kn3.train.fr2en.gz
+   [lmodel-file] 
+      models/lm/train_en-kn-5g.binlm.gz
+   [weight-d] 0.3251756728
+   [weight-w] 0.1031407118
+   [weight-l] 1
+   [weight-t] 0.067430:0.318583:-0.042434:0.102543:0.0437634:0.034424
+   XXX [weight-f]
+   [ttable-limit] 30
+   [ttable-threshold] 0
+   [stack] 20000
+   [beam-threshold] 0.001
+   [distortion-limit] 7
+   [distortion-model] 
+      WordDisplacement
+   [segmentation-model] none
+   [bypass-marked]
+   [cube-pruning]
 \end{verbatim}
-where the {\tt weight-} parameters pertain to, respectively, the distortion
-model, the word-length penalty, the language model, and the translation
-model. The language model usually obtains the highest weight, as in this
-case.\footnote{A note of warning about the LM weight: following Doug Paul's
-``DARPA'' LM format, all LM formats we know use base-10 log probs (including
-our own binary LM format), but canoe interprets them as natural logs.  This
-known bug has minimal impact; correcting it simply requires multiplying the
-desired -weight-l values by log(10), which cow, rat and rescore\_train do
-implicitly.  We chose not to fix it to avoid having to adjust all previously
-tuned sets of weights.  Note that throughout PORTAGEshared, logs are natural by
-default, not base 10.} (XXX Check if LM has highest weight XXX).  
+where the \texttt{weight-} parameters pertain to, respectively, the distortion
+model, the word-length penalty, the language model, the translation models
+(backward scores), and the forward scores of the translation models. The
+language model usually obtains the highest weight, as in this case.\footnote{A
+note of warning about the LM weight: following Doug Paul's ``DARPA'' LM format,
+all LM formats we know use base-10 log probs (including our own binary LM
+format), but canoe interprets them as natural logs: throughout PORTAGEshared,
+logs are natural by default, not base 10.  This known bug has minimal impact;
+correcting it simply requires multiplying the desired -weight-l values by
+log(10), which cow, rat and rescore\_train do implicitly.  We chose not to fix
+it to avoid having to adjust all previously tuned sets of weights.}
+
+\subsection{Training a Rescoring Model} \label{RAT}
+
+The final training step is to create a model for rescoring n-best
+lists. Rescoring means having \texttt{canoe} generate a list of $n$ (typically
+1000) translation hypotheses for each source sentence, then choosing the best
+translations from among these. The advantage of this procedure is that the
+choice can be made on the basis of information that is too expensive for
+\texttt{canoe} to use during search. This step usually gives a modest
+improvement over the results obtained using \texttt{canoe} alone. Sometimes,
+however, it gives no significant improvement while being fairly slow, so if
+translation speed is an issue, you will probably want to skip rescoring.  In
+this framework, rescoring is automatically bypassed unless
+\texttt{DO\_RESCORING} is set to 1 in \texttt{Makefile.params}.
+
+Training a rescoring model involves generating n-best lists, then calculating
+the values of selected \emph{features} for each hypothesis in each list. A
+feature is any real-valued function that is intended to capture the relation
+between a source sentence and a translation hypothesis. A rescoring model
+consists of a vector of feature weights set so as to optimize translation
+performance when a weighted combination of feature values is used to reorder
+the n-best lists.
+
+Training is carried out by the \texttt{rat.sh} script. This takes as input a
+rescoring model that specifies which features to use, and it returns optimal
+weights for these features.
+
+The default model created by this framework contains a small set of useful
+features:
+\begin{verbatim}
+   > cd ../..          # only needed if you were still in models/tm
+   > cd models/rescore
+   > make rescore-model.ini
+   ln -sf ../../models models
+   configtool rescore-model:ffvals models/decode/canoe.ini.cow \
+      | cut -f 1 -d ' ' > rescore-model.ini
+   echo [...] >> rescore-model.ini
+   [...]
+   > cat rescore-model.ini
+   FileFF:ffvals,1
+   FileFF:ffvals,2
+   FileFF:ffvals,3
+   FileFF:ffvals,4
+   FileFF:ffvals,5
+   FileFF:ffvals,6
+   FileFF:ffvals,7
+   FileFF:ffvals,8
+   FileFF:ffvals,9
+   XXX
+   IBM2TgtGivenSrc:models/tm/ibm2.train.en_given_fr.gz
+   IBM2SrcGivenTgt:models/tm/ibm2.train.fr_given_en.gz
+   IBM1WTransTgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz
+   IBM1WTransSrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz
+   LengthFF
+   nbestPhrasePostSrc:1#<ffval-wts>#<pfx>
+   nbestSentLenPost:1#<ffval-wts>#<pfx>
+   nbestWordPostTrg:1#<ffval-wts>#<pfx>
+   nbestNgramPost:1#1#<ffval-wts>#<pfx>
+   nbestNgramPost:2#1#<ffval-wts>#<pfx>
+\end{verbatim}
+There are two kinds of features included in our rescoring model:
+\begin{itemize}
+\item Those that look like \texttt{FileFF:ffvals,}$i$ tell \texttt{rat.sh} to
+use the $i$\/th feature generated by the \texttt{canoe} decoder itself. It is
+standard practice to use all decoder features when rescoring, as is done
+automatically by the framework via the \texttt{configtool} command executed
+above.
+\item The other features, following the format \emph{FeatureName:args}, tell
+\texttt{rat.sh} to generate values for the feature \emph{FeatureName} using
+arguments \emph{args}.  For example,
+\texttt{IBM2TgtGivenSrc:model/tm/ibm2.train.en\_given\_fr.gz} says to calculate
+the feature \texttt{IBM2TgtGivenSrc} using the IBM model
+\texttt{model/tm/ibm2.train.en\_given\_fr.gz}.  which we trained earlier. To
+see a list of all available features, type \texttt{rescore\_train -H}.
+\end{itemize}
+
+
 
 \end{document}
