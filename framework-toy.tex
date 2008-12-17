@@ -8,12 +8,17 @@
 \newcommand{\PS}{PORTAGE\-\emph{shared}\xspace}
 
 \title{A toy experiment using the \PS \\
-       experimental framework}
-\date{}
+       experimental framework (v1.3)}
+\date{December, 2008}
 \author{Eric Joanis}
 
 \begin{document}
+
+\vspace{\vfill}
+
 \maketitle
+
+\vspace{\vfill}
 
 \begin{center}
 An adaption of George Foster's \emph{Running Portage: A Toy Example} \\
@@ -21,19 +26,28 @@ to Samuel Larkin's experimental framework, updated to reflect recommended usage
 of \PS.
 \end{center}
 
+\vspace{\vfill}
+\vspace{\vfill}
+
 \begin{center}
-{~} \\ \tiny
+{~} \\ \footnotesize
    Technologies langagi{\`e}res interactives /
       Interactive Language Technologies \\
    Institut de technologie de l'information /
       Institute for Information Technology \\
    Conseil national de recherches Canada /
       National Research Council Canada \\
-   Copyright \copyright 2008, Sa Majest{\'e} la Reine du Chef du Canada /
-      Her Majesty in Right of Canada
+   Copyright \copyright 2008, Sa Majest{\'e} la Reine du Chef du Canada \\
+   Copyright \copyright 2008, Her Majesty in Right of Canada
 \end{center}
 
+\vspace{\vfill}
+
+\newpage
+
 \tableofcontents
+
+\newpage
 
 \section{Introduction}
 
@@ -48,7 +62,7 @@ translation system.  This document describes this process performed on a
 trivially small data set.  The example is for French to English translation,
 using text from the Hansard corpus.  It is too small for good translation, but
 large enough to give the flavour of a more realistic setup. Running time is
-about XXX.
+several hours.
 
 \subsection{Running the toy experiment}
 
@@ -172,15 +186,16 @@ didn't use the default.  Edit \texttt{Makefile.params} and change the
 \texttt{test} instead of \texttt{test1 test2}.
 This variable lists the stem of all your test sets, and the framework
 assumes you have two by default.
-You will also need to set \texttt{TRAIN\_LM} to \texttt{train} instead of
-\texttt{lm-train} since we won't be using a separate corpus to train language
-models with.
+You will also need to set \texttt{TRAIN\_LM} and \texttt{TRAIN\_TM} to
+\texttt{train} instead of \texttt{lm-train} and \texttt{tm-train} since we
+won't be using a separate corpora to train the translation and language models.
 After editing the file:
 \begin{verbatim}
    > grep "export TEST_SET" Makefile.params
-   export TEST_SET ?= test
-   > grep "export TRAIN_LM" Makefile.params
-   export TRAIN_LM ?= train
+   export TEST_SET      ?= test
+   > grep "export TRAIN_.M" Makefile.params
+   export TRAIN_LM      ?= train
+   export TRAIN_TM      ?= train
 \end{verbatim}
 
 While you're there, you should get familiar with all the variables in the
@@ -194,8 +209,8 @@ below, you should reverse the values of \texttt{SRC\_LANG} and
 \texttt{TGT\_LANG}.
 \begin{verbatim}
    > grep "_LANG " Makefile.params
-export SRC_LANG ?= fr
-export TGT_LANG ?= en
+   export SRC_LANG ?= fr
+   export TGT_LANG ?= en
 \end{verbatim}
 
 In this toy experiment, we'll use the default value for most other parameters,
@@ -321,7 +336,6 @@ If you have access to larger corpora of monolingual text in your target
 language, you can use them to train additional language models.  The framework
 does not automate training such additional language models, but you can add
 them in manually before optimizing the decoder weights (see section~\ref{COW}).
-XXX Make sure this forward ref is correct. XXX
 
 \subsection{Creating a Truecasing Model} \label{TC}
 
@@ -537,19 +551,25 @@ generated in the previous steps into the \texttt{canoe.ini} file when you
 make it.  \texttt{make canoe.ini} will first create a soft link to the models
 directory---this way, all models appear to be relative to the current directly,
 which makes it easier to find them.  We'll create such symlinks everywhere we
-need access to the models.  The command replaces the template parameters
-\texttt{<SL>}, \texttt{<TL>}, \texttt{<TRAIN\_TM>} and, \texttt{<TRAIN\_LM>}
-and \texttt{<CPTS>} by the appropriate values.  XXX document each of these
-tags. XXX
-
-The special token \texttt{<FORWARD\_WEIGHTS>} causes default forward weights inserter
-into the \texttt{canoe.ini}, to be used by \texttt{canoe} and tuned by
-\texttt{cow.sh}.  Unlike other weigths, which are used by default as soon as
-the corresponding model is present, forward weights are disabled by default, so
-the appropriate number of 1's must be inserted into the \texttt{canoe.ini} for
-its \texttt{[weight-f]} parameter.  In this framework, if you don't want to use
-forward weights, remove the \texttt{[weight-f]} line in
-\texttt{canoe.ini.template}.
+need access to the models.  The command replaces the template parameters by the
+appropriate values:
+\begin{itemize}
+\item \texttt{<SL>}:   source language code, e.g. ``fr'';
+\item \texttt{<TL>}:   target language code, e.g., ``en'';
+\item \texttt{<CPTS>}: all conditional phrase tables trained above, and found
+                       in the \texttt{models/tm} directory; and
+\item \texttt{<LMS>}:  all language models trained trained above, and found in
+                       the \texttt{models/lm} directory);
+\item \texttt{<FORWARD\_WEIGHTS>}: the right number of forward translation
+model weights.  This special token is required to enable the use of forward
+weights by \texttt{canoe} and their tuning by \texttt{cow.sh}.
+Unlike other weigths, which are used by default as soon as
+the corresponding model is present, forward weights are disabled by default.
+Therefore, the appropriate number of 1's must be inserted into
+\texttt{canoe.ini} for its \texttt{[weight-f]} parameter.  In this framework,
+if you don't want to use forward weights, comment out the \texttt{[weight-f]}
+line in \texttt{canoe.ini.template}.
+\end{itemize}
 
 The final command, \texttt{configtool check canoe.ini}, confirms that the
 \texttt{canoe.ini} file produced is error-free---it check that all parameters
@@ -560,8 +580,6 @@ are compatible and that all models can be found.
    cat canoe.ini.template \
       | sed -e 's/<SL>/fr/g' \
             -e 's/<TL>/en/g' \
-            -e 's/<TRAIN_TM>/train/g' \
-            -e 's/<TRAIN_LM>/train/g' \
             -e 's/<CPTS>/models\/tm\/cpt.ibm2-rf-zn-kn3.train.fr2en.gz [...] \
             -e 's/<LMS>/models\/lm\/train_en-kn-5g.binlm.gz/g' \
       > canoe.ini
@@ -584,16 +602,16 @@ are compatible and that all models can be found.
    [cube-pruning]
    [bypass-marked]
 \end{verbatim}
- 
+
 When using this framework, do not modify \texttt{canoe.ini}
-directly.\footnote{If you're working in a different framework or manually,
-you'll probably set your decoding parameters directly in your canoe.ini.}  To
-change the training parameters for language models or phrase tables, modify the
-parameters or Makefiles appropriately in \texttt{models/LM} and
-\texttt{models/TM} and regenerate those models.  Be careful, though: the
-\texttt{canoe.ini} file will include all models generated in the same
-framework, so you should work in different copies of the framework if you want
-to experiment with different training parameters.
+directly.\footnote{If you're working in a different setting, you might set your
+decoding parameters directly in your canoe.ini.}  To change the training
+parameters for language models or phrase tables, modify the parameters or
+Makefiles appropriately in \texttt{models/LM} and \texttt{models/TM} and
+regenerate those models.  Be careful, though: the \texttt{canoe.ini} file will
+include all models generated in the same framework, so you should work in
+different copies of the framework if you want to experiment with different
+training parameters for those models.
 
 To change the other decoding parameters, modify \texttt{canoe.ini.template} as
 required.  For example, you can add additional language models (trained outside
@@ -743,7 +761,7 @@ weights for these features.
 The default model created by this framework contains a small set of useful
 features:
 \begin{verbatim}
-   > cd ../..          # only needed if you were still in models/tm
+   > cd ../..          # only needed if you were still in models/decode
    > cd models/rescore
    > make rescore-model.ini
    ln -sf ../../models models
@@ -828,7 +846,134 @@ are compressed to save space.
 
 \subsection{Translating} \label{Translating}
 
+Once training is complete, the system can be used to translate.
+\begin{verbatim}
+   > cd ../..          # only needed if you were still in models/rescore
+   > cd translate
+\end{verbatim}
+
+\subsubsection{Decoding Only}
+
+As mentioned earlier, there are two options for translating. The simplest is to
+decode using the configuration file produced by \texttt{cow.sh}.  Earlier in
+this toy experiment, we set \texttt{DO\_RESCORING} in \texttt{Makefile.params},
+which we need to override manually here to demontrate translation by decoding
+only:
+\begin{verbatim}
+   > make DO_RESCORING= translate
+   ln -sf ../models models
+   cat models/decode/canoe.ini.cow > canoe.ini.cow.test
+   configtool check canoe.ini.cow.test
+   ok
+   Generating test.out
+   canoe-parallel.sh -lb -n 1 canoe -f canoe.ini.cow.test \
+      < ../corpora/test_fr.rule > test.out 2> log.test.out
+\end{verbatim}
+This produces the output file \texttt{test.out}, containing one line for each
+source line in \texttt{test\_fr.rule}.
+
+\subsubsection{Decoding and Rescoring}
+
+If you executed the command in the Decoding Only section above, please run
+\texttt{make clean} before proceeding.
+
+The other option for translating is to generate nbest lists and rescore them
+using the model generated in section~\ref{RAT}. To do this, we use the {\tt
+rat.sh} script again, but this time in translation mode:
+\begin{verbatim}
+   > make translate
+   ln -sf ../models models
+   cat models/decode/canoe.ini.cow > canoe.ini.cow.test
+   configtool check canoe.ini.cow.test
+   ok
+   Generating test.rat
+   rat.sh -lb -n 1 trans -v -K 1000 \
+      -msrc ../corpora/test_fr.rule -f canoe.ini.cow.test \
+      models/rescore/rescore-model ../corpora/test_fr.lc \
+      >& log.test.rat \
+      && mv test_fr.rule.rat test.rat
+   cp workdir-test_fr.rule-1000best/1best test.out
+\end{verbatim}
+This produces both \texttt{test.out}, the output of the decoder, and
+\texttt{test.rat}, the best translation according to the rescoring model.
+
+\subsubsection{Truecasing}
+
+Notice that the output files contain only lowercase, tokenized text. A
+postprocessing step is required to restore normal letter case and to undo the
+tokenization: truecasing.
+\begin{verbatim}
+   > make tc
+   TrueCasing test.out.tc
+   truecase.pl \
+                   -text=test.out \
+                   -lm=models/tc/train_en-kn-3g.binlm.gz \
+                   -map=models/tc/train_en.map \
+                   > test.out.tc 2> log.test.out.tc
+   TrueCasing test.rat.tc
+   truecase.pl \
+                   -text=test.rat \
+                   -lm=models/tc/train_en-kn-3g.binlm.gz \
+                   -map=models/tc/train_en.map \
+                   > test.rat.tc 2> log.test.rat.tc
+\end{verbatim}
+
 \subsection{Testing} \label{Testing}
+
+Translation quality can be evaluated using BLEU score, which is a measure of
+how well the translation matches an alternative translation that is known to be
+correct. It is based on the number of short word sequences that the two
+translations have in common, and varies between 0 for no matches to 1 for a
+perfect match. BLEU is calculated by the program {\tt bleumain}:
+\begin{verbatim}
+   > make bleu
+   Calculating BLEU for test.out.bleu
+   bleumain test.out ../corpora/test_en.lc > test.out.bleu
+   Calculating BLEU for test.rat.bleu
+   bleumain test.rat ../corpora/test_en.lc > test.rat.bleu
+   more *.bleu | cat
+   ::::::::::::::
+   test.out.bleu
+   ::::::::::::::
+   1-gram (match/total) 1307/2440 0.535656
+   2-gram (match/total) 524/2340 0.223932
+   3-gram (match/total) 261/2241 0.116466
+   4-gram (match/total) 152/2142 0.0709617
+   Sentence length: 2440; Best-match sentence length: 2380
+   Score: -1.72911
+   BLEU score: 0.177442
+   ::::::::::::::
+   test.rat.bleu
+   ::::::::::::::
+   1-gram (match/total) 1302/2441 0.533388
+   2-gram (match/total) 503/2341 0.214865
+   3-gram (match/total) 247/2242 0.110169
+   4-gram (match/total) 138/2143 0.0643957
+   Sentence length: 2441; Best-match sentence length: 2380
+   Score: -1.77867
+   BLEU score: 0.168862
+\end{verbatim}
+The output from {\tt bleumain} contains match statistics of various orders,
+followed by the global BLEU score, as shown above.
+
+Here, we only calculate the BLEU scores on the lowercase output, using the
+lowercase reference, but you can get BLEU scores for the truecased output by
+using the truecase reference instead.
+
+These results indicate that the translation produced by rescoring is slightly
+worse than the one produced by plain decoding. Given the small size of the
+test set, it seems unlikely that the difference is statistically
+significant. To test this hypothesis, we can use {\tt bleucompare}, which does
+a comparison using pairwise bootstrap resampling:
+\begin{verbatim}
+   > bleucompare test.rat test.out REFS ../corpora/test_en.lc 
+   Comparing using BLEU
+   test.rat got max BLEU score in 0.7% of samples
+   test.out got max BLEU score in 99.3% of samples
+\end{verbatim}
+This indicates that the difference is in fact significant at the 99\% level.
+(Note that you may get completely different results here, since the training
+corpus used is much too small to produce reliable results.)
 
 \section{Final Note}
 Because of differences in rounding, optimization, random number generation,
