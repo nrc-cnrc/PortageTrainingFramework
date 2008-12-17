@@ -124,7 +124,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}  models
 	      -e 's/<TL>/${TGT_LANG}/g' \
 	      -e 's/<CPTS>/${CPTS}/g' \
 			-e 's/<LMS>/${LMS}/g' \
-	      -e 's/^\(\[\(weight-f\)\]\)/##mid##\1/' \
+	      -e 's/^\(\[\(weight-f\|ftm\)\]\)/##mid##\1/' \
 	> tmp.$@
 	WT=$$(perl -e 'print 1; print ":1" foreach (2..`configtool nt tmp.$@`)'); \
 	cat tmp.$@ \
