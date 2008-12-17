@@ -127,7 +127,7 @@ clean.logs:
 .PHONY: check_decoding_model
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model: setup
-	if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
+	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
 		echo "Please run ${DECODING_MODEL_DIR} first!"; \
 		false; \
 	fi
@@ -160,7 +160,7 @@ ${UNTUNED_RESCORING_MODEL}: ${DECODING_MODEL} models ${RESCORING_MODEL_TEMPLATE}
 train: ${RESCORING_MODEL}
 
 ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
-	_LOCAL=1 echo "Tuning a rescoring model."
+	@_LOCAL=1 echo "Tuning a rescoring model."
 	RP_PSUB_OPTS="-N $@" \
 	rat.sh \
 		-lb \

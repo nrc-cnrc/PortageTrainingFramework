@@ -64,7 +64,7 @@ all: ${TRUECASING_MAP}
 all: ${TRUECASING_LM}
 else
 all:
-	echo "Nothing to do, user ask not to do truecasing." >&2
+	@echo "Nothing to do, user asked not to do truecasing." >&2
 endif
 
 

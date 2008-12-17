@@ -55,7 +55,7 @@ IBM_DIR ?= models/TM
 CORPORA_DIR ?= ../corpora
 
 # Where to find the truecasing models.
-TRUECASING_DIR ?= ../models/tc
+TRUECASING_DIR ?= models/tc
 
 # Indicates what are the test/eval set to be translated after having trained a decoder model and a rescoring model
 TEST_SET ?= test1 test2
@@ -78,8 +78,8 @@ vpath %${SRCX}  ${CORPORA_DIR}
 vpath %${TGTX}  ${CORPORA_DIR}
 vpath %${RULEX} ${CORPORA_DIR}
 
-vpath ${DECODING_MODEL}  ${DECODING_MODEL_DIR}  ../models/decode
-vpath ${RESCORING_MODEL} ${RESCORING_MODEL_DIR} ../models/rescore
+vpath ${DECODING_MODEL}  ${DECODING_MODEL_DIR}  models/decode
+vpath ${RESCORING_MODEL} ${RESCORING_MODEL_DIR} models/rescore
 vpath ${TRUECASING_LM}   ${TRUECASING_DIR}
 vpath ${TRUECASING_MAP}  ${TRUECASING_DIR}
 
@@ -165,7 +165,7 @@ clean.logs:
 # If there is no decoding model available, warn the user since we do not know
 # how to make the decoding model in this module.
 ${DECODING_MODEL}::
-	echo "Unable to make $@ please run make in models/decode." >&2
+	@echo "Unable to make $@ please run make in models/decode." >&2
 	false
 
 
@@ -205,7 +205,7 @@ $(addsuffix .out, ${TEST_SET}): SHELL=${GUARD_SHELL}
 	cp workdir-$*${RULEX}-${NBEST_SIZE}best/1best $@
 else
 %.out: ${DECODING_MODEL}.% %${RULEX}
-	echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	canoe-parallel.sh \
 		-lb \
 		-n ${PARALLELISM_LEVEL_TRANSLATE} \
@@ -220,7 +220,7 @@ endif
 out.bleu: $(addsuffix .out.bleu, ${TEST_SET})
 $(addsuffix .out.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
 %.out.bleu: %.out %${TGTX}
-	echo "Calculating BLEU for $@"
+	@echo "Calculating BLEU for $@"
 	bleumain $^ > $@
 
 .PHONY: out.detok
@@ -254,7 +254,7 @@ clean.translate.%:
 .PHONY: rat
 rat: $(addsuffix .rat, ${TEST_SET})
 %.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} models
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	rat.sh \
 		-lb \
 		-n ${PARALLELISM_LEVEL_TRANSLATE} \
@@ -272,7 +272,7 @@ rat: $(addsuffix .rat, ${TEST_SET})
 rat.bleu: $(addsuffix .rat.bleu, ${TEST_SET})
 $(addsuffix .rat.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
 %.rat.bleu: %.rat %${TGTX}
-	echo "Calculating BLEU for $@"
+	@echo "Calculating BLEU for $@"
 	bleumain $^ > $@
 
 .PHONY: rat.detok
@@ -285,7 +285,7 @@ $(addsuffix .rat.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
 #rat.detok.bleu: $(addsuffix .rat.detok.bleu, ${TEST_SET})
 #$(addsuffix .rat.detok.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
 #%.rat.detok.bleu: %.rat.detok %${TGTX}
-#	echo "Calculating BLEU for $@"
+#	@echo "Calculating BLEU for $@"
 #	cat $(word 2, $+) \
 #	| utf8_casemap -c l \
 #	| bleumain $< - > $@
@@ -315,7 +315,7 @@ endif
 		-text=$(word 1, $^) \
 		-lm=$(word 2, $^) \
 		-map=$(word 3, $^) \
-		> $@ 
+		> $@ 2> log.$@
 
 .PHONY: tc.detok
 tc.detok: $(addsuffix .out.tc.detok, ${TEST_SET})
@@ -343,7 +343,7 @@ clean.truecasing.%:
 ########################################
 # General detokenizeer.
 %.detok: %
-	echo "Detokenizing $<"
+	@echo "Detokenizing $<"
 	${DETOKENIZER} -lang=${TGT_LANG} $< $@
 
 
@@ -355,15 +355,17 @@ models: SHELL=${GUARD_SHELL}
 models:
 	ln -sf ${MODEL_DIR} $@
 	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
-		echo "Please run ${DECODING_MODEL_DIR} first!"; \
+		echo "Please train ${DECODING_MODEL_DIR} first!"; \
 		rm $@; \
 		false; \
 	fi
+ifdef DO_RESCORING
 	@if [[ ! -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]]; then \
-      echo "Please run ${RESCORING_MODEL_DIR} first!"; \
+		echo "Please train ${RESCORING_MODEL_DIR} first!"; \
 		rm $@; \
 		false; \
 	fi
+endif
 
 
 
@@ -387,8 +389,18 @@ ibm2.%.gz:
 ibm1.%.gz:
 	ln -sf ${IBM_DIR}/ibm1.*$*.gz ibm1.$*.gz 
 
+########################################
+# Get BLEU scores
+.PHONY: bleu
+bleu: out.bleu
+ifdef DO_RESCORING
+bleu: rat.bleu
+endif
+bleu:
+	more *.bleu | cat
 
 
+########################################
 # Tries to run all targets in this Makefile mainly to check the syntax of all
 # targets.
 .PHONY: full

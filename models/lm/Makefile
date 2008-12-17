@@ -126,7 +126,7 @@ mark: ${CORPUS_NAME}.marked.gz
 
 #.SECONDARY: ${CORPUS_NAME}.marked.gz
 %.marked.gz: %${CORPUS_EXT}
-	_LOCAL=1 echo "Marking $<"
+	@_LOCAL=1 echo "Marking $<"
 	RP_PSUB_OPTS="-N $@" \
 	set -o pipefail; zcat -f $< \
 	| add-start-end.sh \
@@ -150,7 +150,7 @@ irstlm: ${LM_NAME}.ilm.gz
 # Here we've added LM_DESC to strip it out from the marked corpus file name.
 #.SECONDARY: ${LM_NAME}.ilm.gz
 %${LM_DESC}.ilm.gz: %.marked.gz
-	_LOCAL=1 echo "  Creating IRSTLM $@"
+	@_LOCAL=1 echo "  Creating IRSTLM $@"
 	_LOCAL=1 ${RM} $@
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	IRSTLM=${IRSTLM} ${BUILD_LM_PGM} \
@@ -181,7 +181,7 @@ arpa: ${LM_NAME}.lm.gz
 #.SECONDARY: ${LM_NAME}.lm.gz
 ifdef LM_TOOLKIT_SRI
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
-	_LOCAL=1 echo "  Creating ARPA text format $@"
+	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	ngram-count \
 		-interpolate \
@@ -193,7 +193,7 @@ ifdef LM_TOOLKIT_SRI
 
 else
 %.lm.gz: %.ilm.gz
-	_LOCAL=1 echo "  Creating ARPA text format $@"
+	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	compile-lm \
 		--text yes \
@@ -221,7 +221,7 @@ blmt: ${LM_NAME}.blmt
 
 #.SECONDARY: ${LM_NAME}.blmt
 %.blmt: %.ilm.gz
-	_LOCAL=1 echo "  Creating bin.ARPA format $@"
+	@_LOCAL=1 echo "  Creating bin.ARPA format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	compile-lm \
 		$< \
@@ -243,7 +243,7 @@ quantize: $(LM_NAME).qlm.gz
 
 #.SECONDARY: ${LM_NAME}.qlm.gz
 %.qlm: %.lm.gz
-	_LOCAL=1 echo "  qARPA $< to $@"
+	@_LOCAL=1 echo "  qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	quantize-lm \
 		$< \
@@ -265,7 +265,7 @@ Qblmt: ${LM_NAME}.Qblmt
 
 #.SECONDARY: ${LM_NAME}.Qblmt
 %.Qblmt: %.qlm.gz
-	_LOCAL=1 echo "  bin.qARPA $< to $@"
+	@_LOCAL=1 echo "  bin.qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	compile-lm \
 		$< \

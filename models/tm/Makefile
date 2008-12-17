@@ -149,7 +149,7 @@ IBM1_MODEL_EXTRAS ?=
 .PHONY:  ibm1_model
 ibm1_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm1.$t.$d.gz))
 ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v \
@@ -160,7 +160,7 @@ ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 		>& log.$(basename $@)
 
 ibm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v -r \
@@ -186,7 +186,7 @@ IBM2_MODEL_EXTRAS ?=
 .PHONY:  ibm2_model
 ibm2_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm2.$t.$d.gz))
 ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v -m \
@@ -199,7 +199,7 @@ ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 		>& log.$(basename $@)
 
 ibm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v -r \
@@ -227,7 +227,7 @@ HMM_MODEL_EXTRAS ?=
 .PHONY:  hmm_model
 hmm_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm.$t.$d.gz))
 hmm.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v  \
@@ -240,7 +240,7 @@ hmm.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 		>& log.$(basename $@)
 
 hmm.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v -r \
@@ -268,7 +268,7 @@ LIANG_MODEL_EXTRAS ?=
 .PHONY:  liang_model
 liang_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, liang.$t.$d.gz))
 liang.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v \
@@ -281,7 +281,7 @@ liang.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 		>& log.$(basename $@)
 
 liang.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v -r \
@@ -325,7 +325,7 @@ IBM2_JPT_PREFIX = jpt.ibm2
 .PHONY:  ibm2_jpt
 ibm2_jpt: $(foreach t, ${TRAIN_TM}, ${IBM2_JPT_PREFIX}.$t.${JOINTX})
 ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
 		-n ${PARALLELISM_LEVEL_TM} \
@@ -345,7 +345,7 @@ HMM_JPT_PREFIX=jpt.hmm
 .PHONY:  hmm_jpt
 hmm_jpt: $(foreach t, ${TRAIN_TM}, ${HMM_JPT_PREFIX}.$t.${JOINTX})
 ${HMM_JPT_PREFIX}.%.${JOINTX}:  hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
 		-n ${PARALLELISM_LEVEL_TM} \
@@ -365,7 +365,7 @@ LIANG_JPT_PREFIX=jpt.liang
 .PHONY:  liang_jpt
 liang_jpt: $(foreach t, ${TRAIN_TM}, ${LIANG_JPT_PREFIX}.$t.${JOINTX})
 ${LIANG_JPT_PREFIX}.%.${JOINTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
 		-n ${PARALLELISM_LEVEL_TM} \
@@ -408,7 +408,7 @@ ibm2_cpt_list:
 ibm2_cpt: ${ibm2_cpt_list}
 
 ${IBM2_CPT_PREFIX}.%.${SRC_2_TGTX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX} ${IBM2_JPT_PREFIX}.%.${JOINTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
@@ -425,7 +425,7 @@ ${IBM2_CPT_PREFIX}.%.${SRC_2_TGTX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_
 		>& log.$(basename $@)
 
 ${IBM2_CPT_PREFIX}.%.${TGT_2_SRCX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX} ${IBM2_JPT_PREFIX}.%.${JOINTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
@@ -459,7 +459,7 @@ hmm_cpt_list:
 hmm_cpt: ${hmm_cpt_list}
 
 ${HMM_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGTX} ${HMM_JPT_PREFIX}.%.${JOINTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
@@ -476,7 +476,7 @@ ${HMM_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGT
 		>& log.$(basename $@)
 
 ${HMM_CPT_PREFIX}.%.${TGT_2_SRCX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGTX} ${HMM_JPT_PREFIX}.%.${JOINTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
@@ -510,7 +510,7 @@ liang_cpt_list:
 liang_cpt: ${liang_cpt_list}
 
 ${LIANG_CPT_PREFIX}.%.${SRC_2_TGTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_TGTX}  ${LIANG_JPT_PREFIX}.%.${JOINTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
@@ -527,7 +527,7 @@ ${LIANG_CPT_PREFIX}.%.${SRC_2_TGTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GI
 		>& log.$(basename $@)
 
 ${LIANG_CPT_PREFIX}.%.${TGT_2_SRCX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_TGTX}  ${LIANG_JPT_PREFIX}.%.${JOINTX}
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
@@ -554,7 +554,7 @@ ${LIANG_CPT_PREFIX}.%.${TGT_2_SRCX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GI
 ########################################
 # INVERT ANY CONDITIONAL PHRASE TABLE
 #%.${TGT_2_SRCX}: %.${SRC_2_TGTX}
-#	echo "Generating $@"
+#	@echo "Generating $@"
 #	zcat $< \
 #	| reverse_cond_phr_tab.py \
 #	| TMPDIR=. tmtext_sort.sh -1st - \
@@ -566,7 +566,7 @@ ${LIANG_CPT_PREFIX}.%.${TGT_2_SRCX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GI
 ########################################
 # INVERT ANY JOINT PHRASE TABLE
 %.${TGT}-${SRC}.gz: %.${JOINT}.gz
-	_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@" \
 	zcat $< \
 	| reverse_JOINT_phr_tab.py \

@@ -95,7 +95,7 @@ tc: corpora
 	${MAKE} -C models/tc all
 else
 tc:
-	echo "Not training the truecasing models." >&2
+	@echo "Not training the truecasing models." >&2
 endif
 
 
