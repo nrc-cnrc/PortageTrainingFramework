@@ -1,3 +1,6 @@
+# @author Samuel Larkin
+# @brief Master parameter file where all user specific parameters should be set.
+#
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
@@ -110,7 +113,8 @@ export HELDOUT_SET  ?= ${TUNE_DECODE} ${TUNE_RESCORE} ${TEST_SET}
 export CORPORA_SET  ?= ${TRAIN_SET} ${HELDOUT_SET}
 
 # Define what type of phrase table we want to generate.
-export PT_TYPE ?= ibm2_cpt
+# Can be: {ibm2_cpt | hmm_cpt | liang_cpt}
+export PT_TYPES ?= ibm2_cpt hmm_cpt
 
 # Define what type of language model we want to generate.
 export LM_TYPES ?= binlm

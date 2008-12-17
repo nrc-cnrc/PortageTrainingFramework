@@ -11,3 +11,4 @@
 [segmentation-model] none
 [cube-pruning]
 [bypass-marked]
+[weight-f] <ENABLE_FTM>

@@ -1,6 +1,9 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3
 #
+# @author Samuel Larkin
+# @brief Tunes/trains a decoding model.
+#
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
@@ -119,11 +122,16 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}  models
 	cat $< \
 	| sed -e 's/<SL>/${SRC_LANG}/g' \
 	      -e 's/<TL>/${TGT_LANG}/g' \
-	      -e 's/<TRAIN_TM>/${TRAIN_TM}/g' \
-	      -e 's/<TRAIN_LM>/${TRAIN_LM}/g' \
 	      -e 's/<CPTS>/${CPTS}/g' \
-	      -e 's/<LMS>/${LMS}/g' \
+			-e 's/<LMS>/${LMS}/g' \
+	      -e 's/^\(\[\(weight-f\)\]\)/##mid##\1/' \
+	> tmp.$@
+	WT=$$(perl -e 'print 1; print ":1" foreach (2..`configtool nt tmp.$@`)'); \
+	cat tmp.$@ \
+	| sed -e "s/^##mid##//" \
+	      -e "s/<ENABLE_FTM>/$$WT/" \
 	> $@
+	rm tmp.$@
 	configtool check $@
 
 clean: clean.canoe.ini

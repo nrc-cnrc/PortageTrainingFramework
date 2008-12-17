@@ -1,6 +1,9 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3
 #
+# @author Samuel Larkin
+# @brief Tunes/trains a rescoring model.
+#
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
@@ -136,19 +139,19 @@ check_decoding_model: setup
 # requires: a trained decoding model.
 # This provides the default rescore-model.ini.
 ${UNTUNED_RESCORING_MODEL}: SHELL=${GUARD_SHELL}
-${UNTUNED_RESCORING_MODEL}: ${DECODING_MODEL} models
-	configtool rescore-model:ffvals $< | cut -f 1 -d ' ' > $@
-	echo "IBM2TgtGivenSrc:${IBM_DIR}/ibm2.${TGT_GIVEN_SRCX}" >> $@
-	echo "IBM2SrcGivenTgt:${IBM_DIR}/ibm2.${SRC_GIVEN_TGTX}" >> $@
-	echo "IBM1WTransTgtGivenSrc:${IBM_DIR}/ibm1.${TGT_GIVEN_SRCX}" >> $@
-	echo "IBM1WTransSrcGivenTgt:${IBM_DIR}/ibm1.${SRC_GIVEN_TGTX}" >> $@
-	echo "LengthFF" >> $@
-	echo "nbestPhrasePostSrc:1#<ffval-wts>#<pfx>" >> $@
-	echo "nbestSentLenPost:1#<ffval-wts>#<pfx>" >> $@
-	echo "nbestWordPostTrg:1#<ffval-wts>#<pfx>" >> $@
-	echo "nbestNgramPost:1#1#<ffval-wts>#<pfx>" >> $@
-	echo "nbestNgramPost:2#1#<ffval-wts>#<pfx>" >> $@
-	
+${UNTUNED_RESCORING_MODEL}: ${DECODING_MODEL} models ${RESCORING_MODEL_TEMPLATE}
+	set -o pipefail; configtool rescore-model:ffvals $< | cut -f 1 -d ' ' > $@
+	cat ${lastword $+} \
+	| sed -e "s#IBM1FWD#${IBM_DIR}/ibm1.${TGT_GIVEN_SRCX}#" \
+	      -e "s#IBM1BKW#${IBM_DIR}/ibm1.${SRC_GIVEN_TGTX}#" \
+	      -e "s#IBM2FWD#${IBM_DIR}/ibm2.${TGT_GIVEN_SRCX}#" \
+	      -e "s#IBM2BKW#${IBM_DIR}/ibm2.${SRC_GIVEN_TGTX}#" \
+	      -e "s#HMMFWD#${IBM_DIR}/hmm.${TGT_GIVEN_SRCX}#" \
+	      -e "s#HMMBKW#${IBM_DIR}/hmm.${SRC_GIVEN_TGTX}#" \
+	      -e "s#LIANGFWD#${IBM_DIR}/liang.${TGT_GIVEN_SRCX}#" \
+	      -e "s#LIANGBKW#${IBM_DIR}/liang.${SRC_GIVEN_TGTX}#" \
+	>> $@
+
 
 
 ########################################

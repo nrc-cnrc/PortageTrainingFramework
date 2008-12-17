@@ -1,0 +1,25 @@
+# NB: this omits some features that are slow to compute. Use rescore_train -H
+# for a complete list.
+LengthFF
+IBM1TgtGivenSrc:IBM1FWD
+IBM1SrcGivenTgt:IBM1BKW
+IBM2TgtGivenSrc:IBM2FWD
+IBM2SrcGivenTgt:IBM2BKW
+HMMTgtGivenSrc:HMMFWD
+HMMSrcGivenTgt:HMMBKW
+HMMVitTgtGivenSrc:HMMFWD
+HMMVitSrcGivenTgt:HMMBKW
+IBM1WTransTgtGivenSrc:IBM1FWD
+IBM1WTransSrcGivenTgt:IBM1BKW
+IBM1DeletionTgtGivenSrc:IBM1FWD
+IBM1DeletionSrcGivenTgt:IBM1BKW
+nbestWordPostSrc:1#<ffval-wts>#<pfx>
+nbestWordPostTrg:1#<ffval-wts>#<pfx>
+nbestPhrasePostSrc:1#<ffval-wts>#<pfx>
+nbestPhrasePostTrg:1#<ffval-wts>#<pfx>
+nbestNgramPost:2#1#<ffval-wts>#<pfx>
+nbestSentLenPost:1#<ffval-wts>#<pfx>
+ParMismatch
+QuotMismatch:ef
+#CacheLM:<src>.id
+RatioFF

@@ -1,6 +1,9 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3
 #
+# @author Samuel Larkin
+# @brief Simple preprocessing of corpora, mainly lowercasing.
+#
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada

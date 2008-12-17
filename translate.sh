@@ -16,6 +16,10 @@ Usage: translate.sh [options] source_file
 
   Takes a source text file and translates it according to the current trained
   models.
+  source_file must be tokenized and splitted one sentence per line and have the
+  following form:
+  <prefix>_<source_language>.al
+  where <source_language> be 2 letters indicating the source language.
 
 Options:
 
@@ -109,6 +113,10 @@ test $# -eq 0   && error_exit "Missing the input file to translate."
 full_source=$1; shift
 source=`basename $full_source`
 test $# -gt 0   && error_exit "Superfluous arguments $*"
+
+if [[ $source !~ _..\.al ]]; then
+   error_exit "Source file doesn't have the proper name format."
+fi
 
 # Extract the prefix of this translation set.
 prefix=${source%_*.*}

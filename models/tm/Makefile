@@ -1,6 +1,9 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3
 #
+# @author Samuel Larkin
+# @brief Trains ibm models, hmm models, joint frequency counts models and phrase tables.
+#
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
@@ -26,7 +29,7 @@ export LANG   = en_CA.utf8
 export LC_ALL = en_CA.utf8
 
 # Define what type of phrase table we want to generate.
-PT_TYPE ?= ibm2_cpt
+PT_TYPES ?= ibm2_cpt hmm_cpt
 
 # What program to use to train models
 CAT ?= cat.sh
@@ -108,7 +111,17 @@ help:
 
 # Define all the work to be done.
 .PHONY: all
-all: ${PT_TYPE}
+all: SHELL=${GUARD_SHELL}
+all:
+	for t in ${PT_TYPES}; do ${MAKE} $$t; done
+
+
+
+# What the user can expect from this module.
+.PHONY: list_final_output
+list_final_output: SHELL=${GUARD_SHELL}
+list_final_output: $(addsuffix _list,${PT_TYPES})
+	@echo "are the expected final output."
 
 
 
@@ -386,8 +399,13 @@ IBM2_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
 IBM2_SMOOTHERS_DESCRIPTION ?= -rf-zn-kn3
 IBM2_CPT_PREFIX=cpt.ibm2${IBM2_SMOOTHERS_DESCRIPTION}
 
+ibm2_cpt_list = $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${IBM2_CPT_PREFIX}.$t.$d))
+ibm2_cpt_list: SHELL=${GUARD_SHELL}
+ibm2_cpt_list:
+	@echo ${ibm2_cpt_list}
+
 .PHONY:  ibm2_cpt
-ibm2_cpt: $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${IBM2_CPT_PREFIX}.$t.$d))
+ibm2_cpt: ${ibm2_cpt_list}
 
 ${IBM2_CPT_PREFIX}.%.${SRC_2_TGTX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX} ${IBM2_JPT_PREFIX}.%.${JOINTX}
 	_LOCAL=1 echo "Generating $@"
@@ -432,8 +450,13 @@ HMM_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
 HMM_SMOOTHERS_DESCRIPTION ?= -rf-zn-kn3
 HMM_CPT_PREFIX=cpt.hmm${HMM_SMOOTHERS_DESCRIPTION}
 
+hmm_cpt_list = $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${HMM_CPT_PREFIX}.$t.$d))
+hmm_cpt_list: SHELL=${GUARD_SHELL}
+hmm_cpt_list:
+	@echo ${hmm_cpt_list}
+
 .PHONY:  hmm_cpt
-hmm_cpt: $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${HMM_CPT_PREFIX}.$t.$d))
+hmm_cpt: ${hmm_cpt_list}
 
 ${HMM_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGTX} ${HMM_JPT_PREFIX}.%.${JOINTX}
 	_LOCAL=1 echo "Generating $@"
@@ -478,8 +501,13 @@ LIANG_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
 LIANG_SMOOTHERS_DESCRIPTION ?= -rf-zn-kn3
 LIANG_CPT_PREFIX=cpt.liang${LIANG_SMOOTHERS_DESCRIPTION}
 
+liang_cpt_list = $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${LIANG_CPT_PREFIX}.$t.$d))
+liang_cpt_list: SHELL=${GUARD_SHELL}
+liang_cpt_list:
+	@echo ${liang_cpt_list}
+
 .PHONY:  liang_cpt
-liang_cpt: $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${LIANG_CPT_PREFIX}.$t.$d))
+liang_cpt: ${liang_cpt_list}
 
 ${LIANG_CPT_PREFIX}.%.${SRC_2_TGTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_TGTX}  ${LIANG_JPT_PREFIX}.%.${JOINTX}
 	_LOCAL=1 echo "Generating $@"

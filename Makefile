@@ -1,6 +1,9 @@
 #!/usr/bin/make -rf
 # vim:noet:ts=3
 #
+# @author Samuel Larkin
+# @brief Master makefile for the framework, handles dependencies between modules.
+#
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
