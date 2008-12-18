@@ -30,7 +30,7 @@ export LANG   = en_CA.utf8
 export LC_ALL = en_CA.utf8
 
 # Define what type of phrase table we want to generate.
-PT_TYPES ?= ibm2_cpt hmm_cpt
+PT_TYPES ?= ibm2_cpt liang_cpt
 
 # What program to use to train models
 CAT ?= cat.sh
@@ -185,6 +185,7 @@ clean.ibm1:
 # requires: source and target corpora and ibm1 models.
 IBM2_MODEL_EXTRAS ?=
 .PHONY:  ibm2_model
+ibm2_model: ibm1_model
 ibm2_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm2.$t.$d.gz))
 ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
@@ -226,6 +227,7 @@ clean.ibm2:
 # requires: source and target corpora and ibm1 models.
 HMM_MODEL_EXTRAS ?=
 .PHONY:  hmm_model
+hmm_model: ibm1_model
 hmm_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm.$t.$d.gz))
 hmm.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
@@ -267,6 +269,7 @@ clean.hmm:
 # requires: source and target corpora and ibm1 models.
 LIANG_MODEL_EXTRAS ?=
 .PHONY:  liang_model
+liang_model: ibm1_model
 liang_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, liang.$t.$d.gz))
 liang.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
