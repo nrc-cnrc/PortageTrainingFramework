@@ -2,6 +2,7 @@
 # vim:noet:ts=3
 #
 # @author Samuel Larkin
+# @file Makefile
 # @brief Translates, rescores, truecases and detokenizes documents.
 #
 # Technologies langagieres interactives / Interactive Language Technologies

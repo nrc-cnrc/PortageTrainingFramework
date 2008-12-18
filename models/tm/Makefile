@@ -2,6 +2,7 @@
 # vim:noet:ts=3
 #
 # @author Samuel Larkin
+# @file Makefile
 # @brief Trains ibm models, hmm models, joint frequency counts models and phrase tables.
 #
 # Technologies langagieres interactives / Interactive Language Technologies

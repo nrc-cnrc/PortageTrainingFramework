@@ -2,6 +2,7 @@
 # vim:noet:ts=3
 #
 # @author Samuel Larkin
+# @file Makefile
 # @brief Simple preprocessing of corpora, mainly lowercasing.
 #
 # Technologies langagieres interactives / Interactive Language Technologies

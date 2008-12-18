@@ -2,6 +2,7 @@
 # vim:noet:ts=3
 #
 # @author Samuel Larkin
+# @file Makefile
 # @brief Tunes/trains a rescoring model.
 #
 # Technologies langagieres interactives / Interactive Language Technologies

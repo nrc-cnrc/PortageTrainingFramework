@@ -2,6 +2,7 @@
 # vim:noet:ts=3
 #
 # @author Samuel Larkin
+# @file Makefile
 # @brief Trains language model files.
 #
 # Technologies langagieres interactives / Interactive Language Technologies

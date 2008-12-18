@@ -2,6 +2,7 @@
 # vim:noet:ts=3
 #
 # @author Samuel Larkin
+# @file Makefile
 # @brief Master makefile for the framework, handles dependencies between modules.
 #
 # Technologies langagieres interactives / Interactive Language Technologies

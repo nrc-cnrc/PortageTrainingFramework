@@ -2,6 +2,7 @@
 # vim:noet:ts=3
 #
 # @author Samuel Larkin
+# @file Makefile
 # @brief Trains a truecasing model.
 #
 # Technologies langagieres interactives / Interactive Language Technologies
