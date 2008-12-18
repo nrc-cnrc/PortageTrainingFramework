@@ -223,18 +223,19 @@ framework to finish this toy experiment while skipping language model training.
 Another set of parameters you might want to adjust are the various
 \texttt{PARALLELISM\_LEVEL\_*} variables.  \PS is written in such a way as to
 take advantage of multi-processor computers and/or multi-node computing
-clusters, doing tasks in parellel where possible.  By default, the framework
-uses \texttt{qsub} to submit jobs if you're working on a cluster, but minimizes
-parallelism otherwise.  Either way, parallelism will be even more aggressive if
-you add the \texttt{-j} option to each \texttt{make} command line (use with
-caution!).
+clusters, doing tasks in parellel where possible.  If you're not running on a
+cluster, the number of CPUs on your machine is a good choice for all five
+variables (the default is conservatively set to 1).  If your are running on a
+cluster, the framework uses \texttt{qsub} to submit jobs, via the
+\texttt{run-parallel.sh} and \texttt{psub} scripts, and you can set the five
+variables according to resources available to you.
 
 One more thing you will notice about this framework is that most commands run
 by make are preceeded by \texttt{RP\_PSUB\_OPTS=...} or \texttt{\_LOCAL=1}.
 These only have an impact when running on a cluster, and are written in such a
-way that they are effectively ignored otherwise.  When working on a cluster,
-commands preceded by \texttt{\_LOCAL=1}, which should be very short commands,
-will not be run directly instead of being submitted to the queue, while
+way that they are ignored otherwise.  When working on a cluster, commands
+preceded by \texttt{\_LOCAL=1}, which are all very short commands, will be run
+directly instead of being submitted to the queue, while
 \texttt{RP\_PSUB\_OPTS=...} is used to specify additional options to
 \texttt{psub}, which is used in \PS to encapsulate the invocation of
 \texttt{qsub}.  If your cluster has specific usage rules or your require
@@ -285,13 +286,19 @@ toolkits such as CMU SLM (www.speech.cs.cmu.edu/ SLM\_info.html), SRILM
 If you are using the IRSTLM toolkit, here is the command used to produce the
 model needed for this example, \texttt{train\_en-kn-5g.binlm.gz}:
 \begin{verbatim}
+   > cd ..             # only needed if you were still in corpora
    > make lms
    make -C models/lm all
-   zcat -f ../../corpora/train_en.lc.gz | add-start-end.sh | gzip -c \
+   Marking ../../corpora/train_en.lc.gz
+   zcat -f ../../corpora/train_en.lc.gz \
+      | add-start-end.sh \
+      | gzip -c \
       > train_en.marked.gz
+   Creating IRSTLM train_en-kn-5g.ilm.gz
    build-lm.sh -p -t stat.$$ -n 5 -k 1 -s kneser-ney \
       -i "gunzip -c train_en.marked.gz" -o train_en-kn-5g.ilm.gz \
       >& log.train_en-kn-5g.ilm
+   Creating ARPA text format train_en-kn-5g.lm.gz
    compile-lm --text yes train_en-kn-5g.ilm.gz unsorted.train_en-kn-5g.lm \
       >& log.train_en-kn-5g.lm
    lm_sort_filter.sh -lm unsorted.train_en-kn-5g.lm train_en-kn-5g.lm.gz
@@ -314,6 +321,7 @@ model:
 \begin{verbatim}
    > make lms
    make -C models/lm all 
+   Creating ARPA text format train_en-kn-5g.lm.gz
    ngram-count -interpolate -kndiscount -order 5 \
       -text ../../corpora/train_en.lc.gz -lm train_en-kn-5g.lm.gz \
       >& log.train_en-kn-5g.lm
