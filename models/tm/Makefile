@@ -30,7 +30,11 @@ export LANG   = en_CA.utf8
 export LC_ALL = en_CA.utf8
 
 # Define what type of phrase table we want to generate.
+<<<<<<< Makefile
+PT_TYPES ?= ibm2_cpt hmm1_cpt
+=======
 PT_TYPES ?= ibm2_cpt liang_cpt
+>>>>>>> 1.11
 
 # What program to use to train models
 CAT ?= cat.sh
@@ -141,7 +145,7 @@ clean:
 models: ibm1_model
 models: ibm2_model
 models: hmm_model
-models: liang_model
+models: hmm2_model
 
 ########################################
 # TRAINING THE IBM1 MODELS
@@ -223,55 +227,55 @@ clean.ibm2:
 
 
 ########################################
-# TRAINING THE HMM MODELS
+# TRAINING THE HMM1 MODELS => He-lex
 # requires: source and target corpora and ibm1 models.
-HMM_MODEL_EXTRAS ?=
-.PHONY:  hmm_model
-hmm_model: ibm1_model
-hmm_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm.$t.$d.gz))
-hmm.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
+HMM1_MODEL_EXTRAS ?=
+.PHONY:  hmm1_model
+hmm1_model: ibm1_model
+hmm1_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm1.$t.$d.gz))
+hmm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v  \
 		-n1 0 -n2 5 \
-		-mimic default \
+		-mimic he-lex \
 		-i $(word 3, $+) \
-		${HMM_MODEL_EXTRAS} \
+		${HMM1_MODEL_EXTRAS} \
 		$@ \
 		$(wordlist 1, 2, $+) \
 		>& log.$(basename $@)
 
-hmm.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
+hmm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
 		-v -r \
 		-n1 0 -n2 5 \
-		-mimic default \
+		-mimic he-lex \
 		-i $(word 3, $+) \
-		${HMM_MODEL_EXTRAS} \
+		${HMM1_MODEL_EXTRAS} \
 		$@ \
 		$(wordlist 1, 2, $+) \
 		>& log.$(basename $@)
 
-clean: clean.hmm
+clean: clean.hmm1
 
-.PHONY: clean.hmm
-clean.hmm: SHELL=${GUARD_SHELL}
-clean.hmm:
-	$(RM) hmm.*
+.PHONY: clean.hmm1
+clean.hmm1: SHELL=${GUARD_SHELL}
+clean.hmm1:
+	$(RM) hmm1.*
 
 
 
 ########################################
-# TRAINING THE LIANG MODELS
+# TRAINING THE HMM2 MODELS => liang
 # requires: source and target corpora and ibm1 models.
-LIANG_MODEL_EXTRAS ?=
-.PHONY:  liang_model
-liang_model: ibm1_model
-liang_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, liang.$t.$d.gz))
-liang.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
+HMM2_MODEL_EXTRAS ?=
+.PHONY:  hmm2_model
+hmm2_model: ibm1_model
+hmm2_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm2.$t.$d.gz))
+hmm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
@@ -279,12 +283,12 @@ liang.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 		-n1 0 -n2 5 \
 		-mimic liang \
 		-i $(word 3, $+) \
-		${LIANG_MODEL_EXTRAS} \
+		${HMM2_MODEL_EXTRAS} \
 		$@ \
 		$(wordlist 1, 2, $+) \
 		>& log.$(basename $@)
 
-liang.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
+hmm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
@@ -292,17 +296,17 @@ liang.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 		-n1 0 -n2 5 \
 		-mimic liang \
 		-i $(word 3, $+) \
-		${LIANG_MODEL_EXTRAS} \
+		${HMM2_MODEL_EXTRAS} \
 		$@ \
 		$(wordlist 1, 2, $+) \
 		>& log.$(basename $@)
 
-clean: clean.liang
+clean: clean.hmm2
 
-.PHONY: clean.liang
-clean.liang: SHELL=${GUARD_SHELL}
-clean.liang:
-	$(RM) liang.*
+.PHONY: clean.hmm2
+clean.hmm2: SHELL=${GUARD_SHELL}
+clean.hmm2:
+	$(RM) hmm2.*
 
 
 
@@ -310,8 +314,8 @@ clean.liang:
 # JOINT PHRASE TABLES
 .PHONY: jpts
 jpts: ibm2_jpt
-jpts: hmm_jpt
-jpts: liang_jpt
+jpts: hmm1_jpt
+jpts: hmm2_jpt
 
 clean: clean.jpts
 
@@ -342,13 +346,13 @@ ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGT
 
 
 ########################################
-# HMM JOINT PHRASE TABLES
+# HMM1 JOINT PHRASE TABLES
 # requires: hmm models, source and target corpora.
-HMM_JPT_PREFIX=jpt.hmm
+HMM1_JPT_PREFIX=jpt.hmm1
 
-.PHONY:  hmm_jpt
-hmm_jpt: $(foreach t, ${TRAIN_TM}, ${HMM_JPT_PREFIX}.$t.${JOINTX})
-${HMM_JPT_PREFIX}.%.${JOINTX}:  hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
+.PHONY:  hmm1_jpt
+hmm1_jpt: $(foreach t, ${TRAIN_TM}, ${HMM1_JPT_PREFIX}.$t.${JOINTX})
+${HMM1_JPT_PREFIX}.%.${JOINTX}:  hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
@@ -362,13 +366,13 @@ ${HMM_JPT_PREFIX}.%.${JOINTX}:  hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGTX} 
 
 
 ########################################
-# LIANG JOINT PHRASE TABLES
-# requires: liang models, source and target corpora.
-LIANG_JPT_PREFIX=jpt.liang
+# HMM2 JOINT PHRASE TABLES => liang
+# requires: hmm2 models, source and target corpora.
+HMM2_JPT_PREFIX=jpt.hmm2
 
-.PHONY:  liang_jpt
-liang_jpt: $(foreach t, ${TRAIN_TM}, ${LIANG_JPT_PREFIX}.$t.${JOINTX})
-${LIANG_JPT_PREFIX}.%.${JOINTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
+.PHONY:  hmm2_jpt
+hmm2_jpt: $(foreach t, ${TRAIN_TM}, ${HMM2_JPT_PREFIX}.$t.${JOINTX})
+${HMM2_JPT_PREFIX}.%.${JOINTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
@@ -386,8 +390,8 @@ ${LIANG_JPT_PREFIX}.%.${JOINTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_
 # CONDITIONAL PHRASE TABLES
 .PHONY: cpts
 cpts: ibm2_cpt
-cpts: hmm_cpt
-cpts: liang_cpt
+cpts: hmm1_cpt
+cpts: hmm2_cpt
 
 clean: clean.cpts
 
@@ -448,21 +452,21 @@ ${IBM2_CPT_PREFIX}.%.${TGT_2_SRCX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_
 
 
 ########################################
-# HMM CONDITIONAL PHRASE TABLES
-# requires: hmm models and ibm2 JOINT frequency phrase table.
-HMM_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
-HMM_SMOOTHERS_DESCRIPTION ?= -rf-zn-kn3
-HMM_CPT_PREFIX=cpt.hmm${HMM_SMOOTHERS_DESCRIPTION}
+# HMM1 CONDITIONAL PHRASE TABLES => He-lex
+# requires: hmm1 models and ibm2 JOINT frequency phrase table.
+HMM1_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
+HMM1_SMOOTHERS_DESCRIPTION ?= -rf-zn-kn3
+HMM1_CPT_PREFIX=cpt.hmm1${HMM1_SMOOTHERS_DESCRIPTION}
 
-hmm_cpt_list = $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${HMM_CPT_PREFIX}.$t.$d))
-hmm_cpt_list: SHELL=${GUARD_SHELL}
-hmm_cpt_list:
-	@echo ${hmm_cpt_list}
+hmm1_cpt_list = $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${HMM1_CPT_PREFIX}.$t.$d))
+hmm1_cpt_list: SHELL=${GUARD_SHELL}
+hmm1_cpt_list:
+	@echo ${hmm1_cpt_list}
 
-.PHONY:  hmm_cpt
-hmm_cpt: ${hmm_cpt_list}
+.PHONY:  hmm1_cpt
+hmm1_cpt: ${hmm1_cpt_list}
 
-${HMM_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGTX} ${HMM_JPT_PREFIX}.%.${JOINTX}
+${HMM1_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGTX} ${HMM1_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
@@ -471,7 +475,7 @@ ${HMM_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGT
 		-hmm \
 		-v -i -z \
 		-1 ${SRC} -2 ${TGT} \
-		${HMM_SMOOTHERS} \
+		${HMM1_SMOOTHERS} \
 		-multipr fwd \
 		-o $(subst .${SRC_2_TGTX}, , $@) \
 		-ibm_l2_given_l1  $(filter %${TGT_GIVEN_SRCX}, $+) \
@@ -479,7 +483,7 @@ ${HMM_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGT
 		$(filter %${JOINT}.gz, $+) \
 		>& log.$(basename $@)
 
-${HMM_CPT_PREFIX}.%.${TGT_2_SRCX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGTX} ${HMM_JPT_PREFIX}.%.${JOINTX}
+${HMM1_CPT_PREFIX}.%.${TGT_2_SRCX}: hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGTX} ${HMM1_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
@@ -488,7 +492,7 @@ ${HMM_CPT_PREFIX}.%.${TGT_2_SRCX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGT
 		-hmm \
 		-v -i -z \
 		-1 ${SRC} -2 ${TGT} \
-		${HMM_SMOOTHERS} \
+		${HMM1_SMOOTHERS} \
 		-multipr rev \
 		-o $(subst .${TGT_2_SRCX}, , $@) \
 		-ibm_l2_given_l1  $(filter %${TGT_GIVEN_SRCX}, $+) \
@@ -499,21 +503,21 @@ ${HMM_CPT_PREFIX}.%.${TGT_2_SRCX}: hmm.%.${TGT_GIVEN_SRCX} hmm.%.${SRC_GIVEN_TGT
 
 
 ########################################
-# LIANG CONDITIONAL PHRASE TABLES
-# requires: liang models and ibm2 JOINT frequency phrase table.
-LIANG_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
-LIANG_SMOOTHERS_DESCRIPTION ?= -rf-zn-kn3
-LIANG_CPT_PREFIX=cpt.liang${LIANG_SMOOTHERS_DESCRIPTION}
+# HMM2 CONDITIONAL PHRASE TABLES => liang
+# requires: hmm2 models and ibm2 JOINT frequency phrase table.
+HMM2_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
+HMM2_SMOOTHERS_DESCRIPTION ?= -rf-zn-kn3
+HMM2_CPT_PREFIX=cpt.hmm2${HMM2_SMOOTHERS_DESCRIPTION}
 
-liang_cpt_list = $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${LIANG_CPT_PREFIX}.$t.$d))
-liang_cpt_list: SHELL=${GUARD_SHELL}
-liang_cpt_list:
-	@echo ${liang_cpt_list}
+hmm2_cpt_list = $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${HMM2_CPT_PREFIX}.$t.$d))
+hmm2_cpt_list: SHELL=${GUARD_SHELL}
+hmm2_cpt_list:
+	@echo ${hmm2_cpt_list}
 
-.PHONY:  liang_cpt
-liang_cpt: ${liang_cpt_list}
+.PHONY:  hmm2_cpt
+hmm2_cpt: ${hmm2_cpt_list}
 
-${LIANG_CPT_PREFIX}.%.${SRC_2_TGTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_TGTX}  ${LIANG_JPT_PREFIX}.%.${JOINTX}
+${HMM2_CPT_PREFIX}.%.${SRC_2_TGTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGTX}  ${HMM2_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
@@ -522,7 +526,7 @@ ${LIANG_CPT_PREFIX}.%.${SRC_2_TGTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GI
 		-hmm \
 		-v -i -z \
 		-1 ${SRC} -2 ${TGT} \
-		${LIANG_SMOOTHERS} \
+		${HMM2_SMOOTHERS} \
 		-multipr fwd \
 		-o $(subst .${SRC_2_TGTX}, , $@) \
 		-ibm_l2_given_l1  $(filter %${TGT_GIVEN_SRCX}, $+) \
@@ -530,7 +534,7 @@ ${LIANG_CPT_PREFIX}.%.${SRC_2_TGTX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GI
 		$(filter %${JOINT}.gz, $+) \
 		>& log.$(basename $@)
 
-${LIANG_CPT_PREFIX}.%.${TGT_2_SRCX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GIVEN_TGTX}  ${LIANG_JPT_PREFIX}.%.${JOINTX}
+${HMM2_CPT_PREFIX}.%.${TGT_2_SRCX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGTX}  ${HMM2_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
@@ -539,7 +543,7 @@ ${LIANG_CPT_PREFIX}.%.${TGT_2_SRCX}:  liang.%.${TGT_GIVEN_SRCX} liang.%.${SRC_GI
 		-hmm \
 		-v -i -z \
 		-1 ${SRC} -2 ${TGT} \
-		${LIANG_SMOOTHERS} \
+		${HMM2_SMOOTHERS} \
 		-multipr rev \
 		-o $(subst .${TGT_2_SRCX}, , $@) \
 		-ibm_l2_given_l1  $(filter %${TGT_GIVEN_SRCX}, $+) \
