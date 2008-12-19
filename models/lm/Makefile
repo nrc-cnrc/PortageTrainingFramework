@@ -196,14 +196,14 @@ else
 %.lm.gz: %.ilm.gz
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	set -o pipefail; \
 	compile-lm \
 		--text yes \
 		$< \
-		unsorted.$(basename $@) \
-	&> log.$(basename $@)
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	lm_sort_filter.sh -lm unsorted.$(basename $@) $@
-	_LOCAL=1 rm unsorted.$(basename $@)
+		/dev/stdout \
+	2> log.$(basename $@) \
+	| lm_sort.pl \
+	| gzip > $@
 endif
 
 clean: clean.arpa
