@@ -263,7 +263,7 @@ clean.hmm1:
 
 
 ########################################
-# TRAINING THE HMM2 MODELS => liang
+# TRAINING THE HMM2 MODELS => liang variant
 # requires: source and target corpora and ibm1 models.
 HMM2_MODEL_EXTRAS ?=
 .PHONY:  hmm2_model
