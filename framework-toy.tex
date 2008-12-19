@@ -116,9 +116,8 @@ commands to catch up). Here are some other useful make commands:
 Here is an overview of the \PS process, as described in the following
 sections (section numbers are in brackets):
 \begin{enumerate}
-\item Corpus preparation (\ref{CorpusPreparation}): includes tokenization
-      (\ref{Tokenization}), alignment (\ref{Alignment}), lowercasing
-      (\ref{Lowercasing}), and splitting (\ref{Splitting}).
+\item Corpus preparation (\ref{CorpusPreparation}): includes tokenization,
+      alignment, lowercasing, and splitting (\ref{Splitting}).
 \item Model training (\ref{Training}): includes language model (\ref{LM}),
       translation model (\ref{TM}), truecasing model (\ref{TC}), decoder weight
       optimization (\ref{COW}), and rescoring model training (\ref{RAT}).
@@ -138,7 +137,7 @@ sentence-aligned files in the format expected by Portage.  We provide a
 tokenizer, a sentence aligner and sample corpus pre-processing scripts with
 \PS, which can help you with these steps.  For details, see section \emph{Text
 Processing} in the user manual (found in
-\textt{PORTAGEshared/doc/user-manual.html} on the CD).
+\texttt{PORTAGEshared/doc/user-manual.html} on the CD).
 
 \subsection{Splitting the Corpus} \label{Splitting}
 
@@ -254,7 +253,7 @@ version to
    [...]
 \end{verbatim}
 
-The decoder, canoe, treats \texttt{<}, \testtt{>} and \texttt{\\} as special
+The decoder, canoe, treats \texttt{<}, \texttt{>} and \texttt{\\} as special
 characters, in order to support markups for special translation rules.  We
 won't use any markups for this example, but we still need to escape the three
 special characters, in the source language only, since this is only for the
@@ -338,12 +337,14 @@ With either toolkit, this example assumes that the target language is English;
 for English to French translation, a similar command could be used to create a
 French language model.
 
-In this example, we only use the target language part of the parallel training
-corpus to train the language model, but this is not the recommended practice.
-If you have access to larger corpora of monolingual text in your target
-language, you can use them to train additional language models.  The framework
-does not automate training such additional language models, but you can add
-them in manually before optimizing the decoder weights (see section~\ref{COW}).
+In this toy example, we only use the target language part of the parallel
+training corpus to train the language model, but this is not the recommended
+practice.  If you have access to larger corpora of monolingual text in your
+target language, you can use them to train additional language models.  You can
+either add them in the \texttt{corpora} directory and list them in
+\texttt{Makefile.params} under \texttt{TRAIN\_LM}, or you can train them
+externally and add them to the \texttt{canoe.ini.template} file (see
+section~\ref{COW}).
 
 \subsection{Creating a Truecasing Model} \label{TC}
 
@@ -389,7 +390,6 @@ as a prerequisite.  We do this for both directions.
 \begin{verbatim}
    > cd models/tm
    > make ibm2_model
-   make -C models/tm all
    Generating ibm1.train.en_given_fr.gz
    cat.sh -n 1 -pn 1 -v -n1 5 -n2 0 ibm1.train.en_given_fr.gz 
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
@@ -420,16 +420,16 @@ example, the IBM log files show convergence and pruning statistics for each
 iteration:
 \begin{verbatim}
    > grep -h ppx log.ibm[12]*en_given_fr
-   iter 1 (IBM1): prev ppx = 478.842, size = 1488446 word pairs; took 7 second(s).
-   iter 2 (IBM1): prev ppx = 125.745, size = 1368326 word pairs; took 6 second(s).
-   iter 3 (IBM1): prev ppx = 79.431, size = 1170561 word pairs; took 6 second(s).
-   iter 4 (IBM1): prev ppx = 65.4013, size = 996641 word pairs; took 5 second(s).
-   iter 5 (IBM1): prev ppx = 60.3716, size = 853457 word pairs; took 5 second(s).
-   parallel iter (IBM2): prev ppx = 58.1128, size = 853135 word pairs.
-   parallel iter (IBM2): prev ppx = 41.3624, size = 852820 word pairs.
-   parallel iter (IBM2): prev ppx = 34.4884, size = 838117 word pairs.
-   parallel iter (IBM2): prev ppx = 31.1112, size = 754164 word pairs.
-   parallel iter (IBM2): prev ppx = 29.3212, size = 647532 word pairs.
+   iter 1 (IBM1): prev ppx = 359.673, size = 1476170 word pairs; took 7 second(s).
+   iter 2 (IBM1): prev ppx = 109.736, size = 1364397 word pairs; took 6 second(s).
+   iter 3 (IBM1): prev ppx = 66.6961, size = 1194591 word pairs; took 6 second(s).
+   iter 4 (IBM1): prev ppx = 53.0032, size = 1025745 word pairs; took 5 second(s).
+   iter 5 (IBM1): prev ppx = 48.0923, size = 882560 word pairs; took 5 second(s).
+   parallel iter (IBM2): prev ppx = 45.9329, size = 882290 word pairs.
+   parallel iter (IBM2): prev ppx = 29.5655, size = 881943 word pairs.
+   parallel iter (IBM2): prev ppx = 23.6397, size = 857564 word pairs.
+   parallel iter (IBM2): prev ppx = 20.9975, size = 748588 word pairs.
+   parallel iter (IBM2): prev ppx = 19.6976, size = 623553 word pairs.
 \end{verbatim}
 
 The IBM models are written to files \texttt{ibm[12].*} and contain word
@@ -479,11 +479,13 @@ phrase, \texttt{p(fr|en)} is the probability that \texttt{fr} is the
 translation of \texttt{en}, and \texttt{p(en|fr)} is the probability that
 \texttt{en} is the translation of \texttt{fr}.
 Here are two sample lines from this file:
+\begin{footnotesize}
 \begin{verbatim}
    > zgrep '| proposed regulations |' cpt.ibm2-rf-zn-kn3.train.fr2en.gz 
-   projets de règlement ||| proposed regulations ||| 0.5 5.74665412e-07 0.0586759842 1 0.00752825038 0.117351968
-   règlements proposés ||| proposed regulations ||| 0.5 0.0124936768 0.0586759842 1 0.383383272 0.117351968
+   projets de règlement ||| proposed regulations ||| 0.666666667 1.15796785e-06 0.345856098 1 0.00775090097 0.518784513
+   règlements proposés ||| proposed regulations ||| 0.333333333 0.0129629319 0.0461328713 1 0.393561879 0.138397881
 \end{verbatim}
+\end{footnotesize}
 You'll notice there are in fact six numbers per line.  That's because we used
 three smoothers: we have three estimates of \texttt{p(fr|en)} followed by three
 estimates of \texttt{p(en|fr)}.  Also, this example is carefully chosen;
@@ -493,41 +495,52 @@ phrase table are incorrect.
 \subsubsection{Creating a Translation Model Using HMM Alignments}
 
 Now we repeat the same steps using HMM word alignment models, using the
-``Liang'' variant.
+``he-lex'' variant (\texttt{hmm1}).
 \begin{verbatim}
-   > make liang_cpt
-   Generating liang.train.en_given_fr.gz
-   cat.sh -n 1 -pn 1 -v -n1 0 -n2 5 -mimic liang \
-      -i ibm1.train.en_given_fr.gz liang.train.en_given_fr.gz \
+   > make hmm1_cpt
+   Generating hmm1.train.en_given_fr.gz
+   cat.sh -n 1 -pn 1 -v -n1 0 -n2 5 -mimic he-lex \
+      -i ibm1.train.en_given_fr.gz hmm1.train.en_given_fr.gz \
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
-      >& log.liang.train.en_given_fr
-   Generating liang.train.fr_given_en.gz
-   cat.sh -n 1 -pn 1 -v -r -n1 0 -n2 5 -mimic liang \
-      -i ibm1.train.fr_given_en.gz liang.train.fr_given_en.gz \
+      >& log.hmm1.train.en_given_fr
+   Generating hmm1.train.fr_given_en.gz
+   cat.sh -n 1 -pn 1 -v -r -n1 0 -n2 5 -mimic he-lex \
+      -i ibm1.train.fr_given_en.gz hmm1.train.fr_given_en.gz \
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
-      >& log.liang.train.fr_given_en
-   Generating jpt.liang.train.fr-en.gz
-   gen-jpt-parallel.sh -n 1 -o jpt.liang.train.fr-en.gz \
+      >& log.hmm1.train.fr_given_en
+   Generating jpt.hmm1.train.fr-en.gz
+   gen-jpt-parallel.sh -n 1 -o jpt.hmm1.train.fr-en.gz \
       GPT -v -j -w 1 -m 8 -hmm -1 fr -2 en \
-      liang.train.en_given_fr.gz liang.train.fr_given_en.gz \
+      hmm1.train.en_given_fr.gz hmm1.train.fr_given_en.gz \
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
-      2> log.jpt.liang.train.fr-en
-   Generating cpt.liang-rf-zn-kn3.train.fr2en.gz
+      2> log.jpt.hmm1.train.fr-en
+   Generating cpt.hmm1-rf-zn-kn3.train.fr2en.gz
    joint2cond_phrase_tables -sort -prune1 100 -hmm -v -i -z \
       -1 fr -2 en -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3" \
-      -multipr fwd -o  cpt.liang-rf-zn-kn3.train  \
-      -ibm_l2_given_l1  liang.train.en_given_fr.gz \
-      -ibm_l1_given_l2  liang.train.fr_given_en.gz \
-      jpt.liang.train.fr-en.gz \
-      >& log.cpt.liang-rf-zn-kn3.train.fr2en
+      -multipr fwd -o  cpt.hmm1-rf-zn-kn3.train  \
+      -ibm_l2_given_l1  hmm1.train.en_given_fr.gz \
+      -ibm_l1_given_l2  hmm1.train.fr_given_en.gz \
+      jpt.hmm1.train.fr-en.gz \
+      >& log.cpt.hmm1-rf-zn-kn3.train.fr2en
 \end{verbatim}
 There are many variants to the HMM models.  It is not clear which one is the
-best, so we don't try to cover all possibilities in this framework.  You'll
-need to modify \texttt{models/tm/Makefile} to select the variants you want.
-The variant based on Liang et al's baseline (enabled by specifying
-\texttt{-mimic liang} as above) works well.  The variant with lexically
-conditioned jump parameters, following He (WMT-2006), is sometimes better
-(enabled by specifying \texttt{-mimic he-lex}).
+best, so we don't try to cover all possibilities in this framework.
+In this framework, we've include recipes to produce two variants: the one based
+on Liang et al's baseline (enabled by specifying \texttt{-mimic liang}, and
+invoked via the \texttt{hmm2\_*} targets in this framework); and the variant
+with lexically conditioned jump parameters, following He (WMT-2006), which is
+sometimes better (enabled by specifying \texttt{-mimic he-lex} as above, and
+invoked via the \texttt{hmm1\_*} targets in this framework).
+To read about other variants, type \texttt{train\_ibm -h}.  You'll need to
+modify \texttt{models/tm/Makefile} to select the variants you want.  It's
+probably easiest to modify the commands associated with the
+\texttt{hmm1\_model} and \texttt{hmm2\_model} targets.
+
+The \texttt{PT\_TYPES} variable in \texttt{Makefile} enumerates which models
+you want to generate when you type \texttt{make all}.  All models you generate
+will be used in subsequent steps, so only generated the ones you intend to use.
+(You should work in different copies of the framework if you want to experiment
+on different variants.)
 
 \subsection{Optimizing Decoder Weights} \label{COW}
 
@@ -551,16 +564,12 @@ In this framework, we start with a template configuration file,
      <CPTS>
    [lmodel-file]
      <LMS>
-   [weight-f] <FORWARD_WEIGHTS>
+   [weight-f] <ENABLE_FTM>
 \end{verbatim}
 
 The framework will automatically insert the phrase tables and language models
 generated in the previous steps into the \texttt{canoe.ini} file when you
-make it.  \texttt{make canoe.ini} will first create a soft link to the models
-directory---this way, all models appear to be relative to the current directly,
-which makes it easier to find them.  We'll create such symlinks everywhere we
-need access to the models.  The command replaces the template parameters by the
-appropriate values:
+make it.  These are the template parameters it will replace:
 \begin{itemize}
 \item \texttt{<SL>}:   source language code, e.g. ``fr'';
 \item \texttt{<TL>}:   target language code, e.g., ``en'';
@@ -568,20 +577,16 @@ appropriate values:
                        in the \texttt{models/tm} directory; and
 \item \texttt{<LMS>}:  all language models trained trained above, and found in
                        the \texttt{models/lm} directory);
-\item \texttt{<FORWARD\_WEIGHTS>}: the right number of forward translation
+\item \texttt{<ENABLE\_FTM>}: the right number of forward translation
 model weights.  This special token is required to enable the use of forward
-weights by \texttt{canoe} and their tuning by \texttt{cow.sh}.
-Unlike other weigths, which are used by default as soon as
+translation model weights by \texttt{canoe} and their tuning by
+\texttt{cow.sh}.  Unlike other weights, which are used by default as soon as
 the corresponding model is present, forward weights are disabled by default.
-Therefore, the appropriate number of 1's must be inserted into
-\texttt{canoe.ini} for its \texttt{[weight-f]} parameter.  In this framework,
-if you don't want to use forward weights, comment out the \texttt{[weight-f]}
-line in \texttt{canoe.ini.template}.
+In this framework, if you don't want to use forward weights, comment out or
+delete the \texttt{[weight-f]} line in \texttt{canoe.ini.template}.
 \end{itemize}
 
-The final command, \texttt{configtool check canoe.ini}, confirms that the
-\texttt{canoe.ini} file produced is error-free---it check that all parameters
-are compatible and that all models can be found.
+So we make the \texttt{canoe.ini} file:
 \begin{verbatim}
    > make canoe.ini
    ln -sf ../../models models
@@ -593,10 +598,21 @@ are compatible and that all models can be found.
       > canoe.ini
    configtool check canoe.ini
    ok
+\end{verbatim}
+The first command above creates a soft link to the models directory---this way,
+all models appear to be relative to the current directly, which makes it easier
+to find them.  We'll create such symlinks everywhere we need access to the
+models.  The next command replaces the template parameters by the appropriate
+values.  The final command, \texttt{configtool check canoe.ini}, confirms that the
+\texttt{canoe.ini} file produced is error-free---it check that all parameters
+are compatible and that all models can be found.
+
+Here is the result:
+\begin{verbatim}
    > cat canoe.ini
    [ttable-multi-prob]
+     models/tm/cpt.hmm1-rf-zn-kn3.train.fr2en.gz
      models/tm/cpt.ibm2-rf-zn-kn3.train.fr2en.gz
-     models/tm/cpt.liang-rf-zn-kn3.train.fr2en.gz
    [lmodel-file]
      models/lm/train_en-kn-5g.binlm.gz
    [weight-f] 1:1:1:1:1:1
@@ -621,10 +637,10 @@ include all models generated in the same framework, so you should work in
 different copies of the framework if you want to experiment with different
 training parameters for those models.
 
-To change the other decoding parameters, modify \texttt{canoe.ini.template} as
-required.  For example, you can add additional language models (trained outside
-the framework) by adding them in the \texttt{[lmodel-file]} section, separated
-by whitespace or a newline from \texttt{<CPTS>}.
+To change the other decoding parameters, modify \texttt{canoe.ini.template}.
+For example, you can add additional language models (trained outside the
+framework) by adding them in the \texttt{[lmodel-file]} section, separated by
+whitespace or a newline from \texttt{<CPTS>}.
 
 The other decoding parameters control the search strategy.  They have been set
 to reasonable defaults, but may need to be adjusted depending on the
@@ -645,7 +661,7 @@ files for weight tuning:
    mkdir -p foos
    cow.sh -v -parallel:"-n 1" -maxiter 15 -nbest-list-size 100 \
       -filt -nofloor -workdir foos -f canoe.ini
-      ../../corpora/dev1_fr.rule XXX ../../corpora/dev1_en.lc \
+      ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc \
       >& log.canoe.ini.cow
    rm -f -r foos multi.probs.*.FILT.gz canoe.ini.FILT canoe.ini.FILT.cow
 \end{verbatim}
@@ -655,13 +671,15 @@ in parallel. Do \texttt{cow.sh -h} to see documentation on this option; modify
 \texttt{PARALLELISM\_LEVEL\_TUNE\_DECODE} in \texttt{Makefile.params} to adjust
 cow parallelism in this framework.} and writes large amounts of logging
 information, it is usually a good idea to redirect all of its output to a log
-file, as shown here; and also to run it in the background (not done here, for
-compatibility with the \texttt{make} procedure).  Progress can be monitored by
-looking at the file \texttt{rescore-results}, which shows the translation quality
-(measured by BLEU score---see section~\ref{Testing} for a description), as well
-as the current weights, for each iteration. Note that the BLEU score does not
-necessarily increase monotonically, as can be seen in several places in the
-\texttt{rescore-results} file obtained with this example:
+file, as shown here; and also to run it in the background (not done here).
+Progress is most easily monitored by looking at the file
+\texttt{rescore-results},\footnote{The scripts \texttt{best-rr-val} and
+\texttt{all-best-rr-vals} can be handy if you're monitoring multiple
+experiments.} which shows the translation quality (measured by BLEU score---see
+section~\ref{Testing} for a description), as well as the current weights, for
+each iteration. Note that the BLEU score does not necessarily increase
+monotonically, as can be seen in several places in the \texttt{rescore-results}
+file obtained with this example:
 \begin{footnotesize}
 \begin{verbatim}
 > cat rescore-results
@@ -697,12 +715,16 @@ framework if no errors were encountered.  The large temporary files are seldom
 of any use afterwards, except for troubleshooting, so there is no point in
 keeping them.  If you would like to inspect them, possibly to see the n-best
 lists or other files used by \texttt{cow.sh}, you can remove the \texttt{rm}
-command executed after \texttt{cow.sh} in \texttt{Makefile}.
+command executed after \texttt{cow.sh} in \texttt{Makefile}.  A lot of
+information is also logged to \texttt{log.canoe.ini.cow}.  This file usually
+contains too much information, though, but the script \texttt{cowpie.sh} can be
+used to produce a summary of some of the information it contains.  Type
+\texttt{cowpie.sh -h} for an interpretation of the output.
 
-The output from \texttt{cow.sh} is written to the file \texttt{canoe.ini.cow}
-(assuming the original configuration file was called \texttt{canoe.ini}). This
-duplicates the contents of \texttt{canoe.ini}, but adds the optimal weights
-learned on the development corpus:
+The final output from \texttt{cow.sh} is written to the file
+\texttt{canoe.ini.cow} (assuming the original configuration file was called
+\texttt{canoe.ini}). This duplicates the contents of \texttt{canoe.ini}, but
+adds the optimal weights learned on the development corpus:
 \begin{verbatim}
    > cat canoe.ini.cow
 [ttable-multi-prob] 
@@ -905,7 +927,7 @@ rat.sh} script again, but this time in translation mode:
 This produces both \texttt{test.out}, the output of the decoder, and
 \texttt{test.rat}, the best translation according to the rescoring model.
 
-\subsubsection{Truecasing}
+\subsubsection{Truecasing} \label{Truecasing}
 
 Notice that the output files contain only lowercase, tokenized text. A
 postprocessing step is required to restore normal letter case and to undo the
