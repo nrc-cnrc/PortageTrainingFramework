@@ -2,6 +2,7 @@
   <CPTS>
 [lmodel-file]
   <LMS>
+[weight-f] <ENABLE_FTM>
 [ttable-limit] 30
 [ttable-threshold] 0
 [stack] 20000
@@ -11,4 +12,3 @@
 [segmentation-model] none
 [cube-pruning]
 [bypass-marked]
-[weight-f] <ENABLE_FTM>
