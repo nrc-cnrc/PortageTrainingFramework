@@ -202,6 +202,7 @@ else
 		$< \
 		/dev/stdout \
 	2> log.$(basename $@) \
+	| egrep -v '^Saving in txt format to' \
 	| lm_sort.pl \
 	| gzip > $@
 endif
