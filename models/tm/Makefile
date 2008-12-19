@@ -112,9 +112,7 @@ help:
 
 # Define all the work to be done.
 .PHONY: all
-all: SHELL=${GUARD_SHELL}
-all:
-	for t in ${PT_TYPES}; do ${MAKE} $$t; done
+all: ${PT_TYPES}
 
 
 
@@ -140,7 +138,7 @@ clean:
 .PHONY: models
 models: ibm1_model
 models: ibm2_model
-models: hmm_model
+models: hmm1_model
 models: hmm2_model
 
 ########################################
@@ -327,6 +325,7 @@ clean.jpts:
 IBM2_JPT_PREFIX = jpt.ibm2
 
 .PHONY:  ibm2_jpt
+ibm2_jpt: ibm2_model
 ibm2_jpt: $(foreach t, ${TRAIN_TM}, ${IBM2_JPT_PREFIX}.$t.${JOINTX})
 ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
@@ -342,11 +341,12 @@ ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGT
 
 
 ########################################
-# HMM1 JOINT PHRASE TABLES
+# HMM1 JOINT PHRASE TABLES => He's lexical variant
 # requires: hmm models, source and target corpora.
 HMM1_JPT_PREFIX=jpt.hmm1
 
 .PHONY:  hmm1_jpt
+hmm1_jpt: hmm1_model
 hmm1_jpt: $(foreach t, ${TRAIN_TM}, ${HMM1_JPT_PREFIX}.$t.${JOINTX})
 ${HMM1_JPT_PREFIX}.%.${JOINTX}:  hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
@@ -362,11 +362,12 @@ ${HMM1_JPT_PREFIX}.%.${JOINTX}:  hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGT
 
 
 ########################################
-# HMM2 JOINT PHRASE TABLES => liang
+# HMM2 JOINT PHRASE TABLES => Liang's variant
 # requires: hmm2 models, source and target corpora.
 HMM2_JPT_PREFIX=jpt.hmm2
 
 .PHONY:  hmm2_jpt
+hmm2_jpt: hmm2_model
 hmm2_jpt: $(foreach t, ${TRAIN_TM}, ${HMM2_JPT_PREFIX}.$t.${JOINTX})
 ${HMM2_JPT_PREFIX}.%.${JOINTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
@@ -385,6 +386,7 @@ ${HMM2_JPT_PREFIX}.%.${JOINTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGT
 ################################################################################
 # CONDITIONAL PHRASE TABLES
 .PHONY: cpts
+cpts: jpts
 cpts: ibm2_cpt
 cpts: hmm1_cpt
 cpts: hmm2_cpt
@@ -409,6 +411,7 @@ ibm2_cpt_list:
 	@echo ${ibm2_cpt_list}
 
 .PHONY:  ibm2_cpt
+ibm2_cpt: ibm2_jpt
 ibm2_cpt: ${ibm2_cpt_list}
 
 ${IBM2_CPT_PREFIX}.%.${SRC_2_TGTX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX} ${IBM2_JPT_PREFIX}.%.${JOINTX}
@@ -460,6 +463,7 @@ hmm1_cpt_list:
 	@echo ${hmm1_cpt_list}
 
 .PHONY:  hmm1_cpt
+hmm1_cpt: hmm1_jpt
 hmm1_cpt: ${hmm1_cpt_list}
 
 ${HMM1_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGTX} ${HMM1_JPT_PREFIX}.%.${JOINTX}
@@ -511,6 +515,7 @@ hmm2_cpt_list:
 	@echo ${hmm2_cpt_list}
 
 .PHONY:  hmm2_cpt
+hmm2_cpt: hmm2_jpt
 hmm2_cpt: ${hmm2_cpt_list}
 
 ${HMM2_CPT_PREFIX}.%.${SRC_2_TGTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGTX}  ${HMM2_JPT_PREFIX}.%.${JOINTX}
