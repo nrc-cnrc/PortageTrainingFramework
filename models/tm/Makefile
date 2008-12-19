@@ -30,11 +30,7 @@ export LANG   = en_CA.utf8
 export LC_ALL = en_CA.utf8
 
 # Define what type of phrase table we want to generate.
-<<<<<<< Makefile
 PT_TYPES ?= ibm2_cpt hmm1_cpt
-=======
-PT_TYPES ?= ibm2_cpt liang_cpt
->>>>>>> 1.11
 
 # What program to use to train models
 CAT ?= cat.sh
