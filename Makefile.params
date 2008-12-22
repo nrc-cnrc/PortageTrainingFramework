@@ -16,12 +16,18 @@ export SRC_LANG ?= en
 export TGT_LANG ?= fr
 
 # Here we specify the stem of the corpora files.
-# files should look like this: <STEM>_<LANGUAGE>.raw
-# i.e. test1_fr.raw
+# files should look like this: <PREFIX>_<LANGUAGE>.al
+# Warning: only TEST_SET can contain more than one <PREFIX>
+# i.e. test1_fr.al
+# TRAIN_LM is used to create a language model.
 export TRAIN_LM      ?= lm-train
+# TRAIN_TM is used to create the translation table.
 export TRAIN_TM      ?= tm-train
+# TUNE_DECODE is used to train cow.
 export TUNE_DECODE   ?= dev1
+# TUNE_RESCORE is used to train rat.
 export TUNE_RESCORE  ?= dev2
+# TEST_SET are used to estimate the quality of the system.
 export TEST_SET      ?= test1 test2
 
 # The prefix_root where we can find IRSTLM/bin, which must also be on your
@@ -113,8 +119,8 @@ export HELDOUT_SET  ?= ${TUNE_DECODE} ${TUNE_RESCORE} ${TEST_SET}
 export CORPORA_SET  ?= ${TRAIN_SET} ${HELDOUT_SET}
 
 # Define what type of phrase table we want to generate.
-# Can be: {ibm2_cpt | hmm_cpt | liang_cpt}
-export PT_TYPES ?= ibm2_cpt hmm_cpt
+# Can be: {ibm2_cpt | hmm1_cpt | hmm2_cpt}
+export PT_TYPES ?= ibm2_cpt hmm1_cpt
 
 # Define what type of language model we want to generate.
 export LM_TYPES ?= binlm
