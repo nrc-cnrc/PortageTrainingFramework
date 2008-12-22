@@ -22,6 +22,68 @@ can truly represent the current state of the art.  Nonetheless, we've tried to
 present in this framework our currently recommended practice.
 
 
-Instructions:
+INSTRUCTIONS:
 
-Forthcoming
+The following describes the quickest way to get started with this framework.
+
+
+SOFTWARE SETUP:
+
+Make sure you have PORTAGEshared installed and available in your path.  Make
+sure you also have irstlm properly compiled and setup which means that you have
+set IRSTLM with the location of your installed irstlm.
+
+
+TRAINING:
+
+You will need to copy or symlink your training files in corpora where your
+files should have this pattern <PREFIX>_<LANG>.al where <LANG> is two letters
+representing the content's language for that file.  These files are one
+sentence per line, truecased, tokenized and sentence aligned with their
+counterpart in the other language except for the file used for the language
+model.  This framework requires two pairs of tuning files containing around
+1000 sentences each and two pairs of test files.  It also requires training
+copora for the language model and the translation models which are kept
+compress (.gz).  Here's what your corpora directory should look like:
+
+corpora/dev1_en.al
+corpora/dev1_fr.al
+corpora/dev2_en.al
+corpora/dev2_fr.al
+corpora/lm-train_fr.al.gz
+corpora/Makefile        <= provided by the framework.
+corpora/Makefile.params <= provided by the framework.
+corpora/test1_en.al
+corpora/test1_fr.al
+corpora/test2_en.al
+corpora/test2_fr.al
+corpora/tm-train_en.al.gz
+corpora/tm-train_fr.al.gz
+
+As an example, dev1_en.al is an english file with dev1 as <PREFIX>.
+
+If you decide not to use the default file names for any of the previous files,
+you must edit ./Makefile.params accordingly.  Replace the prefixes of TRAIN_LM,
+TRAIN_TM, TUNE_DECODE, TUNE_RESCORE and/or TEST_SET to reflect your file names.
+Note that these variables are not the full file name but rather the <PREFIX> of
+each files.
+
+Note that, since the file used for training the language model and the
+translation model are big, the framework expected them compressed.
+
+If you are not building a system to translate from english to french, you will
+also need to modify SRC_LANG and TGT_LANG in ./Makefile.params.  You will also
+notice that that <LANG> = {SRC_LANG, TGT_LANG} and are preferably two letter
+tokens representing your source and target languages.
+
+Finally, you need to get to the root of the framework, type make help and copy
+and paste the two export lines into your shell.  Then you are good to try make
+all.
+
+
+ONCE YOU HAVE A TRAINED SYSTEM:
+
+Once your system is trained, you will want to translate some other documents.
+These documents don't have an aligned counterpart but are still required to be
+tokenized and have one sentence per line.  To translate a new document, you simply have to do ./translate.sh <YOUR_NEW_DOCUMENT>
+
