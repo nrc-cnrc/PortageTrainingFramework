@@ -147,10 +147,10 @@ ${UNTUNED_RESCORING_MODEL}: ${DECODING_MODEL} models ${RESCORING_MODEL_TEMPLATE}
 	      -e "s#IBM1BKW#${IBM_DIR}/ibm1.${SRC_GIVEN_TGTX}#" \
 	      -e "s#IBM2FWD#${IBM_DIR}/ibm2.${TGT_GIVEN_SRCX}#" \
 	      -e "s#IBM2BKW#${IBM_DIR}/ibm2.${SRC_GIVEN_TGTX}#" \
-	      -e "s#HMMFWD#${IBM_DIR}/hmm.${TGT_GIVEN_SRCX}#" \
-	      -e "s#HMMBKW#${IBM_DIR}/hmm.${SRC_GIVEN_TGTX}#" \
-	      -e "s#LIANGFWD#${IBM_DIR}/liang.${TGT_GIVEN_SRCX}#" \
-	      -e "s#LIANGBKW#${IBM_DIR}/liang.${SRC_GIVEN_TGTX}#" \
+	      -e "s#HMM1FWD#${IBM_DIR}/hmm1.${TGT_GIVEN_SRCX}#" \
+	      -e "s#HMM1BKW#${IBM_DIR}/hmm1.${SRC_GIVEN_TGTX}#" \
+	      -e "s#HMM2FWD#${IBM_DIR}/hmm2.${TGT_GIVEN_SRCX}#" \
+	      -e "s#HMM2BKW#${IBM_DIR}/hmm2.${SRC_GIVEN_TGTX}#" \
 	>> $@
 
 
