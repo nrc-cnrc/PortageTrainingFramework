@@ -38,11 +38,9 @@ TGT_GIVEN_SRCX = ${TGT_GIVEN_SRC}.gz
 # This is used to create a symbolic link.
 MODEL_DIR ?= ../../models
 
-# What will be the name of the rescoring model's file.
+# What will be the name of the rescoring model file.
 RESCORING_MODEL ?= rescore-model
 RESCORING_MODEL_TEMPLATE ?= ${RESCORING_MODEL}.template
-
-#
 UNTUNED_RESCORING_MODEL ?= ${RESCORING_MODEL}.ini
 
 # Indicates where to find the canoe.ini template
@@ -162,7 +160,7 @@ ${UNTUNED_RESCORING_MODEL}: ${DECODING_MODEL} models ${RESCORING_MODEL_TEMPLATE}
 train: ${RESCORING_MODEL}
 
 ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
-	@_LOCAL=1 echo "Tuning a rescoring model."
+	@_LOCAL=1 echo "Tuning the rescoring model."
 	RP_PSUB_OPTS="-N $@" \
 	rat.sh \
 		-lb \
