@@ -16,13 +16,11 @@ Usage: translate.sh [options] source_file
 
   Takes a source text file and translates it according to the current trained
   models.
-  source_file must be tokenized and splitted one sentence per line and have the
-  following form:
-  <prefix>_<source_language>.al
-  where <source_language> be 2 letters indicating the source language.
+  source_file must be tokenized and splitted one sentence per line.
 
 Options:
 
+  -l(ang)     language of source_file [en].
   -h(elp)     print this help message
   -v(erbose)  increment the verbosity level by 1 (may be repeated)
   -d(ebug)    print debugging information
@@ -97,8 +95,10 @@ verbose() {
 # Command line processing [Remove irrelevant parts of this code when you use
 # this template]
 VERBOSE=0
+LANGUAGE=en
 while [ $# -gt 0 ]; do
    case "$1" in
+   -l|-lang)            arg_check 1 $# $1; LANGUAGE=$2; shift;;
    -v|-verbose)         VERBOSE=$(( $VERBOSE + 1 ));;
    -d|-debug)           DEBUG=1;;
    -h|-help)            usage;;
@@ -112,20 +112,22 @@ done
 test $# -eq 0   && error_exit "Missing the input file to translate."
 full_source=$1; shift
 source=`basename $full_source`
+
+# Make sure that the source has the framework's expected form
+# <PREFIX>_<LANGUAGE>.al
+source=${source%_${LANGUAGE}.al}_${LANGUAGE}.al
+
+# Are there superfluous arguments
 test $# -gt 0   && error_exit "Superfluous arguments $*"
 
-if [[ $source !~ _..\.al ]]; then
-   error_exit "Source file doesn't have the proper name format."
-fi
-
 # Extract the prefix of this translation set.
-prefix=${source%_*.*}
+prefix=${source%_${LANGUAGE}.al}
 
 # Check if the inputs are of the form <stem>_<src_lang>.<langx>
 verbose 1 "Translating: $prefix"
 
 # Lets make a copy of the source file in corpora
-test -f corpora/$source || cp $full_source corpora/
+test -f corpora/$source || cp $full_source corpora/$source
 
 # Check if there is a valid decoding_model and if needed a valid rescoring_model
 if [[ -f "models/decode/canoe.ini.cow" ]]; then
@@ -139,7 +141,7 @@ if [[ $? -ne 0 ]]; then
 fi
 
 # And decode
-make -C translate all TRANSLATE_SET=$prefix 1>&2
+make -C translate all TEST_SET=$prefix 1>&2
 if [[ $? -ne 0 ]]; then
    error_exit "Problem while translating $source";
 fi
