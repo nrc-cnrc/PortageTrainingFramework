@@ -383,7 +383,7 @@ alignments, and one from HMM word alignments.  You can do all this by typing
 \texttt{make tms} in your \texttt{toy.experiment} directory, but we'll break it
 down in several steps here.
 
-\subsubsection{Creating a Translation Model Using IBM2 Alignments}
+\subsubsection{Creating a Translation Model Using IBM2 Alignments} \label{IBM2}
 
 First we train IBM2 word alignment models, which require training IBM1 models
 as a prerequisite.  We do this for both directions.
@@ -492,36 +492,36 @@ estimates of \texttt{p(en|fr)}.  Also, this example is carefully chosen;
 because of the small size of the training corpus, many other entries in the
 phrase table are incorrect.
 
-\subsubsection{Creating a Translation Model Using HMM Alignments}
+\subsubsection{Creating a Translation Model Using HMM Alignments} \label{HMM}
 
 Now we repeat the same steps using HMM word alignment models, using the
-``he-lex'' variant (\texttt{hmm1}).
+``liang'' variant (\texttt{hmm2}).
 \begin{verbatim}
-   > make hmm1_cpt
-   Generating hmm1.train.en_given_fr.gz
-   cat.sh -n 1 -pn 1 -v -n1 0 -n2 5 -mimic he-lex \
-      -i ibm1.train.en_given_fr.gz hmm1.train.en_given_fr.gz \
+   > make hmm2_cpt
+   Generating hmm2.train.en_given_fr.gz
+   cat.sh -n 1 -pn 1 -v -n1 0 -n2 5 -mimic liang \
+      -i ibm1.train.en_given_fr.gz hmm2.train.en_given_fr.gz \
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
-      >& log.hmm1.train.en_given_fr
-   Generating hmm1.train.fr_given_en.gz
-   cat.sh -n 1 -pn 1 -v -r -n1 0 -n2 5 -mimic he-lex \
-      -i ibm1.train.fr_given_en.gz hmm1.train.fr_given_en.gz \
+      >& log.hmm2.train.en_given_fr
+   Generating hmm2.train.fr_given_en.gz
+   cat.sh -n 1 -pn 1 -v -r -n1 0 -n2 5 -mimic liang \
+      -i ibm1.train.fr_given_en.gz hmm2.train.fr_given_en.gz \
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
-      >& log.hmm1.train.fr_given_en
-   Generating jpt.hmm1.train.fr-en.gz
-   gen-jpt-parallel.sh -n 1 -o jpt.hmm1.train.fr-en.gz \
+      >& log.hmm2.train.fr_given_en
+   Generating jpt.hmm2.train.fr-en.gz
+   gen-jpt-parallel.sh -n 1 -o jpt.hmm2.train.fr-en.gz \
       GPT -v -j -w 1 -m 8 -hmm -1 fr -2 en \
-      hmm1.train.en_given_fr.gz hmm1.train.fr_given_en.gz \
+      hmm2.train.en_given_fr.gz hmm2.train.fr_given_en.gz \
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
-      2> log.jpt.hmm1.train.fr-en
-   Generating cpt.hmm1-rf-zn-kn3.train.fr2en.gz
+      2> log.jpt.hmm2.train.fr-en
+   Generating cpt.hmm2-rf-zn-kn3.train.fr2en.gz
    joint2cond_phrase_tables -sort -prune1 100 -hmm -v -i -z \
       -1 fr -2 en -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3" \
-      -multipr fwd -o  cpt.hmm1-rf-zn-kn3.train  \
-      -ibm_l2_given_l1  hmm1.train.en_given_fr.gz \
-      -ibm_l1_given_l2  hmm1.train.fr_given_en.gz \
-      jpt.hmm1.train.fr-en.gz \
-      >& log.cpt.hmm1-rf-zn-kn3.train.fr2en
+      -multipr fwd -o  cpt.hmm2-rf-zn-kn3.train  \
+      -ibm_l2_given_l1  hmm2.train.en_given_fr.gz \
+      -ibm_l1_given_l2  hmm2.train.fr_given_en.gz \
+      jpt.hmm2.train.fr-en.gz \
+      >& log.cpt.hmm2-rf-zn-kn3.train.fr2en
 \end{verbatim}
 There are many variants to the HMM models.  It is not clear which one is the
 best, so we don't try to cover all possibilities in this framework.
@@ -531,16 +531,21 @@ invoked via the \texttt{hmm2\_*} targets in this framework); and the variant
 with lexically conditioned jump parameters, following He (WMT-2006), which is
 sometimes better (enabled by specifying \texttt{-mimic he-lex} as above, and
 invoked via the \texttt{hmm1\_*} targets in this framework).
+
 To read about other variants, type \texttt{train\_ibm -h}.  You'll need to
 modify \texttt{models/tm/Makefile} to select the variants you want.  It's
 probably easiest to modify the commands associated with the
-\texttt{hmm1\_model} and \texttt{hmm2\_model} targets.
+\texttt{hmm1\_model} and \texttt{hmm2\_model} targets instead of creating new
+targets.
 
-The \texttt{PT\_TYPES} variable in \texttt{Makefile} enumerates which models
-you want to generate when you type \texttt{make all}.  All models you generate
-will be used in subsequent steps, so only generated the ones you intend to use.
-(You should work in different copies of the framework if you want to experiment
-on different variants.)
+For this toy experiment, the ``liang'' variant works best, which is why we
+instructed you to type \texttt{make hmm2\_cpt} above.  To have \texttt{make
+all} make the same choice, change the \texttt{PT\_TYPES} variable in
+\texttt{Makefile} to \texttt{ibm2\_cpt hmm2\_cpt}: this variable enumerates
+which models you want to generate when you type \texttt{make all}.  All models
+you generate will be used in subsequent steps, so only generated the ones you
+intend to use.  (You should work in different copies of the framework if you
+want to experiment with different variants.)
 
 \subsection{Optimizing Decoder Weights} \label{COW}
 
@@ -611,7 +616,7 @@ Here is the result:
 \begin{verbatim}
    > cat canoe.ini
    [ttable-multi-prob]
-     models/tm/cpt.hmm1-rf-zn-kn3.train.fr2en.gz
+     models/tm/cpt.hmm2-rf-zn-kn3.train.fr2en.gz
      models/tm/cpt.ibm2-rf-zn-kn3.train.fr2en.gz
    [lmodel-file]
      models/lm/train_en-kn-5g.binlm.gz
@@ -683,21 +688,21 @@ file obtained with this example:
 \begin{footnotesize}
 \begin{verbatim}
 > cat rescore-results
-BLEU score: 0.136568   -d 1 -w 0 -lm 1 -tm 1:1:1:1:1:1 -ftm 1:1:1:1:1:1
-BLEU score: 0.102302   -d 0.040 -w -1 -lm 0.626 -tm 0.02:0.16:-0.17:0.59:-0.11:-0.28 -ftm 0.29:0.19:-0.06:-0.32:0.71:-0.14
-BLEU score: 0.022673   -d 0.062 -w -0.565 -lm 1 -tm 0.06:0.10:-0.00:-0.00:0.07:-0.00 -ftm 0.02:-0.09:-0.00:0.01:-0.00:0.02
-BLEU score: 0.174290   -d 0.084 -w -0.020 -lm 1 -tm 0.13:0.08:-0.01:-0.03:0.08:-0.00 -ftm -0.01:0.00:-0.00:0.06:0.14:-0.12
-BLEU score: 0.083275   -d 0.778 -w 0.415 -lm 1 -tm 0.35:-0.04:-0.01:-0.04:0.03:-0.01 -ftm 0.03:-0.03:-0.00:0.04:-0.01:0.00
-BLEU score: 0.177278   -d 0.221 -w -0.012 -lm 1 -tm 0.15:0.11:-0.00:-0.00:0.01:0.00 -ftm 0.05:0.22:0.01:0.13:-0.01:-0.00
-BLEU score: 0.189677   -d 0.354 -w -0.120 -lm 1 -tm 0.19:0.09:-0.01:-0.01:0.01:-0.17 -ftm 0.04:-0.00:-0.02:0.19:0.10:-0.03
-BLEU score: 0.200537   -d 0.365 -w -0.304 -lm 1 -tm 0.15:0.11:-0.01:-0.01:0.00:-0.14 -ftm 0.03:0.05:-0.03:0.17:0.10:-0.03
-BLEU score: 0.200639   -d 0.364 -w -0.301 -lm 1 -tm 0.15:0.12:-0.01:-0.01:0.01:-0.14 -ftm 0.03:0.05:-0.03:0.17:0.10:-0.03
-BLEU score: 0.200826   -d 0.362 -w -0.299 -lm 1 -tm 0.15:0.12:-0.01:-0.01:0.00:-0.13 -ftm 0.03:0.06:-0.03:0.17:0.10:-0.03
-BLEU score: 0.200826   -d 0.363 -w -0.295 -lm 1 -tm 0.15:0.11:-0.01:-0.01:0.01:-0.13 -ftm 0.03:0.06:-0.03:0.17:0.10:-0.03
-BLEU score: 0.200826   -d 0.364 -w -0.296 -lm 1 -tm 0.15:0.11:-0.01:-0.01:0.01:-0.13 -ftm 0.03:0.06:-0.03:0.17:0.10:-0.03
-BLEU score: 0.200826   -d 0.364 -w -0.296 -lm 1 -tm 0.15:0.11:-0.01:-0.01:0.01:-0.13 -ftm 0.03:0.06:-0.03:0.17:0.09:-0.03
-BLEU score: 0.200826   -d 0.364 -w -0.294 -lm 1 -tm 0.15:0.11:-0.01:-0.01:0.01:-0.14 -ftm 0.03:0.06:-0.03:0.17:0.09:-0.03
-BLEU score: 0.200826   -d 0.363 -w -0.294 -lm 1 -tm 0.15:0.11:-0.01:-0.01:0.01:-0.14 -ftm 0.03:0.06:-0.03:0.17:0.09:-0.03
+BLEU score: 0.141236   -d 1 -w 0 -lm 1 -tm 1:1:1:1:1:1 -ftm 1:1:1:1:1:1
+BLEU score: 0.000000   -d 0.145 -w -0.971 -lm 0.600 -tm -0.48:-0.18:-0.28:0.19:-1:0.09 -ftm 0.17:-0.22:-0.06:-0.28:-0.09:-0.07
+BLEU score: 0.065014   -d 1 -w -0.066 -lm 0.040 -tm -0.05:-0.01:0.03:0.00:-0.01:0.00 -ftm 0.06:0.00:-0.03:-0.00:0.00:-0.00
+BLEU score: 0.122222   -d 2.74e-05 -w -1 -lm 0.296 -tm -0.09:-0.01:-0.10:-0.02:0.00:0.02 -ftm 0.24:0.19:0.00:0.12:0.12:0.04
+BLEU score: 0.173738   -d 0.219 -w -1 -lm 0.572 -tm 0.10:0.00:-0.00:0.03:0.00:-0.01 -ftm 0.02:0.28:-0.00:-0.00:-0.05:0.05
+BLEU score: 0.177699   -d 0.362 -w 0.193 -lm 1 -tm 0.53:-0.00:-0.09:-0.08:0.00:-0.02 -ftm -0.05:0.57:-0.18:-0.04:0.03:0.08
+BLEU score: 0.060503   -d 0.021 -w -0.078 -lm 1 -tm 0.48:-0.01:0.00:-0.00:-0.00:0.00 -ftm 0.00:-0.03:0.01:-0.00:-0.01:0.00
+BLEU score: 0.186415   -d 0.141 -w -0.603 -lm 1 -tm 0.38:0.00:0.01:-0.00:-0.00:-0.00 -ftm 0.04:0.38:-0.02:0.01:-0.05:0.01
+BLEU score: 0.189153   -d 0.159 -w 0.049 -lm 1 -tm 0.44:-0.01:0.00:0.00:-0.00:0.00 -ftm 0.23:0.09:-0.31:0.02:0.00:-0.02
+BLEU score: 0.197739   -d 0.172 -w 0.120 -lm 1 -tm 0.43:-0.00:0.00:0.00:-0.00:-0.00 -ftm 0.22:0.15:-0.33:0.02:0.00:-0.01
+BLEU score: 0.200836   -d 0.224 -w 0.118 -lm 1 -tm 0.46:-0.00:0.00:0.00:-0.00:-5.60e-05 -ftm 0.23:0.16:-0.33:0.02:0.00:-0.01
+BLEU score: 0.172499   -d 0.117 -w -0.289 -lm 0.261 -tm 0.12:0.00:-0.00:0.00:-0.04:0.03 -ftm 1:0.26:-0.54:0.05:0.02:-0.02
+BLEU score: 0.192449   -d 0.199 -w -0.387 -lm 1 -tm 0.17:0.00:0.00:-0.04:-0.01:0.00 -ftm 0.93:0.25:-0.63:0.06:0.02:-0.02
+BLEU score: 0.193263   -d 0.205 -w -0.396 -lm 1 -tm 0.18:0.02:-0.00:-0.04:-0.00:-0.00 -ftm 0.99:0.22:-0.68:0.07:0.01:-0.01
+BLEU score: 0.173176   -d 0.048 -w 0.003 -lm 1 -tm 0.62:-0.00:-0.21:0.07:-0.00:0.00 -ftm 0.00:0.30:0.00:-0.03:0.00:-0.00
 \end{verbatim}
 \end{footnotesize}
 When the last iteration still shows an improvement (which is not the case here),
@@ -729,14 +734,14 @@ adds the optimal weights learned on the development corpus:
    > cat canoe.ini.cow
 [ttable-multi-prob] 
    models/tm/cpt.ibm2-rf-zn-kn3.train.fr2en.gz
-   models/tm/cpt.liang-rf-zn-kn3.train.fr2en.gz
+   models/tm/cpt.hmm2-rf-zn-kn3.train.fr2en.gz
 [lmodel-file] 
    models/lm/train_en-kn-5g.binlm.gz
-[weight-d] 0.362472415
-[weight-w] -0.2999703884
+[weight-d] 0.224038288
+[weight-w] 0.1183493733
 [weight-l] 1
-[weight-t] 0.156554:0.120460:-0.012390:-0.018825:0.009940:-0.138515
-[weight-f] 0.031522:0.061217:-0.032945:0.171901:0.101529:-0.034342
+[weight-t] 0.465875:-0.006479:0.004425:0.004474:-0.000445:-5.607e-05
+[weight-f] 0.233136:0.162551:-0.337420:0.023109:0.000215:-0.019836
 [ttable-limit] 30
 [ttable-threshold] 0
 [stack] 20000
@@ -788,6 +793,11 @@ Training is carried out by the \texttt{rat.sh} script. This takes as input a
 rescoring model that specifies which features to use, and it returns optimal
 weights for these features.
 
+Before you proceed, you need to manually edit \texttt{rescore-model.template}
+and change all occurrences of \texttt{HMM1} to \texttt{HMM2}, since we
+generated the second HMM model variant for word alignment models (see
+section~\ref{HMM}).
+
 The default model created by this framework contains a small set of useful
 features:
 \begin{verbatim}
@@ -795,10 +805,12 @@ features:
    > cd models/rescore
    > make rescore-model.ini
    ln -sf ../../models models
-   configtool rescore-model:ffvals models/decode/canoe.ini.cow \
+   set -o pipefail; configtool rescore-model:ffvals models/decode/canoe.ini.cow \
       | cut -f 1 -d ' ' > rescore-model.ini
-   echo [...] >> rescore-model.ini
-   [...]
+   cat rescore-model.template \
+      | sed -e "s#IBM1FWD#models/tm/ibm1.train.en_given_fr.gz#" \
+      [...]
+      >> rescore-model.ini
    > cat rescore-model.ini
    FileFF:ffvals,1
    FileFF:ffvals,2
@@ -809,17 +821,37 @@ features:
    FileFF:ffvals,7
    FileFF:ffvals,8
    FileFF:ffvals,9
-   XXX
+   FileFF:ffvals,10
+   FileFF:ffvals,11
+   FileFF:ffvals,12
+   FileFF:ffvals,13
+   FileFF:ffvals,14
+   FileFF:ffvals,15
+   # NB: this omits some features that are slow to compute. Use rescore_train -H
+   # for a complete list.
+   LengthFF
+   IBM1TgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz
+   IBM1SrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz
    IBM2TgtGivenSrc:models/tm/ibm2.train.en_given_fr.gz
    IBM2SrcGivenTgt:models/tm/ibm2.train.fr_given_en.gz
+   HMMTgtGivenSrc:models/tm/hmm2.train.en_given_fr.gz
+   HMMSrcGivenTgt:models/tm/hmm2.train.fr_given_en.gz
+   HMMVitTgtGivenSrc:models/tm/hmm2.train.en_given_fr.gz
+   HMMVitSrcGivenTgt:models/tm/hmm2.train.fr_given_en.gz
    IBM1WTransTgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz
    IBM1WTransSrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz
-   LengthFF
-   nbestPhrasePostSrc:1#<ffval-wts>#<pfx>
-   nbestSentLenPost:1#<ffval-wts>#<pfx>
+   IBM1DeletionTgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz
+   IBM1DeletionSrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz
+   nbestWordPostSrc:1#<ffval-wts>#<pfx>
    nbestWordPostTrg:1#<ffval-wts>#<pfx>
-   nbestNgramPost:1#1#<ffval-wts>#<pfx>
+   nbestPhrasePostSrc:1#<ffval-wts>#<pfx>
+   nbestPhrasePostTrg:1#<ffval-wts>#<pfx>
    nbestNgramPost:2#1#<ffval-wts>#<pfx>
+   nbestSentLenPost:1#<ffval-wts>#<pfx>
+   ParMismatch
+   QuotMismatch:ef
+   #CacheLM:<src>.id
+   RatioFF
 \end{verbatim}
 There are two kinds of features included in our rescoring model:
 \begin{itemize}
@@ -828,14 +860,16 @@ use the $i$\/th feature generated by the \texttt{canoe} decoder itself. It is
 standard practice to use all decoder features when rescoring, as is done
 automatically by the framework via the \texttt{configtool} command executed
 above.
-\item The other features, following the format \emph{FeatureName:args}, tell
+\item The other features, following the format \emph{FeatureName:Args}, tell
 \texttt{rat.sh} to generate values for the feature \emph{FeatureName} using
-arguments \emph{args}.  For example,
+arguments \emph{Args}.  For example,
 \texttt{IBM2TgtGivenSrc:model/tm/ibm2.train.en\_given\_fr.gz} says to calculate
 the feature \texttt{IBM2TgtGivenSrc} using the IBM model
-\texttt{model/tm/ibm2.train.en\_given\_fr.gz}.  which we trained earlier. To
+\texttt{model/tm/ibm2.train.en\_given\_fr.gz}, which we trained earlier. To
 see a list of all available features, type \texttt{rescore\_train -H}.
 \end{itemize}
+
+Lines starting with \texttt{#} are comments and are ignored by the software.
 
 \subsubsection{Running RAT (Rescore And Translate)}
 
@@ -852,9 +886,9 @@ for details), controlled in this framework via the variable
    cat models/decode/canoe.ini.cow > canoe.ini.cow.dev2
    configtool check canoe.ini.cow.dev2
    ok
-   Tuning a rescoring model.
+   Tuning the rescoring model.
    rat.sh -lb -n 1 train -v -K 1000 -o rescore-model \
-      -msrc XXX \
+      -msrc ../../corpora/dev2_fr.rule \
       -f canoe.ini.cow.dev2 rescore-model.ini \
       ../../corpora/dev2_fr.lc ../../corpora/dev2_en.lc \
       >& log.rescore-model
@@ -863,7 +897,46 @@ for details), controlled in this framework via the variable
 The output from \texttt{rat.sh} is written to the file \texttt{rescore-model}:
 \begin{verbatim}
    > cat rescore-model
-   XXX
+   FileFF:ffvals,1 0.001726045622
+   FileFF:ffvals,2 -0.0259773694
+   FileFF:ffvals,3 0.16128923
+   FileFF:ffvals,4 -0.03746621311
+   FileFF:ffvals,5 -0.005731543992
+   FileFF:ffvals,6 0.002639640123
+   FileFF:ffvals,7 0.002885707887
+   FileFF:ffvals,8 -0.0003304783895
+   FileFF:ffvals,9 0.001620606054
+   FileFF:ffvals,10 0.05822454765
+   FileFF:ffvals,11 -0.0004374884011
+   FileFF:ffvals,12 0.26722911
+   FileFF:ffvals,13 0.004129589535
+   FileFF:ffvals,14 -0.003426758107
+   FileFF:ffvals,15 9.72241105e-05
+   # NB: this omits some features that are slow to compute. Use rescore_train -H 0
+   # for a complete list. 0
+   LengthFF -0.01664732769
+   IBM1TgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz 0.009676812217
+   IBM1SrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz 0.1746531278
+   IBM2TgtGivenSrc:models/tm/ibm2.train.en_given_fr.gz 0.003220736515
+   IBM2SrcGivenTgt:models/tm/ibm2.train.fr_given_en.gz 0.00194059615
+   HMMTgtGivenSrc:models/tm/hmm2.train.en_given_fr.gz -0.003876003204
+   HMMSrcGivenTgt:models/tm/hmm2.train.fr_given_en.gz 0.005696662236
+   HMMVitTgtGivenSrc:models/tm/hmm2.train.en_given_fr.gz -0.003361413721
+   HMMVitSrcGivenTgt:models/tm/hmm2.train.fr_given_en.gz 0.0005181525485
+   IBM1WTransTgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz -0.001264916151
+   IBM1WTransSrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz 0.004323456902
+   IBM1DeletionTgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz 0.3903803825
+   IBM1DeletionSrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz -1
+   nbestWordPostSrc:1#<ffval-wts>#<pfx> -0.002481580013
+   nbestWordPostTrg:1#<ffval-wts>#<pfx> -0.01662635989
+   nbestPhrasePostSrc:1#<ffval-wts>#<pfx> 0.1024738029
+   nbestPhrasePostTrg:1#<ffval-wts>#<pfx> 0.06133669615
+   nbestNgramPost:2#1#<ffval-wts>#<pfx> 0.004936590791
+   nbestSentLenPost:1#<ffval-wts>#<pfx> -0.05364471301
+   ParMismatch 0.001803340274
+   QuotMismatch:ef 0.001308475621
+   #CacheLM:<src>.id 0
+   RatioFF 0.04762249812
 \end{verbatim}
 This is identical to {\tt rescore-model.ini}, except that each feature is now
 assigned a weight. Other by-products created by {\tt rat.sh} are found in the
@@ -927,25 +1000,48 @@ rat.sh} script again, but this time in translation mode:
 This produces both \texttt{test.out}, the output of the decoder, and
 \texttt{test.rat}, the best translation according to the rescoring model.
 
-\subsubsection{Truecasing} \label{Truecasing}
+\subsubsection{Truecasing and Detokenizing} \label{Truecasing}
 
-Notice that the output files contain only lowercase, tokenized text. A
-postprocessing step is required to restore normal letter case and to undo the
-tokenization: truecasing.
+If you inspect the output files, you will notice that they contain only
+lowercase, tokenized text. Two postprocessing step is required to restore normal
+case and normally spaced text: truecasing and detokenizing.
+
+Truecasing is done by the \texttt{truecase.pl} script using the model trained
+previously:
 \begin{verbatim}
    > make tc
    TrueCasing test.out.tc
    truecase.pl \
+                   -uppercaseBOS \
                    -text=test.out \
                    -lm=models/tc/train_en-kn-3g.binlm.gz \
                    -map=models/tc/train_en.map \
                    > test.out.tc 2> log.test.out.tc
    TrueCasing test.rat.tc
    truecase.pl \
+                   -uppercaseBOS \
                    -text=test.rat \
                    -lm=models/tc/train_en-kn-3g.binlm.gz \
                    -map=models/tc/train_en.map \
                    > test.rat.tc 2> log.test.rat.tc
+\end{verbatim}
+
+Detokenizing is done by the script \texttt{udetokenize.pl}, which has
+hand-coded rules to detokenize French or English, encoded in utf-8.  Other
+languages are not supported at this point, but may already be handled partly
+correctly by this script.  As for other encodings, latin1 and cp-1252 are
+supported by \texttt{detokenize.pl}.
+
+\begin{verbatim}
+   > make detok
+   Detokenizing test.out
+   udetokenize.pl -lang=en test.out test.out.detok
+   Detokenizing test.out.tc
+   udetokenize.pl -lang=en test.out.tc test.out.tc.detok
+   Detokenizing test.rat.tc
+   udetokenize.pl -lang=en test.rat.tc test.rat.tc.detok
+   Detokenizing test.rat
+   udetokenize.pl -lang=en test.rat test.rat.detok
 \end{verbatim}
 
 \subsection{Testing} \label{Testing}
@@ -961,53 +1057,35 @@ perfect match. BLEU is calculated by the program {\tt bleumain}:
    bleumain test.out ../corpora/test_en.lc > test.out.bleu
    Calculating BLEU for test.rat.bleu
    bleumain test.rat ../corpora/test_en.lc > test.rat.bleu
-   more *.bleu | cat
-   ::::::::::::::
-   test.out.bleu
-   ::::::::::::::
-   1-gram (match/total) 1307/2440 0.535656
-   2-gram (match/total) 524/2340 0.223932
-   3-gram (match/total) 261/2241 0.116466
-   4-gram (match/total) 152/2142 0.0709617
-   Sentence length: 2440; Best-match sentence length: 2380
-   Score: -1.72911
-   BLEU score: 0.177442
-   ::::::::::::::
-   test.rat.bleu
-   ::::::::::::::
-   1-gram (match/total) 1302/2441 0.533388
-   2-gram (match/total) 503/2341 0.214865
-   3-gram (match/total) 247/2242 0.110169
-   4-gram (match/total) 138/2143 0.0643957
-   Sentence length: 2441; Best-match sentence length: 2380
-   Score: -1.77867
-   BLEU score: 0.168862
+   grep BLEU *.bleu
+   test.out.bleu:BLEU score: 0.171809
+   test.rat.bleu:BLEU score: 0.184020
 \end{verbatim}
 The output from {\tt bleumain} contains match statistics of various orders,
 followed by the global BLEU score, as shown above.
 
 Here, we only calculate the BLEU scores on the lowercase output, using the
 lowercase reference, but you can get BLEU scores for the truecased output by
-using the truecase reference instead.
+giving the truecase translation and reference(s) to \texttt{bleumain}.
 
 These results indicate that the translation produced by rescoring is slightly
-worse than the one produced by plain decoding. Given the small size of the
+better than the one produced by plain decoding. Given the small size of the
 test set, it seems unlikely that the difference is statistically
 significant. To test this hypothesis, we can use {\tt bleucompare}, which does
 a comparison using pairwise bootstrap resampling:
 \begin{verbatim}
    > bleucompare test.rat test.out REFS ../corpora/test_en.lc 
    Comparing using BLEU
-   test.rat got max BLEU score in 0.7% of samples
-   test.out got max BLEU score in 99.3% of samples
+   test.rat got max BLEU score in 97.8% of samples
+   test.out got max BLEU score in 2.2% of samples
 \end{verbatim}
-This indicates that the difference is in fact significant at the 99\% level.
+This indicates that the difference is in fact significant at the 98\% level.
 (Note that you may get completely different results here, since the training
 corpus used is much too small to produce reliable results.)
 
 \section{Final Note}
 Because of differences in rounding, optimization, random number generation,
-etc.\ between systems, results may vary on your platform and are shown in this
-document only as a reference for the user.
+etc.\ between systems, results, especially numerical ones, may vary on your
+platform and are shown in this document only as a reference for the user.
 
 \end{document}
