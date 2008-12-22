@@ -40,6 +40,7 @@ MODEL_DIR ?= ../../models
 
 # What will be the name of the rescoring model's file.
 RESCORING_MODEL ?= rescore-model
+RESCORING_MODEL_TEMPLATE ?= ${RESCORING_MODEL}.template
 
 #
 UNTUNED_RESCORING_MODEL ?= ${RESCORING_MODEL}.ini
