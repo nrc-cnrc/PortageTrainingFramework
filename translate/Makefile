@@ -313,6 +313,7 @@ endif
 %.tc: % ${TRUECASING_LM} ${TRUECASING_MAP}
 	@echo "TrueCasing $@"
 	truecase.pl \
+		-uppercaseBOS \
 		-text=$(word 1, $^) \
 		-lm=$(word 2, $^) \
 		-map=$(word 3, $^) \
@@ -390,15 +391,31 @@ ibm2.%.gz:
 ibm1.%.gz:
 	ln -sf ${IBM_DIR}/ibm1.*$*.gz ibm1.$*.gz 
 
+
+
 ########################################
-# Get BLEU scores
+# Hook to get BLEU scores
 .PHONY: bleu
 bleu: out.bleu
 ifdef DO_RESCORING
 bleu: rat.bleu
 endif
 bleu:
-	more *.bleu | cat
+	grep BLEU *.bleu
+
+
+
+########################################
+# Hook to perform detokenization
+.PHONY: detok
+detok: out.detok
+ifdef DO_TRUECASING
+detok: tc.detok
+endif
+ifdef DO_RESCORING
+detok: rat.detok
+endif
+
 
 
 ########################################
