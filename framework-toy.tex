@@ -183,7 +183,7 @@ Now you need to tell the framework what you've called your test set, since we
 didn't use the default.  Edit \texttt{Makefile.params} and change the
 \texttt{TEST\_SET} variable to say
 \texttt{test} instead of \texttt{test1 test2}.
-This variable lists the stem of all your test sets, and the framework
+This variable lists the prefix of all your test sets, and the framework
 assumes you have two by default.
 You will also need to set \texttt{TRAIN\_LM} and \texttt{TRAIN\_TM} to
 \texttt{train} instead of \texttt{lm-train} and \texttt{tm-train} since we
@@ -299,15 +299,18 @@ model needed for this example, \texttt{train\_en-kn-5g.binlm.gz}:
       >& log.train_en-kn-5g.ilm
    Creating ARPA text format train_en-kn-5g.lm.gz
    compile-lm --text yes train_en-kn-5g.ilm.gz unsorted.train_en-kn-5g.lm \
-      >& log.train_en-kn-5g.lm
-   lm_sort_filter.sh -lm unsorted.train_en-kn-5g.lm train_en-kn-5g.lm.gz
+      >& log.train_en-kn-5g.lm \
+   set -o pipefail; \
+      compile-lm --text yes train_en-kn-5g.ilm.gz /dev/stdout \
+      | egrep -v '^Saving in txt format to' \
+      | lm_sort.pl | gzip > train_en-kn-5g.lm.gz
    arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \
       >& log.train_en-kn-5g.binlm
 \end{verbatim}
 The first three commands executed, \texttt{add-start-end.sh},
 \texttt{build-lm.sh} and \texttt{compile-lm}, construct the language model in
-``DARPA'' format using IRSTLM software.  The next command,
-\texttt{lm\_sort\_filter.sh}, reorders the contents of the LM to maximize the
+``DARPA'' format using IRSTLM software.  The script
+\texttt{lm\_sort.pl} reorders the contents of the LM to maximize the
 compression ratio \texttt{gzip} can achieve.  The sort step is unecessary with
 a small language model, but can significantly reduce final file sizes with very
 large language models.  The last command, \texttt{arpalm2binlm}, converts the
@@ -340,10 +343,9 @@ French language model.
 In this toy example, we only use the target language part of the parallel
 training corpus to train the language model, but this is not the recommended
 practice.  If you have access to larger corpora of monolingual text in your
-target language, you can use them to train additional language models.  You can
-either add them in the \texttt{corpora} directory and list them in
-\texttt{Makefile.params} under \texttt{TRAIN\_LM}, or you can train them
-externally and add them to the \texttt{canoe.ini.template} file (see
+target language, you can use them to train additional language models.
+The framework does not support training multiple language models, but you can
+train them externally and add them to the \texttt{canoe.ini.template} file (see
 section~\ref{COW}).
 
 \subsection{Creating a Truecasing Model} \label{TC}
