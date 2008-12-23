@@ -1,4 +1,4 @@
-\documentclass[11pt]{article}
+\documentclass[11pt,letterpaper]{article}
 \usepackage{isolatin1}
 \usepackage{xspace}
 
@@ -7,6 +7,13 @@
 % Official typesetting of PORTAGEshared
 \newcommand{\PS}{PORTAGE\-\emph{shared}\xspace}
 
+\usepackage{ifpdf}
+\ifpdf
+\setlength{\pdfpagewidth}{8.5in}
+\setlength{\pdfpageheight}{11in}
+\else
+\fi
+
 \title{A toy experiment using the \PS \\
        experimental framework (v1.3)}
 \date{December, 2008}
@@ -14,11 +21,11 @@
 
 \begin{document}
 
-\vspace{\vfill}
+\vfill
 
 \maketitle
 
-\vspace{\vfill}
+\vfill
 
 \begin{center}
 An adaption of George Foster's \emph{Running Portage: A Toy Example} \\
@@ -26,8 +33,8 @@ to Samuel Larkin's experimental framework, updated to reflect recommended usage
 of \PS.
 \end{center}
 
-\vspace{\vfill}
-\vspace{\vfill}
+\vfill
+\vfill
 
 \begin{center}
 {~} \\ \footnotesize
@@ -41,11 +48,15 @@ of \PS.
    Copyright \copyright 2008, Her Majesty in Right of Canada
 \end{center}
 
-\vspace{\vfill}
+\vfill
 
 \newpage
 
+\vfill
+
 \tableofcontents
+
+\vfill
 
 \newpage
 
@@ -885,7 +896,7 @@ the feature \texttt{IBM2TgtGivenSrc} using the IBM model
 see a list of all available features, type \texttt{rescore\_train -H}.
 \end{itemize}
 
-Lines starting with \texttt{#} are comments and are ignored by the software.
+Lines starting with \texttt{\#} are comments and are ignored by the software.
 
 \subsubsection{Running RAT (Rescore And Translate)}
 
