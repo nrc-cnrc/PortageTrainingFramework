@@ -61,6 +61,7 @@ clean:
 	${MAKE} -C models/decode clean
 	${MAKE} -C models/rescore clean
 	${MAKE} -C translate clean
+	${RM} framework-toy.{aux,log,pdf,toc}
 
 
 

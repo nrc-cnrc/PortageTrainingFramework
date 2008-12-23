@@ -179,7 +179,7 @@ clean: clean.rescore_train
 clean.rescore_train: SHELL=${GUARD_SHELL}
 clean.rescore_train:
 	${RM} ${RESCORING_MODEL} ${RESCORING_MODEL}.ini
-	${RM} -r gen-features-parallel-output.* workdir-${TUNE_RESCORE_SRC}-${NBEST_SIZE}best
+	${RM} -r gen-features-parallel-output.* workdir-${TUNE_RESCORE_RULE}-${NBEST_SIZE}best
 
 
 
