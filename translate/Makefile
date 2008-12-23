@@ -314,8 +314,8 @@ ifdef DO_RESCORING
 tc: $(addsuffix .rat.tc, ${TEST_SET})
 endif
 %.tc: % models
-	@[[ -f ${TRUECASING_DIR}/${TRUECASING_LM} ]]  || echo "Can't find ${TRUECASING_LM}" >&2
-	@[[ -f ${TRUECASING_DIR}/${TRUECASING_MAP} ]] || echo "Can't find ${TRUECASING_MAP}" >&2
+	@[[ -f ${TRUECASING_DIR}/${TRUECASING_LM} ]]  || (echo "Can't access truecasing lm ${TRUECASING_DIR}/${TRUECASING_LM}"; false) >&2
+	@[[ -f ${TRUECASING_DIR}/${TRUECASING_MAP} ]] || (echo "Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}"; false) >&2
 	@echo "TrueCasing $@"
 	truecase.pl \
 		-uppercaseBOS \
