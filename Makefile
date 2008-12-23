@@ -49,6 +49,11 @@ doc: framework-toy.pdf
 	-TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 
+.PHONY: doc-clean
+# Clean auxiliary files from make doc, but not the .pdf itself.
+doc-clean:
+	${RM} framework-toy.{aux,log,toc}
+
 
 
 .PHONY: clean
