@@ -72,7 +72,7 @@ corpora: check_setup
 
 
 .PHONY: models
-models: lms tms
+models: lm tm
 ifdef DO_TRUECASING
 models: tc
 endif
