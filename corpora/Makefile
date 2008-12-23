@@ -21,7 +21,7 @@ MAKEFILE_PARAMS ?= Makefile.params
 
 
 # Change make's default shell to a distributed one, if working on a cluster.
-SHELL = ${GUARD_SHELL}
+SHELL = ${FRAMEWORK_SHELL}
 
 
 # What command to use for lowercasing corpora.
@@ -111,21 +111,21 @@ lc: ${LC}
 
 # Prepare truecased file.
 %.tc: %${ALIGNX}
-	@${check_utf8}
+	@${check_utf8} \
 	cp $< $@
 
 %.tc${GZ}: %${ALIGNX}${GZ}
-	@${check_utf8}
+	@${check_utf8} \
 	cp $< $@
 
 
 # Constructs a lowercased corpora from its aligned version.
 %${LANGX}: %${ALIGNX}
-	@$(check_utf8)
+	@$(check_utf8) \
 	cat $< | ${LOWERCASE} > $@
 
 %${LANGXZ}: %${ALIGNX}${GZ}
-	@$(check_utf8)
+	@$(check_utf8) \
 	zcat $< | ${LOWERCASE} | gzip > $@
 
 
@@ -135,7 +135,7 @@ lc: ${LC}
 RULE = $(addsuffix ${RULEX}, ${HELDOUT_SET})
 rule: ${RULE}
 %${RULEX}: %_${SRC_LANG}${LANGX}
-	@$(check_utf8)
+	@$(check_utf8) \
 	canoe-escapes.pl -add $< > $@
 
 
@@ -149,7 +149,7 @@ reference: $(addprefix $(subst _${TGT_LANG},,$(basename ${TRANSLATE_SET})),  _${
 
 # Check if the first dependency is a utf8 file.
 define check_utf8
-(file -Libz $< | egrep -qi 'charset=utf-8|ASCII') || echo "WARNING: Please convert $< to utf-8"
+(file -Libz $< | egrep -qi 'charset=utf-8|ASCII') || echo "WARNING: Please convert $< to utf-8"; 
 endef
 
 
