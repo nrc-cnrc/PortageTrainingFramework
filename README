@@ -15,36 +15,39 @@ Joanis
 
 
 This experimental framework is intended as a starting point for experiments
-with PORTAGEshared.  It uses recommended settings for a reasonable baseline
-experiment.  In practice, our baseline settings change all the time, at NRC, as
-we continue our research on Statistical Machine Translation, so no framework
-can truly represent the current state of the art.  Nonetheless, we've tried to
+with PORTAGEshared.  It uses recommended settings for a reasonable experimental
+starting point.  In practice, our settings change all the time, at NRC, as we
+continue our research on Statistical Machine Translation, so no framework can
+truly represent the current state of the art.  Nonetheless, we've tried to
 present in this framework our currently recommended practice.
 
 
-INSTRUCTIONS:
+QUICK START GUIDE
 
 The following describes the quickest way to get started with this framework.
 
 
 SOFTWARE SETUP:
 
-Make sure you have PORTAGEshared installed and available in your path.  Make
-sure you also have irstlm properly compiled and setup which means that you have
-set IRSTLM with the location of your installed irstlm.
+Make sure you have PORTAGEshared installed and available in your $PATH.  Also
+make sure you have IRSTLM properly compiled and set up, which means that you
+have set $IRSTLM to the location of your installed IRSTLM.  Typing "make help"
+will give you sample commands you can cut and paste to do so.  Alternatively,
+if you have SRILM installed, set LM_TOOLKIT_SRI=1 in Makefile.params.
 
 
 TRAINING:
 
-You will need to copy or symlink your training files in corpora where your
-files should have this pattern <PREFIX>_<LANG>.al where <LANG> is two letters
-representing the content's language for that file.  These files are one
-sentence per line, truecased, tokenized and sentence aligned with their
-counterpart in the other language except for the file used for the language
-model.  This framework requires two pairs of tuning files containing around
-1000 sentences each and two pairs of test files.  It also requires training
-copora for the language model and the translation models which are kept
-compress (.gz).  Here's what your corpora directory should look like:
+You will need to copy or symlink your training files in corpora.  Your files
+should have the pattern <PREFIX>_<LANG>.al, where <LANG> is two letters
+representing the language for that file.  These files should contain one
+sentence per line, in original truecase, tokenized and sentence aligned with
+the matching lines in the other language, except for the file used for the
+language model.  This framework requires two pairs of tuning files containing
+around 1000 sentences each, and two pairs of test files.  It also requires
+training copora for the language model and the translation models, which are
+kept compressed (.gz) since they are expected to be large.  Here's what your
+corpora directory should look like:
 
 corpora/dev1_en.al
 corpora/dev1_fr.al
@@ -60,25 +63,21 @@ corpora/test2_fr.al
 corpora/tm-train_en.al.gz
 corpora/tm-train_fr.al.gz
 
-As an example, dev1_en.al is an english file with dev1 as <PREFIX>.
+As an example, dev1_en.al is an english file with dev1 as its <PREFIX>.
 
 If you decide not to use the default file names for any of the previous files,
-you must edit ./Makefile.params accordingly.  Replace the prefixes of TRAIN_LM,
+you must edit Makefile.params accordingly.  Replace the prefixes of TRAIN_LM,
 TRAIN_TM, TUNE_DECODE, TUNE_RESCORE and/or TEST_SET to reflect your file names.
 Note that these variables are not the full file name but rather the <PREFIX> of
-each files.
+each file or file pair.
 
-Note that, since the file used for training the language model and the
-translation model are big, the framework expected them compressed.
+If you are building a system to translate languages other than English->French,
+you will need to modify SRC_LANG and TGT_LANG in Makefile.params.  You will
+also notice that that <LANG> = {SRC_LANG, TGT_LANG} and are preferably two
+letter tokens representing your source and target languages.
 
-If you are not building a system to translate from english to french, you will
-also need to modify SRC_LANG and TGT_LANG in ./Makefile.params.  You will also
-notice that that <LANG> = {SRC_LANG, TGT_LANG} and are preferably two letter
-tokens representing your source and target languages.
-
-Finally, you need to go to the root of the framework, type make help and copy
-and paste the two export lines into your shell.  Then you are good to try make
-all.
+At this point "make all" should do all the work, from training all models to
+getting BLEU scores, tuning decoding and rescoring weights in the process.
 
 
 ONCE YOU HAVE A TRAINED SYSTEM:
