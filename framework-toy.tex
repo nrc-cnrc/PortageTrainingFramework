@@ -215,9 +215,23 @@ below, you should reverse the values of \texttt{SRC\_LANG} and
 In this toy experiment, we'll use the default value for most other parameters,
 but you need to set the \texttt{IRSTLM} variable if you have installed IRSTLM
 and wish to use it, or the \texttt{LM\_TOOLKIT\_SRI} to use SRILM (if your
-licensing requirements permit it).  If you have neither, leave both variables
-undefined; we provide trained language models that you can drop into the
-framework to finish this toy experiment while skipping language model training.
+licensing requirements permit it).
+If you have neither, leave both variables undefined; we provide trained
+language models that you can drop into the framework to finish this toy
+experiment while skipping language model training.
+
+If you are using IRSTLM, after setting the \texttt{IRSTLM} variable in
+\texttt{Makefile.params}, you need to type \texttt{make help} and cut and paste
+the two export commands, unless you've already done the equivalent steps while
+installing IRSTLM:
+\begin{verbatim}
+   > make help | head -3
+   please run in order for this framework to run properly:
+   export PATH=$PORTAGE/pkgs/irstlm/bin:$PATH
+   export IRSTLM=$PORTAGE/pkgs/irstlm
+   > export PATH=$PORTAGE/pkgs/irstlm/bin:$PATH
+   > export IRSTLM=$PORTAGE/pkgs/irstlm
+\end{verbatim}
 
 Another set of parameters you might want to adjust are the various
 \texttt{PARALLELISM\_LEVEL\_*} variables.  \PS is written in such a way as to
