@@ -81,8 +81,8 @@ vpath %${RULEX} ${CORPORA_DIR}
 
 vpath ${DECODING_MODEL}  ${DECODING_MODEL_DIR}  models/decode
 vpath ${RESCORING_MODEL} ${RESCORING_MODEL_DIR} models/rescore
-vpath ${TRUECASING_LM}   ${TRUECASING_DIR} ../${TRUECASING_DIR}
-vpath ${TRUECASING_MAP}  ${TRUECASING_DIR} ../${TRUECASING_DIR}
+vpath ${TRUECASING_LM}   ${TRUECASING_DIR}
+vpath ${TRUECASING_MAP}  ${TRUECASING_DIR}
 
 
 
@@ -111,6 +111,9 @@ endif
 endif
 
 # The final translation depends if we are doing rescoring and/or truecasing.
+.PHONY: final_result
+final_result: SHELL=${GUARD_SHELL}
+
 final_result: $(addsuffix .translation,${TEST_SET})
 %.translation: %${FINALX}
 	cp $< $@
@@ -176,8 +179,8 @@ ${DECODING_MODEL}::
 # You could add some specific target if you need to customize a canoe.ini.cow
 # for a particular file.
 ${DECODING_MODEL}.%: models
-	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
-	configtool check $@
+	_LOCAL=1 cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
+	_LOCAL=1 configtool check $@
 # example: increase the beam threshold and stack size.
 #	cat $< \
 #	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
@@ -310,13 +313,15 @@ tc: $(addsuffix .out.tc, ${TEST_SET})
 ifdef DO_RESCORING
 tc: $(addsuffix .rat.tc, ${TEST_SET})
 endif
-%.tc: % ${TRUECASING_LM} ${TRUECASING_MAP}
+%.tc: % models
+	@[[ -f ${TRUECASING_DIR}/${TRUECASING_LM} ]]  || echo "Can't find ${TRUECASING_LM}" >&2
+	@[[ -f ${TRUECASING_DIR}/${TRUECASING_MAP} ]] || echo "Can't find ${TRUECASING_MAP}" >&2
 	@echo "TrueCasing $@"
 	truecase.pl \
 		-uppercaseBOS \
-		-text=$(word 1, $^) \
-		-lm=$(word 2, $^) \
-		-map=$(word 3, $^) \
+		-text=$< \
+		-lm=${TRUECASING_DIR}/${TRUECASING_LM} \
+		-map=${TRUECASING_DIR}/${TRUECASING_MAP} \
 		> $@ 2> log.$@
 
 .PHONY: tc.detok
