@@ -146,6 +146,7 @@ if [[ $? -ne 0 ]]; then
    error_exit "Problem while translating $source";
 fi
 
-echo "Your file is available in" >&2
-cat translate/$prefix.translation
+#echo "Your file is available in" >&2
+#cat translate/$prefix.translation
 
+echo "Your translation file is available here: translate/$prefix.translation"
