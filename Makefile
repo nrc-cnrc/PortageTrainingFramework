@@ -19,7 +19,7 @@ MAKEFILE_PARAMS ?= Makefile.params
 .PHONY: all
 all: tune
 ifneq ($(strip ${TEST_SET}),)
-all: translate
+all: eval
 endif
 
 
@@ -79,11 +79,11 @@ endif
 
 
 
-.PHONY: lms
+.PHONY: lm
 # Create the Language Model (LM).
-lms: lm.${TGT_LANG}
+lm: lm.${TGT_LANG}
 ifdef BIDIRECTIONAL_SYSTEM
-lms: lm.${SRC_LANG}
+lm: lm.${SRC_LANG}
 endif
 lm.%: corpora
 	${MAKE} -C models/lm all
@@ -102,19 +102,18 @@ endif
 
 
 
-.PHONY: tms
+.PHONY: tm
 # Create the Translation Model (TM).
-tms: corpora
+tm: corpora
 	${MAKE} -C models/tm all
 
 
 
 .PHONY: tune
 # Tune the required models.
+tune: cow
 ifdef DO_RESCORING
 tune: rat
-else
-tune: cow
 endif
 
 
@@ -135,8 +134,15 @@ rat: cow
 
 .PHONY: translate
 # Tune weights and apply them to the test sets
-translate: models tune
+translate: tune
 	${MAKE} -C translate
+
+
+
+.PHONY: eval
+# Get BLEU scores for the test set(s)
+eval: translate
+	${MAKE} -C translate bleu
 
 
 

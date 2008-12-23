@@ -311,7 +311,7 @@ If you are using the IRSTLM toolkit, here is the command used to produce the
 model needed for this example, \texttt{train\_en-kn-5g.binlm.gz}:
 \begin{verbatim}
    > cd ..             # only needed if you were still in corpora
-   > make lms
+   > make lm
    make -C models/lm all
    Marking ../../corpora/train_en.lc.gz
    zcat -f ../../corpora/train_en.lc.gz \
@@ -346,7 +346,7 @@ software.
 If you are using the SRILM toolkit, here is the command used to produce this
 model:
 \begin{verbatim}
-   > make lms
+   > make lm
    make -C models/lm all 
    Creating ARPA text format train_en-kn-5g.lm.gz
    ngram-count -interpolate -kndiscount -order 5 \
@@ -364,6 +364,13 @@ already compresses well.
 With either toolkit, this example assumes that the target language is English;
 for English to French translation, a similar command could be used to create a
 French language model.
+
+If you have not installed any LM toolkit, we provide the file
+\texttt{train\_en-kn-5g.lm.gz} in
+\texttt{PORTAGEshared/test-suite/unit-testing/framework-toy/lm}.  You can copy
+that file into \texttt{models/lm} and then type \texttt{make lm} to proceed
+with the rest of this example, although you won't be able to complete your own
+experiments without an LM toolkit.
 
 In this toy example, we only use the target language part of the parallel
 training corpus to train the language model, but this is not the recommended
@@ -400,6 +407,13 @@ model as in section~\ref{LM} above, but using the truecase corpus,
 \texttt{train\_en.tc.gz}, instead of the lowercased version,
 \texttt{train\_en.lc.gz}, as above.
 
+If you have not installed any LM toolkit, we provide the file
+\texttt{train\_en-kn-3g.lm.gz} in
+\texttt{PORTAGEshared/test-suite/unit-testing/framework-toy/tc}.  You can copy
+that file into \texttt{models/tc} and and type \texttt{make tc} to proceed with
+the rest of this example, although you won't be able to complete your own
+experiments without an LM toolkit.
+
 \subsection{Creating a Translation Model} \label{TM}
 
 Creating a translation model involves two main steps: training IBM and HMM word
@@ -407,7 +421,7 @@ alignment models in both directions, then using them to extract phrase pairs
 from the corpus.  This step was once fairly simple, but not the recommended
 practice is to train and use two sets of phrase tables: one from IBM2 word
 alignments, and one from HMM word alignments.  You can do all this by typing
-\texttt{make tms} in your \texttt{toy.experiment} directory, but we'll break it
+\texttt{make tm} in your \texttt{toy.experiment} directory, but we'll break it
 down in several steps here.
 
 \subsubsection{Creating a Translation Model Using IBM2 Alignments} \label{IBM2}
@@ -583,6 +597,10 @@ information need to be tuned. The tuning process is carried out by a script
 called \texttt{cow.sh}, which runs \texttt{canoe} several times. \texttt{cow.sh}
 requires a configuration file for \texttt{canoe}, called \texttt{canoe.ini} by
 default.
+
+You can do all the steps below by typing \texttt{make cow} in your
+\texttt{toy.experiment} directory, but we'll break it down in several steps
+here.
 
 \subsubsection{The Decoder Configuration File: canoe.ini}
 
@@ -814,6 +832,10 @@ consists of a vector of feature weights set so as to optimize translation
 performance when a weighted combination of feature values is used to reorder
 the n-best lists.
 
+You can do all the steps below by typing \texttt{make rat} in your
+\texttt{toy.experiment} directory, but we'll break it down in several steps
+here.
+
 \subsubsection{The Input Rescoring Model}
 
 Training is carried out by the \texttt{rat.sh} script. This takes as input a
@@ -982,6 +1004,10 @@ Once training is complete, the system can be used to translate.
    > cd translate
 \end{verbatim}
 
+Some of the steps below will be performed if you do \texttt{make translate} in
+your \texttt{toy.experiment} directory, but the final output you need depends
+on what you're doing, and might not be produced by default.
+
 \subsubsection{Decoding Only}
 
 As mentioned earlier, there are two options for translating. The simplest is to
@@ -1090,6 +1116,9 @@ perfect match. BLEU is calculated by the program {\tt bleumain}:
 \end{verbatim}
 The output from {\tt bleumain} contains match statistics of various orders,
 followed by the global BLEU score, as shown above.
+
+The result above can also be obtained by typing \texttt{make eval}, or just
+\texttt{make}, in your \texttt{toy.experiment} directory.
 
 Here, we only calculate the BLEU scores on the lowercase output, using the
 lowercase reference, but you can get BLEU scores for the truecased output by
