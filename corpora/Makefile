@@ -135,7 +135,7 @@ lc: ${LC}
 RULE = $(addsuffix ${RULEX}, ${HELDOUT_SET})
 rule: ${RULE}
 %${RULEX}: %_${SRC_LANG}${LANGX}
-	@$(check_utf8) \
+	@$(check_utf8)
 	canoe-escapes.pl -add $< > $@
 
 
