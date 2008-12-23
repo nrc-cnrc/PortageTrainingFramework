@@ -80,6 +80,10 @@ clean:
 
 
 # Build the truecased lm model using the convinient Makefile from models/lm.
+.PHONY: lm
+lm: SHELL=${GUARD_SHELL}
+lm: ${TRUECASING_LM}
+
 %-kn-3g.binlm.gz: SHELL=${GUARD_SHELL}
 %-kn-3g.binlm.gz:
 	${MAKE} -f ../lm/Makefile $@
@@ -87,6 +91,10 @@ clean:
 
 
 # Build a map file.
+.PHONY: map
+map: SHELL=${GUARD_SHELL}
+map: ${TRUECASING_MAP}
+
 %.map:  %${TCX}  %${LANGXZ}
 	compile_truecase_map $+ > $@
 
