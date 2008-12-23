@@ -32,7 +32,7 @@ export TEST_SET      ?= test1 test2
 
 # The prefix_root where we can find IRSTLM/bin, which must also be on your
 # PATH.
-export IRSTLM ?= /home/larkins/sandboxes/irstlm
+export IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 
 # Uncomment the following line if you have acces to SRILM, in which case its
 # executable scripts and programs should be on your PATH.
