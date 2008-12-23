@@ -76,14 +76,15 @@ also need to modify SRC_LANG and TGT_LANG in ./Makefile.params.  You will also
 notice that that <LANG> = {SRC_LANG, TGT_LANG} and are preferably two letter
 tokens representing your source and target languages.
 
-Finally, you need to get to the root of the framework, type make help and copy
+Finally, you need to go to the root of the framework, type make help and copy
 and paste the two export lines into your shell.  Then you are good to try make
 all.
 
 
 ONCE YOU HAVE A TRAINED SYSTEM:
 
-Once your system is trained, you will want to translate some other documents.
-These documents don't have an aligned counterpart but are still required to be
-tokenized and have one sentence per line.  To translate a new document, you simply have to do ./translate.sh <YOUR_NEW_DOCUMENT>
+Once your system is trained, you might want to translate some other documents.
+These documents don't need an aligned counterpart but must still be tokenized
+and have one sentence per line.  To translate a new document, simply run:
+   ./translate.sh <YOUR_NEW_TOKENIZED_DOCUMENT>
 
