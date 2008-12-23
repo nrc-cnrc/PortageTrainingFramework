@@ -111,21 +111,21 @@ lc: ${LC}
 
 # Prepare truecased file.
 %.tc: %${ALIGNX}
-	@${check_utf8} \
+	@${check_utf8}
 	cp $< $@
 
 %.tc${GZ}: %${ALIGNX}${GZ}
-	@${check_utf8} \
+	@${check_utf8}
 	cp $< $@
 
 
 # Constructs a lowercased corpora from its aligned version.
 %${LANGX}: %${ALIGNX}
-	@$(check_utf8) \
+	@$(check_utf8)
 	cat $< | ${LOWERCASE} > $@
 
 %${LANGXZ}: %${ALIGNX}${GZ}
-	@$(check_utf8) \
+	@$(check_utf8)
 	zcat $< | ${LOWERCASE} | gzip > $@
 
 
@@ -149,7 +149,7 @@ reference: $(addprefix $(subst _${TGT_LANG},,$(basename ${TRANSLATE_SET})),  _${
 
 # Check if the first dependency is a utf8 file.
 define check_utf8
-(file -Libz $< | egrep -qi 'charset=utf-8|ASCII') || echo "WARNING: Please convert $< to utf-8"; 
+_LOCAL=1 (file -Libz $< | egrep -qi 'charset=utf-8|ASCII') || echo "WARNING: Please convert $< to utf-8" 
 endef
 
 
