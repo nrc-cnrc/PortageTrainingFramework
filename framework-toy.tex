@@ -223,13 +223,15 @@ below, you should reverse the values of \texttt{SRC\_LANG} and
    export TGT_LANG ?= en
 \end{verbatim}
 
-In this toy experiment, we'll use the default value for most other parameters,
-but you need to set the \texttt{IRSTLM} variable if you have installed IRSTLM
-and wish to use it, or the \texttt{LM\_TOOLKIT\_SRI} to use SRILM (if your
-licensing requirements permit it).
-If you have neither, leave both variables undefined; we provide trained
-language models that you can drop into the framework to finish this toy
-experiment while skipping language model training.
+In this toy experiment, we'll use the default value for most other parameters.
+
+We recommend you use SRILM as your language modeling toolkit, if your
+licensing requirements permit it.  If not, you can use IRSTLM instead.  In this
+case, you need to comment out the \texttt{LM\_TOOLKIT\_SRI} variable and set
+the \texttt{IRSTLM} variable to indicate where you installed it.  If you have
+neither toolkit, leave both variables undefined; we provide trained language
+models that you can drop into the framework to finish this toy experiment while
+skipping language model training.
 
 If you are using IRSTLM, after setting the \texttt{IRSTLM} variable in
 \texttt{Makefile.params}, you need to type \texttt{make help} and cut and paste
@@ -302,10 +304,27 @@ weights, and creating a rescoring model.
 
 \subsection{Creating a Language Model} \label{LM}
 
-Portage does not come with programs for language model training. However,
-it accepts models in the widely-used ``DARPA'' format which is produced by popular
+Portage does not come with programs for language model training. However, it
+accepts models in the widely-used ``DARPA'' format which is produced by popular
 toolkits such as CMU SLM (www.speech.cs.cmu.edu/ SLM\_info.html), SRILM
 (www.speech.sri.com/projects/srilm), or IRSTLM (irstlm.sourceforge.net).
+
+If you are using the SRILM toolkit, here is the command used to produce this
+model:
+\begin{verbatim}
+   > make lm
+   make -C models/lm all 
+   Creating ARPA text format train_en-kn-5g.lm.gz
+   ngram-count -interpolate -kndiscount -order 5 \
+      -text ../../corpora/train_en.lc.gz -lm train_en-kn-5g.lm.gz \
+      >& log.train_en-kn-5g.lm
+   arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \
+      >& log.train_en-kn-5g.binlm
+\end{verbatim}
+The first command executed, \texttt{ngram-count}, produces the language model
+itself in ``DARPA'' format.  The second command, \texttt{arpalm2binlm},
+converts it into the Portage binary language model format, like in the IRSTLM
+example.
 
 If you are using the IRSTLM toolkit, here is the command used to produce the
 model needed for this example, \texttt{train\_en-kn-5g.binlm.gz}:
@@ -338,28 +357,11 @@ The first three commands executed, \texttt{add-start-end.sh},
 \texttt{lm\_sort.pl} reorders the contents of the LM to maximize the
 compression ratio \texttt{gzip} can achieve.  The sort step is unecessary with
 a small language model, but can significantly reduce final file sizes with very
-large language models.  The last command, \texttt{arpalm2binlm}, converts the
-language model into the Portage binary language model format.  This binary
-format contains the same information, but is much faster to load in \PS
-software.
-
-If you are using the SRILM toolkit, here is the command used to produce this
-model:
-\begin{verbatim}
-   > make lm
-   make -C models/lm all 
-   Creating ARPA text format train_en-kn-5g.lm.gz
-   ngram-count -interpolate -kndiscount -order 5 \
-      -text ../../corpora/train_en.lc.gz -lm train_en-kn-5g.lm.gz \
-      >& log.train_en-kn-5g.lm
-   arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \
-      >& log.train_en-kn-5g.binlm
-\end{verbatim}
-The first command executed, \texttt{ngram-count}, produces the language model
-itself in ``DARPA'' format.  The second command, \texttt{arpalm2binlm},
-converts it into the Portage binary language model format, like in the IRSTLM
-example.  With SRILM, we don't use the optional sorting step, since its output
-already compresses well.
+large language models.\footnote{We didn't do this sorting step with SRILM,
+since its output already compresses well.}  The last command,
+\texttt{arpalm2binlm}, converts the language model into the Portage binary
+language model format.  This binary format contains the same information, but
+is much faster to load in \PS software.
 
 With either toolkit, this example assumes that the target language is English;
 for English to French translation, a similar command could be used to create a
@@ -370,7 +372,7 @@ If you have not installed any LM toolkit, we provide the file
 \texttt{PORTAGEshared/test-suite/unit-testing/framework-toy/lm}.  You can copy
 that file into \texttt{models/lm} and then type \texttt{make lm} to proceed
 with the rest of this example, although you won't be able to complete your own
-experiments without an LM toolkit.
+experiments without a language modeling toolkit.
 
 In this toy example, we only use the target language part of the parallel
 training corpus to train the language model, but this is not the recommended
@@ -412,7 +414,7 @@ If you have not installed any LM toolkit, we provide the file
 \texttt{PORTAGEshared/test-suite/unit-testing/framework-toy/tc}.  You can copy
 that file into \texttt{models/tc} and and type \texttt{make tc} to proceed with
 the rest of this example, although you won't be able to complete your own
-experiments without an LM toolkit.
+experiments without a language modeling toolkit.
 
 \subsection{Creating a Translation Model} \label{TM}
 
