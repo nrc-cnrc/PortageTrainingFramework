@@ -70,6 +70,15 @@ endif
 
 
 
+# What the user can expect from this module.
+.PHONY: list_final_output
+list_final_output: SHELL=${GUARD_SHELL}
+list_final_output:
+	${MAKE} -sf ../lm/Makefile $@
+	@echo "${TRUECASING_MAP}"
+
+
+
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
 clean:

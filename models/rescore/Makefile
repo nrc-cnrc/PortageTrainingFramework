@@ -95,6 +95,15 @@ help:
 
 
 
+# What the user can expect from this module.
+.PHONY: list_final_output
+list_final_output: SHELL=${GUARD_SHELL}
+list_final_output:
+	@echo "Expected final output(s):"
+	@echo "${RESCORING_MODEL}"
+
+
+
 # Unfortunately, this script requires setup.
 .PHONY: setup
 setup: SHELL=${GUARD_SHELL}

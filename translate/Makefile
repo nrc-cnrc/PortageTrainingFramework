@@ -120,6 +120,15 @@ final_result: $(addsuffix .translation,${TEST_SET})
 
 
 
+# What the user can expect from this module.
+.PHONY: list_final_output
+list_final_output: SHELL=${GUARD_SHELL}
+list_final_output:
+	@echo "Expected final output(s):"
+	@echo "$(addsuffix .translation,${TEST_SET})"
+
+
+
 ########################################
 # What is require to setup this module.
 .PHONY: setup

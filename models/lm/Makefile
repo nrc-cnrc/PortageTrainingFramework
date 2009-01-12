@@ -101,6 +101,13 @@ all_lm: quantize
 all_lm: Qblmt
 all_lm: binlm
 
+# What the user can expect from this module.
+.PHONY: list_final_output
+list_final_output: SHELL=${GUARD_SHELL}
+list_final_output:
+	@echo "Expected final output(s):"
+	@echo "${LM_NAME}.binlm.gz"
+
 
 
 .PHONY: clean

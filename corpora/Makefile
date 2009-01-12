@@ -75,6 +75,7 @@ all: tc
 endif
 
 # What the user can expect from this module.
+.PHONY: list_final_output
 list_final_output: SHELL=${GUARD_SHELL}
 list_final_output:
 	@echo "Expected final output are:"
