@@ -46,7 +46,9 @@ MODEL_DIR ?= ../../models
 
 # Indicates what prefix/file to use for training a decoder model
 TUNE_DECODE     ?= dev1
+# What source file to use for tuning the decoder.
 TUNE_DECODE_SRC  = ${TUNE_DECODE}${SRCX}
+# What target file to use for tuning the decoder.
 TUNE_DECODE_TGT  = ${TUNE_DECODE}${TGTX}
 
 # Specific PSUB options
@@ -117,7 +119,7 @@ check_template:
 ########################################
 # Create canoe.ini from template.
 CPTS ?= $(subst /,\/,$(wildcard models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz))
-LMS  ?= $(subst /,\/,$(wildcard models/lm/*${TGT_LANG}*.binlm.gz))
+LMS  ?= $(subst /,\/,$(wildcard models/lm/lm-*${TGT_LANG}*.binlm.gz))
 ${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}  models
 	cat $< \
@@ -187,4 +189,12 @@ symlink: models
 models: SHELL=${GUARD_SHELL}
 models:
 	ln -sf ${MODEL_DIR} $@
+	@ls models/tm/cpt.* &> /dev/null || \
+		(echo "WARNING: Is it possible that you don't have trained at least a translation model?" >&2; \
+		rm $@; \
+		false;)
+	@ls models/lm/lm-*.binlm.gz &> /dev/null || \
+		(echo "WARNING: Is it possible that you don't have trained at least a language model?" >&2; \
+		rm $@; \
+		false;)
 
