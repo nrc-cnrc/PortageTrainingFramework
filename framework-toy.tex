@@ -75,17 +75,28 @@ using text from the Hansard corpus.  It is too small for good translation, but
 large enough to give the flavour of a more realistic setup. Running time is
 several hours.
 
-\subsection{Running the toy experiment}
+\subsection{Making sure \PS is installed}
 
 To begin, you must build or obtain the \PS executables and ensure that they are
 in your path, typically by sourcing the \texttt{SETUP.bash/ .tcsh} file as
 customized for your environment during installation of \PS.  You should also
 set your environment variable \texttt{\$PORTAGE} to the directory where \PS is
-installed, which is also done by \texttt{SETUP.bash/ .tcsh}.  Then you must make
-a complete copy of this framework directory hierarchy, because it is designed
-to work in place, creating the models within this hierarchy itself.  The
-philosophy of this framework is that each experiment is done in a separate copy
-of the framework.
+installed, which is also done by \texttt{SETUP.bash/ .tcsh}.  Follow the
+instructions in \texttt{INSTALL} before you proceed with this document.
+
+To make sure \PS is installed properly, try \texttt{canoe -h}, \texttt{cow.sh
+-h} and \texttt{tokenize.pl -h}.  If you get usage information for each of
+these programs, you should be ready to proceed.  If one of them gives you an
+error message, then some part of your installation is incomplete.  See section
+\emph{Verifying your installation} in \texttt{INSTALL} for troubleshooting
+suggestions.
+
+\subsection{Running the toy experiment}
+
+Once you know \PS is correctly installed, you should make a complete copy of
+this framework directory hierarchy, because it is designed to work in place,
+creating the models within this hierarchy itself.  The philosophy of this
+framework is that each experiment is done in a separate copy of the framework.
 
 For example:
 \begin{verbatim}
