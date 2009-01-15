@@ -45,7 +45,7 @@ UNTUNED_RESCORING_MODEL ?= ${RESCORING_MODEL}.ini
 
 # Indicates where to find the canoe.ini template
 DECODING_MODEL_DIR ?= models/decode
-DECODING_MODEL     ?= ${DECODING_MODEL_DIR}/canoe.ini.cow
+DECODING_MODEL     ?= canoe.ini.cow
 
 # Indicates where to find the IBM models.
 IBM_DIR ?= models/tm
@@ -135,7 +135,7 @@ clean.logs:
 .PHONY: check_decoding_model
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model: setup
-	@if [[ ! -e ${DECODING_MODEL} ]]; then \
+	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
 		echo "Please run ${DECODING_MODEL_DIR} first!"; \
 		false; \
 	fi
@@ -147,8 +147,8 @@ check_decoding_model: setup
 # requires: a trained decoding model.
 # This provides the default rescore-model.ini.
 ${UNTUNED_RESCORING_MODEL}: SHELL=${GUARD_SHELL}
-${UNTUNED_RESCORING_MODEL}: ${DECODING_MODEL} models ${RESCORING_MODEL_TEMPLATE}
-	set -o pipefail; configtool rescore-model:ffvals $< | cut -f 1 -d ' ' > $@
+${UNTUNED_RESCORING_MODEL}: models ${RESCORING_MODEL_TEMPLATE}
+	set -o pipefail; configtool rescore-model:ffvals ${DECODING_MODEL_DIR}/${DECODING_MODEL} | cut -f 1 -d ' ' > $@
 	cat ${lastword $+} \
 	| sed -e "s#IBM1FWD#${IBM_DIR}/ibm1.${TGT_GIVEN_SRCX}#" \
 	      -e "s#IBM1BKW#${IBM_DIR}/ibm1.${SRC_GIVEN_TGTX}#" \
@@ -198,11 +198,11 @@ clean.rescore_train:
 ${DECODING_MODEL}.%: SHELL=${GUARD_SHELL}
 ${DECODING_MODEL}.%: models
 	echo ${DECODING_MODEL}
-	@if [[ ! -e ${DECODING_MODEL} ]]; then \
+	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
 		echo "Please run ${DECODING_MODEL_DIR} first!"; \
 		false; \
 	fi
-	cat ${DECODING_MODEL} > $@
+	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
 #	cat $< \
 #	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
@@ -225,7 +225,7 @@ clean.decoding.model:
 # Check the decoding model config file.
 .PHONY: configtool
 configtool: SHELL=${GUARD_SHELL}
-configtool: ${DECODING_MODEL} models
+configtool: ${DECODING_MODEL_DIR}/${DECODING_MODEL} models
 	configtool check $<
 
 
