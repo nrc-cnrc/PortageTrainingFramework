@@ -128,13 +128,13 @@ check_template:
 ########################################
 # Create canoe.ini from template.
 CPTS ?= $(subst /,\/,$(wildcard models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz))
-LMS  ?= $(subst /,\/,$(wildcard models/lm/lm-*${TGT_LANG}*.binlm.gz))
+LMS  ?= $(subst /,\/,$(wildcard models/lm/*${TGT_LANG}*.binlm.gz))
 ${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}  models
 	@ls models/tm/cpt.* &> /dev/null || \
 		(echo "ERROR: Is it possible that you haven't trained at least one translation model?" >&2; \
 		false;)
-	@ls models/lm/lm-*.binlm.gz &> /dev/null || \
+	@ls models/lm/*.binlm.gz &> /dev/null || \
 		(echo "ERROR: Is it possible that you haven't trained at least one language model?" >&2; \
 		false;)
 	cat $< \
