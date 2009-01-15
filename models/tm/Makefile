@@ -15,6 +15,9 @@
 # Source file requirements
 # <PREFIX>_<LANGUAGE>.<LANGX>
  
+# Variables we use from ../../Makefile.params:
+# PT_TYPES indicates what type of phrase table we want to generate.
+
 # Mandatory include: master config file.
 include ../../Makefile.params
 
@@ -28,9 +31,6 @@ SHELL = ${FRAMEWORK_SHELL}
 
 export LANG   = en_CA.utf8
 export LC_ALL = en_CA.utf8
-
-# Define what type of phrase table we want to generate.
-PT_TYPES ?= ibm2_cpt hmm1_cpt
 
 # What program to use to train models
 CAT ?= cat.sh
