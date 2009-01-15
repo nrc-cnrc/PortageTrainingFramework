@@ -87,3 +87,97 @@ These documents don't need an aligned counterpart but must still be tokenized
 and have one sentence per line.  To translate a new document, simply run:
    ./translate.sh <YOUR_NEW_TOKENIZED_DOCUMENT>
 
+
+
+TROUBLE SHOOTING GUIDE:
+This part tries to solve simple mistakes that prevent you from running
+successfully this framework.
+
+It is always good to check the commands you are about to run by typing:
+> make all -n
+where -n tells make not to run the commands.
+
+Also, we've tried to create log.* files, these should indicate what was the
+problem so you always read them first.
+
+1. When running the corpora module:
+Error message:
+make: *** No rule to make target `lm-train1_fr.lc.gz', needed by `lc'.  Stop.
+This is the most common mistake and usally means there is a prefix mismatch
+between the filename and the prefix for either TRAIN_LM, TRAIN_TM, TUNE_DECODE,
+TUNE_RESCORE or TEST_SET in ./Makefile.params.  The solution is simply to match
+the prefix with the filename in the following manner:
+filename: <prefix>_<language>.al   i.e. test_en.al
+prefix: <prefix>   i.e. test
+If you have the proper prefix but it still fails, make sure that your file's
+extension is .al for TUNE_DECODE, TUNE_RESCORE & TEST_SET and .al.gz for
+TRAIN_LM & TRAIN_TM.
+
+
+2. When running the models/lm module:
+Make sure you have successfully run "make -C corpora all" or refer to 1.
+
+If you are using IRSTLM:
+Error message:
+make: *** No rule to make target `lm-train_fr-kn-5g.binlm.gz', needed by `binlm'.  Stop.
+Then try:
+> make -C models/lm mark
+and if you get the following error: 
+make: *** No rule to make target `lm-train_fr.marked.gz', needed by `mark'.  Stop.
+most likely, you didn't successfully run "make -C corpora".
+
+Error message:
+/bin/sh: line 3: add-start-end.sh: command not found
+make: *** [lm-train_fr.marked.gz] Error 127
+This means that add-start-end.sh is not in your path.  Make sure that you have
+properly installed IRSTLM and that it is present in your path.
+> which add-start-end.sh
+
+If you are using SRILM:
+Error message:
+make: *** [lm-train_fr-kn-5g.lm.gz] Error 127
+make sure ngram-count is in your path by typing:
+> which ngram-count
+Make sure you have correctly installed SRILM.
+
+Either SRILM or IRSTLM:
+Error message:
+make: *** [lm-train_fr-kn-5g.binlm.gz] Error 127
+which mostly likely indicates that your PORTAGEshared setup is incomplete.
+You can verify that you have access to PORTAGEshared programs by typing:
+> which arpalm2binlm
+Make sure you have correctly installed PORTAGEshared.
+
+
+3. When running the models/tc module:
+Make sure you have successfully run "make -C corpora all" or refer to 1.
+
+Make sure that you were successful in running the models/lm module since the tc
+module relies heavily on it.
+
+
+4. When running the models/tm module:
+First, make sure the corpora module was successfully completed or refer to 1.
+
+
+5. When running the models/decode module:
+First, make sure the models/lm and models/tm modules were successfully
+completed or refer to 2 or 4.
+
+
+6. When running the models/rescore module:
+First, make sure the models/decode module was successfully completed.
+
+
+7. When running the translate module:
+First, make sure the models/decode and possibly models/rescore modules were
+successfully completed.
+
+
+8. General commands
+If nothing works, you can always try the following enormously verbose "hardcore
+debugger's" command in the faulty module:
+> make -n -prd | less 
+First, this will not run the command because of -n and secondly, this will
+output all make knows.
+
