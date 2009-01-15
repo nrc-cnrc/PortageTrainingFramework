@@ -548,8 +548,12 @@ phrase table are incorrect.
 
 \subsubsection{Creating a Translation Model Using HMM Alignments} \label{HMM}
 
-Now we repeat the same steps using HMM word alignment models, using the
-``liang'' variant (\texttt{hmm2}).
+Warning: we won't use the default settings here, so before you proceed, please
+edit \texttt{Makefile.params} and change the \texttt{PT\_TYPES} variable to the
+value \texttt{ibm2\_cpt hmm2\_cpt}.
+
+Now we repeat the steps we did previously, but using HMM word alignment models,
+choosing the ``liang'' variant (\texttt{hmm2}).
 \begin{verbatim}
    > make hmm2_cpt
    Generating hmm2.train.en_given_fr.gz
@@ -593,13 +597,12 @@ probably easiest to modify the commands associated with the
 targets.
 
 For this toy experiment, the ``liang'' variant works best, which is why we
-instructed you to type \texttt{make hmm2\_cpt} above.  To have \texttt{make
-all} make the same choice, change the \texttt{PT\_TYPES} variable in
-\texttt{Makefile} to \texttt{ibm2\_cpt hmm2\_cpt}: this variable enumerates
-which models you want to generate when you type \texttt{make all}.  All models
-you generate will be used in subsequent steps, so only generated the ones you
-intend to use.  (You should work in different copies of the framework if you
-want to experiment with different variants.)
+instructed you to type \texttt{make hmm2\_cpt} above and asked you to modify
+\texttt{PT\_TYPES}: this variable enumerates which models you want to generate
+when you type \texttt{make all}.  All models you generate will be used in
+subsequent steps, so only generated the ones you intend to use.  (You should
+work in different copies of the framework if you want to experiment with
+different variants.)
 
 \subsection{Optimizing Decoder Weights} \label{COW}
 
