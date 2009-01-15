@@ -130,9 +130,6 @@ export LM_TYPES ?= binlm
 export PREFIX_DEV_COW  ?= ${TUNE_DECODE}
 export PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
 
-#
-export DECODING_MODEL ?= canoe.ini.cow
-
 # Defines the truecasing model filename.
 export TRUECASING_MAP ?= ${TRAIN_LM}_${TGT_LANG}.map
 export TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-3g.binlm${GZ}
