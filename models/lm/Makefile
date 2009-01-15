@@ -24,7 +24,7 @@ SHELL = ${FRAMEWORK_SHELL}
 
 # Defines the IRST environment variables.
 # Where is IRSTLM located
-export IRSTLM ?= /home/larkins/sandboxes/irstlm
+export IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 # Where are IRSTLM's binaries located
 BIN_DIR = ${IRSTLM}/bin
 
