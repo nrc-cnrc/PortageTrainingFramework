@@ -45,7 +45,7 @@ UNTUNED_RESCORING_MODEL ?= ${RESCORING_MODEL}.ini
 
 # Indicates where to find the canoe.ini template
 DECODING_MODEL_DIR ?= models/decode
-DECODING_MODEL     ?= canoe.ini.cow
+DECODING_MODEL     ?= ${DECODING_MODEL_DIR}/canoe.ini.cow
 
 # Indicates where to find the IBM models.
 IBM_DIR ?= models/tm
@@ -76,7 +76,6 @@ PARALLELISM_LEVEL_TUNE_RESCORE ?= 5
 vpath %${SRCX}  ${CORPORA_DIR}
 vpath %${TGTX}  ${CORPORA_DIR}
 vpath %${RULEX} ${CORPORA_DIR}
-vpath ${DECODING_MODEL} ${DECODING_MODEL_DIR} ../decode
 
 
 
@@ -136,7 +135,7 @@ clean.logs:
 .PHONY: check_decoding_model
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model: setup
-	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
+	@if [[ ! -e ${DECODING_MODEL} ]]; then \
 		echo "Please run ${DECODING_MODEL_DIR} first!"; \
 		false; \
 	fi
@@ -197,8 +196,13 @@ clean.rescore_train:
 # You could add some specific target if you need to customize a decoding model
 # for a particular testset.
 ${DECODING_MODEL}.%: SHELL=${GUARD_SHELL}
-${DECODING_MODEL}.%: ${DECODING_MODEL} models
-	cat $< > $@
+${DECODING_MODEL}.%: models
+	echo ${DECODING_MODEL}
+	@if [[ ! -e ${DECODING_MODEL} ]]; then \
+		echo "Please run ${DECODING_MODEL_DIR} first!"; \
+		false; \
+	fi
+	cat ${DECODING_MODEL} > $@
 	configtool check $@
 #	cat $< \
 #	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
@@ -235,9 +239,4 @@ symlink: models
 models: SHELL=${GUARD_SHELL}
 models:
 	ln -sf ${MODEL_DIR} $@
-	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
-		echo "Please run ${DECODING_MODEL_DIR} first!"; \
-		rm $@; \
-		false; \
-	fi
 

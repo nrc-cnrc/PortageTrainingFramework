@@ -131,6 +131,12 @@ CPTS ?= $(subst /,\/,$(wildcard models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz))
 LMS  ?= $(subst /,\/,$(wildcard models/lm/lm-*${TGT_LANG}*.binlm.gz))
 ${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}  models
+	@ls models/tm/cpt.* &> /dev/null || \
+		(echo "ERROR: Is it possible that you haven't trained at least one translation model?" >&2; \
+		false;)
+	@ls models/lm/lm-*.binlm.gz &> /dev/null || \
+		(echo "ERROR: Is it possible that you haven't trained at least one language model?" >&2; \
+		false;)
 	cat $< \
 	| sed -e 's/<SL>/${SRC_LANG}/g' \
 	      -e 's/<TL>/${TGT_LANG}/g' \
@@ -198,12 +204,3 @@ symlink: models
 models: SHELL=${GUARD_SHELL}
 models:
 	ln -sf ${MODEL_DIR} $@
-	@ls models/tm/cpt.* &> /dev/null || \
-		(echo "WARNING: Is it possible that you don't have trained at least one translation model?" >&2; \
-		rm $@; \
-		false;)
-	@ls models/lm/lm-*.binlm.gz &> /dev/null || \
-		(echo "WARNING: Is it possible that you don't have trained at least one language model?" >&2; \
-		rm $@; \
-		false;)
-
