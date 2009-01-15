@@ -183,11 +183,21 @@ ${DECODING_MODEL}::
 
 
 
+check_decoding_model: SHELL=${GUARD_SHELL}
+check_decoding_model:
+	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
+		echo "ERROR: Please train ${DECODING_MODEL_DIR} first!" >&2; \
+		false; \
+	fi
+
+#@_LOCAL=1 [[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] || (echo "Please train ${DECODING_MODEL_DIR} first!" >&2; false)
+
 ########################################
 # Create a specific canoe.ini per test set.
 # You could add some specific target if you need to customize a canoe.ini.cow
 # for a particular file.
-${DECODING_MODEL}.%: models
+$(addprefix ${DECODING_MODEL},${TEST_SET}): SHELL=${GUARD_SHELL}
+${DECODING_MODEL}.%: check_decoding_model models
 	_LOCAL=1 cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	_LOCAL=1 configtool check $@
 # example: increase the beam threshold and stack size.
@@ -262,11 +272,21 @@ clean.translate.%:
 
 
 
+check_rescoring_model: SHELL=${GUARD_SHELL}
+check_rescoring_model:
+	@if [[ ! -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]]; then \
+		echo "ERROR: No rescoring model available!" >&2; \
+		echo "Please train ${RESCORING_MODEL_DIR} first!" >&2; \
+		false; \
+	fi
+
+#@_LOCAL=1 [[ -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]] || (echo "ERROR: No rescoring model available!" >&2; echo "Please train ${RESCORING_MODEL_DIR} first!" >&2; false)
+
 ########################################
 # Rescore the translate_set
 .PHONY: rat
 rat: $(addsuffix .rat, ${TEST_SET})
-%.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} models
+%.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} models check_rescoring_model
 	@_LOCAL=1 echo "Generating $@"
 	rat.sh \
 		-lb \
@@ -370,18 +390,6 @@ clean.truecasing.%:
 models: SHELL=${GUARD_SHELL}
 models:
 	ln -sf ${MODEL_DIR} $@
-	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
-		echo "Please train ${DECODING_MODEL_DIR} first!"; \
-		rm $@; \
-		false; \
-	fi
-ifdef DO_RESCORING
-	@if [[ ! -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]]; then \
-		echo "Please train ${RESCORING_MODEL_DIR} first!"; \
-		rm $@; \
-		false; \
-	fi
-endif
 
 
 
