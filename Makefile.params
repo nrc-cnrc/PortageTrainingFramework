@@ -92,8 +92,7 @@ export PARALLELISM_LEVEL_TRANSLATE
 
 
 ################################################################################
-# System defined variables
-# Don't change the following unless you have some specific needs.
+# Advanced configuration variables
 
 # Compress extension.
 export GZ ?= .gz
