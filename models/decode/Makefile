@@ -199,11 +199,11 @@ models: SHELL=${GUARD_SHELL}
 models:
 	ln -sf ${MODEL_DIR} $@
 	@ls models/tm/cpt.* &> /dev/null || \
-		(echo "WARNING: Is it possible that you don't have trained at least a translation model?" >&2; \
+		(echo "WARNING: Is it possible that you don't have trained at least one translation model?" >&2; \
 		rm $@; \
 		false;)
 	@ls models/lm/lm-*.binlm.gz &> /dev/null || \
-		(echo "WARNING: Is it possible that you don't have trained at least a language model?" >&2; \
+		(echo "WARNING: Is it possible that you don't have trained at least one language model?" >&2; \
 		rm $@; \
 		false;)
 
