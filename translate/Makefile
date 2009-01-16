@@ -184,7 +184,7 @@ ${DECODING_MODEL}::
 
 
 check_decoding_model: SHELL=${GUARD_SHELL}
-check_decoding_model:
+check_decoding_model: models
 	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
 		echo "ERROR: Please train ${DECODING_MODEL_DIR} first!" >&2; \
 		false; \
