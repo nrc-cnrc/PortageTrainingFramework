@@ -16,7 +16,7 @@
 
 \title{A toy experiment using the \PS \\
        experimental framework (v1.3)}
-\date{December, 2008}
+\date{January, 2009}
 \author{Eric Joanis}
 
 \begin{document}
@@ -209,19 +209,20 @@ Now you need to edit \texttt{Makefile.params} to set some global parameters:
 \begin{itemize}
 \item reverse the values of \texttt{SRC\_LANG} and
 \texttt{TGT\_LANG}, to select translation from French to English, rather than
-the other way around, which is the default
+the other way around, which is the default;
 \item set \texttt{TRAIN\_LM} and \texttt{TRAIN\_TM} to
 \texttt{train} instead of \texttt{lm-train} and \texttt{tm-train} since we
-won't be using a separate corpora to train the translation and language models
+won't be using a separate corpora to train the translation and language models;
 \item set \texttt{TEST\_SET} to \texttt{test} instead of the default
-  \texttt{test1 test2}
+  \texttt{test1 test2};
 \item select a language modeling option (see below for more info about this
   choice): 
 \begin{itemize}
-\item to use SRILM, no change is required
-\item to use IRSLTM, comment out the \texttt{LM\_TOOLKIT\_SRI} variable and set the
-\texttt{IRSTLM} variable to the location where IRSTLM is installed
-\item to use neither, comment out both \texttt{LM\_TOOLKIT\_SRI} and \texttt{IRSTLM}
+\item to use SRILM, no change is required;
+\item to use IRSLTM, comment out the \texttt{LM\_TOOLKIT\_SRI} variable and set
+the \texttt{IRSTLM} variable to the location where IRSTLM is installed;
+\item to use neither, comment out both \texttt{LM\_TOOLKIT\_SRI} and
+\texttt{IRSTLM}.
 \end{itemize}
 \end{itemize}
 In this toy experiment, we will use the default value for all other parameters.
@@ -231,10 +232,10 @@ the \emph{User definable variables} section of the file.  This is where most of
 the configurable behaviours are set, such as whether to do rescoring and/or
 truecasing, what LM toolkit you are using (if any), etc. 
 
-We recommend you use SRILM www.speech.cs.cmu.edu/ SLM\_info.html) as your
+We recommend you use SRILM (www.speech.sri.com/projects/srilm/) as your
 language modeling toolkit, if your licensing requirements permit it; if not,
 you can use IRSTLM instead (irstlm.sourceforge.net).\footnote{Another options
-  is the CMU SLM (www.speech.cs.cmu.edu/ SLM\_info.html).} If you have neither
+is the CMU SLM (www.speech.cs.cmu.edu/ SLM\_info.html).} If you have neither
 toolkit at the moment, we provide trained language models that you can drop
 into the framework to finish this toy experiment while skipping language model
 training. To use IRSTLM, in addition to the edits described above, you need to
@@ -928,7 +929,7 @@ see a list of all available features, type \texttt{rescore\_train -H}.
 
 Lines starting with \texttt{\#} are comments and are ignored by the software.
 
-\subsubsection{Running Rat}
+\subsubsection{Running RAT (Rescore And Translate)}
 
 Apart from the rescoring model, {\tt rat.sh} needs a source file and one or
 more alternative translations for it (same as {\tt cow.sh}). These may be the
