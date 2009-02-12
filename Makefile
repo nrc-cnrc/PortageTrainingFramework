@@ -155,3 +155,12 @@ eval: translate
 check_setup:
 	${MAKE} -C models/lm check_setup
 
+
+########################################
+# If you need to preprocess your corpora, you can call this target to do the job.
+# The end result should be .al files .
+PREPARE_CORPORA_MAKEFILE ?= Makefile.prepare.corpora
+.PHONY: prepare.corpora
+prepare.corpora:
+	${MAKE} -C corpora -f ${PREPARE_CORPORA_MAKEFILE}
+
