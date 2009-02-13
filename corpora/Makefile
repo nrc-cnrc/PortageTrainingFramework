@@ -140,12 +140,13 @@ rule: ${RULE}
 	canoe-escapes.pl -add $< > $@
 
 
+# NOTE: here TRANSLATE_SET must contain the prefix only.
 # Special target to prepare a new translation set.
-translate: $(addprefix $(subst _${SRC_LANG},,$(basename ${TRANSLATE_SET})), ${RULEX} _${SRC_LANG}${LANGX})
+translate: $(foreach t,${TRANSLATE_SET}, $t${RULEX} $t_${SRC_LANG}${LANGX})
 
 
 # Special targte to prepare the reference.
-reference: $(addprefix $(subst _${TGT_LANG},,$(basename ${TRANSLATE_SET})),  _${TGT_LANG}${LANGX})
+reference: $(foreach t,${TRANSLATE_SET},  $t_${TGT_LANG}${LANGX})
 
 
 # Check if the first dependency is a utf8 file.
