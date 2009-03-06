@@ -338,6 +338,22 @@ prune: ${LM_NAME}.plm.gz
 
 
 
+# Create Tightly Packed Language Model.
+.PHONY: tplm
+tplm: ${LM_NAME}.tplm
+
+%.tplm: %.lm.gz
+	arpalm2tplm.sh $< $*
+
+clean: clean.tplm
+
+.PHONY: clean.tplm
+clean.tplm: SHELL=${GUARD_SHELL}
+clean.tplm:
+	${RM} ${LM_NAME}.tplm
+
+
+
 ########################################
 # HELPERS
 # Check if the environment is set
