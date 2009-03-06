@@ -557,6 +557,14 @@ ${HMM2_CPT_PREFIX}.%.${TGT_2_SRCX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN
 
 
 
+########################################
+# Create Tightly Packed Phrase Table.
+%.tpt: %.gz
+   textpt2tppt.sh $<
+
+
+
+
 ################################################################################
 # HELPERS
 
