@@ -70,6 +70,10 @@ NBEST_SIZE ?= 1000
 # Number of parallel chunks to process.
 PARALLELISM_LEVEL_TRANSLATE ?= 5
 
+# Some ad-hoc post procssing.
+POST_PROCESSING ?= cat
+
+
 .SECONDARY:
 .SUFFIXES:
 .DELETE_ON_ERROR:
@@ -116,7 +120,7 @@ final_result: SHELL=${GUARD_SHELL}
 
 final_result: $(addsuffix .translation,${TEST_SET})
 %.translation: %${FINALX}
-	cp $< $@
+	${POST_PROCESSING} < $< > $@
 
 
 
