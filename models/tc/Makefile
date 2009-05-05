@@ -97,6 +97,9 @@ lm: ${TRUECASING_LM}
 %-kn-3g.binlm.gz:
 	${MAKE} -f ../lm/Makefile $@
 
+%.tplm: 
+	${MAKE} -f ../lm/Makefile $@
+
 
 
 # Build a map file.
@@ -107,3 +110,5 @@ map: ${TRUECASING_MAP}
 %.map:  %${TCX}  %${LANGXZ}
 	compile_truecase_map $+ > $@
 
+%.map.tppt: %.map
+	vocabMap2tpt.sh $<
