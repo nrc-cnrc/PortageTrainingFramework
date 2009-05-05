@@ -231,6 +231,7 @@ $(addsuffix .out, ${TEST_SET}): SHELL=${GUARD_SHELL}
 %.out: %.rat
 	cp workdir-$*${RULEX}-${NBEST_SIZE}best/1best $@
 else
+$(addsuffix .out, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
 %.out: ${DECODING_MODEL}.% %${RULEX}
 	@_LOCAL=1 echo "Generating $@"
 	canoe-parallel.sh \
@@ -290,6 +291,7 @@ check_rescoring_model:
 # Rescore the translate_set
 .PHONY: rat
 rat: $(addsuffix .rat, ${TEST_SET})
+$(addsuffix .rat, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
 %.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} models check_rescoring_model
 	@_LOCAL=1 echo "Generating $@"
 	rat.sh \
