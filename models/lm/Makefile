@@ -32,7 +32,7 @@ BIN_DIR = ${IRSTLM}/bin
 PARALLELISM_LEVEL_LM ?= 5
 
 # What is the order of the required lm.
-ORDER ?= 5
+ORDER ?= 4
 
 # Most steps require to load all the lm in memory, how many cpus should those jobs use.
 CPUS ?= 2
