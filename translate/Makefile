@@ -370,9 +370,9 @@ clean: clean.truecasing
 
 .PHONY: clean.truecasing
 clean.truecasing: SHELL=${GUARD_SHELL}
-clean.truecasing: $(foreach f, ${TEST_SET}, clean.truecasing.$f.out)
-clean.truecasing: $(foreach f, ${TEST_SET}, clean.truecasing.$f.rat)
-clean.truecasing.%:
+clean.truecasing: $(foreach f, ${TEST_SET}, clean.truecasing.$f.out.guard)
+clean.truecasing: $(foreach f, ${TEST_SET}, clean.truecasing.$f.rat.guard)
+clean.truecasing.%.guard:
 	${RM} $*.tc
 	${RM} $*.tc.detok
 
