@@ -115,6 +115,16 @@ clean: SHELL=${GUARD_SHELL}
 
 
 
+########################################
+# Hide logs.
+.PHONY: hide
+hide: SHELL=${GUARD_SHELL}
+hide:
+	mkdir -p .logs
+	mv log.* run-parallel-logs-* .logs
+
+
+
 # How to clean the language models.
 clean: clean.logs
 

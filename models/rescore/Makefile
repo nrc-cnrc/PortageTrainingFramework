@@ -120,6 +120,16 @@ clean:
 
 
 ########################################
+# Hide logs.
+.PHONY: hide
+hide: SHELL=${GUARD_SHELL}
+hide:
+	mkdir -p .logs
+	mv log.* run-parallel-logs-* .logs
+
+
+
+########################################
 # Clean logs
 clean: clean.logs
 
