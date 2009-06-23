@@ -70,6 +70,17 @@ clean:
 
 
 
+.PHONY: hide
+# Hide logs from user's view into .logs
+hide:
+	${MAKE} -C models/lm hide
+	${MAKE} -C models/tc hide
+	${MAKE} -C models/tm hide
+	${MAKE} -C models/decode hide
+	${MAKE} -C models/rescore hide
+
+
+
 .PHONY: corpora
 corpora: check_setup
 	${MAKE} -C corpora all
