@@ -94,7 +94,8 @@ clean:
 hide: SHELL=${GUARD_SHELL}
 hide:
 	mkdir -p .logs
-	mv log.* run-parallel-logs-* .logs
+	-ls log.* >& /dev/null && mv log.* .logs
+	-ls run-parallel-logs-* >& /dev/null && mv run-parallel-logs-* .logs
 
 
 
