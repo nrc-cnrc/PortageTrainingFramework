@@ -98,6 +98,13 @@ hide:
 	-ls run-parallel-logs-* >& /dev/null && mv run-parallel-logs-* .logs
 
 
+########################################
+# portageLive easy target.
+.PHONY: portageLive
+portageLive: ${TRUECASING_MAP}.tppt
+portageLive: ${TRAIN_LM}_${TGT_LANG}-kn-3g.tplm
+
+
 
 # Build the truecased lm model using the convinient Makefile from models/lm.
 .PHONY: lm

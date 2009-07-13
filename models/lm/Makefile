@@ -138,6 +138,13 @@ clean.logs:
 
 
 
+########################################
+# Transform model for PortageLive
+.PHONY: portageLive
+portageLive: tplm
+
+
+
 # Adds sentence start and end markers
 .PHONY: mark
 mark: ${CORPUS_NAME}.marked.gz

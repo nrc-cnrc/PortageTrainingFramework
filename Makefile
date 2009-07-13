@@ -167,6 +167,22 @@ check_setup:
 	${MAKE} -C models/lm check_setup
 
 
+
+########################################
+# Prepare portageLive models.
+.PHONY: portageLive
+portageLive: portageLive_lm
+portageLive: portageLive_tc
+portageLive: portageLive_decode
+
+portageLive_%:
+	${MAKE} -C models/$* portageLive
+
+portageLive_decode: cow
+	${MAKE} -C models/decode portageLive
+
+
+
 ########################################
 # If you need to preprocess your corpora, you can call this target to do the job.
 # The end result should be .al files .
