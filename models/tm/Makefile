@@ -346,6 +346,7 @@ ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGT
 		GPT \
 		-v -j -w 1 -m $M -ibm 2 \
 		-1 ${SRC} -2 ${TGT} \
+		${IBM2_JPT_EXTRAS} \
 		$+ \
 		2> log.$(basename $@)
 
@@ -367,6 +368,7 @@ ${HMM1_JPT_PREFIX}.%.${JOINTX}:  hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGT
 		GPT \
 		-v -j -w 1 -m $M -hmm \
 		-1 ${SRC} -2 ${TGT} \
+		${HMM1_JPT_EXTRAS} \
 		$+ \
 		2> log.$(basename $@)
 
@@ -388,6 +390,7 @@ ${HMM2_JPT_PREFIX}.%.${JOINTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGT
 		GPT \
 		-v -j -w 1 -m $M -hmm \
 		-1 ${SRC} -2 ${TGT} \
+		${HMM2_JPT_EXTRAS} \
 		$+ \
 		2> log.$(basename $@)
 
