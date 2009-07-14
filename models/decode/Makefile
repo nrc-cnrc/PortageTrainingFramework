@@ -60,6 +60,9 @@ NBEST_SIZE ?= 1000
 # Number of parallel chunks to process.
 PARALLELISM_LEVEL_TUNE_DECODE ?= 5
 
+# What program to use to do MERT.
+MERT ?= cow.sh
+
 .SECONDARY:
 .DELETE_ON_ERROR:
 
@@ -178,7 +181,7 @@ train: ${DECODING_MODEL}
 ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TGT}
 	_LOCAL=1 mkdir -p foos
 	RP_PSUB_OPTS="-N tune.decode.model" \
-	cow.sh \
+	${MERT} \
 		-v \
 		-parallel:"-n ${PARALLELISM_LEVEL_TUNE_DECODE}" \
 		-maxiter 15 \
