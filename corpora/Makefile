@@ -66,12 +66,17 @@ help:
 
 
 
+# What are the final ouptut so we can manipulate them as a whole.
+LIST_FINAL_OUTPUT += ${LC} ${RULE}
+
+
 # Defines all that needs to be done by this makefile.
 .PHONY: all
 all: lc
 all: rule
 ifdef DO_TRUECASING
 all: tc
+LIST_FINAL_OUTPUT += ${TC}
 endif
 
 # What the user can expect from this module.
@@ -162,3 +167,23 @@ clean:
 	-${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
 	-${RM} run-parallel-logs-*
 
+
+########################################
+# LOCK / UNLOCK
+.PHONY: lock
+lock: SHELL=${GUARD_SHELL}
+lock: ${LIST_FINAL_OUTPUT}
+	chmod u-w $+
+
+.PHONY: unlock
+unlock: SHELL=${GUARD_SHELL}
+unlock: ${LIST_FINAL_OUTPUT}
+	chmod u+w $+
+
+
+################################################################################
+# HELPERS
+.PHONY: debug
+debug: SHELL=${GUARD_SHELL}
+debug:
+	@echo "LIST_FINAL_OUTPUT: ${LIST_FINAL_OUTPUT}"
