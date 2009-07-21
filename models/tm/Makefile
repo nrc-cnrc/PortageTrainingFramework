@@ -154,13 +154,14 @@ models: hmm2_model
 ########################################
 # TRAINING THE IBM1 MODELS
 # requires: source and target corpora.
+IBM1_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 IBM1_MODEL_EXTRAS ?=
 .PHONY:  ibm1_model
 ibm1_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm1.$t.$d.gz))
 ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
+	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_PARALLELISM_LEVEL} \
 		-v \
 		-n1 5 -n2 0 \
 		${IBM1_MODEL_EXTRAS} \
@@ -171,7 +172,7 @@ ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 ibm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
+	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_PARALLELISM_LEVEL} \
 		-v -r \
 		-n1 5 -n2 0 \
 		${IBM1_MODEL_EXTRAS} \
@@ -192,13 +193,14 @@ clean.ibm1:
 # TRAINING THE IBM2 MODELS
 # requires: source and target corpora and ibm1 models.
 IBM2_MODEL_EXTRAS ?=
+IBM2_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 .PHONY:  ibm2_model
 ibm2_model: ibm1_model
 ibm2_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm2.$t.$d.gz))
 ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
+	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_PARALLELISM_LEVEL} \
 		-v -m \
 		-n1 0 -n2 5 \
 		-slen 20 -tlen 20 -bksize 20 \
@@ -211,7 +213,7 @@ ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 ibm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
+	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_PARALLELISM_LEVEL} \
 		-v -r \
 		-n1 0 -n2 5 \
 		-slen 20 -tlen 20 -bksize 20 \
@@ -233,6 +235,7 @@ clean.ibm2:
 ########################################
 # TRAINING THE HMM1 MODELS => He-lex
 # requires: source and target corpora and ibm1 models.
+HMM1_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 HMM1_MODEL_EXTRAS ?=
 .PHONY:  hmm1_model
 hmm1_model: ibm1_model
@@ -240,7 +243,7 @@ hmm1_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm1.$t.
 hmm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
+	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_PARALLELISM_LEVEL} \
 		-v  \
 		-n1 0 -n2 5 \
 		-mimic he-lex \
@@ -253,7 +256,7 @@ hmm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 hmm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
+	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_PARALLELISM_LEVEL} \
 		-v -r \
 		-n1 0 -n2 5 \
 		-mimic he-lex \
@@ -275,6 +278,7 @@ clean.hmm1:
 ########################################
 # TRAINING THE HMM2 MODELS => liang variant
 # requires: source and target corpora and ibm1 models.
+HMM2_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 HMM2_MODEL_EXTRAS ?=
 .PHONY:  hmm2_model
 hmm2_model: ibm1_model
@@ -282,7 +286,7 @@ hmm2_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm2.$t.
 hmm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
+	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_PARALLELISM_LEVEL} \
 		-v \
 		-n1 0 -n2 5 \
 		-mimic liang \
@@ -295,7 +299,7 @@ hmm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 hmm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${PARALLELISM_LEVEL_TM} -pn ${PARALLELISM_LEVEL_TM} \
+	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_PARALLELISM_LEVEL} \
 		-v -r \
 		-n1 0 -n2 5 \
 		-mimic liang \
@@ -332,6 +336,7 @@ clean.jpts:
 ########################################
 # IBM2 JOINT PHRASE TABLES
 # requires: ibm2 models, source and target corpora.
+IBM2_JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 IBM2_JPT_PREFIX = jpt.ibm2
 
 .PHONY:  ibm2_jpt
@@ -341,7 +346,7 @@ ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGT
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
-		-n ${PARALLELISM_LEVEL_TM} \
+		-n ${IBM2_JPT_PARALLELISM_LEVEL} \
 		-o $@ \
 		GPT \
 		-v -j -w 1 -m $M -ibm 2 \
@@ -354,6 +359,7 @@ ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGT
 ########################################
 # HMM1 JOINT PHRASE TABLES => He's lexical variant
 # requires: hmm models, source and target corpora.
+HMM1_JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 HMM1_JPT_PREFIX=jpt.hmm1
 
 .PHONY:  hmm1_jpt
@@ -363,7 +369,7 @@ ${HMM1_JPT_PREFIX}.%.${JOINTX}:  hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGT
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
-		-n ${PARALLELISM_LEVEL_TM} \
+		-n ${HMM1_JPT_PARALLELISM_LEVEL} \
 		-o $@ \
 		GPT \
 		-v -j -w 1 -m $M -hmm \
@@ -376,6 +382,7 @@ ${HMM1_JPT_PREFIX}.%.${JOINTX}:  hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGT
 ########################################
 # HMM2 JOINT PHRASE TABLES => Liang's variant
 # requires: hmm2 models, source and target corpora.
+HMM2_JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 HMM2_JPT_PREFIX=jpt.hmm2
 
 .PHONY:  hmm2_jpt
@@ -385,7 +392,7 @@ ${HMM2_JPT_PREFIX}.%.${JOINTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGT
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
-		-n ${PARALLELISM_LEVEL_TM} \
+		-n ${HMM2_JPT_PARALLELISM_LEVEL} \
 		-o $@ \
 		GPT \
 		-v -j -w 1 -m $M -hmm \
