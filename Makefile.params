@@ -20,9 +20,9 @@ export TGT_LANG ?= fr
 # Warning: only TEST_SET can contain more than one <PREFIX>
 # i.e. test1_fr.al
 # TRAIN_LM is used to create a language model.
-export TRAIN_LM      ?= lm-train
+export TRAIN_LM      ?= train
 # TRAIN_TM is used to create the translation table.
-export TRAIN_TM      ?= tm-train
+export TRAIN_TM      ?= train
 # TUNE_DECODE is used to train cow.
 export TUNE_DECODE   ?= dev1
 # TUNE_RESCORE is used to train rat.
@@ -48,12 +48,12 @@ DO_TRUECASING=1
 
 # If you have ICU installed and have compiled PORTAGE shared with icu,
 # uncomment the following line.
-#ICU=1
+ICU=1
 
 # If you are on a cluster that is run-parallel.sh friendly, define the
 # following to force cluster mode.  You normally don't need to do so, though,
 # since clusters are detected automatically below.
-#USING_CLUSTER=1
+USING_CLUSTER=1
 
 # If you are on a cluster but you want to force single computer mode,
 # uncomment the following line:
@@ -71,7 +71,7 @@ export USING_CLUSTER
 
 ifdef USING_CLUSTER
    PARALLELISM_LEVEL_LM ?= 5
-   PARALLELISM_LEVEL_TM ?= 5
+   PARALLELISM_LEVEL_TM ?= 25
    PARALLELISM_LEVEL_TUNE_DECODE  ?= 10
    PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
    PARALLELISM_LEVEL_TRANSLATE    ?= 10

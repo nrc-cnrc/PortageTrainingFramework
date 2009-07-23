@@ -1,1 +1,2 @@
 # User defines for models/lm/.
+CPUS = 4
