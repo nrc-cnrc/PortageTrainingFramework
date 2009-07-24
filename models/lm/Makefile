@@ -145,6 +145,13 @@ portageLive: tplm
 
 
 
+########################################
+# Transform model for PORTAGEsharedLive
+.PHONY: PORTAGEsharedLive
+PORTAGEsharedLive: binlm
+
+
+
 # Adds sentence start and end markers
 .PHONY: mark
 mark: ${CORPUS_NAME}.marked.gz

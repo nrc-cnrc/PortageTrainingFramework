@@ -106,6 +106,13 @@ portageLive: ${TRAIN_LM}_${TGT_LANG}-kn-3g.tplm
 
 
 
+########################################
+# PORTAGEsharedLive easy target.
+.PHONY: PORTAGEsharedLive
+PORTAGEsharedLive: all
+
+
+
 # Build the truecased lm model using the convinient Makefile from models/lm.
 .PHONY: lm
 lm: SHELL=${GUARD_SHELL}

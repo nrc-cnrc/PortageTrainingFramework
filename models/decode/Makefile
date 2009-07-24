@@ -210,9 +210,9 @@ clean.cow:
 # NOTE: you cannot apply weights if you plan to do some rescoring.
 
 .PHONY: portageLive
-portageLive: canoe.ini.cow.vm
+portageLive: canoe.ini.cow.live
 
-ONE_CPT=one.cpt.en2fr.gz
+ONE_CPT = one.cpt.en2fr.gz
 
 # Make a single phrase table from all the phraase tables.
 ${ONE_CPT}: SHELL=${FRAMEWORK_SHELL}
@@ -227,17 +227,27 @@ canoe.ini.cow.hardFilter: ${GUARD_SHELL}
 canoe.ini.cow.hardFilter: ${ONE_CPT} canoe.ini.cow
 	configtool rep-multi-prob:$< canoe.ini.cow > $@
 
+APPLY_WEIGHTS_OPTIONS ?= -tppt
 # Hard filter & tpptize the single phrase table.
 cpt.en2fr.tppt: SHELL=${FRAMEWORK_SHELL}
 phrases.${SRC_LANG}2${TGT_LANG}.tppt: canoe.ini.cow.hardFilter
 	RP_PSUB_OPTS="-N vm.tppt" \
-	tmtext-apply-weights.pl -hf -tppt -src ${SRC_LANG} -tgt ${TGT_LANG} -f $< -o phrases
+	tmtext-apply-weights.pl -hf ${APPLY_WEIGHTS_OPTIONS} -src ${SRC_LANG} -tgt ${TGT_LANG} -f $< -o phrases
 
 # We need to output a new canoe.ini.cow that reflects the single tppt and applied weights.
-canoe.ini.cow.vm: SHELL=${FRAMEWORK_SHELL}
-canoe.ini.cow.vm: phrases.${SRC_LANG}2${TGT_LANG}.tppt canoe.ini.cow
-	configtool -c applied-weights:$< canoe.ini.cow > $@
+canoe.ini.cow.live: SHELL=${FRAMEWORK_SHELL}
+canoe.ini.cow.live: phrases.${SRC_LANG}2${TGT_LANG}.tppt canoe.ini.cow
+	configtool applied-weights:$< canoe.ini.cow > $@
 	configtool check $@
+
+
+
+########################################
+# How to prepare PORTAGEsharedLive.
+# Same thing as portageLive except tptizing is not supported.
+.PHONY: PORTAGEsharedLive
+PORTAGEsharedLive:
+	${MAKE} portageLive APPLY_WEIGHTS_OPTIONS="-shf one.cpt.hf.en2fr.gz"
 
 
 

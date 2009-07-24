@@ -184,6 +184,21 @@ portageLive_decode: cow
 
 
 ########################################
+# Prepare PORTAGEsharedLive models.
+.PHONY: PORTAGEsharedLive
+PORTAGEsharedLive: PORTAGEsharedLive_lm
+PORTAGEsharedLive: PORTAGEsharedLive_tc
+PORTAGEsharedLive: PORTAGEsharedLive_decode
+
+PORTAGEsharedLive_%:
+	${MAKE} -C models/$* PORTAGEsharedLive
+
+PORTAGEsharedLive_decode: cow
+	${MAKE} -C models/decode PORTAGEsharedLive
+
+
+
+########################################
 # If you need to preprocess your corpora, you can call this target to do the job.
 # The end result should be .al files .
 PREPARE_CORPORA_MAKEFILE ?= Makefile.prepare.corpora
