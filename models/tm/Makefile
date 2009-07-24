@@ -160,7 +160,7 @@ IBM1_MODEL_EXTRAS ?=
 ibm1_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm1.$t.$d.gz))
 ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-4 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_PARALLELISM_LEVEL} \
 		-v \
 		-n1 5 -n2 0 \
@@ -171,7 +171,7 @@ ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 
 ibm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-4 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_PARALLELISM_LEVEL} \
 		-v -r \
 		-n1 5 -n2 0 \
@@ -199,7 +199,7 @@ ibm2_model: ibm1_model
 ibm2_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm2.$t.$d.gz))
 ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-4 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_PARALLELISM_LEVEL} \
 		-v -m \
 		-n1 0 -n2 5 \
@@ -212,7 +212,7 @@ ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 
 ibm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-4 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_PARALLELISM_LEVEL} \
 		-v -r \
 		-n1 0 -n2 5 \
