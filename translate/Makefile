@@ -255,7 +255,10 @@ $(addsuffix .out, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
 endif
 
 .PHONY: out.bleu
+out.bleu: SHELL=${GUARD_SHELL}
 out.bleu: $(addsuffix .out.bleu, ${TEST_SET})
+	egrep Human $+
+
 $(addsuffix .out.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
 %.out.bleu: %.out %${TGTX}
 	@echo "Calculating BLEU for $@"
@@ -318,7 +321,10 @@ $(addsuffix .rat, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
 	&& mv $*${RULEX}.rat $@
 
 .PHONY: rat.bleu
+rat.bleu: SHELL=${GUARD_SHELL}
 rat.bleu: $(addsuffix .rat.bleu, ${TEST_SET})
+	egrep Human $+
+
 $(addsuffix .rat.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
 %.rat.bleu: %.rat %${TGTX}
 	@echo "Calculating BLEU for $@"
@@ -434,6 +440,7 @@ ibm1.%.gz:
 ########################################
 # Hook to get BLEU scores
 .PHONY: bleu
+bleu: SHELL=${GUARD_SHELL}
 bleu: out.bleu
 ifdef DO_RESCORING
 bleu: rat.bleu
