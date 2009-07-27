@@ -255,15 +255,6 @@ PORTAGEsharedLive:
 
 
 
-########################################
-# How to prepare PORTAGEsharedLive.
-# Same thing as portageLive except tptizing is not supported.
-.PHONY: PORTAGEsharedLive
-PORTAGEsharedLive:
-	${MAKE} portageLive APPLY_WEIGHTS_OPTIONS="-shf one.cpt.hf.en2fr.gz"
-
-
-
 ################################################################################
 # HELPERS
 
