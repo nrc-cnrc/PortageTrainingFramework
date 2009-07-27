@@ -227,6 +227,8 @@ canoe.ini.cow.hardFilter: ${GUARD_SHELL}
 canoe.ini.cow.hardFilter: ${ONE_CPT} canoe.ini.cow
 	configtool rep-multi-prob:$< canoe.ini.cow > $@
 
+
+# When using Portage, the default behavior should be to create tppt models.
 APPLY_WEIGHTS_OPTIONS ?= -tppt
 # Hard filter & tpptize the single phrase table.
 cpt.${SRC_LANG}2${TGT_LANG}.tppt: SHELL=${FRAMEWORK_SHELL}
@@ -249,9 +251,11 @@ check_canoe_live: canoe.ini.cow.live
 ########################################
 # How to prepare PORTAGEsharedLive.
 # Same thing as portageLive except tptizing is not supported.
+# NOTE: since hard filtering a model will append FILT to the name, it is safe
+# reuse ${ONE_CPT} as the hard-filtered model's name.
 .PHONY: PORTAGEsharedLive
 PORTAGEsharedLive:
-	${MAKE} portageLive APPLY_WEIGHTS_OPTIONS="-shf one.cpt.hf.en2fr.gz"
+	${MAKE} portageLive APPLY_WEIGHTS_OPTIONS=
 
 
 
