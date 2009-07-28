@@ -130,9 +130,7 @@ verbose 1 "Translating: $prefix"
 test -f corpora/$source || cp $full_source corpora/$source
 
 # Check if there is a valid decoding_model and if needed a valid rescoring_model
-if [[ -f "models/decode/canoe.ini.cow" ]]; then
-   echo "You need to train a decoding model first (models/decode)" >&2
-fi
+[[ -f "models/decode/canoe.ini.cow" ]] || error_exit "You need to train a decoding model first (models/decode)"
 
 # Preprocess the corpus
 make -C corpora translate TRANSLATE_SET=$prefix 1>&2
