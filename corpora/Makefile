@@ -105,14 +105,23 @@ lc: ${LC}
 
 
 # Tokenizes source corpora without sentence splitting.
-#%_${SRC_LANG}.tc: %_${SRC_LANG}${ALIGNX}
-#	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1) \
-#	&& cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
+%_${SRC_LANG}${ALIGNX}: %_${SRC_LANG}.raw
+	@${check_utf8}
+	utokenize.pl -noss -lang=${SRC_LANG} < $< > $@
 
 # Tokenizes target corpora without sentence splitting.
-#%_${TGT_LANG}.tc: %_${TGT_LANG}${ALIGNX}
-#	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1) \
-#	&& cat $< | utokenize.pl -noss -lang=${TGT_LANG} > $@
+%_${TGT_LANG}${ALIGNX}: %_${TGT_LANG}.raw
+	@${check_utf8}
+	utokenize.pl -noss -lang=${TGT_LANG} < $< > $@
+
+# HOW to handle big source language corpora.
+$(addsuffix _${SRC_LANG}${ALIGNX}, ${BIG_CORPORA}): %_${SRC_LANG}${ALIGNX}: %_${SRC_LANG}${RAWX}
+   parallelize.pl -n 10 "utokenize.pl -noss -lang=${SRC_LANG} < $< > $@"
+
+# HOW to handle big target language corpora.
+$(addsuffix _${TGT_LANG}${ALIGNX}, ${BIG_CORPORA}): %_${TGT_LANG}${ALIGNX}: %_${TGT_LANG}${RAWX}
+   parallelize.pl -n 10 "utokenize.pl -noss -lang=${TGT_LANG} < $< > $@"
+
 
 
 # Prepare truecased file.
