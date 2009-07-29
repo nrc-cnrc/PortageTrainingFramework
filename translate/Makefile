@@ -254,9 +254,10 @@ $(addsuffix .out, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
 		2> log.$@
 endif
 
+OUT_BLEU_DEP = $(addsuffix .out.bleu, ${TEST_SET})
 .PHONY: out.bleu
 out.bleu: SHELL=${GUARD_SHELL}
-out.bleu: $(addsuffix .out.bleu, ${TEST_SET})
+out.bleu: ${OUT_BLEU_DEP}
 	egrep Human $+
 
 $(addsuffix .out.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
@@ -320,9 +321,10 @@ $(addsuffix .rat, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
 	>& log.$@ \
 	&& mv $*${RULEX}.rat $@
 
+RAT_BLEU_DEP = $(addsuffix .rat.bleu, ${TEST_SET})
 .PHONY: rat.bleu
 rat.bleu: SHELL=${GUARD_SHELL}
-rat.bleu: $(addsuffix .rat.bleu, ${TEST_SET})
+rat.bleu: ${RAT_BLEU_DEP}
 	egrep Human $+
 
 $(addsuffix .rat.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
@@ -441,12 +443,12 @@ ibm1.%.gz:
 # Hook to get BLEU scores
 .PHONY: bleu
 bleu: SHELL=${GUARD_SHELL}
-bleu: out.bleu
+bleu: ${OUT_BLEU_DEP}
 ifdef DO_RESCORING
-bleu: rat.bleu
+bleu: ${RAT_BLEU_DEP}
 endif
 bleu:
-	grep BLEU *.bleu
+	grep Human *.bleu
 
 
 
