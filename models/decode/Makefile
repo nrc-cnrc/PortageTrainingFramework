@@ -254,8 +254,9 @@ check_canoe_live: canoe.ini.cow.live
 # NOTE: since hard filtering a model will append FILT to the name, it is safe
 # reuse ${ONE_CPT} as the hard-filtered model's name.
 .PHONY: PORTAGEsharedLive
+PORTAGEsharedLive: APPLY_WEIGHTS_OPTIONS=
 PORTAGEsharedLive:
-	${MAKE} portageLive APPLY_WEIGHTS_OPTIONS=
+	${MAKE} portageLive
 
 
 
