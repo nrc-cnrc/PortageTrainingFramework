@@ -255,8 +255,8 @@ check_canoe_live: canoe.ini.cow.live
 # reuse ${ONE_CPT} as the hard-filtered model's name.
 .PHONY: PORTAGEsharedLive
 PORTAGEsharedLive: APPLY_WEIGHTS_OPTIONS=
-PORTAGEsharedLive:
-	${MAKE} portageLive
+PORTAGEsharedLive: portageLive
+	@true
 
 
 
