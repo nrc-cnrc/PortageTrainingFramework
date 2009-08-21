@@ -217,7 +217,7 @@ ONE_CPT = one.cpt.en2fr.gz
 # Make a single phrase table from all the phraase tables.
 ${ONE_CPT}: SHELL=${FRAMEWORK_SHELL}
 ${ONE_CPT}: canoe.ini.cow
-	RP_PSUB_OPTS="-N vm.join -nodes bigtmp" \
+	RP_PSUB_OPTS="-1 -N vm.join -nodes bigtmp" \
 	join_phrasetables -v `configtool list-multi-probs $<` \
 	| gzip \
 	> $@
@@ -231,6 +231,7 @@ canoe.ini.cow.hardFilter: ${ONE_CPT} canoe.ini.cow
 # When using Portage, the default behavior should be to create tppt models.
 APPLY_WEIGHTS_OPTIONS ?= -tppt
 # Hard filter & tpptize the single phrase table.
+canoe.ini.cow.live: SHELL=${FRAMEWORK_SHELL}
 cpt.${SRC_LANG}2${TGT_LANG}.tppt: SHELL=${FRAMEWORK_SHELL}
 cpt.${SRC_LANG}2${TGT_LANG}.tppt canoe.ini.cow.live: canoe.ini.cow.hardFilter
 	RP_PSUB_OPTS="-8 -N vm.tppt" \
