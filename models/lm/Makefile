@@ -65,6 +65,10 @@ endif
 # This is to test the perplexity of the language models.
 PPX_TEST_SET ?= test.txt
 
+# After this Makefile, the following targets/files are precious.
+FILES_TO_BE_LOCKED = ${LM_NAME}*
+
+
 # Tells make where to find the corpus' file and the marked file if need be.
 vpath %${CORPUS_EXT} ${CORPORA_DIR}
 vpath %.marked.gz ${CORPORA_DIR}

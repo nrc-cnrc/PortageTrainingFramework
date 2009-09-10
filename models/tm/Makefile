@@ -90,6 +90,10 @@ endif
 # This script might produce directory and we want to easily remove them.
 RM = rm -rf
 
+# After this Makefile, the following targets/files are precious.
+FILES_TO_BE_LOCKED = ibm* hmm* jpt* cpt*
+
+
 # Allows to search for alignment files in corpus
 vpath %${SRCX} ${CORPORA_DIR}
 vpath %${TGTX} ${CORPORA_DIR}

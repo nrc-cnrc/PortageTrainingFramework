@@ -63,6 +63,10 @@ PARALLELISM_LEVEL_TUNE_DECODE ?= 5
 # What program to use to do MERT.
 MERT ?= cow.sh
 
+# After this Makefile, the following targets/files are precious.
+FILES_TO_BE_LOCKED = ${DECODING_MODEL}
+
+
 .SECONDARY:
 .DELETE_ON_ERROR:
 

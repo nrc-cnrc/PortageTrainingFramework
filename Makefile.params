@@ -1,3 +1,4 @@
+# vim:noet:ts=3
 # @author Samuel Larkin
 # @brief Master parameter file where all user specific parameters should be set.
 #
@@ -156,4 +157,20 @@ GUARD_SHELL = /bin/sh
 # How to compress a file.
 %.gz: %
 	cat $< | gzip > $@
+
+# List of files that should read-only for safety.  Mainly this list
+# should be composed of final targets from a Makefile.
+FILES_TO_BE_LOCKED ?=
+
+# Change to read-only aka "Locks" precious files.
+.PHONY: lock
+lock: SHELL=${GUARD_SHELL}
+lock:
+	-chmod u-w ${FILES_TO_BE_LOCKED}
+
+# Change to read-write aka "Unlocks" precious files.
+.PHONY: unlock
+unlock: SHELL=${GUARD_SHELL}
+unlock:
+	-chmod u+w ${FILES_TO_BE_LOCKED}
 

@@ -68,6 +68,10 @@ NBEST_SIZE ?= 1000
 # Number of parallel chunks to process.
 PARALLELISM_LEVEL_TUNE_RESCORE ?= 5
 
+# After this Makefile, the following targets/files are precious.
+FILES_TO_BE_LOCKED = ${RESCORING_MODEL}
+
+
 .SECONDARY:
 .SUFFIXES:
 .DELETE_ON_ERROR:
