@@ -1,0 +1,63 @@
+#!/usr/bin/make -f
+# vim:noet:ts=3
+
+include ../Makefile.params
+-include Makefile.prepare.corpora.params
+
+# What is the extension to the raw files.
+RAWX ?= .raw
+
+# Where to find the corpora.
+CORPORA_DIR ?= /Where.to.find.your.corpora
+
+# What are the corpora prefix we want to process.
+CORPORA ?= ${TRAIN_LM} ${TRAIN_TM} ${TUNE_DECODE} ${TUNE_RESCORE} ${TEST_SET}
+
+# We want the prefix for big corpora > 50M
+BIG_CORPORA ?= $(notdir $(shell find ${CORPORA_DIR} -maxdepth 1 -size +50M -name \*_${SRC_LANG}${RAWX}))
+
+vpath %${RAWX} ${CORPORA_DIR}
+
+
+SHELL = ${FRAMEWORK_SHELL}
+
+.PHONY: all
+all: tokenize
+
+
+# Obviously used for debugging.
+.PHONY: debug
+debug: SHELL=${GUARD_SHELL}
+debug:
+	@echo "Corpora dir: ${CORPORA_DIR}"
+	@echo "Corpora: ${CORPORA}"
+	@echo "Big corpora: ${BIG_CORPORA}"
+
+
+# What do we need to be tokenized?
+# These will be the starting point for the portage.simple.framework.2.
+.PHONY: tokenize
+tokenize: $(addsuffix _${SRC_LANG}${ALIGNX},${CORPORA})
+tokenize: $(addsuffix _${TGT_LANG}${ALIGNX},${CORPORA})
+
+
+########################################
+# How to tokenize files.
+
+# Tokenizes source corpora without sentence splitting.
+%_${SRC_LANG}${ALIGNX}: %_${SRC_LANG}${RAWX}
+	cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
+
+# Tokenizes target corpora without sentence splitting.
+%_${TGT_LANG}${ALIGNX}: %_${TGT_LANG}${RAWX}
+	cat $< | utokenize.pl -noss -lang=${TGT_LANG} > $@
+
+
+# HOW to handle big source language corpora.
+$(addsuffix _${SRC_LANG}${ALIGNX}, ${BIG_CORPORA}): %_${SRC_LANG}${ALIGNX}: %_${SRC_LANG}${RAWX}
+	parallelize.pl -n 10 "utokenize.pl -noss -lang=${SRC_LANG} < $< > $@"
+
+# HOW to handle big target language corpora.
+$(addsuffix _${TGT_LANG}${ALIGNX}, ${BIG_CORPORA}): %_${TGT_LANG}${ALIGNX}: %_${TGT_LANG}${RAWX}
+	parallelize.pl -n 10 "utokenize.pl -noss -lang=${TGT_LANG} < $< > $@"
+
