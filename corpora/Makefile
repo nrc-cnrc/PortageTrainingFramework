@@ -69,6 +69,8 @@ help:
 # What are the final ouptut so we can manipulate them as a whole.
 LIST_FINAL_OUTPUT += ${LC} ${RULE}
 
+# After this Makefile, the following targets/files are precious.
+FILES_TO_BE_LOCKED ?= ${LIST_FINAL_OUTPUT}
 
 # Defines all that needs to be done by this makefile.
 .PHONY: all
@@ -176,18 +178,6 @@ clean:
 	-${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
 	-${RM} run-parallel-logs-*
 
-
-########################################
-# LOCK / UNLOCK
-.PHONY: lock
-lock: SHELL=${GUARD_SHELL}
-lock: ${LIST_FINAL_OUTPUT}
-	chmod u-w $+
-
-.PHONY: unlock
-unlock: SHELL=${GUARD_SHELL}
-unlock: ${LIST_FINAL_OUTPUT}
-	chmod u+w $+
 
 
 ################################################################################
