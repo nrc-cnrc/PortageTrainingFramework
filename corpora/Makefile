@@ -70,7 +70,7 @@ help:
 LIST_FINAL_OUTPUT += ${LC} ${RULE}
 
 # After this Makefile, the following targets/files are precious.
-FILES_TO_BE_LOCKED ?= ${LIST_FINAL_OUTPUT}
+FILES_TO_BE_LOCKED = ${LIST_FINAL_OUTPUT}
 
 # Defines all that needs to be done by this makefile.
 .PHONY: all
