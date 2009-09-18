@@ -68,6 +68,8 @@ PPX_TEST_SET ?= test.txt
 # After this Makefile, the following targets/files are precious.
 FILES_TO_BE_LOCKED = ${LM_NAME}*
 
+# Enable monitoring of memory usage.
+MONITOR_MEMORY_USAGE ?=
 
 # Tells make where to find the corpus' file and the marked file if need be.
 vpath %${CORPUS_EXT} ${CORPORA_DIR}
@@ -219,6 +221,7 @@ ifdef LM_TOOLKIT_SRI
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
 	ngram-count \
 		-interpolate \
 		-kndiscount \
@@ -342,6 +345,7 @@ binlm: ${LM_NAME}.binlm.gz
 #.SECONDARY: %.binlm.gz
 %.binlm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
 	arpalm2binlm $< $@ >& log.$(basename $@)
 
 clean: clean.binlm
@@ -371,6 +375,7 @@ prune: ${LM_NAME}.plm.gz
 tplm: ${LM_NAME}.tplm
 
 %.tplm: %.lm.gz
+	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$@ & \
 	arpalm2tplm.sh $< $*
 
 clean: clean.tplm
