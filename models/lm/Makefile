@@ -71,6 +71,10 @@ FILES_TO_BE_LOCKED = ${LM_NAME}*
 # Enable monitoring of memory usage.
 MONITOR_MEMORY_USAGE ?=
 
+#
+EXTRA_NGRAM_COUNT_OPTIONS ?=
+
+
 # Tells make where to find the corpus' file and the marked file if need be.
 vpath %${CORPUS_EXT} ${CORPORA_DIR}
 vpath %.marked.gz ${CORPORA_DIR}
@@ -228,6 +232,7 @@ ifdef LM_TOOLKIT_SRI
 		-order ${ORDER} \
 		-text $< \
 		-lm $@ \
+		${EXTRA_NGRAM_COUNT_OPTIONS} \
 	>& log.$(basename $@)
 
 else
