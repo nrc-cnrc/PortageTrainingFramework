@@ -1,1 +1,2 @@
 # User defines for models/tm/.
+IBM1_MODEL_EXTRAS = -speed 1

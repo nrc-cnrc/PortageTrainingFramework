@@ -71,7 +71,7 @@ export USING_CLUSTER
 
 ifdef USING_CLUSTER
    PARALLELISM_LEVEL_LM ?= 5
-   PARALLELISM_LEVEL_TM ?= 25
+   PARALLELISM_LEVEL_TM ?= 8
    PARALLELISM_LEVEL_TUNE_DECODE  ?= 10
    PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
    PARALLELISM_LEVEL_TRANSLATE    ?= 10
@@ -119,7 +119,7 @@ export CORPORA_SET  ?= ${TRAIN_SET} ${HELDOUT_SET}
 
 # Define what type of phrase table we want to generate.
 # Can be: {ibm2_cpt | hmm1_cpt | hmm2_cpt}
-export PT_TYPES ?= ibm2_cpt hmm1_cpt
+export PT_TYPES ?= ibm2_cpt
 
 # Define what type of language model we want to generate.
 export LM_TYPES ?= binlm
@@ -156,4 +156,20 @@ GUARD_SHELL = /bin/sh
 # How to compress a file.
 %.gz: %
 	cat $< | gzip > $@
+
+# List of files that should read-only for safety.  Mainly this list
+# should be composed of final targets from a Makefile.
+FILES_TO_BE_LOCKED ?=
+
+# Change to read-only aka "Locks" precious files.
+.PHONY: lock
+lock: SHELL=${GUARD_SHELL}
+lock:
+	-chmod u-w ${FILES_TO_BE_LOCKED}
+
+# Change to read-write aka "Unlocks" precious files.
+.PHONY: unlock
+unlock: SHELL=${GUARD_SHELL}
+unlock:
+	-chmod u+w ${FILES_TO_BE_LOCKED}
 

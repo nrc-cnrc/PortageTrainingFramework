@@ -39,6 +39,10 @@ export ORDER = 3
 TCX = .tc.gz
 export CORPUS_EXT = ${TCX}
 
+# After this Makefile, the following targets/files are precious.
+FILES_TO_BE_LOCKED = ${TRUECASING_MAP} ${TRUECASING_LM} ${TRAIN_LM}*
+
+
 # Where can we find the corpora?
 vpath %.tc.gz ${CORPORA_DIR}
 vpath %${LANGXZ} ${CORPORA_DIR}
@@ -103,6 +107,13 @@ hide:
 .PHONY: portageLive
 portageLive: ${TRUECASING_MAP}.tppt
 portageLive: ${TRAIN_LM}_${TGT_LANG}-kn-3g.tplm
+
+
+
+########################################
+# PORTAGEsharedLive easy target.
+.PHONY: PORTAGEsharedLive
+PORTAGEsharedLive: all
 
 
 

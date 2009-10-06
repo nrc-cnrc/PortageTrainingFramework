@@ -90,6 +90,10 @@ endif
 # This script might produce directory and we want to easily remove them.
 RM = rm -rf
 
+# After this Makefile, the following targets/files are precious.
+FILES_TO_BE_LOCKED = ibm* hmm* jpt* cpt*
+
+
 # Allows to search for alignment files in corpus
 vpath %${SRCX} ${CORPORA_DIR}
 vpath %${TGTX} ${CORPORA_DIR}
@@ -160,7 +164,7 @@ IBM1_MODEL_EXTRAS ?=
 ibm1_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm1.$t.$d.gz))
 ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-4 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-8 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_PARALLELISM_LEVEL} \
 		-v \
 		-n1 5 -n2 0 \
@@ -171,7 +175,7 @@ ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 
 ibm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-4 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-8 -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_PARALLELISM_LEVEL} \
 		-v -r \
 		-n1 5 -n2 0 \
@@ -344,7 +348,7 @@ ibm2_jpt: ibm2_model
 ibm2_jpt: $(foreach t, ${TRAIN_TM}, ${IBM2_JPT_PREFIX}.$t.${JOINTX})
 ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-8 -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
 		-n ${IBM2_JPT_PARALLELISM_LEVEL} \
 		-o $@ \
@@ -436,7 +440,7 @@ ibm2_cpt: ${ibm2_cpt_list}
 
 ${IBM2_CPT_PREFIX}.%.${SRC_2_TGTX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX} ${IBM2_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-8 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-16 -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
