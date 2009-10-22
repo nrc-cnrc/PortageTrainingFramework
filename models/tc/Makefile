@@ -25,10 +25,10 @@ SHELL = ${FRAMEWORK_SHELL}
 # Where to find the corpus' file.
 CORPORA_DIR ?= ../../corpora
 
-# Define LM_TOOLKIT_SRI if you want to use SRILM
-#LM_TOOLKIT_SRI=1
+# Define LM_TOOLKIT=SRI if you want to use SRILM
+# Define LM_TOOLKIT=MIT if you want to use MITLM
 # Make sure all Makefile knows about it.
-export LM_TOOLKIT_SRI
+export LM_TOOLKIT
 
 # Typical lms for truecasing are 3g.
 export ORDER = 3
@@ -58,7 +58,7 @@ vpath %${LANGXZ} ${CORPORA_DIR}
 help: SHELL=${GUARD_SHELL}
 help:
 	@echo "This script build a language model and a map for truecasing."
-	@echo "Define LM_TOOLKIT_SRI=1 if you have and want to use SRILM instead of IRSTLM."
+	@echo "Define LM_TOOLKIT=SRI or LM_TOOLKIT=MIT if you have and want to use SRILM or MITLM instead of IRSTLM."
 	@echo "Your corpora: ${TRAIN_LM}.${TCX}"
 	@echo "type: make all"
 

@@ -93,7 +93,7 @@ help:
 	@echo "export IRSTLM=${IRSTLM}"
 	@echo "Then make all"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
-	@echo "Define LM_TOOLKIT_SRI=1 if you have and want to use SRILM instead of IRSTLM."
+	@echo "Define LM_TOOLKIT=SRI or LM_TOOLKIT=MIT if you have and want to use SRILM or MITLM instead of IRSTLM."
 	@echo "Note: you can build some other lm by defining TRAIN_LM=<corpora_prefix>."
 
 
@@ -221,7 +221,7 @@ arpa: ${LM_NAME}.lm.gz
 
 # Here we've added LM_DESC to strip it out from the corpus file name.
 #.SECONDARY: ${LM_NAME}.lm.gz
-ifdef LM_TOOLKIT_SRI
+ifeq (${LM_TOOLKIT}, SRI)
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -235,7 +235,7 @@ ifdef LM_TOOLKIT_SRI
 		${EXTRA_NGRAM_COUNT_OPTIONS} \
 	>& log.$(basename $@)
 
-else
+else ifeq (${LM_TOOLKIT}, IRST)
 %.lm.gz: %.ilm.gz
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -248,6 +248,20 @@ else
 	| egrep -v '^Saving in txt format to' \
 	| lm_sort.pl \
 	| gzip > $@
+else ifeq (${LM_TOOLKIT}, MIT)
+%${LM_DESC}.lm.gz: %${CORPUS_EXT}
+	@_LOCAL=1 echo "  Creating ARPA text format $@"
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
+	zcat $< \
+	| estimate-ngram \
+		-order ${ORDER} \
+		-smoothing ModKN \
+		-text /dev/stdin \
+		-write-lm $@ \
+	2> log.$(basename $@)
+else
+	$(error "Invalid type for LM_TOOLKIT: ${LM_TOOLKIT}")
 endif
 
 clean: clean.arpa
@@ -406,11 +420,15 @@ test:
 .PHONY: check_setup
 check_setup: SHELL=${GUARD_SHELL}
 check_setup:
-ifdef LM_TOOLKIT_SRI
-	true
-else
+ifeq (${LM_TOOLKIT}, SRI)
+	which ngram-count
+else ifeq (${LM_TOOLKIT}, MIT)
+	which estimate-ngram
+else ifeq (${LM_TOOLKIT}, IRST)
 	test -n $$IRSTLM
 	which build-lm.sh
+else
+	$(error "Invalid type for LM_TOOLKIT: ${LM_TOOLKIT}")
 endif
 
 

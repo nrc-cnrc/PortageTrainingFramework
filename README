@@ -33,7 +33,8 @@ Make sure you have PORTAGEshared installed and available in your $PATH.  Also
 make sure you have IRSTLM properly compiled and set up, which means that you
 have set $IRSTLM to the location of your installed IRSTLM.  Typing "make help"
 will give you sample commands you can cut and paste to do so.  Alternatively,
-if you have SRILM installed, set LM_TOOLKIT_SRI=1 in Makefile.params.
+if you have SRILM installed, set LM_TOOLKIT=SRI in Makefile.params or
+LM_TOOLKIT=MIT to use MITLM's toolkit.
 
 
 TRAINING:

@@ -35,30 +35,35 @@ export TEST_SET      ?= test1 test2
 # PATH.  (Only need if you're not using SRILM - see next variable.)
 export IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 
-# Comment out the following line if you do not have acces to SRILM.  If you use
-# SRILM, its executable scripts and programs should be on your PATH.
-LM_TOOLKIT_SRI=1
+# Change LM_TOOLKIT's value depending on the available lm tooolkit that you
+# have.  If you use SRILM or MITLM, their executable scripts and programs
+# should be on your PATH.
+# LM_TOOLKIT={SRI,IRST,MIT} 
+# where SRI  => SRILM's toolkit
+#       IRST => IRSTLM's toolkit
+#       MIT  => MITLM's toolkit
+LM_TOOLKIT = IRST
 
 # Train and apply rescoring if this variable is defined.
 # Comment out to disable rescoring.
-DO_RESCORING=1
+DO_RESCORING = 1
 
 # Train and apply truecassing if this variable is defined.
 # Comment out to disable truecasing.
-DO_TRUECASING=1
+DO_TRUECASING = 1
 
 # If you have ICU installed and have compiled PORTAGE shared with icu,
 # uncomment the following line.
-#ICU=1
+#ICU = 1
 
 # If you are on a cluster that is run-parallel.sh friendly, define the
 # following to force cluster mode.  You normally don't need to do so, though,
 # since clusters are detected automatically below.
-#USING_CLUSTER=1
+#USING_CLUSTER = 1
 
 # If you are on a cluster but you want to force single computer mode,
 # uncomment the following line:
-#export NOCLUSTER=1
+#export NOCLUSTER = 1
 
 # Automatically detects if we are on a cluster.
 ifeq ($(strip $(shell which-test.sh qsub && echo "true")),true)
