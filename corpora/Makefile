@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# vim:noet:ts=3
+# vim:noet:ts=3:nowrap
 #
 # @author Samuel Larkin
 # @file Makefile
@@ -19,6 +19,12 @@ include ../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+# If your files are not tokenize, they should have the RAWX extentsion.
+RAWX ?= .raw
+
+# Big corpora should be gzipped and will be processed with parallelize.pl to speed-up thing.
+# BIG_CORPORA defines the prefixes like train or lm-train for example.
+BIG_CORPORA ?= $(sort ${TRAIN_SET})  # Using sort to remove duplicates.
 
 # Change make's default shell to a distributed one, if working on a cluster.
 SHELL = ${FRAMEWORK_SHELL}
@@ -107,22 +113,22 @@ lc: ${LC}
 
 
 # Tokenizes source corpora without sentence splitting.
-%_${SRC_LANG}${ALIGNX}: %_${SRC_LANG}.raw
+%_${SRC_LANG}${ALIGNX}: %_${SRC_LANG}${RAWX}
 	@${check_utf8}
 	utokenize.pl -noss -lang=${SRC_LANG} < $< > $@
 
 # Tokenizes target corpora without sentence splitting.
-%_${TGT_LANG}${ALIGNX}: %_${TGT_LANG}.raw
+%_${TGT_LANG}${ALIGNX}: %_${TGT_LANG}${RAWX}
 	@${check_utf8}
 	utokenize.pl -noss -lang=${TGT_LANG} < $< > $@
 
 # HOW to handle big source language corpora.
-$(addsuffix _${SRC_LANG}${ALIGNX}, ${BIG_CORPORA}): %_${SRC_LANG}${ALIGNX}: %_${SRC_LANG}${RAWX}
-   parallelize.pl -n 10 "utokenize.pl -noss -lang=${SRC_LANG} < $< > $@"
+$(addsuffix _${SRC_LANG}${ALIGNX}${GZ}, ${BIG_CORPORA}): %_${SRC_LANG}${ALIGNX}${GZ}: %_${SRC_LANG}${RAWX}${GZ}
+	parallelize.pl -n ${PARALLELISM_LEVEL_CORPORA} "utokenize.pl -noss -lang=${SRC_LANG} < $< > $@"
 
 # HOW to handle big target language corpora.
-$(addsuffix _${TGT_LANG}${ALIGNX}, ${BIG_CORPORA}): %_${TGT_LANG}${ALIGNX}: %_${TGT_LANG}${RAWX}
-   parallelize.pl -n 10 "utokenize.pl -noss -lang=${TGT_LANG} < $< > $@"
+$(addsuffix _${TGT_LANG}${ALIGNX}${GZ}, ${BIG_CORPORA}): %_${TGT_LANG}${ALIGNX}${GZ}: %_${TGT_LANG}${RAWX}${GZ}
+	parallelize.pl -n ${PARALLELISM_LEVEL_CORPORA} "utokenize.pl -noss -lang=${TGT_LANG} < $< > $@"
 
 
 
@@ -186,3 +192,4 @@ clean:
 debug: SHELL=${GUARD_SHELL}
 debug:
 	@echo "LIST_FINAL_OUTPUT: ${LIST_FINAL_OUTPUT}"
+	@echo "BIG_CORPORA: ${BIG_CORPORA}"
