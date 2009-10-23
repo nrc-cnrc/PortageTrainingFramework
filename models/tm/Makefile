@@ -155,16 +155,21 @@ models: ibm2_model
 models: hmm1_model
 models: hmm2_model
 
+
+
 ########################################
 # TRAINING THE IBM1 MODELS
 # requires: source and target corpora.
 IBM1_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 IBM1_MODEL_EXTRAS ?=
+IBM1_MODEL_CPUS ?= 1
+
 .PHONY:  ibm1_model
 ibm1_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm1.$t.$d.gz))
+
 ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${IBM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_PARALLELISM_LEVEL} \
 		-v \
 		-n1 5 -n2 0 \
@@ -175,7 +180,7 @@ ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 
 ibm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${IBM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_PARALLELISM_LEVEL} \
 		-v -r \
 		-n1 5 -n2 0 \
@@ -196,14 +201,17 @@ clean.ibm1:
 ########################################
 # TRAINING THE IBM2 MODELS
 # requires: source and target corpora and ibm1 models.
-IBM2_MODEL_EXTRAS ?=
 IBM2_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+IBM2_MODEL_EXTRAS ?=
+IBM2_MODEL_CPUS ?= 1
+
 .PHONY:  ibm2_model
 ibm2_model: ibm1_model
 ibm2_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm2.$t.$d.gz))
+
 ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${IBM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_PARALLELISM_LEVEL} \
 		-v -m \
 		-n1 0 -n2 5 \
@@ -216,7 +224,7 @@ ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 
 ibm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${IBM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_PARALLELISM_LEVEL} \
 		-v -r \
 		-n1 0 -n2 5 \
@@ -241,12 +249,15 @@ clean.ibm2:
 # requires: source and target corpora and ibm1 models.
 HMM1_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 HMM1_MODEL_EXTRAS ?=
+HMM1_MODEL_CPUS ?= 1
+
 .PHONY:  hmm1_model
 hmm1_model: ibm1_model
 hmm1_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm1.$t.$d.gz))
+
 hmm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${HMM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_PARALLELISM_LEVEL} \
 		-v  \
 		-n1 0 -n2 5 \
@@ -259,7 +270,7 @@ hmm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 
 hmm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${HMM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_PARALLELISM_LEVEL} \
 		-v -r \
 		-n1 0 -n2 5 \
@@ -284,12 +295,15 @@ clean.hmm1:
 # requires: source and target corpora and ibm1 models.
 HMM2_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 HMM2_MODEL_EXTRAS ?=
+HMM2_MODEL_CPUS ?= 1
+
 .PHONY:  hmm2_model
 hmm2_model: ibm1_model
 hmm2_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm2.$t.$d.gz))
+
 hmm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${HMM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_PARALLELISM_LEVEL} \
 		-v \
 		-n1 0 -n2 5 \
@@ -302,7 +316,7 @@ hmm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 
 hmm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-1 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${HMM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_PARALLELISM_LEVEL} \
 		-v -r \
 		-n1 0 -n2 5 \
@@ -337,18 +351,21 @@ clean.jpts:
 	$(RM) jpt.*
 	${RM} -r JPTPAR*
 
+
 ########################################
 # IBM2 JOINT PHRASE TABLES
 # requires: ibm2 models, source and target corpora.
 IBM2_JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-IBM2_JPT_PREFIX = jpt.ibm2
+IBM2_JPT_PREFIX ?= jpt.ibm2
+IBM2_JPT_CPUS ?= 2
 
 .PHONY:  ibm2_jpt
 ibm2_jpt: ibm2_model
 ibm2_jpt: $(foreach t, ${TRAIN_TM}, ${IBM2_JPT_PREFIX}.$t.${JOINTX})
+
 ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${IBM2_JPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
 		-n ${IBM2_JPT_PARALLELISM_LEVEL} \
 		-o $@ \
@@ -364,14 +381,15 @@ ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGT
 # HMM1 JOINT PHRASE TABLES => He's lexical variant
 # requires: hmm models, source and target corpora.
 HMM1_JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-HMM1_JPT_PREFIX=jpt.hmm1
+HMM1_JPT_PREFIX ?= jpt.hmm1
+HMM1_JPT_CPUS ?= 2
 
 .PHONY:  hmm1_jpt
 hmm1_jpt: hmm1_model
 hmm1_jpt: $(foreach t, ${TRAIN_TM}, ${HMM1_JPT_PREFIX}.$t.${JOINTX})
 ${HMM1_JPT_PREFIX}.%.${JOINTX}:  hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${HMM1_JPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
 		-n ${HMM1_JPT_PARALLELISM_LEVEL} \
 		-o $@ \
@@ -387,14 +405,15 @@ ${HMM1_JPT_PREFIX}.%.${JOINTX}:  hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGT
 # HMM2 JOINT PHRASE TABLES => Liang's variant
 # requires: hmm2 models, source and target corpora.
 HMM2_JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-HMM2_JPT_PREFIX=jpt.hmm2
+HMM2_JPT_PREFIX ?= jpt.hmm2
+HMM2_JPT_CPUS ?= 2
 
 .PHONY:  hmm2_jpt
 hmm2_jpt: hmm2_model
 hmm2_jpt: $(foreach t, ${TRAIN_TM}, ${HMM2_JPT_PREFIX}.$t.${JOINTX})
 ${HMM2_JPT_PREFIX}.%.${JOINTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGTX}  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${HMM2_JPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
 		-n ${HMM2_JPT_PARALLELISM_LEVEL} \
 		-o $@ \
@@ -427,7 +446,8 @@ clean.cpts:
 # requires: ibm2 models and ibm2 JOINT frequency phrase table.
 IBM2_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
 IBM2_SMOOTHERS_DESCRIPTION ?= -rf-zn-kn3
-IBM2_CPT_PREFIX=cpt.ibm2${IBM2_SMOOTHERS_DESCRIPTION}
+IBM2_CPT_PREFIX ?= cpt.ibm2${IBM2_SMOOTHERS_DESCRIPTION}
+IBM2_CPT_CPUS ?= 2
 
 ibm2_cpt_list = $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${IBM2_CPT_PREFIX}.$t.$d))
 ibm2_cpt_list: SHELL=${GUARD_SHELL}
@@ -440,7 +460,7 @@ ibm2_cpt: ${ibm2_cpt_list}
 
 ${IBM2_CPT_PREFIX}.%.${SRC_2_TGTX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX} ${IBM2_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${IBM2_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
@@ -457,7 +477,7 @@ ${IBM2_CPT_PREFIX}.%.${SRC_2_TGTX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_
 
 ${IBM2_CPT_PREFIX}.%.${TGT_2_SRCX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX} ${IBM2_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${IBM2_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
@@ -479,7 +499,8 @@ ${IBM2_CPT_PREFIX}.%.${TGT_2_SRCX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_
 # requires: hmm1 models and ibm2 JOINT frequency phrase table.
 HMM1_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
 HMM1_SMOOTHERS_DESCRIPTION ?= -rf-zn-kn3
-HMM1_CPT_PREFIX=cpt.hmm1${HMM1_SMOOTHERS_DESCRIPTION}
+HMM1_CPT_PREFIX ?= cpt.hmm1${HMM1_SMOOTHERS_DESCRIPTION}
+HMM1_CPT_CPUS ?= 2
 
 hmm1_cpt_list = $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${HMM1_CPT_PREFIX}.$t.$d))
 hmm1_cpt_list: SHELL=${GUARD_SHELL}
@@ -492,7 +513,7 @@ hmm1_cpt: ${hmm1_cpt_list}
 
 ${HMM1_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGTX} ${HMM1_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${HMM1_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
@@ -509,7 +530,7 @@ ${HMM1_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_
 
 ${HMM1_CPT_PREFIX}.%.${TGT_2_SRCX}: hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGTX} ${HMM1_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${HMM1_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
@@ -531,7 +552,8 @@ ${HMM1_CPT_PREFIX}.%.${TGT_2_SRCX}: hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_
 # requires: hmm2 models and ibm2 JOINT frequency phrase table.
 HMM2_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
 HMM2_SMOOTHERS_DESCRIPTION ?= -rf-zn-kn3
-HMM2_CPT_PREFIX=cpt.hmm2${HMM2_SMOOTHERS_DESCRIPTION}
+HMM2_CPT_PREFIX ?= cpt.hmm2${HMM2_SMOOTHERS_DESCRIPTION}
+HMM2_CPT_CPUS ?= 2
 
 hmm2_cpt_list = $(foreach t, ${TRAIN_TM}, $(foreach d,${CPT_DIRECTION},${HMM2_CPT_PREFIX}.$t.$d))
 hmm2_cpt_list: SHELL=${GUARD_SHELL}
@@ -544,7 +566,7 @@ hmm2_cpt: ${hmm2_cpt_list}
 
 ${HMM2_CPT_PREFIX}.%.${SRC_2_TGTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGTX}  ${HMM2_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${HMM2_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
@@ -561,7 +583,7 @@ ${HMM2_CPT_PREFIX}.%.${SRC_2_TGTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN
 
 ${HMM2_CPT_PREFIX}.%.${TGT_2_SRCX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGTX}  ${HMM2_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
-	RP_PSUB_OPTS="-2 -N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-${HMM2_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
