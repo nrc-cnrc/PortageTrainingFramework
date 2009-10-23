@@ -63,6 +63,10 @@ PARALLELISM_LEVEL_TUNE_DECODE ?= 5
 # What program to use to do MERT.
 MERT ?= cow.sh
 
+# After this Makefile, the following targets/files are precious.
+FILES_TO_BE_LOCKED = ${DECODING_MODEL}
+
+
 .SECONDARY:
 .DELETE_ON_ERROR:
 
@@ -210,14 +214,14 @@ clean.cow:
 # NOTE: you cannot apply weights if you plan to do some rescoring.
 
 .PHONY: portageLive
-portageLive: canoe.ini.cow.vm
+portageLive: check_canoe_live
 
-ONE_CPT=one.cpt.en2fr.gz
+ONE_CPT = one.cpt.en2fr.gz
 
 # Make a single phrase table from all the phraase tables.
 ${ONE_CPT}: SHELL=${FRAMEWORK_SHELL}
 ${ONE_CPT}: canoe.ini.cow
-	RP_PSUB_OPTS="-N vm.join -nodes bigtmp" \
+	RP_PSUB_OPTS="-1 -N vm.join -nodes bigtmp" \
 	join_phrasetables -v `configtool list-multi-probs $<` \
 	| gzip \
 	> $@
@@ -227,17 +231,37 @@ canoe.ini.cow.hardFilter: ${GUARD_SHELL}
 canoe.ini.cow.hardFilter: ${ONE_CPT} canoe.ini.cow
 	configtool rep-multi-prob:$< canoe.ini.cow > $@
 
+
+# When using Portage, the default behavior should be to create tppt models.
+APPLY_WEIGHTS_OPTIONS ?= -tppt
 # Hard filter & tpptize the single phrase table.
-cpt.en2fr.tppt: SHELL=${FRAMEWORK_SHELL}
-phrases.${SRC_LANG}2${TGT_LANG}.tppt: canoe.ini.cow.hardFilter
-	RP_PSUB_OPTS="-N vm.tppt" \
-	tmtext-apply-weights.pl -hf -tppt -src ${SRC_LANG} -tgt ${TGT_LANG} -f $< -o phrases
+canoe.ini.cow.live: SHELL=${FRAMEWORK_SHELL}
+cpt.${SRC_LANG}2${TGT_LANG}.tppt: SHELL=${FRAMEWORK_SHELL}
+cpt.${SRC_LANG}2${TGT_LANG}.tppt canoe.ini.cow.live: canoe.ini.cow.hardFilter
+	RP_PSUB_OPTS="-8 -N vm.tppt" \
+	tmtext-apply-weights.pl \
+		-hf ${APPLY_WEIGHTS_OPTIONS} \
+		-src ${SRC_LANG} -tgt ${TGT_LANG} \
+		-f $< -c canoe.ini.cow.live \
+		-o cpt
 
 # We need to output a new canoe.ini.cow that reflects the single tppt and applied weights.
-canoe.ini.cow.vm: SHELL=${FRAMEWORK_SHELL}
-canoe.ini.cow.vm: phrases.${SRC_LANG}2${TGT_LANG}.tppt canoe.ini.cow
-	configtool -c applied-weights:$< canoe.ini.cow > $@
-	configtool check $@
+.PHONY: check_canoe_live
+check_canoe_live: SHELL=${GUARD_SHELL}
+check_canoe_live: canoe.ini.cow.live
+	configtool check $<
+
+
+
+########################################
+# How to prepare PORTAGEsharedLive.
+# Same thing as portageLive except tptizing is not supported.
+# NOTE: since hard filtering a model will append FILT to the name, it is safe
+# reuse ${ONE_CPT} as the hard-filtered model's name.
+.PHONY: PORTAGEsharedLive
+PORTAGEsharedLive: APPLY_WEIGHTS_OPTIONS=
+PORTAGEsharedLive: portageLive
+	@true
 
 
 

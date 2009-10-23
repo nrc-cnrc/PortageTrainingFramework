@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# vim:noet:ts=3
+# vim:noet:ts=3:nowrap
 #
 # @author Samuel Larkin
 # @file Makefile
@@ -19,6 +19,12 @@ include ../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+# If your files are not tokenize, they should have the RAWX extentsion.
+RAWX ?= .raw
+
+# Big corpora should be gzipped and will be processed with parallelize.pl to speed-up thing.
+# BIG_CORPORA defines the prefixes like train or lm-train for example.
+BIG_CORPORA ?= $(sort ${TRAIN_SET})  # Using sort to remove duplicates.
 
 # Change make's default shell to a distributed one, if working on a cluster.
 SHELL = ${FRAMEWORK_SHELL}
@@ -69,6 +75,8 @@ help:
 # What are the final ouptut so we can manipulate them as a whole.
 LIST_FINAL_OUTPUT += ${LC} ${RULE}
 
+# After this Makefile, the following targets/files are precious.
+FILES_TO_BE_LOCKED = ${LIST_FINAL_OUTPUT}
 
 # Defines all that needs to be done by this makefile.
 .PHONY: all
@@ -105,14 +113,23 @@ lc: ${LC}
 
 
 # Tokenizes source corpora without sentence splitting.
-#%_${SRC_LANG}.tc: %_${SRC_LANG}${ALIGNX}
-#	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1) \
-#	&& cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
+%_${SRC_LANG}${ALIGNX}: %_${SRC_LANG}${RAWX}
+	@${check_utf8}
+	utokenize.pl -noss -lang=${SRC_LANG} < $< > $@
 
 # Tokenizes target corpora without sentence splitting.
-#%_${TGT_LANG}.tc: %_${TGT_LANG}${ALIGNX}
-#	(file -biL $< | egrep -qi 'charset=utf-8') || (echo "Please convert $< to utf-8" && exit 1) \
-#	&& cat $< | utokenize.pl -noss -lang=${TGT_LANG} > $@
+%_${TGT_LANG}${ALIGNX}: %_${TGT_LANG}${RAWX}
+	@${check_utf8}
+	utokenize.pl -noss -lang=${TGT_LANG} < $< > $@
+
+# HOW to handle big source language corpora.
+$(addsuffix _${SRC_LANG}${ALIGNX}${GZ}, ${BIG_CORPORA}): %_${SRC_LANG}${ALIGNX}${GZ}: %_${SRC_LANG}${RAWX}${GZ}
+	parallelize.pl -n ${PARALLELISM_LEVEL_CORPORA} "utokenize.pl -noss -lang=${SRC_LANG} < $< > $@"
+
+# HOW to handle big target language corpora.
+$(addsuffix _${TGT_LANG}${ALIGNX}${GZ}, ${BIG_CORPORA}): %_${TGT_LANG}${ALIGNX}${GZ}: %_${TGT_LANG}${RAWX}${GZ}
+	parallelize.pl -n ${PARALLELISM_LEVEL_CORPORA} "utokenize.pl -noss -lang=${TGT_LANG} < $< > $@"
+
 
 
 # Prepare truecased file.
@@ -168,18 +185,6 @@ clean:
 	-${RM} run-parallel-logs-*
 
 
-########################################
-# LOCK / UNLOCK
-.PHONY: lock
-lock: SHELL=${GUARD_SHELL}
-lock: ${LIST_FINAL_OUTPUT}
-	chmod u-w $+
-
-.PHONY: unlock
-unlock: SHELL=${GUARD_SHELL}
-unlock: ${LIST_FINAL_OUTPUT}
-	chmod u+w $+
-
 
 ################################################################################
 # HELPERS
@@ -187,3 +192,4 @@ unlock: ${LIST_FINAL_OUTPUT}
 debug: SHELL=${GUARD_SHELL}
 debug:
 	@echo "LIST_FINAL_OUTPUT: ${LIST_FINAL_OUTPUT}"
+	@echo "BIG_CORPORA: ${BIG_CORPORA}"
