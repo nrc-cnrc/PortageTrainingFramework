@@ -1,2 +1,6 @@
 # User defines for models/tm/.
 IBM1_MODEL_EXTRAS = -speed 1
+IBM1_MODEL_CPUS = 8
+IBM2_MODEL_CPUS = 4
+IBM2_JPT_CPUS = 8
+IBM2_CPT_CPUS = 16
