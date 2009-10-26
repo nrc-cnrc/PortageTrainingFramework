@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# vim:noet:ts=3
+# vim:noet:ts=3:nowrap
 
 include ../Makefile.params
 -include Makefile.prepare.corpora.params
@@ -13,12 +13,14 @@ CORPORA_DIR ?= /Where.to.find.your.corpora
 # What are the corpora prefix we want to process.
 CORPORA ?= ${TRAIN_LM} ${TRAIN_TM} ${TUNE_DECODE} ${TUNE_RESCORE} ${TEST_SET}
 
-# We want the prefix for big corpora > 50M
-BIG_CORPORA ?= $(notdir $(shell find ${CORPORA_DIR} -maxdepth 1 -size +50M -name \*_${SRC_LANG}${RAWX}))
+# Big corpora should be gzipped and will be processed with parallelize.pl to speed-up thing.
+# BIG_CORPORA defines the prefixes like train or lm-train for example.
+BIG_CORPORA ?= $(sort ${TRAIN_SET})  # Using sort to remove duplicates.
 
 vpath %${RAWX} ${CORPORA_DIR}
 
 
+# Change make's default shell to a distributed one, if working on a cluster.
 SHELL = ${FRAMEWORK_SHELL}
 
 .PHONY: all
@@ -37,8 +39,13 @@ debug:
 # What do we need to be tokenized?
 # These will be the starting point for the portage.simple.framework.2.
 .PHONY: tokenize
-tokenize: $(addsuffix _${SRC_LANG}${ALIGNX},${CORPORA})
-tokenize: $(addsuffix _${TGT_LANG}${ALIGNX},${CORPORA})
+TOK += $(addsuffix _${SRC_LANG}${ALIGNX}, ${HELDOUT_SET})
+TOK += $(addsuffix _${TGT_LANG}${ALIGNX}, ${HELDOUT_SET})
+# Note that will want to compress the TRAIN_SET for space efficiency.
+TOK += $(addsuffix _${SRC_LANG}${ALIGNX}${GZ}, ${TRAIN_TM})
+TOK += $(addsuffix _${TGT_LANG}${ALIGNX}${GZ}, ${TRAIN_TM})
+TOK += $(addsuffix _${TGT_LANG}${ALIGNX}${GZ}, ${TRAIN_LM})
+tokenize: ${TOK}
 
 
 ########################################
@@ -46,18 +53,25 @@ tokenize: $(addsuffix _${TGT_LANG}${ALIGNX},${CORPORA})
 
 # Tokenizes source corpora without sentence splitting.
 %_${SRC_LANG}${ALIGNX}: %_${SRC_LANG}${RAWX}
-	cat $< | utokenize.pl -noss -lang=${SRC_LANG} > $@
+	@${check_utf8}
+	RP_PSUB_OPTS="-1" \
+	utokenize.pl -noss -lang=${SRC_LANG} < $< > $@
 
 # Tokenizes target corpora without sentence splitting.
 %_${TGT_LANG}${ALIGNX}: %_${TGT_LANG}${RAWX}
-	cat $< | utokenize.pl -noss -lang=${TGT_LANG} > $@
-
+	@${check_utf8}
+	RP_PSUB_OPTS="-1" \
+	utokenize.pl -noss -lang=${TGT_LANG} < $< > $@
 
 # HOW to handle big source language corpora.
-$(addsuffix _${SRC_LANG}${ALIGNX}, ${BIG_CORPORA}): %_${SRC_LANG}${ALIGNX}: %_${SRC_LANG}${RAWX}
-	parallelize.pl -n 10 "utokenize.pl -noss -lang=${SRC_LANG} < $< > $@"
+$(addsuffix _${SRC_LANG}${ALIGNX}${GZ}, ${BIG_CORPORA}): %_${SRC_LANG}${ALIGNX}${GZ}: %_${SRC_LANG}${RAWX}${GZ}
+	RP_PSUB_OPTS="-1" \
+	parallelize.pl -psub -1 -n ${PARALLELISM_LEVEL_CORPORA} "utokenize.pl -noss -lang=${SRC_LANG} < $< > $@"
 
 # HOW to handle big target language corpora.
-$(addsuffix _${TGT_LANG}${ALIGNX}, ${BIG_CORPORA}): %_${TGT_LANG}${ALIGNX}: %_${TGT_LANG}${RAWX}
-	parallelize.pl -n 10 "utokenize.pl -noss -lang=${TGT_LANG} < $< > $@"
+$(addsuffix _${TGT_LANG}${ALIGNX}${GZ}, ${BIG_CORPORA}): %_${TGT_LANG}${ALIGNX}${GZ}: %_${TGT_LANG}${RAWX}${GZ}
+	RP_PSUB_OPTS="-1" \
+	parallelize.pl -psub -1 -n ${PARALLELISM_LEVEL_CORPORA} "utokenize.pl -noss -lang=${TGT_LANG} < $< > $@"
+
+
 
