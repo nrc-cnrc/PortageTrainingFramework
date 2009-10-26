@@ -115,40 +115,48 @@ lc: ${LC}
 # Tokenizes source corpora without sentence splitting.
 %_${SRC_LANG}${ALIGNX}: %_${SRC_LANG}${RAWX}
 	@${check_utf8}
+	RP_PSUB_OPTS="-1" \
 	utokenize.pl -noss -lang=${SRC_LANG} < $< > $@
 
 # Tokenizes target corpora without sentence splitting.
 %_${TGT_LANG}${ALIGNX}: %_${TGT_LANG}${RAWX}
 	@${check_utf8}
+	RP_PSUB_OPTS="-1" \
 	utokenize.pl -noss -lang=${TGT_LANG} < $< > $@
 
 # HOW to handle big source language corpora.
 $(addsuffix _${SRC_LANG}${ALIGNX}${GZ}, ${BIG_CORPORA}): %_${SRC_LANG}${ALIGNX}${GZ}: %_${SRC_LANG}${RAWX}${GZ}
-	parallelize.pl -n ${PARALLELISM_LEVEL_CORPORA} "utokenize.pl -noss -lang=${SRC_LANG} < $< > $@"
+	RP_PSUB_OPTS="-1" \
+	parallelize.pl -psub -1 -n ${PARALLELISM_LEVEL_CORPORA} "utokenize.pl -noss -lang=${SRC_LANG} < $< > $@"
 
 # HOW to handle big target language corpora.
 $(addsuffix _${TGT_LANG}${ALIGNX}${GZ}, ${BIG_CORPORA}): %_${TGT_LANG}${ALIGNX}${GZ}: %_${TGT_LANG}${RAWX}${GZ}
-	parallelize.pl -n ${PARALLELISM_LEVEL_CORPORA} "utokenize.pl -noss -lang=${TGT_LANG} < $< > $@"
+	RP_PSUB_OPTS="-1" \
+	parallelize.pl -psub -1 -n ${PARALLELISM_LEVEL_CORPORA} "utokenize.pl -noss -lang=${TGT_LANG} < $< > $@"
 
 
 
 # Prepare truecased file.
 %.tc: %${ALIGNX}
 	@${check_utf8}
+	RP_PSUB_OPTS="-1" \
 	cp $< $@
 
 %.tc${GZ}: %${ALIGNX}${GZ}
 	@${check_utf8}
+	RP_PSUB_OPTS="-1" \
 	cp $< $@
 
 
 # Constructs a lowercased corpora from its aligned version.
 %${LANGX}: %${ALIGNX}
 	@$(check_utf8)
+	RP_PSUB_OPTS="-1" \
 	cat $< | ${LOWERCASE} > $@
 
 %${LANGXZ}: %${ALIGNX}${GZ}
 	@$(check_utf8)
+	RP_PSUB_OPTS="-1" \
 	zcat $< | ${LOWERCASE} | gzip > $@
 
 
@@ -159,6 +167,7 @@ RULE = $(addsuffix ${RULEX}, ${HELDOUT_SET})
 rule: ${RULE}
 %${RULEX}: %_${SRC_LANG}${LANGX}
 	@$(check_utf8)
+	RP_PSUB_OPTS="-1" \
 	canoe-escapes.pl -add $< > $@
 
 
