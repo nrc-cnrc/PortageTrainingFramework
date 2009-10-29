@@ -204,5 +204,5 @@ PORTAGEsharedLive_decode: cow
 PREPARE_CORPORA_MAKEFILE ?= Makefile.prepare.corpora
 .PHONY: prepare.corpora
 prepare.corpora:
-	${MAKE} -C corpora -f ${PREPARE_CORPORA_MAKEFILE}
+	${MAKE} -C corpora -f ${PREPARE_CORPORA_MAKEFILE} all
 
