@@ -151,7 +151,7 @@ rat: cow
 .PHONY: translate
 # Tune weights and apply them to the test sets
 translate: tune
-	${MAKE} -C translate
+	${MAKE} -C translate all
 
 
 
