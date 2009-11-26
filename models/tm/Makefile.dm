@@ -29,6 +29,8 @@ TGTX ?= _${TGT_LANG}${LANGX}
 SRCXZ ?= ${SRCX}${GZ}
 TGTXZ ?= ${TGTX}${GZ}
 
+COUNT_PARALLEL_LEVEL ?= 30
+
 # IBM / HMM models extension
 SRC_GIVEN_TGT  = ${SRC_LANG}_given_${TGT_LANG}
 TGT_GIVEN_SRC  = ${TGT_LANG}_given_${SRC_LANG}
@@ -58,7 +60,7 @@ all: dm
 # Where % = is the word alignment model type.
 counts.%.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
 	parallelize.pl \
-		-n 50 \
+		-n ${COUNT_PARALLEL_LEVEL} \
 		-s $(word 1, $+) \
 		-s $(word 2, $+) \
 		'dmcount -v -m 8 $*.${TRAIN_TM}.${TGT_GIVEN_SRCX} $*.${TRAIN_TM}.${SRC_GIVEN_TGTX} $+ > $@'
@@ -66,7 +68,7 @@ counts.%.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
 
 .PHONY: dm
 dm: dm.hmm1+ibm2.${SRC_2_TGTX}
-dm.hmm1+ibm2.${SRC_2_TGTX}: SHELL=run-parallel.sh
+dm.hmm1+ibm2.${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
 dm.hmm1+ibm2.${SRC_2_TGTX}: counts.ibm2.gz counts.hmm1.gz
 	RP_PSUB_OPTS="-4"\
 	zcat -f $+ \
