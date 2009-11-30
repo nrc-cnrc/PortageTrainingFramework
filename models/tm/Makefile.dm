@@ -1,5 +1,16 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
+# $Id$
+#
+# @author Samuel Larkin
+# @file Makefile.dm
+# @brief Train Lexicalized Distortion Models.
+#
+# Technologies langagieres interactives / Interactive Language Technologies
+# Inst. de technologie de l'information / Institute for Information Technology
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2009, Sa Majeste la Reine du Chef du Canada
+# Copyright 2009, Her Majesty in Right of Canada
 
 # doing en 2 fr
 
@@ -48,6 +59,11 @@ TUNE_SET ?= ${TUNE_DECODE}
 
 CORPORA_DIR ?= ../../corpora
 
+# Number of workers to use in parallel during tuning.
+NUMBER_PARALLEL_WORKER ?= `wc -l < $<`
+# Number of cpus per worker to use when tuning.
+NUMBER_PARALLEL_CPU ?= 4
+
 vpath %${SRCXZ} ${CORPORA_DIR}
 vpath %${TGTXZ} ${CORPORA_DIR}
 vpath %${SRCX} ${CORPORA_DIR}
@@ -87,7 +103,7 @@ tune: log.tune-dms
 	| head -n 1
 
 log.tune-dms: tune-dms.cmds
-	run-parallel.sh -psub "-2" $< `wc -l < $<` >& $@
+	run-parallel.sh -psub "-${NUMBER_PARALLEL_CPU}" $< ${NUMBER_PARALLEL_WORKER} >& $@
 
 count.tune.hmm1+ibm2.gz: count.tune.hmm1.gz count.tune.ibm2.gz 
 	zcat $+ | gzip > $@
@@ -104,3 +120,4 @@ tune-dms.cmds: counts.ibm2.gz counts.hmm1.gz count.tune.hmm1+ibm2.gz
 	done; done; done; done | shuf | head -${SAMPLE_SIZE} > $@
 	echo -n "test -f ${TUNE_RESULTS_DIR}/res.tune.20.20.20.20 || " >> $@
 	echo "(zcat -f $(wordlist 1,2,$+) | dmestm -eval $(word 3,$+) -wtu 20  -wtg 20  -wt1 20  -wt2 20  > /dev/null ) >& ${TUNE_RESULTS_DIR}/res.tune.20.20.20.20" >> $@
+
