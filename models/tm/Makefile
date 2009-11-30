@@ -1,5 +1,6 @@
 #!/usr/bin/make -f
-# vim:noet:ts=3
+# vim:noet:ts=3:nowrap
+# $Id$
 #
 # @author Samuel Larkin
 # @file Makefile
