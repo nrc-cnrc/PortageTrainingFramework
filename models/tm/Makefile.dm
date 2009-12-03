@@ -28,10 +28,10 @@
 include ../../Makefile.params
 -include Makefile.params
 
-WTU ?= 10
-WTG ?= 10
-WT1 ?= 10
-WT2 ?= 10
+WTU ?= 5
+WTG ?= 5
+WT1 ?= 5
+WT2 ?= 5
 
 SAMPLE_SIZE ?= 64
 
@@ -64,6 +64,10 @@ NUMBER_PARALLEL_WORKER ?= `wc -l < $<`
 # Number of cpus per worker to use when tuning.
 NUMBER_PARALLEL_CPU ?= 4
 
+# Number of cpu to use to create the final model.
+CPU ?= 4
+
+
 vpath %${SRCXZ} ${CORPORA_DIR}
 vpath %${TGTXZ} ${CORPORA_DIR}
 vpath %${SRCX} ${CORPORA_DIR}
@@ -86,7 +90,7 @@ counts.%.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
 dm: dm.hmm1+ibm2.${SRC_2_TGTX}
 dm.hmm1+ibm2.${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
 dm.hmm1+ibm2.${SRC_2_TGTX}: counts.ibm2.gz counts.hmm1.gz
-	RP_PSUB_OPTS="-4"\
+	RP_PSUB_OPTS="-${CPU}"\
 	zcat -f $+ \
 	| dmestm -s -g $(basename $@).bkoff -wtu ${WTU} -wtg ${WTG} -wt1 ${WT1} -wt2 ${WT2} \
 	| gzip \
