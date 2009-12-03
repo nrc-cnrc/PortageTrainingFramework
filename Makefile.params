@@ -30,6 +30,8 @@ export TUNE_DECODE   ?= dev1
 export TUNE_RESCORE  ?= dev2
 # TEST_SET are used to estimate the quality of the system.
 export TEST_SET      ?= test1 test2
+# Uncomment if you have source text, that doesn't have a reference, to translate.
+#TRANSLATE_SET ?=
 
 # The prefix_root where we can find IRSTLM/bin, which must also be on your
 # PATH.  (Only need if you're not using SRILM - see next variable.)

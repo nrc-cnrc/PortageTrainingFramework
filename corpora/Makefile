@@ -86,6 +86,10 @@ ifdef DO_TRUECASING
 all: tc
 LIST_FINAL_OUTPUT += ${TC}
 endif
+ifdef TRANSLATE_SET
+all: translate
+LIST_FINAL_OUTPUT += ${TRANSLATE_SET_LIST}
+endif
 
 # What the user can expect from this module.
 .PHONY: list_final_output
@@ -173,7 +177,9 @@ rule: ${RULE}
 
 # NOTE: here TRANSLATE_SET must contain the prefix only.
 # Special target to prepare a new translation set.
-translate: $(foreach t,${TRANSLATE_SET}, $t${RULEX} $t_${SRC_LANG}${LANGX})
+TRANSLATE_SET_LIST = $(foreach t,${TRANSLATE_SET}, $t${RULEX} $t_${SRC_LANG}${LANGX})
+.PHONY: translate
+translate: ${TRANSLATE_SET_LIST}
 
 
 # Special targte to prepare the reference.

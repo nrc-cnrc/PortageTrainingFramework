@@ -119,6 +119,9 @@ endif
 final_result: SHELL=${GUARD_SHELL}
 
 final_result: $(addsuffix .translation,${TEST_SET})
+ifdef TRANSLATE_SET
+final_result: $(addsuffix .translation,${TRANSLATE_SET})
+endif
 %.translation: %${FINALX}
 	${POST_PROCESSING} < $< > $@
 
