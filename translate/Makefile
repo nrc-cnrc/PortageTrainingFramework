@@ -19,6 +19,9 @@ include ../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+# What is this module's name.
+MODULE_NAME ?= translate
+
 # TODO: Make this Makefile work with run-parallel.sh -c
 export SHELL = ${FRAMEWORK_SHELL}
 

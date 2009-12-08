@@ -218,6 +218,7 @@ resource_summary:
 	@${MAKE} --no-print-directory -s -C models/tc resource_summary_sub
 	@${MAKE} --no-print-directory -s -C models/decode resource_summary_sub
 	@${MAKE} --no-print-directory -s -C models/rescore resource_summary_sub
+	@${MAKE} --no-print-directory -s -C translate resource_summary_sub
 
 .PHONY: summary
 summary: SHELL=/bin/bash
