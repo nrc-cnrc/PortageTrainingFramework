@@ -367,6 +367,7 @@ clean.jpts:
 # IBM2 JOINT PHRASE TABLES
 # requires: ibm2 models, source and target corpora.
 IBM2_JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+IBM2_JPT_WORKERS ?= ${IBM2_JPT_PARALLELISM_LEVEL}
 IBM2_JPT_PREFIX ?= jpt.ibm2
 IBM2_JPT_CPUS ?= 2
 
@@ -379,6 +380,7 @@ ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGT
 	RP_PSUB_OPTS="-${IBM2_JPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
 		-n ${IBM2_JPT_PARALLELISM_LEVEL} \
+		-nw ${IBM2_JPT_WORKERS} \
 		-o $@ \
 		GPT \
 		-v -j -w 1 -m $M -ibm 2 \
@@ -392,6 +394,7 @@ ${IBM2_JPT_PREFIX}.%.${JOINTX}:  ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGT
 # HMM1 JOINT PHRASE TABLES => He's lexical variant
 # requires: hmm models, source and target corpora.
 HMM1_JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+HMM1_JPT_WORKERS ?= ${HMM1_JPT_PARALLELISM_LEVEL}
 HMM1_JPT_PREFIX ?= jpt.hmm1
 HMM1_JPT_CPUS ?= 2
 
@@ -403,6 +406,7 @@ ${HMM1_JPT_PREFIX}.%.${JOINTX}:  hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGT
 	RP_PSUB_OPTS="-${HMM1_JPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
 		-n ${HMM1_JPT_PARALLELISM_LEVEL} \
+		-nw ${HMM1_JPT_WORKERS} \
 		-o $@ \
 		GPT \
 		-v -j -w 1 -m $M -hmm \
@@ -416,6 +420,7 @@ ${HMM1_JPT_PREFIX}.%.${JOINTX}:  hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGT
 # HMM2 JOINT PHRASE TABLES => Liang's variant
 # requires: hmm2 models, source and target corpora.
 HMM2_JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+HMM2_JPT_WORKERS ?= ${HMM2_JPT_PARALLELISM_LEVEL}
 HMM2_JPT_PREFIX ?= jpt.hmm2
 HMM2_JPT_CPUS ?= 2
 
@@ -427,6 +432,7 @@ ${HMM2_JPT_PREFIX}.%.${JOINTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGT
 	RP_PSUB_OPTS="-${HMM2_JPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
 		-n ${HMM2_JPT_PARALLELISM_LEVEL} \
+		-nw ${HMM2_JPT_WORKERS} \
 		-o $@ \
 		GPT \
 		-v -j -w 1 -m $M -hmm \
