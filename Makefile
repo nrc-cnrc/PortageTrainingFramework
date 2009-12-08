@@ -206,3 +206,20 @@ PREPARE_CORPORA_MAKEFILE ?= Makefile.prepare.corpora
 prepare.corpora:
 	${MAKE} -C corpora -f ${PREPARE_CORPORA_MAKEFILE} all
 
+
+
+########################################
+# Resource Summary
+.PHONY: resource_summary
+resource_summary: SHELL=${GUARD_SHELL}
+resource_summary:
+	@${MAKE} --no-print-directory -s -C models/lm resource_summary_sub
+	@${MAKE} --no-print-directory -s -C models/tm resource_summary_sub
+	@${MAKE} --no-print-directory -s -C models/tc resource_summary_sub
+	@${MAKE} --no-print-directory -s -C models/decode resource_summary_sub
+	@${MAKE} --no-print-directory -s -C models/rescore resource_summary_sub
+
+.PHONY: summary
+summary: SHELL=/bin/bash
+summary:
+	@p-res-mon.sh <(${MAKE} resource_summary)

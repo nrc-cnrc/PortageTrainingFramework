@@ -184,3 +184,10 @@ unlock: SHELL=${GUARD_SHELL}
 unlock:
 	-chmod u+w ${FILES_TO_BE_LOCKED}
 
+# Summarizes resources usage for this system.
+.PHONY: resource_summary_sub
+resource_summary_sub: SHELL=${GUARD_SHELL}
+resource_summary_sub:
+	find -type f -name log.\* \
+	| sort \
+	| xargs p-res-mon.sh -m ${MODULE_NAME}

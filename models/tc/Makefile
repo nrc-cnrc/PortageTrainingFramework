@@ -19,6 +19,9 @@ include ../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+# What is this module's name.
+MODULE_NAME ?= tc
+
 # Let's make this usage on the cluster.
 SHELL = ${FRAMEWORK_SHELL}
 
@@ -41,6 +44,9 @@ export CORPUS_EXT = ${TCX}
 
 # After this Makefile, the following targets/files are precious.
 FILES_TO_BE_LOCKED = ${TRUECASING_MAP} ${TRUECASING_LM} ${TRAIN_LM}*
+
+# Resource monitoring.
+P_RES_MON ?= p-res-mon.sh -t
 
 
 # Where can we find the corpora?
@@ -137,7 +143,12 @@ map: SHELL=${GUARD_SHELL}
 map: ${TRUECASING_MAP}
 
 %.map:  %${TCX}  %${LANGXZ}
-	compile_truecase_map $+ > $@
+	${P_RES_MON} \
+	compile_truecase_map $+ \
+		> $@ \
+		2> log.$@
 
 %.map.tppt: %.map
-	vocabMap2tpt.sh $<
+	${P_RES_MON} \
+	vocabMap2tpt.sh $< \
+		2> log.$@

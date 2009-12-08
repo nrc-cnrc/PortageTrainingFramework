@@ -19,6 +19,9 @@ include ../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+# What is this module's name.
+MODULE_NAME ?= lm
+
 # Let's make this usage on the cluster.
 SHELL = ${FRAMEWORK_SHELL}
 
@@ -73,6 +76,9 @@ MONITOR_MEMORY_USAGE ?=
 
 #
 EXTRA_NGRAM_COUNT_OPTIONS ?=
+
+# Resource monitoring.
+P_RES_MON ?= p-res-mon.sh -t
 
 
 # Tells make where to find the corpus' file and the marked file if need be.
@@ -222,10 +228,12 @@ arpa: ${LM_NAME}.lm.gz
 # Here we've added LM_DESC to strip it out from the corpus file name.
 #.SECONDARY: ${LM_NAME}.lm.gz
 ifeq (${LM_TOOLKIT}, SRI)
+#	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
+#
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
+	${P_RES_MON} \
 	ngram-count \
 		-interpolate \
 		-kndiscount \
@@ -240,6 +248,7 @@ else ifeq (${LM_TOOLKIT}, IRST)
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	set -o pipefail; \
+	${P_RES_MON} \
 	compile-lm \
 		--text yes \
 		$< \
@@ -248,18 +257,22 @@ else ifeq (${LM_TOOLKIT}, IRST)
 	| egrep -v '^Saving in txt format to' \
 	| lm_sort.pl \
 	| gzip > $@
+
+#	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
+#
 else ifeq (${LM_TOOLKIT}, MIT)
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
-	zcat $< \
+	${P_RES_MON} \
+	{ zcat $< \
 	| estimate-ngram \
 		-order ${ORDER} \
 		-smoothing ModKN \
 		-text /dev/stdin \
-		-write-lm $@ \
+		-write-lm $@; } \
 	2> log.$(basename $@)
+
 else
 	$(error "Invalid type for LM_TOOLKIT: ${LM_TOOLKIT}")
 endif
@@ -282,6 +295,7 @@ blmt: ${LM_NAME}.blmt
 %.blmt: %.ilm.gz
 	@_LOCAL=1 echo "  Creating bin.ARPA format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	${P_RES_MON} \
 	compile-lm \
 		$< \
 		$@ \
@@ -304,6 +318,7 @@ quantize: $(LM_NAME).qlm.gz
 %.qlm: %.lm.gz
 	@_LOCAL=1 echo "  qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	${P_RES_MON} \
 	quantize-lm \
 		$< \
 		$@ \
@@ -326,6 +341,7 @@ Qblmt: ${LM_NAME}.Qblmt
 %.Qblmt: %.qlm.gz
 	@_LOCAL=1 echo "  bin.qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	${P_RES_MON} \
 	compile-lm \
 		$< \
 		$@ \
@@ -346,6 +362,7 @@ sort_arpa: ${LM_NAME}.lm.sorted.gz
 
 #.SECONDARY: ${LM_NAME}.lm.sorted.gz
 %.lm.sorted.gz: %.lm.gz
+	${P_RES_MON} \
 	lm_sort_filter.sh -lm $< $@ >& log.$(basename $@)
 
 clean: clean.sort_arpa
@@ -362,9 +379,11 @@ clean.sort_arpa:
 binlm: ${LM_NAME}.binlm.gz
 
 #.SECONDARY: %.binlm.gz
+#	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
+#
 %.binlm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
+	${P_RES_MON} \
 	arpalm2binlm $< $@ >& log.$(basename $@)
 
 clean: clean.binlm

@@ -26,6 +26,9 @@ include ../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+# What is this module's name.
+MODULE_NAME ?= tm
+
 # TODO: Make sure this Makefile works for Portage's cluster.
 # This will require that run-parallel.sh -c RP_OPTS be functional.
 SHELL = ${FRAMEWORK_SHELL}
@@ -96,6 +99,10 @@ FILES_TO_BE_LOCKED = ibm* hmm* jpt* cpt*
 
 # Should we monitor the memory usage of the processes?
 MONITOR_MEMORY_USAGE ?=
+
+# Resource monitoring.
+P_RES_MON ?= p-res-mon.sh -t
+
 
 
 # Allows to search for alignment files in corpus
@@ -465,7 +472,7 @@ ibm2_cpt: ${ibm2_cpt_list}
 ${IBM2_CPT_PREFIX}.%.${SRC_2_TGTX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX} ${IBM2_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${IBM2_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
-	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
+	${P_RES_MON} \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
@@ -483,7 +490,7 @@ ${IBM2_CPT_PREFIX}.%.${SRC_2_TGTX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_
 ${IBM2_CPT_PREFIX}.%.${TGT_2_SRCX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_TGTX} ${IBM2_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${IBM2_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
-	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
+	${P_RES_MON} \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
@@ -520,7 +527,7 @@ hmm1_cpt: ${hmm1_cpt_list}
 ${HMM1_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGTX} ${HMM1_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM1_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
-	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
+	${P_RES_MON} \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
@@ -538,7 +545,7 @@ ${HMM1_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_
 ${HMM1_CPT_PREFIX}.%.${TGT_2_SRCX}: hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_TGTX} ${HMM1_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM1_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
-	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
+	${P_RES_MON} \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
@@ -575,7 +582,7 @@ hmm2_cpt: ${hmm2_cpt_list}
 ${HMM2_CPT_PREFIX}.%.${SRC_2_TGTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGTX}  ${HMM2_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM2_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
-	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
+	${P_RES_MON} \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
@@ -593,7 +600,7 @@ ${HMM2_CPT_PREFIX}.%.${SRC_2_TGTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN
 ${HMM2_CPT_PREFIX}.%.${TGT_2_SRCX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN_TGTX}  ${HMM2_JPT_PREFIX}.%.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM2_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
-	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
+	${P_RES_MON} \
 	joint2cond_phrase_tables \
 		-sort \
 		-prune1 100 \
@@ -616,7 +623,9 @@ ${HMM2_CPT_PREFIX}.%.${TGT_2_SRCX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN
 ########################################
 # Create Tightly Packed Phrase Table.
 %.tppt: %.gz
-	textpt2tppt.sh $<
+	${P_RES_MON} \
+	textpt2tppt.sh $< \
+	2> log.$@
 
 
 
