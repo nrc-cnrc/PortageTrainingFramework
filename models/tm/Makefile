@@ -172,6 +172,7 @@ models: hmm2_model
 # TRAINING THE IBM1 MODELS
 # requires: source and target corpora.
 IBM1_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+IBM1_MODEL_WORKERS ?= ${IBM1_MODEL_PARALLELISM_LEVEL}
 IBM1_MODEL_EXTRAS ?=
 IBM1_MODEL_CPUS ?= 1
 
@@ -181,7 +182,7 @@ ibm1_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm1.$t.
 ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${IBM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_CPUS} \
+	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_WORKERS} \
 		-v \
 		-n1 5 -n2 0 \
 		${IBM1_MODEL_EXTRAS} \
@@ -192,7 +193,7 @@ ibm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX}
 ibm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${IBM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_CPUS} \
+	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_WORKERS} \
 		-v -r \
 		-n1 5 -n2 0 \
 		${IBM1_MODEL_EXTRAS} \
@@ -213,6 +214,7 @@ clean.ibm1:
 # TRAINING THE IBM2 MODELS
 # requires: source and target corpora and ibm1 models.
 IBM2_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+IBM2_MODEL_WORKERS ?= ${IBM2_MODEL_PARALLELISM_LEVEL}
 IBM2_MODEL_EXTRAS ?=
 IBM2_MODEL_CPUS ?= 1
 
@@ -223,7 +225,7 @@ ibm2_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, ibm2.$t.
 ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${IBM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_CPUS} \
+	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_WORKERS} \
 		-v -m \
 		-n1 0 -n2 5 \
 		-slen 20 -tlen 20 -bksize 20 \
@@ -236,7 +238,7 @@ ibm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 ibm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${IBM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_CPUS} \
+	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_WORKERS} \
 		-v -r \
 		-n1 0 -n2 5 \
 		-slen 20 -tlen 20 -bksize 20 \
@@ -259,6 +261,7 @@ clean.ibm2:
 # TRAINING THE HMM1 MODELS => He-lex
 # requires: source and target corpora and ibm1 models.
 HMM1_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+HMM1_MODEL_WORKERS ?= ${HMM1_MODEL_PARALLELISM_LEVEL}
 HMM1_MODEL_EXTRAS ?=
 HMM1_MODEL_CPUS ?= 1
 
@@ -269,7 +272,7 @@ hmm1_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm1.$t.
 hmm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_PARALLELISM_LEVEL} \
+	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_WORKERS} \
 		-v  \
 		-n1 0 -n2 5 \
 		-mimic he-lex \
@@ -282,7 +285,7 @@ hmm1.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 hmm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_PARALLELISM_LEVEL} \
+	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_WORKERS} \
 		-v -r \
 		-n1 0 -n2 5 \
 		-mimic he-lex \
@@ -305,6 +308,7 @@ clean.hmm1:
 # TRAINING THE HMM2 MODELS => liang variant
 # requires: source and target corpora and ibm1 models.
 HMM2_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+HMM2_MODEL_WORKERS ?= ${HMM2_MODEL_PARALLELISM_LEVEL}
 HMM2_MODEL_EXTRAS ?=
 HMM2_MODEL_CPUS ?= 1
 
@@ -315,7 +319,7 @@ hmm2_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm2.$t.
 hmm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_PARALLELISM_LEVEL} \
+	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_WORKERS} \
 		-v \
 		-n1 0 -n2 5 \
 		-mimic liang \
@@ -328,7 +332,7 @@ hmm2.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 hmm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_PARALLELISM_LEVEL} \
+	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_WORKERS} \
 		-v -r \
 		-n1 0 -n2 5 \
 		-mimic liang \
