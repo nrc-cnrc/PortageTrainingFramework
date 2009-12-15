@@ -65,7 +65,7 @@ NUMBER_PARALLEL_WORKER ?= `wc -l < $<`
 NUMBER_PARALLEL_CPU ?= 4
 
 # Number of cpu to use to create the final model.
-CPU ?= 4
+ESTIM_CPU ?= 4
 
 
 vpath %${SRCXZ} ${CORPORA_DIR}
@@ -90,7 +90,7 @@ counts.%.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
 dm: dm.hmm1+ibm2.${SRC_2_TGTX}
 dm.hmm1+ibm2.${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
 dm.hmm1+ibm2.${SRC_2_TGTX}: counts.ibm2.gz counts.hmm1.gz
-	RP_PSUB_OPTS="-${CPU}"\
+	RP_PSUB_OPTS="-${ESTIM_CPU}"\
 	zcat -f $+ \
 	| dmestm -s -g $(basename $@).bkoff -wtu ${WTU} -wtg ${WTG} -wt1 ${WT1} -wt2 ${WT2} \
 	| gzip \
