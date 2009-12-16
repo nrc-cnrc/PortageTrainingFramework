@@ -76,6 +76,9 @@ PARALLELISM_LEVEL_TRANSLATE ?= 5
 # Some ad-hoc post procssing.
 POST_PROCESSING ?= cat
 
+# How many cpus to use when translating.
+TRANS_CPUS ?= 1
+
 
 .SECONDARY:
 .SUFFIXES:
@@ -250,6 +253,7 @@ else
 $(addsuffix .out, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
 %.out: ${DECODING_MODEL}.% %${RULEX}
 	@_LOCAL=1 echo "Generating $@"
+	RP_PSUB_OPTS="-${TRANS_CPUS}" \
 	canoe-parallel.sh \
 		-lb \
 		-n ${PARALLELISM_LEVEL_TRANSLATE} \
@@ -314,6 +318,7 @@ rat: $(addsuffix .rat, ${TEST_SET})
 $(addsuffix .rat, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
 %.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} models check_rescoring_model
 	@_LOCAL=1 echo "Generating $@"
+	RP_PSUB_OPTS="-${TRANS_CPUS}" \
 	rat.sh \
 		-lb \
 		-n ${PARALLELISM_LEVEL_TRANSLATE} \
