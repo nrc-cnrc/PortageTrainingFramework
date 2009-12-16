@@ -67,6 +67,9 @@ NUMBER_PARALLEL_CPU ?= 4
 # Number of cpu to use to create the final model.
 ESTIM_CPU ?= 4
 
+# Resource monitoring.
+P_RES_MON ?= p-res-mon.sh -t
+
 
 vpath %${SRCXZ} ${CORPORA_DIR}
 vpath %${TGTXZ} ${CORPORA_DIR}
@@ -92,9 +95,9 @@ dm.hmm1+ibm2.${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
 dm.hmm1+ibm2.${SRC_2_TGTX}: counts.ibm2.gz counts.hmm1.gz
 	RP_PSUB_OPTS="-${ESTIM_CPU}"\
 	zcat -f $+ \
-	| dmestm -s -g $(basename $@).bkoff -wtu ${WTU} -wtg ${WTG} -wt1 ${WT1} -wt2 ${WT2} \
+	| { ${P_RES_MON} dmestm -s -g $(basename $@).bkoff -wtu ${WTU} -wtg ${WTG} -wt1 ${WT1} -wt2 ${WT2}; } \
 	| gzip \
-	> $@
+	> $@ 2> log.$(basename $@)
 
 
 
