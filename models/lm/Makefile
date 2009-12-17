@@ -413,8 +413,8 @@ prune: ${LM_NAME}.plm.gz
 tplm: ${LM_NAME}.tplm
 
 %.tplm: %.lm.gz
-	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$@ & \
-	arpalm2tplm.sh $< $*
+	${P_RES_MON} \
+	arpalm2tplm.sh $< $* 2> log.$@
 
 clean: clean.tplm
 
