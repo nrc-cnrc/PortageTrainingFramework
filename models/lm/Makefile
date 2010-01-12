@@ -264,13 +264,13 @@ else ifeq (${LM_TOOLKIT}, MIT)
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${P_RES_MON} \
-	{ zcat $< \
-	| estimate-ngram \
+	zcat $< \
+	| ${P_RES_MON} \
+	estimate-ngram \
 		-order ${ORDER} \
 		-smoothing ModKN \
 		-text /dev/stdin \
-		-write-lm $@; } \
+		-write-lm $@ \
 	2> log.$(basename $@)
 
 else
