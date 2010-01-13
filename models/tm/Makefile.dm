@@ -27,6 +27,7 @@
 
 include ../../Makefile.params
 -include Makefile.params
+-include Makefile.dm.params
 
 WTU ?= 5
 WTG ?= 5
@@ -40,7 +41,12 @@ TGTX ?= _${TGT_LANG}${LANGX}
 SRCXZ ?= ${SRCX}${GZ}
 TGTXZ ?= ${TGTX}${GZ}
 
+# How many jobs to create when creating the counts.
 COUNT_PARALLEL_LEVEL ?= 30
+# How many workers to use to process those jobs.
+COUNT_PARALLEL_WORKERS ?= ${COUNT_PARALLEL_LEVEL}
+# How many cpus each workers should use.
+COUNT_CPUS ?= 1
 
 # IBM / HMM models extension
 SRC_GIVEN_TGT  = ${SRC_LANG}_given_${TGT_LANG}
@@ -83,7 +89,9 @@ all: dm
 # Where % = is the word alignment model type.
 counts.%.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
 	parallelize.pl \
+		-psub -${COUNT_CPUS} \
 		-n ${COUNT_PARALLEL_LEVEL} \
+		-np ${COUNT_PARALLEL_WORKERS} \
 		-s $(word 1, $+) \
 		-s $(word 2, $+) \
 		'dmcount -v -m 8 $*.${TRAIN_TM}.${TGT_GIVEN_SRCX} $*.${TRAIN_TM}.${SRC_GIVEN_TGTX} $+ > $@'
