@@ -1,5 +1,5 @@
 #!/usr/bin/make -rf
-# vim:noet:ts=3
+# vim:noet:ts=3:nowrap
 #
 # @author Samuel Larkin
 # @file Makefile
@@ -60,11 +60,7 @@ doc-clean:
 # Thorough cleaning of everything
 clean:
 	${MAKE} -C corpora clean
-	${MAKE} -C models/lm clean
-	${MAKE} -C models/tm clean
-	${MAKE} -C models/tc clean
-	${MAKE} -C models/decode clean
-	${MAKE} -C models/rescore clean
+	${MAKE} -C models clean
 	${MAKE} -C translate clean
 	${RM} framework-toy.{aux,log,pdf,toc}
 
@@ -73,11 +69,7 @@ clean:
 .PHONY: hide
 # Hide logs from user's view into .logs
 hide:
-	${MAKE} -C models/lm hide
-	${MAKE} -C models/tc hide
-	${MAKE} -C models/tm hide
-	${MAKE} -C models/decode hide
-	${MAKE} -C models/rescore hide
+	${MAKE} -C models hide
 
 
 
@@ -87,41 +79,12 @@ corpora: check_setup
 
 
 
-.PHONY: models
-models: lm tm
-ifdef DO_TRUECASING
-models: tc
-endif
-
-
-
-.PHONY: lm
 # Create the Language Model (LM).
-lm: lm.${TGT_LANG}
-ifdef BIDIRECTIONAL_SYSTEM
-lm: lm.${SRC_LANG}
-endif
-lm.%: corpora
-	${MAKE} -C models/lm all
-
-
-
-.PHONY: tc
 # Create models for truecasing (TC).
-ifdef DO_TRUECASING
-tc: corpora
-	${MAKE} -C models/tc all
-else
-tc:
-	@echo "Not training the truecasing models." >&2
-endif
-
-
-
-.PHONY: tm
 # Create the Translation Model (TM).
-tm: corpora
-	${MAKE} -C models/tm all
+.PHONY: models lm tc tm cow rat
+models lm tc tm cow rat: %: corpora
+	${MAKE} -C models $@
 
 
 
@@ -134,17 +97,15 @@ endif
 
 
 
-.PHONY: cow
+# cow depends on the models.
 # Run COW to tune the decoding model.
 cow: models
-	${MAKE} -C models/decode all
 
 
 
-.PHONY: rat
+# rat depends on cow.
 # Run RAT to tune the rescoring model.
 rat: cow
-	${MAKE} -C models/rescore all
 
 
 
@@ -171,30 +132,16 @@ check_setup:
 ########################################
 # Prepare portageLive models.
 .PHONY: portageLive
-portageLive: portageLive_lm
-portageLive: portageLive_tc
-portageLive: portageLive_decode
-
-portageLive_%:
-	${MAKE} -C models/$* portageLive
-
-portageLive_decode: cow
-	${MAKE} -C models/decode portageLive
+portageLive:
+	${MAKE} -C models portageLive
 
 
 
 ########################################
 # Prepare PORTAGEsharedLive models.
 .PHONY: PORTAGEsharedLive
-PORTAGEsharedLive: PORTAGEsharedLive_lm
-PORTAGEsharedLive: PORTAGEsharedLive_tc
-PORTAGEsharedLive: PORTAGEsharedLive_decode
-
-PORTAGEsharedLive_%:
-	${MAKE} -C models/$* PORTAGEsharedLive
-
-PORTAGEsharedLive_decode: cow
-	${MAKE} -C models/decode PORTAGEsharedLive
+PORTAGEsharedLive:
+	${MAKE} -C models PORTAGEsharedLive
 
 
 
@@ -213,11 +160,7 @@ prepare.corpora:
 .PHONY: resource_summary
 resource_summary: SHELL=${GUARD_SHELL}
 resource_summary:
-	@${MAKE} --no-print-directory -s -C models/lm resource_summary_sub
-	@${MAKE} --no-print-directory -s -C models/tm resource_summary_sub
-	@${MAKE} --no-print-directory -s -C models/tc resource_summary_sub
-	@${MAKE} --no-print-directory -s -C models/decode resource_summary_sub
-	@${MAKE} --no-print-directory -s -C models/rescore resource_summary_sub
+	@${MAKE} --no-print-directory -s -C models resource_summary_sub
 	@${MAKE} --no-print-directory -s -C translate resource_summary_sub
 
 .PHONY: summary
