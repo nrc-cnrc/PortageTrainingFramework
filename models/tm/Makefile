@@ -103,6 +103,9 @@ MONITOR_MEMORY_USAGE ?=
 # Resource monitoring.
 P_RES_MON ?= p-res-mon.sh -t
 
+# What program to use to create conditional pt from joint probs.
+JOINT2COND_PHRASE_TABLE ?= joint2cond_phrase_tables -reduce-mem
+
 
 
 # Allows to search for alignment files in corpus
@@ -572,7 +575,7 @@ ${IBM2_CPT_PREFIX}.%.${SRC_2_TGTX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${IBM2_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${P_RES_MON} \
-	joint2cond_phrase_tables \
+	${JOINT2COND_PHRASE_TABLE} \
 		-sort \
 		-prune1 100 \
 		-ibm 2 \
@@ -590,7 +593,7 @@ ${IBM2_CPT_PREFIX}.%.${TGT_2_SRCX}: ibm2.%.${TGT_GIVEN_SRCX} ibm2.%.${SRC_GIVEN_
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${IBM2_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${P_RES_MON} \
-	joint2cond_phrase_tables \
+	${JOINT2COND_PHRASE_TABLE} \
 		-sort \
 		-prune1 100 \
 		-ibm 2 \
@@ -627,7 +630,7 @@ ${HMM1_CPT_PREFIX}.%.${SRC_2_TGTX}: hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM1_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${P_RES_MON} \
-	joint2cond_phrase_tables \
+	${JOINT2COND_PHRASE_TABLE} \
 		-sort \
 		-prune1 100 \
 		-hmm \
@@ -645,7 +648,7 @@ ${HMM1_CPT_PREFIX}.%.${TGT_2_SRCX}: hmm1.%.${TGT_GIVEN_SRCX} hmm1.%.${SRC_GIVEN_
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM1_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${P_RES_MON} \
-	joint2cond_phrase_tables \
+	${JOINT2COND_PHRASE_TABLE} \
 		-sort \
 		-prune1 100 \
 		-hmm \
@@ -682,7 +685,7 @@ ${HMM2_CPT_PREFIX}.%.${SRC_2_TGTX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM2_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${P_RES_MON} \
-	joint2cond_phrase_tables \
+	${JOINT2COND_PHRASE_TABLE} \
 		-sort \
 		-prune1 100 \
 		-hmm \
@@ -700,7 +703,7 @@ ${HMM2_CPT_PREFIX}.%.${TGT_2_SRCX}:  hmm2.%.${TGT_GIVEN_SRCX} hmm2.%.${SRC_GIVEN
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM2_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${P_RES_MON} \
-	joint2cond_phrase_tables \
+	${JOINT2COND_PHRASE_TABLE} \
 		-sort \
 		-prune1 100 \
 		-hmm \
@@ -737,7 +740,7 @@ ${HMM3_CPT_PREFIX}.%.${SRC_2_TGTX}:  hmm3.%.${TGT_GIVEN_SRCX} hmm3.%.${SRC_GIVEN
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM3_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${P_RES_MON} \
-	joint2cond_phrase_tables \
+	${JOINT2COND_PHRASE_TABLE} \
 		-sort \
 		-prune1 100 \
 		-hmm \
@@ -755,7 +758,7 @@ ${HMM3_CPT_PREFIX}.%.${TGT_2_SRCX}:  hmm3.%.${TGT_GIVEN_SRCX} hmm3.%.${SRC_GIVEN
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM3_CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${P_RES_MON} \
-	joint2cond_phrase_tables \
+	${JOINT2COND_PHRASE_TABLE} \
 		-sort \
 		-prune1 100 \
 		-hmm \
