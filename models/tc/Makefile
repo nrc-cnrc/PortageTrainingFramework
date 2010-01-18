@@ -99,6 +99,13 @@ clean:
 
 
 ########################################
+# resources summary
+.PHONY: summary
+summary: resource_summary_sub
+
+
+
+########################################
 # Hide logs.
 .PHONY: hide
 hide: SHELL=${GUARD_SHELL}

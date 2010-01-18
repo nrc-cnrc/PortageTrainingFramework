@@ -146,11 +146,11 @@ PORTAGEsharedLive_decode: cow
 
 ########################################
 # Resource Summary
-.PHONY: resource_summary
-resource_summary: SHELL=${GUARD_SHELL}
-resource_summary:
-	@${MAKE} --no-print-directory -s -C lm resource_summary_sub
-	@${MAKE} --no-print-directory -s -C tm resource_summary_sub
-	@${MAKE} --no-print-directory -s -C tc resource_summary_sub
-	@${MAKE} --no-print-directory -s -C decode resource_summary_sub
-	@${MAKE} --no-print-directory -s -C rescore resource_summary_sub
+.PHONY: summary
+summary: SHELL=${GUARD_SHELL}
+summary:
+	@${MAKE} --no-print-directory -s -C lm summary
+	@${MAKE} --no-print-directory -s -C tm summary
+	@${MAKE} --no-print-directory -s -C tc summary
+	@${MAKE} --no-print-directory -s -C decode summary
+	@${MAKE} --no-print-directory -s -C rescore summary
