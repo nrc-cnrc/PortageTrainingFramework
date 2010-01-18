@@ -83,29 +83,8 @@ corpora: check_setup
 # Create models for truecasing (TC).
 # Create the Translation Model (TM).
 .PHONY: models lm tc tm cow rat
-models lm tc tm cow rat: %: corpora
+tune models lm tc tm cow rat: %: corpora
 	${MAKE} -C models $@
-
-
-
-.PHONY: tune
-# Tune the required models.
-tune: cow
-ifdef DO_RESCORING
-tune: rat
-endif
-
-
-
-# cow depends on the models.
-# Run COW to tune the decoding model.
-cow: models
-
-
-
-# rat depends on cow.
-# Run RAT to tune the rescoring model.
-rat: cow
 
 
 
