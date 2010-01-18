@@ -160,11 +160,11 @@ prepare.corpora:
 .PHONY: resource_summary
 resource_summary: SHELL=${GUARD_SHELL}
 resource_summary:
-	@${MAKE} --no-print-directory -s -C models resource_summary_sub
+	@${MAKE} --no-print-directory -s -C models resource_summary
 	@${MAKE} --no-print-directory -s -C translate resource_summary_sub
 
 .PHONY: summary
 summary: SHELL=/bin/bash
 summary:
 	@p-res-mon.sh <(${MAKE} resource_summary)
-	@du -sch models/lm/*lm.gz models/tc/*{lm.gz,.map} models/tm/{ibm,hmm,jpt,cpt}* translate
+	@du -sch models/lm/*lm.gz models/tm/{ibm,hmm,jpt,cpt}* models/tc translate
