@@ -111,6 +111,10 @@ clean: SHELL=${GUARD_SHELL}
 clean:
 	${RM} models
 
+.PHONY: clean.content
+clean: clean.content
+clean.content: SHELL=${GUARD_SHELL}
+
 
 
 ########################################
@@ -135,6 +139,7 @@ hide:
 clean: clean.logs
 
 .PHONY: clean.logs
+clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
 	${RM} log.* run-parallel-logs*
 
@@ -179,7 +184,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}  models
 	rm tmp.$@
 	configtool check $@
 
-clean: clean.canoe.ini
+clean.content: clean.canoe.ini
 
 .PHONY: clean.canoe.ini
 clean.canoe.ini: SHELL=${GUARD_SHELL}
@@ -207,7 +212,7 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 		>& log.$@
 	_LOCAL=1 ${RM} -r foos multi.probs.*.FILT.gz ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
 
-clean: clean.cow
+clean.content: clean.cow
 
 .PHONY: clean.cow
 clean.cow: SHELL=${GUARD_SHELL}

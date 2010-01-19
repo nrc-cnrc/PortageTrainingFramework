@@ -170,9 +170,14 @@ help:
 
 
 
+########################################
 # Clean up
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
+
+.PHONY: clean.content
+clean: clean.content
+clean.content: SHELL=${GUARD_SHELL}
 
 
 
@@ -236,7 +241,7 @@ ${DECODING_MODEL}.%: check_decoding_model models
 #	| sed "s/dev-text1/$*/" \
 #	> $@
 
-clean: clean.decoding.models
+clean.content: clean.decoding.models
 
 .PHONY: clean.decoding.models
 clean.decoding.models: SHELL=${GUARD_SHELL}
@@ -297,7 +302,7 @@ $(addsuffix .out.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
 #	| utf8_casemap -c l \
 #	| bleumain $< - > $@
 
-clean: clean.translate
+clean.content: clean.translate
 
 .PHONY: clean.translate
 clean.translate: SHELL=${GUARD_SHELL}
@@ -365,7 +370,7 @@ $(addsuffix .rat.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
 #	| utf8_casemap -c l \
 #	| bleumain $< - > $@
 
-clean: clean.rescore
+clean.content: clean.rescore
 
 .PHONY: clean.rescore_trans
 clean.rescore: SHELL=${GUARD_SHELL}
@@ -402,7 +407,7 @@ tc.detok: $(addsuffix .rat.tc.detok, ${TEST_SET})
 endif
 $(addsuffix .tc.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
 
-clean: clean.truecasing
+clean.content: clean.truecasing
 
 .PHONY: clean.truecasing
 clean.truecasing: SHELL=${GUARD_SHELL}

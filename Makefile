@@ -59,10 +59,17 @@ doc-clean:
 .PHONY: clean
 # Thorough cleaning of everything
 clean:
-	${MAKE} -C corpora clean
-	${MAKE} -C models clean
-	${MAKE} -C translate clean
 	${RM} framework-toy.{aux,log,pdf,toc}
+
+
+
+.PHONY: clean.content
+clean: clean.content clean.logs
+clean.content clean.logs: SHELL=${GUARD_SHELL}
+clean.content clean.logs: %:
+	${MAKE} -C corpora $@
+	${MAKE} -C models $@
+	${MAKE} -C translate $@
 
 
 

@@ -89,12 +89,19 @@ list_final_output:
 
 
 
+########################################
+# Clean up targets
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
 clean:
-	-${RM} ${TRUECASING_MAP}
-	${MAKE} -f ../lm/Makefile clean
-	-${RM} run-parallel-logs-*
+
+
+
+.PHONY: clean.content clean.logs
+clean: clean.content clean.logs
+clean.content clean.logs : SHELL=${GUARD_SHELL}
+clean.content clean.logs : %:
+	${MAKE} -f ../lm/Makefile $@
 
 
 
@@ -144,6 +151,7 @@ lm: ${TRUECASING_LM}
 
 
 
+########################################
 # Build a map file.
 .PHONY: map
 map: SHELL=${GUARD_SHELL}
@@ -159,3 +167,10 @@ map: ${TRUECASING_MAP}
 	${P_RES_MON} \
 	vocabMap2tpt.sh $< \
 		2> log.$@
+
+
+
+.PHONY: clean.map
+clean.content: clean.map
+clean.map:
+	-${RM} ${TRUECASING_MAP}

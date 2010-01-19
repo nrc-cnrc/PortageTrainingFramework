@@ -146,7 +146,16 @@ list_final_output: $(addsuffix _list,${PT_TYPES})
 # CLEAN-UP
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
-clean:
+
+.PHONY: clean.content
+clean: clean.content
+clean.content: SHELL=${GUARD_SHELL}
+
+
+
+.PHONY: clean.logs
+clean: clean.logs
+clean.logs:
 	$(RM) run-parallel-log* log.* run-p.*
 
 
@@ -214,7 +223,7 @@ ibm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX}
 		$^ \
 		>& log.$(basename $@)
 
-clean: clean.ibm1
+clean.content: clean.ibm1
 
 .PHONY: clean.ibm1
 clean.ibm1: SHELL=${GUARD_SHELL}
@@ -263,7 +272,7 @@ ibm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 		$(wordlist 1, 2, $+) \
 		>& log.$(basename $@)
 
-clean: clean.ibm2
+clean.content: clean.ibm2
 
 .PHONY: clean.ibm2
 clean.ibm2: SHELL=${GUARD_SHELL}
@@ -312,7 +321,7 @@ hmm1.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 		$(wordlist 1, 2, $+) \
 		>& log.$(basename $@)
 
-clean: clean.hmm1
+clean.content: clean.hmm1
 
 .PHONY: clean.hmm1
 clean.hmm1: SHELL=${GUARD_SHELL}
@@ -361,7 +370,7 @@ hmm2.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 		$(wordlist 1, 2, $+) \
 		>& log.$(basename $@)
 
-clean: clean.hmm2
+clean.content: clean.hmm2
 
 .PHONY: clean.hmm2
 clean.hmm2: SHELL=${GUARD_SHELL}
@@ -410,7 +419,7 @@ hmm3.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 		$(wordlist 1, 2, $+) \
 		>& log.$(basename $@)
 
-clean: clean.hmm3
+clean.content: clean.hmm3
 
 .PHONY: clean.hmm3
 clean.hmm3: SHELL=${GUARD_SHELL}
@@ -427,7 +436,7 @@ jpts: hmm1_jpt
 jpts: hmm2_jpt
 jpts: hmm3_jpt
 
-clean: clean.jpts
+clean.content: clean.jpts
 
 .PHONY: clean.jpts
 clean.jpts: SHELL=${GUARD_SHELL}
@@ -554,7 +563,7 @@ cpts: hmm1_cpt
 cpts: hmm2_cpt
 cpts: hmm3_cpt
 
-clean: clean.cpts
+clean.content: clean.cpts
 
 .PHONY: clean.cpts
 clean.cpts: SHELL=${GUARD_SHELL}

@@ -192,12 +192,25 @@ _LOCAL=1 file -Libz $< | egrep -qi 'charset=utf-8|ASCII' || echo "WARNING: Pleas
 endef
 
 
+
+########################################
 # How to clean-up.
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
-clean:
+clean: clean.content clean.logs
+
+.PHONY: clean.content
+clean.content: SHELL=${GUARD_SHELL}
+clean.content:
 	-${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
+
+.PHONY: clean.logs
+clean.logs: SHELL=${GUARD_SHELL}
+clean.logs:
 	-${RM} run-parallel-logs-*
+	-${RM} log.*
+	-${RM} .logs
+
 
 
 

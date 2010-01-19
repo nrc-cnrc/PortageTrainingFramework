@@ -124,6 +124,10 @@ clean:
 	${RM} -r canoe-parallel.* run-p.*
 	${RM} models
 
+.PHONY: clean.content
+clean: clean.content
+clean.content: SHELL=${GUARD_SHELL}
+
 
 
 ########################################
@@ -205,7 +209,7 @@ ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UN
 		-f $(wordlist 2,5,$+) \
 	>& log.$@
 
-clean: clean.rescore_train
+clean.content: clean.rescore_train
 
 .PHONY: clean.rescore_train
 clean.rescore_train: SHELL=${GUARD_SHELL}
@@ -233,7 +237,7 @@ ${DECODING_MODEL}.%: models
 #	| sed "s/dev-text1/$*/" \
 #	> $@
 
-clean: clean.decoding.model
+clean.content: clean.decoding.model
 
 .PHONY: clean.decoding.model
 clean.decoding.model: SHELL=${GUARD_SHELL}

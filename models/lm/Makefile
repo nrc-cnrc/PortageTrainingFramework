@@ -129,6 +129,10 @@ list_final_output:
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
 
+.PHONY: clean.content
+clean: clean.content
+clean.content: SHELL=${GUARD_SHELL}
+
 
 
 ########################################
@@ -188,7 +192,7 @@ mark: ${CORPUS_NAME}.marked.gz
 	| gzip -c \
 	> $@
 
-clean: clean.mark
+clean.content: clean.mark
 
 .PHONY: clean.mark
 clean.mark: SHELL=${GUARD_SHELL}
@@ -218,7 +222,7 @@ irstlm: ${LM_NAME}.ilm.gz
 		-o $@ \
 	&> log.$(basename $@)
 
-clean: clean.irstlm
+clean.content: clean.irstlm
 
 .PHONY: clean.irstlm
 clean.irstlm: SHELL=${GUARD_SHELL}
@@ -284,7 +288,7 @@ else
 	$(error "Invalid type for LM_TOOLKIT: ${LM_TOOLKIT}")
 endif
 
-clean: clean.arpa
+clean.content: clean.arpa
 
 .PHONY: clean.arpa
 clean.arpa: SHELL=${GUARD_SHELL}
@@ -308,7 +312,7 @@ blmt: ${LM_NAME}.blmt
 		$@ \
 	&> log.$@
 
-clean: clean.blmt
+clean.content: clean.blmt
 
 .PHONY: clean.blmt
 clean.blmt: SHELL=${GUARD_SHELL}
@@ -331,7 +335,7 @@ quantize: $(LM_NAME).qlm.gz
 		$@ \
 	&> log.$@
 
-clean: clean.quantize
+clean.content: clean.quantize
 
 .PHONY: clean.quantize
 clean.quantize: SHELL=${GUARD_SHELL}
@@ -354,7 +358,7 @@ Qblmt: ${LM_NAME}.Qblmt
 		$@ \
 	&> log.$@
 
-clean: clean.Qblmt
+clean.content: clean.Qblmt
 
 .PHONY: clean.Qblmt
 clean.Qblmt: SHELL=${GUARD_SHELL}
@@ -372,7 +376,7 @@ sort_arpa: ${LM_NAME}.lm.sorted.gz
 	${P_RES_MON} \
 	lm_sort_filter.sh -lm $< $@ >& log.$(basename $@)
 
-clean: clean.sort_arpa
+clean.content: clean.sort_arpa
 
 .PHONY: clean.sort_arpa
 clean.sort_arpa: SHELL=${GUARD_SHELL}
@@ -393,7 +397,7 @@ binlm: ${LM_NAME}.binlm.gz
 	${P_RES_MON} \
 	arpalm2binlm $< $@ >& log.$(basename $@)
 
-clean: clean.binlm
+clean.content: clean.binlm
 
 .PHONY: clean.binlm
 clean.binlm: SHELL=${GUARD_SHELL}
@@ -423,7 +427,7 @@ tplm: ${LM_NAME}.tplm
 	${P_RES_MON} \
 	arpalm2tplm.sh $< $* 2> log.$@
 
-clean: clean.tplm
+clean.content: clean.tplm
 
 .PHONY: clean.tplm
 clean.tplm: SHELL=${GUARD_SHELL}

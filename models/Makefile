@@ -41,10 +41,10 @@ help:
 
 
 
-.PHONY: clean hide
+.PHONY: clean hide clean.logs clean.content
 # Thorough cleaning of everything
 # Hide logs from user's view into .logs
-clean hide: %:
+clean hide clean.logs clean.content: %:
 	${MAKE} -C lm $@
 	${MAKE} -C tm $@
 	${MAKE} -C tc $@
