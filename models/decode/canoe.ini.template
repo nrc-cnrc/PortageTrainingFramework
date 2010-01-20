@@ -8,7 +8,13 @@
 [stack] 20000
 [beam-threshold] 0.001
 [distortion-limit] 7
-[distortion-model] WordDisplacement
 [segmentation-model] none
 [cube-pruning]
 [bypass-marked]
+# Without a distortion model
+[distortion-model] WordDisplacement
+# With a lexicalized distortion model
+#[lex-dist-model-file] models/tm/dm.hmm1+ibm2.en2fr.gz
+#[distortion-model] WordDisplacement:back-lex#m:back-lex#s:back-lex#d:fwd-lex#m:fwd-lex#s:fwd-lex#d
+#[dist-phrase-swap]
+#[dist-limit-ext]
