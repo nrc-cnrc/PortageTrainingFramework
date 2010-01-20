@@ -1,1 +1,2 @@
 # User defines for translate/.
+TRANS_CPUS = 2
