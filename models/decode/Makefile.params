@@ -1,2 +1,3 @@
 # User defines for models/decode/.
-PARALLELISM_LEVEL_TUNE_DECODE = 10 -psub "'"-memmap 15"'"
+#PARALLELISM_LEVEL_TUNE_DECODE = 10 -psub "'"-memmap 15"'"
+PARALLELISM_LEVEL_TUNE_DECODE = 100 -pn 25
