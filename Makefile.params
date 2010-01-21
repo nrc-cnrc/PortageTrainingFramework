@@ -134,7 +134,7 @@ export CORPORA_SET  ?= ${TRAIN_SET} ${HELDOUT_SET}
 
 # Define what type of phrase table we want to generate.
 # Can be: {ibm2_cpt | hmm1_cpt | hmm2_cpt}
-export PT_TYPES ?= ibm2_cpt hmm1_cpt
+export PT_TYPES ?= ibm2_cpt hmm3_cpt
 
 # Define what type of language model we want to generate.
 export LM_TYPES ?= binlm
