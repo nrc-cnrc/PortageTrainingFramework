@@ -66,6 +66,9 @@ PARALLELISM_LEVEL_TUNE_DECODE ?= 5
 # What program to use to do MERT.
 MERT ?= cow.sh
 
+# How may cpus should each worker be using when doing MERT.
+MERT_CPUS = 1
+
 # After this Makefile, the following targets/files are precious.
 FILES_TO_BE_LOCKED = ${DECODING_MODEL}
 
@@ -199,7 +202,7 @@ clean.canoe.ini:
 train: ${DECODING_MODEL}
 ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TGT}
 	_LOCAL=1 mkdir -p foos
-	RP_PSUB_OPTS="-N tune.decode.model" \
+	RP_PSUB_OPTS="-${MERT_CPUS} -N tune.decode.model" \
 	${MERT} \
 		-v \
 		-parallel:"-n ${PARALLELISM_LEVEL_TUNE_DECODE}" \
