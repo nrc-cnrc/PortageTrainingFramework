@@ -74,6 +74,9 @@ PARALLELISM_LEVEL_TUNE_RESCORE ?= 5
 # After this Makefile, the following targets/files are precious.
 FILES_TO_BE_LOCKED = ${RESCORING_MODEL}
 
+# How many cpus should each worker should be using when translating.
+RAT_TRANS_CPUS ?= 1
+
 
 .SECONDARY:
 .SUFFIXES:
