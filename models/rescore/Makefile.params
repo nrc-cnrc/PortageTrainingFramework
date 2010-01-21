@@ -1,1 +1,2 @@
 # User defines for models/rescore/.
+RAT_TRANS_CPUS = 2
