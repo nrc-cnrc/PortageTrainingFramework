@@ -67,7 +67,7 @@ PARALLELISM_LEVEL_TUNE_DECODE ?= 5
 MERT ?= cow.sh
 
 # How may cpus should each worker be using when doing MERT.
-MERT_CPUS = 1
+MERT_CPUS ?= 1
 
 # After this Makefile, the following targets/files are precious.
 FILES_TO_BE_LOCKED = ${DECODING_MODEL}
