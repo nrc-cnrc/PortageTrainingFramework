@@ -1,3 +1,4 @@
+# vim:noet:ts=3
 # @author Samuel Larkin
 # @brief Master parameter file where all user specific parameters should be set.
 #
@@ -95,7 +96,7 @@ else
 	PARALLELISM_LEVEL_TUNE_DECODE  ?= ${NCPUS}
 	PARALLELISM_LEVEL_TUNE_RESCORE ?= ${NCPUS}
 	PARALLELISM_LEVEL_TRANSLATE    ?= ${NCPUS}
-   $(warn "Running in local mode.")
+	$(warn "Running in local mode.")
 endif
 export PARALLELISM_LEVEL_CORPORA
 export PARALLELISM_LEVEL_LM
