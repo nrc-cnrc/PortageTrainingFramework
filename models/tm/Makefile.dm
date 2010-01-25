@@ -84,10 +84,16 @@ vpath %${TGTX} ${CORPORA_DIR}
 
 
 .PHONY: all
-all: dm
+all: ldm
+
+
+
+.PHONY: ldm.counts
+ldm.counts: SHELL=${FRAMEWORK_SHELL}
+ldm.counts: ldm.counts.ibm2.gz ldm.counts.hmm1.gz
 
 # Where % = is the word alignment model type.
-counts.%.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
+ldm.counts.%.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
 	parallelize.pl \
 		-psub -${COUNT_CPUS} \
 		-n ${COUNT_PARALLEL_LEVEL} \
@@ -97,10 +103,10 @@ counts.%.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
 		'dmcount -v -m 8 $*.${TRAIN_TM}.${TGT_GIVEN_SRCX} $*.${TRAIN_TM}.${SRC_GIVEN_TGTX} $+ > $@'
 
 
-.PHONY: dm
-dm: dm.hmm1+ibm2.${SRC_2_TGTX}
-dm.hmm1+ibm2.${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
-dm.hmm1+ibm2.${SRC_2_TGTX}: counts.ibm2.gz counts.hmm1.gz
+.PHONY: ldm
+ldm: ldm.hmm1+ibm2.${SRC_2_TGTX}
+ldm.hmm1+ibm2.${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
+ldm.hmm1+ibm2.${SRC_2_TGTX}: ldm.counts.ibm2.gz ldm.counts.hmm1.gz
 	RP_PSUB_OPTS="-${ESTIM_CPU}"\
 	zcat -f $+ \
 	| { ${P_RES_MON} dmestm -s -g $(basename $@).bkoff -wtu ${WTU} -wtg ${WTG} -wt1 ${WT1} -wt2 ${WT2}; } \
@@ -120,14 +126,14 @@ tune: log.tune-dms
 log.tune-dms: tune-dms.cmds
 	run-parallel.sh -psub "-${NUMBER_PARALLEL_CPU}" $< ${NUMBER_PARALLEL_WORKER} >& $@
 
-count.tune.hmm1+ibm2.gz: count.tune.hmm1.gz count.tune.ibm2.gz 
+ldm.counts.tune.hmm1+ibm2.gz: ldm.counts.tune.hmm1.gz ldm.counts.tune.ibm2.gz 
 	zcat $+ | gzip > $@
 
-count.tune.%.gz: $(addprefix ${TUNE_SET},${SRCX} ${TGTX})
+ldm.counts.tune.%.gz: $(addprefix ${TUNE_SET},${SRCX} ${TGTX})
 	dmcount -v -m 8 $*.${TRAIN_TM}.${TGT_GIVEN_SRCX} $*.${TRAIN_TM}.${SRC_GIVEN_TGTX} $+ \
 	| gzip > $@
 
-tune-dms.cmds: counts.ibm2.gz counts.hmm1.gz count.tune.hmm1+ibm2.gz
+tune-dms.cmds: ldm.counts.ibm2.gz ldm.counts.hmm1.gz ldm.counts.tune.hmm1+ibm2.gz
 	mkdir -p ${TUNE_RESULTS_DIR}
 	for wtu in 5 10 15 20; do for wtg in 5 10 15 20; do for wt1 in 5 10 15 20; do for wt2 in 5 10 15 20; do \
 		echo -n "test -f ${TUNE_RESULTS_DIR}/res.tune.$$wtu.$$wtg.$$wt1.$$wt2 || "; \
