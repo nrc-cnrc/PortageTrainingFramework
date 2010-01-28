@@ -99,7 +99,7 @@ help:
 	@echo "export IRSTLM=${IRSTLM}"
 	@echo "Then make all"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
-	@echo "Define LM_TOOLKIT=SRI or LM_TOOLKIT=MIT if you have and want to use SRILM or MITLM instead of IRSTLM."
+	@echo "Define LM_TOOLKIT=SRI or LM_TOOLKIT=MIT or LM_TOOLKIT=IRST to specify the LM toolkit you want to use."
 	@echo "Note: you can build some other lm by defining TRAIN_LM=<corpora_prefix>."
 
 
@@ -285,7 +285,7 @@ else ifeq (${LM_TOOLKIT}, MIT)
 	2> log.$(basename $@)
 
 else
-	$(error "Invalid type for LM_TOOLKIT: ${LM_TOOLKIT}")
+	$(error "Invalid value for LM_TOOLKIT: ${LM_TOOLKIT}")
 endif
 
 clean.content: clean.arpa

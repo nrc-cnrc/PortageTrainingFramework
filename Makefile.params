@@ -34,7 +34,7 @@ export TEST_SET      ?= test1 test2
 #TRANSLATE_SET ?=
 
 # The prefix_root where we can find IRSTLM/bin, which must also be on your
-# PATH.  (Only need if you're not using SRILM - see next variable.)
+# PATH.  (Only need if you are using IRSTLM - see next variable.)
 export IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 
 # Change LM_TOOLKIT's value depending on the available lm tooolkit that you
