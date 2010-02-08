@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# vim:noet:ts=3
+# vim:noet:ts=3:nowrap
 #
 # @author Samuel Larkin
 # @file Makefile
@@ -181,14 +181,10 @@ ${UNTUNED_RESCORING_MODEL}: SHELL=${GUARD_SHELL}
 ${UNTUNED_RESCORING_MODEL}: models ${RESCORING_MODEL_TEMPLATE}
 	set -o pipefail; configtool rescore-model:ffvals ${DECODING_MODEL_DIR}/${DECODING_MODEL} | cut -f 1 -d ' ' > $@
 	cat ${lastword $+} \
-	| sed -e "s#IBM1FWD#${IBM_DIR}/ibm1.${TGT_GIVEN_SRCX}#" \
-	      -e "s#IBM1BKW#${IBM_DIR}/ibm1.${SRC_GIVEN_TGTX}#" \
-	      -e "s#IBM2FWD#${IBM_DIR}/ibm2.${TGT_GIVEN_SRCX}#" \
-	      -e "s#IBM2BKW#${IBM_DIR}/ibm2.${SRC_GIVEN_TGTX}#" \
-	      -e "s#HMM1FWD#${IBM_DIR}/hmm1.${TGT_GIVEN_SRCX}#" \
-	      -e "s#HMM1BKW#${IBM_DIR}/hmm1.${SRC_GIVEN_TGTX}#" \
-	      -e "s#HMM2FWD#${IBM_DIR}/hmm2.${TGT_GIVEN_SRCX}#" \
-	      -e "s#HMM2BKW#${IBM_DIR}/hmm2.${SRC_GIVEN_TGTX}#" \
+	| sed -e "s#IBM\\(.\\)FWD#${IBM_DIR}/ibm\\1.${TGT_GIVEN_SRCX}#" \
+	      -e "s#IBM\\(.\\)BKW#${IBM_DIR}/ibm\\1.${SRC_GIVEN_TGTX}#" \
+	      -e "s#HMM\\(.\\)FWD#${IBM_DIR}/hmm\\1.${TGT_GIVEN_SRCX}#" \
+	      -e "s#HMM\\(.\\)BKW#${IBM_DIR}/hmm\\1.${SRC_GIVEN_TGTX}#" \
 	>> $@
 
 
