@@ -1,0 +1,254 @@
+# vim:noet:ts=3:nowrap
+# $Id$
+
+# @file Makefile.toolkit
+# @brief
+#
+# @author Samuel Larkin
+#
+# Technologies langagieres interactives / Interactive Language Technologiesm
+# Inst. de technologie de l'information / Institute for Information Technology
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2009, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2009, Her Majesty in Right of Canada
+
+
+
+SHELL = run-parallel.sh
+CAT ?= cat.sh
+
+# IBM / HMM models extension
+L1_GIVEN_L2  ?= ${lang1}_given_${lang2}
+L2_GIVEN_L1  ?= ${lang2}_given_${lang1}
+L1_GIVEN_L2X ?= ${L1_GIVEN_L2}.gz
+L2_GIVEN_L1X ?= ${L2_GIVEN_L1}.gz
+
+# conditional phrase table extension
+L1_2_L2  ?= ${lang1}2${lang2}
+L2_2_L1  ?= ${lang2}2${lang1}
+L1_2_L2X ?= ${L1_2_L2}.gz
+L2_2_L1X ?= ${L2_2_L1}.gz
+
+# Joint phrase table extension
+JOINT  ?= ${lang1}-${lang2}
+JOINTX ?= ${JOINT}.gz
+
+# What program to use to create conditional pt from joint probs.
+JOINT2COND_PHRASE_TABLE ?= joint2cond_phrase_tables -reduce-mem
+
+# Track memory usage
+P_RES_MON ?= p-res-mon.sh -t
+
+ifndef lang1
+$(error "You must define lang1")
+endif
+
+ifndef lang2
+$(error "You must define lang2")
+endif
+
+
+########################################
+# NOTES:
+# - We should have some rules to clean each type of models!?
+# - We might want to collapse the 3 hmm targets/rules into 1.
+# - lang1 & lang2 are side effects of WMT-ACL10 and we might want to rename
+#   them to L1 & L2.
+# - We also need to remove the hardcoded SHELL variable in this script to use
+#   the FRAMEWORK_SHELL of the portage.simple.framework.
+
+
+
+########################################
+# IBM1 MODELS
+IBM1_MODEL_PFX ?= ibm1
+IBM1_MODEL_CPUS ?= 4
+IBM1_MODEL_PARALLELISM_LEVEL ?= 10
+IBM1_MODEL_WORKERS ?= 10
+
+${IBM1_MODEL_PFX}%${L1_GIVEN_L2X}: IBM1_DIR=-r
+${IBM1_MODEL_PFX}.%.gz:
+	RP_PSUB_OPTS="-${IBM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
+	${CAT} -n ${IBM1_MODEL_PARALLELISM_LEVEL} -pn ${IBM1_MODEL_WORKERS} \
+		-v ${IBM1_DIR} \
+		-n1 5 -n2 0 \
+		-bin \
+		${IBM1_MODEL_EXTRAS} \
+		$@ \
+		$^ \
+		>& log.$(basename $@)
+
+
+
+########################################
+# IBM2 MODELS
+IBM2_MODEL_PFX ?= ibm2
+IBM2_MODEL_CPUS ?= 2
+IBM2_MODEL_PARALLELISM_LEVEL ?= 10
+IBM2_MODEL_WORKERS ?= 10
+
+${IBM2_MODEL_PFX}%${L1_GIVEN_L2X}: IBM2_DIR=-r
+${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
+	RP_PSUB_OPTS="-${IBM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
+	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_WORKERS} \
+		-v -m ${IBM2_DIR} \
+		-n1 0 -n2 5 \
+		-slen 20 -tlen 20 -bksize 20 \
+		-bin \
+		-i $< \
+		${IBM2_MODEL_EXTRAS} \
+		$@ \
+		$(wordlist 2, 200, $+) \
+		>& log.$(basename $@)
+
+
+
+########################################
+# HMM1 MODELS
+HMM1_MODEL_PFX ?= hmm3
+HMM1_MODEL_CPUS ?= 2
+HMM1_MODEL_PARALLELISM_LEVEL ?= 10
+HMM1_MODEL_WORKERS ?= 10
+
+${HMM1_MODEL_PFX}%${L1_GIVEN_L2X}: HMM1_DIR=-r
+${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
+	RP_PSUB_OPTS="-${HMM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
+	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_WORKERS} \
+		-v ${HMM1_DIR} \
+		-n1 0 -n2 5 \
+		-mimic he-lex \
+		-bin \
+		-i $< \
+		${HMM1_MODEL_EXTRAS} \
+		$@ \
+		$(wordlist 2, 200, $+) \
+		>& log.$(basename $@)
+
+
+
+########################################
+# HMM2 MODELS
+HMM2_MODEL_PFX ?= hmm3
+HMM2_MODEL_CPUS ?= 2
+HMM2_MODEL_PARALLELISM_LEVEL ?= 10
+HMM2_MODEL_WORKERS ?= 10
+
+${HMM2_MODEL_PFX}%${L1_GIVEN_L2X}: HMM2_DIR=-r
+${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
+	RP_PSUB_OPTS="-${HMM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
+	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_WORKERS} \
+		-v ${HMM2_DIR} \
+		-n1 0 -n2 5 \
+		-mimic liang \
+		-bin \
+		-i $< \
+		${HMM2_MODEL_EXTRAS} \
+		$@ \
+		$(wordlist 2, 200, $+) \
+		>& log.$(basename $@)
+
+
+
+########################################
+# HMM3 MODELS
+HMM3_MODEL_PFX ?= hmm3
+HMM3_MODEL_CPUS ?= 2
+HMM3_MODEL_PARALLELISM_LEVEL ?= 10
+HMM3_MODEL_WORKERS ?= 10
+
+${HMM3_MODEL_PFX}%${L1_GIVEN_L2X}: HMM3_DIR=-r
+${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
+	RP_PSUB_OPTS="-${HMM3_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
+	${CAT} -n ${HMM3_MODEL_PARALLELISM_LEVEL} -pn ${HMM3_MODEL_WORKERS} \
+		-v ${HMM3_DIR} \
+		-n1 0 -n2 5 \
+		-hmm -newhmm -start-dist -final-dist -anchor -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 \
+		-bin \
+		-i $< \
+		${HMM3_MODEL_EXTRAS} \
+		$@ \
+		$(wordlist 2, 200, $+) \
+		>& log.$(basename $@)
+
+
+
+########################################
+# JPT MODELS
+JPT_MODEL_PFX ?= jpt
+JPT_PARALLELISM_LEVEL ?= 200
+JPT_WORKERS ?= 40
+JPT_CPUS ?= 1
+
+${JPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: JPT_MODEL_TYPE=-ibm 1
+${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: JPT_MODEL_TYPE=-ibm 2
+${JPT_MODEL_PFX}.hmm%: JPT_MODEL_TYPE=-hmm
+${JPT_MODEL_PFX}.%.${JOINTX}:
+	RP_PSUB_OPTS="-${JPT_CPUS} -N $@ ${PSUB_OPTS}" \
+	gen-jpt-parallel.sh \
+		-n ${JPT_PARALLELISM_LEVEL} \
+		-nw ${JPT_WORKERS} \
+		-w 1 \
+		-o $@ \
+		GPT \
+		-v -m 8 ${JPT_MODEL_TYPE} \
+		-1 ${lang1} -2 ${lang2} \
+		${JPT_EXTRAS} \
+		$(filter %${L2_GIVEN_L1X}, $+) $(filter %${L1_GIVEN_L2X}, $+) \
+		$(filter-out %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $+) \
+		>& log.$(basename $@)
+
+
+
+########################################
+# CPT MODELS
+CPT_MODEL_PFX ?= cpt
+CPT_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother
+
+CPT_CPUS ?= 12
+
+${CPT_MODEL_PFX}%${L1_2_L2X}: CPT_DIR=fwd
+${CPT_MODEL_PFX}%${L2_2_L1X}: CPT_DIR=rev
+${CPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
+${CPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
+${CPT_MODEL_PFX}.hmm%: WORD_MODEL_TYPE=-hmm
+${CPT_MODEL_PFX}.%.gz:
+	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
+	${P_RES_MON} \
+	${JOINT2COND_PHRASE_TABLE} \
+		-sort \
+		-prune1 100 \
+		-v -i -z \
+		${WORD_MODEL_TYPE} \
+		-1 ${lang1} -2 ${lang2} \
+		${CPT_SMOOTHERS} \
+		-multipr ${CPT_DIR} \
+		-o $(subst .${L1_2_L2X},,$(subst .${L2_2_L1X},,$@)) \
+		-ibm_l2_given_l1  $(filter %${L2_GIVEN_L1X}, $+) \
+		-ibm_l1_given_l2  $(filter %${L1_GIVEN_L2X}, $+) \
+		$(filter %${JOINTX}, $+) \
+		>& log.$(basename $@)
+
+
+
+########################################
+# Create Tightly Packed Phrase Table.
+%.tppt: %.gz
+	${P_RES_MON} \
+	textpt2tppt.sh $< \
+	2> log.$@
+
+
+
+################################################################################
+# HELPERS
+
+########################################
+# INVERT ANY JOINT PHRASE TABLE
+%.${TGT}-${SRC}.gz: %.${JOINT}.gz
+	@_LOCAL=1 echo "Generating $@"
+	RP_PSUB_OPTS="-1 -N $@" \
+	zcat $< \
+	| reverse_JOINT_phr_tab.py \
+	| TMPDIR=. tmtext_sort.sh -1st - \
+	| gzip \
+	> $@
