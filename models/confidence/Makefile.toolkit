@@ -1,0 +1,51 @@
+# vim:noet:ts=3:nowrap
+# $Id$
+
+# @file Makefile.toolkit
+# @brief
+#
+# @author Samuel Larkin
+#
+# Technologies langagieres interactives / Interactive Language Technologiesm
+# Inst. de technologie de l'information / Institute for Information Technology
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2009, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2009, Her Majesty in Right of Canada
+
+
+########################################
+# Tuning a confidence model.
+# Requires:
+# - a confidence estimation <model>.ini
+# - a source corpus ${SRCX}
+# - a target corpus ${TGTX}
+# %.cem: ce-notm.ini ${TUNE_CE_SRC} ${TUNE_CE_TGT}
+%.cem:
+	ce_translate.pl \
+		-train \
+		-notok -nolc \
+		-k=5 \
+		-dir=train2 \
+		-desc=$(filter %${INIX}, $+) \
+		${CANOE_MODEL} \
+		$* \
+		$(filter %${SRCX}, $+) \
+		$(filter %${TGTX}, $+)
+
+
+
+########################################
+# Creating the initial model from the template.
+# TODO:
+# - inacceptable hardcoded substitution for LMs.
+# - idea is to have a Makefile.definition in models/lm?
+%${INIX}: SHELL=${GUARD_SHELL}
+%${INIX}:
+	cat $(filter %$(TEMPLATEX), $+) \
+	| sed -e "s#IBM\\(.\\)FWD#${IBM_DIR}/ibm\\1.${TGT_GIVEN_SRCX}#" \
+	      -e "s#IBM\\(.\\)BKW#${IBM_DIR}/ibm\\1.${SRC_GIVEN_TGTX}#" \
+	      -e "s#HMM\\(.\\)FWD#${IBM_DIR}/hmm\\1.${TGT_GIVEN_SRCX}#" \
+	      -e "s#HMM\\(.\\)BKW#${IBM_DIR}/hmm\\1.${SRC_GIVEN_TGTX}#" \
+	      -e "s#LM_SRC#${LM_DIR}/${TRAIN_LM}_${SRC_LANG}-kn-5g.binlm.gz#" \
+	      -e "s#LM_TGT#${LM_DIR}/${TRAIN_LM}_${TGT_LANG}-kn-5g.binlm.gz#" \
+	> $@

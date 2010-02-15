@@ -1,0 +1,57 @@
+# vim:noet:ts=3:nowrap
+# $Id$
+
+# @file Makefile.definition
+# @brief
+#
+# @author Samuel Larkin
+#
+# Technologies langagieres interactives / Interactive Language Technologiesm
+# Inst. de technologie de l'information / Institute for Information Technology
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2009, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2009, Her Majesty in Right of Canada
+
+
+# Define languages info.
+#SRC_LANG ?= en
+#TGT_LANG ?= fr
+SRCX  ?= _${SRC_LANG}${LANGX}
+TGTX  ?= _${TGT_LANG}${LANGX}
+
+SRC_GIVEN_TGT  ?= ${TRAIN_TM}.${SRC_LANG}_given_${TGT_LANG}
+TGT_GIVEN_SRC  ?= ${TRAIN_TM}.${TGT_LANG}_given_${SRC_LANG}
+SRC_GIVEN_TGTX ?= ${SRC_GIVEN_TGT}.gz
+TGT_GIVEN_SRCX ?= ${TGT_GIVEN_SRC}.gz
+
+# Defining the extension for a ini file.
+INIX ?= .ini
+
+# Defining the extension for a template file.
+TEMPLATEX ?= .template
+
+# Indicates where to find all models.
+# This is used to create a symbolic link.
+MODEL_DIR ?= ../../models
+
+# Indicates where to find the corpora file pairs.
+CORPORA_DIR ?= ../../corpora
+
+# Indicates where to find the IBM models.
+IBM_DIR ?= models/tm
+
+# Indicates where to find the language models.
+LM_DIR ?= models/lm
+
+# What is the train canoe file name.
+CANOE_MODEL ?= canoe.ini.cow
+
+# What source file to use to tune a confidence model.
+TUNE_CE_SRC ?= ${TUNE_CE}${SRCX}
+
+# What target file to use to tune a confidence model.
+TUNE_CE_TGT ?= ${TUNE_CE}${TGTX}
+
+# Tell make where to look for certain files.
+vpath %${SRCX} ${CORPORA_DIR}
+vpath %${TGTX} ${CORPORA_DIR}
