@@ -30,6 +30,7 @@ clean: SHELL=${GUARD_SHELL}
 clean:
 	${RM} canoe.ini.cow ce_model.cem ce-notm.ini models
 	${RM} -r ${CE_WORKDIR_PRX}*
+	${RM} -r run-parallel*
 
 
 

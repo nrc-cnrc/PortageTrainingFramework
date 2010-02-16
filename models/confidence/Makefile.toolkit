@@ -37,9 +37,11 @@
 
 ########################################
 # Creating the initial model from the template.
-# TODO:
-# - inacceptable hardcoded substitution for LMs.
-# - idea is to have a Makefile.definition in models/lm?
+
+# Find out about the name of the source & target language model file names.
+LM_SRC ?= $(subst /,\/,$(wildcard ${LM_DIR}/*${SRC_LANG}*.binlm.gz))
+LM_TGT ?= $(subst /,\/,$(wildcard ${LM_DIR}/*${TGT_LANG}*.binlm.gz))
+
 # Requires:
 # - a template model <%${TEMPLATEX}>
 %${INIX}: SHELL=${GUARD_SHELL}
@@ -49,6 +51,6 @@
 	      -e "s#IBM\\(.\\)BKW#${IBM_DIR}/ibm\\1.${SRC_GIVEN_TGTX}#" \
 	      -e "s#HMM\\(.\\)FWD#${IBM_DIR}/hmm\\1.${TGT_GIVEN_SRCX}#" \
 	      -e "s#HMM\\(.\\)BKW#${IBM_DIR}/hmm\\1.${SRC_GIVEN_TGTX}#" \
-	      -e "s#LM_SRC#${LM_DIR}/${TRAIN_LM}_${SRC_LANG}-kn-5g.binlm.gz#" \
-	      -e "s#LM_TGT#${LM_DIR}/${TRAIN_LM}_${TGT_LANG}-kn-5g.binlm.gz#" \
+	      -e "s#LM_SRC#${LM_SRC}#" \
+	      -e "s#LM_TGT#${LM_TGT}#" \
 	> $@
