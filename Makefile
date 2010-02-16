@@ -89,8 +89,8 @@ corpora: check_setup
 # Create the Language Model (LM).
 # Create models for truecasing (TC).
 # Create the Translation Model (TM).
-.PHONY: models lm tc tm cow rat
-tune models lm tc tm cow rat: %: corpora
+.PHONY: models lm tc tm cow rat confidence
+tune models lm tc tm cow rat confidence: %: corpora
 	${MAKE} -C models $@
 
 

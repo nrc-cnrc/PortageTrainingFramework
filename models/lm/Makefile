@@ -29,7 +29,7 @@ SHELL = ${FRAMEWORK_SHELL}
 # Where is IRSTLM located
 export IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 # Where are IRSTLM's binaries located
-BIN_DIR = ${IRSTLM}/bin
+BIN_DIR ?= ${IRSTLM}/bin
 
 # What is the level of parallelism.
 PARALLELISM_LEVEL_LM ?= 5

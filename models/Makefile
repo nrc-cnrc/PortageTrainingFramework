@@ -58,6 +58,9 @@ models: lm tm
 ifdef DO_TRUECASING
 models: tc
 endif
+ifdef DO_CE
+models: confidence
+endif
 
 
 
@@ -68,7 +71,18 @@ ifdef BIDIRECTIONAL_SYSTEM
 lm: lm.${SRC_LANG}
 endif
 lm.%:
-	${MAKE} -C lm all
+	${MAKE} -C lm all TGT_LANG=$*
+
+
+
+.PHONY: confidence
+ifdef DO_CE
+confidence: lm.${SRC_LANG}
+	${MAKE} -C confidence all
+else
+confidence:
+	@echo "Not tuning a confidence estimation models." >&2
+endif
 
 
 

@@ -20,12 +20,13 @@
 # - a source corpus ${SRCX}
 # - a target corpus ${TGTX}
 # %.cem: ce-notm.ini ${TUNE_CE_SRC} ${TUNE_CE_TGT}
+%.cem: SHELL=${FRAMEWORK_SHELL}
 %.cem:
 	ce_translate.pl \
 		-train \
 		-notok -nolc \
 		-k=5 \
-		-dir=train2 \
+		-dir=${CE_WORKDIR_PRX}$* \
 		-desc=$(filter %${INIX}, $+) \
 		${CANOE_MODEL} \
 		$* \
@@ -39,6 +40,8 @@
 # TODO:
 # - inacceptable hardcoded substitution for LMs.
 # - idea is to have a Makefile.definition in models/lm?
+# Requires:
+# - a template model <%${TEMPLATEX}>
 %${INIX}: SHELL=${GUARD_SHELL}
 %${INIX}:
 	cat $(filter %$(TEMPLATEX), $+) \

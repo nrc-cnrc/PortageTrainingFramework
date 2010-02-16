@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# vim:noet:ts=3
+# vim:noet:ts=3:nowrap
 #
 # @author Samuel Larkin
 # @file Makefile
@@ -174,6 +174,8 @@ help:
 # Clean up
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
+clean:
+	${RM} models
 
 .PHONY: clean.content
 clean: clean.content
@@ -231,10 +233,10 @@ check_decoding_model: models
 # Create a specific canoe.ini per test set.
 # You could add some specific target if you need to customize a canoe.ini.cow
 # for a particular file.
-$(addprefix ${DECODING_MODEL},${TEST_SET}): SHELL=${GUARD_SHELL}
+${DECODING_MODEL}.%: SHELL=${GUARD_SHELL}
 ${DECODING_MODEL}.%: check_decoding_model models
-	_LOCAL=1 cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
-	_LOCAL=1 configtool check $@
+	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
+	configtool check $@
 # example: increase the beam threshold and stack size.
 #	cat $< \
 #	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
@@ -417,6 +419,37 @@ clean.truecasing.%.guard:
 	${RM} $*.tc
 	${RM} $*.tc.detok
 
+
+
+
+########################################
+# Confidence Estimation.
+.PHONY: confidence
+confidence: $(addsuffix .ce, ${TEST_SET})
+
+%.ce: SHELL=${FRAMEWORK_SHELL}
+%.ce: ce_model.cem %${SRCX} %${TGTX} ${DECODING_MODEL}.% models
+	ce_translate.pl \
+		-notok -nolc \
+		-test=$(filter %${SRCX}, $+) \
+		-dir=ce-workdir-$* \
+		-out=$@ \
+		$(filter ${DECODING_MODEL}%, $+) \
+		ce_model.cem \
+		$(filter %${TGTX}, $+)
+
+ce_model.cem: SHELL=${GUARD_SHELL}
+ce_model.cem: models
+	ln -s models/confidence/$@
+
+clean.content: clean.ce
+
+.PHONY: clean.ce
+clean.ce: SHELL=${GUARD_SHELL}
+clean.ce:
+	${RM} -r ce-workdir-*
+	${RM} ce_model.cem
+	${RM} *.ce
 
 
 

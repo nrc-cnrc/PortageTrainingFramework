@@ -52,6 +52,9 @@ TUNE_CE_SRC ?= ${TUNE_CE}${SRCX}
 # What target file to use to tune a confidence model.
 TUNE_CE_TGT ?= ${TUNE_CE}${TGTX}
 
+# Training workdir prefix.
+CE_WORKDIR_PRX ?= ce-workdir-
+
 # Tell make where to look for certain files.
 vpath %${SRCX} ${CORPORA_DIR}
 vpath %${TGTX} ${CORPORA_DIR}

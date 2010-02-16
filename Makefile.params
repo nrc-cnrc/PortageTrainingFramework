@@ -1,4 +1,4 @@
-# vim:noet:ts=3
+# vim:noet:ts=3:nowrap
 # @author Samuel Larkin
 # @brief Master parameter file where all user specific parameters should be set.
 #
@@ -28,6 +28,8 @@ export TRAIN_TM      ?= tm-train
 export TUNE_DECODE   ?= dev1
 # TUNE_RESCORE is used to train rat.
 export TUNE_RESCORE  ?= dev2
+# TUNE_CE is used to train confidence estimation.
+#export TUNE_CE       ?= dev3
 # TEST_SET are used to estimate the quality of the system.
 export TEST_SET      ?= test1 test2
 # Uncomment if you have source text, that doesn't have a reference, to translate.
@@ -49,6 +51,10 @@ LM_TOOLKIT = SRI
 # Train and apply rescoring if this variable is defined.
 # Comment out to disable rescoring.
 DO_RESCORING = 1
+
+# Tune and apply confidence estimation if this variable is defined.
+# Comment out to enable confidence estimation.
+#DO_CE = 1
 
 # Train and apply truecassing if this variable is defined.
 # Comment out to disable truecasing.
@@ -129,7 +135,7 @@ export LANGS ?= ${SRC_LANG} ${TGT_LANG}
 
 # Define the corpora.
 export TRAIN_SET    ?= ${TRAIN_LM} ${TRAIN_TM}
-export HELDOUT_SET  ?= ${TUNE_DECODE} ${TUNE_RESCORE} ${TEST_SET}
+export HELDOUT_SET  ?= ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET}
 export CORPORA_SET  ?= ${TRAIN_SET} ${HELDOUT_SET}
 
 # Define what type of phrase table we want to generate.

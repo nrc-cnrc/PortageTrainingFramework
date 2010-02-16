@@ -113,6 +113,9 @@ LC += $(addsuffix _${TGT_LANG}${LANGX}, ${HELDOUT_SET})
 LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_TM})
 LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TM})
 LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
+ifdef DO_CE
+LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_LM})
+endif
 lc: ${LC}
 
 
@@ -221,3 +224,5 @@ debug: SHELL=${GUARD_SHELL}
 debug:
 	@echo "LIST_FINAL_OUTPUT: ${LIST_FINAL_OUTPUT}"
 	@echo "BIG_CORPORA: ${BIG_CORPORA}"
+	@echo "LC: ${LC}"
+
