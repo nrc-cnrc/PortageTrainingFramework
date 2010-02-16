@@ -166,12 +166,12 @@ export TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-3g.binlm${GZ}
 ifdef USING_CLUSTER
 FRAMEWORK_SHELL = run-parallel.sh
 else
-FRAMEWORK_SHELL = /bin/sh
+FRAMEWORK_SHELL = /bin/bash
 endif
 
 # Some commands shouldn't be run with the cluster shell, will use this one
 # instead.
-GUARD_SHELL = /bin/sh
+GUARD_SHELL = /bin/bash
 
 ########################################
 # HELPERS
