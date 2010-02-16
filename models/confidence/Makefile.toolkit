@@ -2,7 +2,7 @@
 # $Id$
 
 # @file Makefile.toolkit
-# @brief
+# @brief Generic commands needed to tune a confidence estimation model.
 #
 # @author Samuel Larkin
 #

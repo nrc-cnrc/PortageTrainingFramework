@@ -2,7 +2,7 @@
 # $Id$
 
 # @file Makefile.definition
-# @brief
+# @brief Variables' definition for confidence estimation tuning.
 #
 # @author Samuel Larkin
 #

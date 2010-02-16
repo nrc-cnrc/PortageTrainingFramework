@@ -3,7 +3,7 @@
 # $Id$
 
 # @file Makefile
-# @brief
+# @brief Logic/dependencies needed to tune a confidence estimation model.
 #
 # @author Samuel Larkin
 #

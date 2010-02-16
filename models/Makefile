@@ -3,7 +3,7 @@
 # $Id$
 
 # @file Controls making all models.
-# @brief
+# @brief A focal point to train all models.
 #
 # @author Samuel Larkin
 #

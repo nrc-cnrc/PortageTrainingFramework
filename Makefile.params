@@ -1,4 +1,5 @@
 # vim:noet:ts=3:nowrap
+# $Id$
 # @author Samuel Larkin
 # @brief Master parameter file where all user specific parameters should be set.
 #
