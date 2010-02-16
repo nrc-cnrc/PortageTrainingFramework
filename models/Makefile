@@ -34,6 +34,7 @@ help:
 	@echo "tm: ${TRAIN_TM}"
 	@echo "tune decode: ${TUNE_DECODE}"
 	@echo "tune rescore: ${TUNE_RESCORE}"
+	@echo "tune confidence estimation model"
 	@echo "Then make all"
 	@echo
 	@echo "The following are the main targets in this Makefile:"
@@ -50,6 +51,7 @@ clean hide clean.logs clean.content: %:
 	${MAKE} -C tc $@
 	${MAKE} -C decode $@
 	${MAKE} -C rescore $@
+	${MAKE} -C confidence $@
 
 
 
@@ -57,9 +59,6 @@ clean hide clean.logs clean.content: %:
 models: lm tm
 ifdef DO_TRUECASING
 models: tc
-endif
-ifdef DO_CE
-models: confidence
 endif
 
 
@@ -76,13 +75,8 @@ lm.%:
 
 
 .PHONY: confidence
-ifdef DO_CE
-confidence: lm.${SRC_LANG}
+confidence: lm.${SRC_LANG} cow
 	${MAKE} -C confidence all
-else
-confidence:
-	@echo "Not tuning a confidence estimation models." >&2
-endif
 
 
 
@@ -110,6 +104,9 @@ tm:
 tune: cow
 ifdef DO_RESCORING
 tune: rat
+endif
+ifdef DO_CE
+tune: confidence
 endif
 
 
