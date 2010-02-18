@@ -14,7 +14,7 @@
 # Without a distortion model
 [distortion-model] WordDisplacement
 # With a lexicalized distortion model
-#[lex-dist-model-file] models/tm/dm.hmm1+ibm2.en2fr.gz
+#[lex-dist-model-file] models/tm/ldm.hmm3+ibm2.en2fr.gz
 #[distortion-model] WordDisplacement:back-lex#m:back-lex#s:back-lex#d:fwd-lex#m:fwd-lex#s:fwd-lex#d
 #[dist-phrase-swap]
 #[dist-limit-ext]
