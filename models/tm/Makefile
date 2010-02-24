@@ -386,18 +386,21 @@ HMM3_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 HMM3_MODEL_WORKERS ?= ${HMM3_MODEL_PARALLELISM_LEVEL}
 HMM3_MODEL_EXTRAS ?=
 HMM3_MODEL_CPUS ?= 1
+NEW_HMM ?= -newhmm
 
 .PHONY:  hmm3_model
 hmm3_model: ibm1_model
 hmm3_model: $(foreach t, ${TRAIN_TM}, $(foreach d, ${MODEL_DIRECTIONS}, hmm3.$t.$d.gz))
 
+#Note: We use "-end-dist" instead of "-start-dist -final-dist -anchor" because
+#      PORTAGEshared lacks "-start-dist"
 hmm3.%.${TGT_GIVEN_SRCX}:  %${SRCX} %${TGTX} ibm1.%.${TGT_GIVEN_SRCX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${HMM3_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${HMM3_MODEL_PARALLELISM_LEVEL} -pn ${HMM3_MODEL_WORKERS} \
 		-v \
 		-n1 0 -n2 5 \
-		-hmm -newhmm -start-dist -final-dist -anchor -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 \
+		-hmm ${NEW_HMM} -end-dist -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 \
 		-bin \
 		-i $(word 3, $+) \
 		${HMM3_MODEL_EXTRAS} \
@@ -411,7 +414,7 @@ hmm3.%.${SRC_GIVEN_TGTX}:  %${SRCX} %${TGTX} ibm1.%.${SRC_GIVEN_TGTX}
 	${CAT} -n ${HMM3_MODEL_PARALLELISM_LEVEL} -pn ${HMM3_MODEL_WORKERS} \
 		-v -r \
 		-n1 0 -n2 5 \
-		-hmm -newhmm -start-dist -final-dist -anchor -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 \
+		-hmm ${NEW_HMM} -end-dist -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 \
 		-bin \
 		-i $(word 3, $+) \
 		${HMM3_MODEL_EXTRAS} \
