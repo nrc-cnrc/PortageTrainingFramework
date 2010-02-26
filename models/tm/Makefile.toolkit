@@ -32,6 +32,8 @@ L2_2_L1X ?= ${L2_2_L1}.gz
 # Joint phrase table extension
 JOINT  ?= ${lang1}-${lang2}
 JOINTX ?= ${JOINT}.gz
+RJOINT  ?= ${lang2}-${lang1}
+RJOINTX ?= ${RJOINT}.gz
 
 # What program to use to create conditional pt from joint probs.
 JOINT2COND_PHRASE_TABLE ?= joint2cond_phrase_tables -reduce-mem
@@ -206,32 +208,55 @@ CPT_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother
 
 CPT_CPUS ?= 12
 
-${CPT_MODEL_PFX}%${L1_2_L2X}: CPT_DIR=fwd
-${CPT_MODEL_PFX}%${L2_2_L1X}: CPT_DIR=rev
+#${CPT_MODEL_PFX}%${L1_2_L2X}: CPT_DIR=fwd
+#${CPT_MODEL_PFX}%${L2_2_L1X}: CPT_DIR=rev
 ${CPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
 ${CPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
 ${CPT_MODEL_PFX}.hmm%: WORD_MODEL_TYPE=-hmm
-${CPT_MODEL_PFX}.%.gz:
+${CPT_MODEL_PFX}.%: PRUNE1=-prune1 100
+
+${CPT_MODEL_PFX}%${L1_2_L2X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${P_RES_MON} \
 	${JOINT2COND_PHRASE_TABLE} \
 		-sort \
-		-prune1 100 \
+		${PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
 		-1 ${lang1} -2 ${lang2} \
 		${CPT_SMOOTHERS} \
-		-multipr ${CPT_DIR} \
+		-multipr fwd \
 		-o $(subst .${L1_2_L2X},,$(subst .${L2_2_L1X},,$@)) \
 		-ibm_l2_given_l1  $(filter %${L2_GIVEN_L1X}, $+) \
 		-ibm_l1_given_l2  $(filter %${L1_GIVEN_L2X}, $+) \
 		$(filter %${JOINTX}, $+) \
 		>& log.$(basename $@)
 
+# Special case to make valid prune1 reversed conditional phrase tables.
+# Requires:
+# - forward & backward phrase alignment models;
+# - reversed joint frequency files.
+${CPT_MODEL_PFX}%${L2_2_L1X}:
+	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
+	${P_RES_MON} \
+	${JOINT2COND_PHRASE_TABLE} \
+		-sort \
+		${PRUNE1} \
+		-v -i -z \
+		${WORD_MODEL_TYPE} \
+		-1 ${lang2} -2 ${lang1} \
+		${CPT_SMOOTHERS} \
+		-multipr fwd \
+		-o $(subst .${L1_2_L2X},,$(subst .${L2_2_L1X},,$@)) \
+		-ibm_l2_given_l1  $(filter %${L1_GIVEN_L2X}, $+) \
+		-ibm_l1_given_l2  $(filter %${L2_GIVEN_L1X}, $+) \
+		$(filter %.${RJOINTX}, $+) \
+		>& log.$(basename $@)
+
 
 
 ########################################
-# Create Tightly Packed Phrase Table.
+# Create tightly packed conditional phrase table.
 %.tppt: %.gz
 	${P_RES_MON} \
 	textpt2tppt.sh $< \
@@ -244,11 +269,24 @@ ${CPT_MODEL_PFX}.%.gz:
 
 ########################################
 # INVERT ANY JOINT PHRASE TABLE
-%.${TGT}-${SRC}.gz: %.${JOINT}.gz
+# WARNING: This produces a valid jpt for joint2cond but produces an INVALID jpt
+# for merge_counts.  Prefer the version using LC_ALL=C sort rather than
+# tmtext_sort.
+#%.${RJOINTX}: %.${JOINTX}
+#	@_LOCAL=1 echo "Generating $@"
+#	RP_PSUB_OPTS="-1 -N $@" \
+#	zcat $< \
+#	| reverse_joint_phr_tab.py \
+#	| TMPDIR=. tmtext_sort.sh -1st - \
+#	| gzip \
+#	> $@
+########################################
+# INVERT ANY JOINT PHRASE TABLE
+%.${RJOINTX}: %.${JOINTX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-1 -N $@" \
 	zcat $< \
-	| reverse_JOINT_phr_tab.py \
-	| TMPDIR=. tmtext_sort.sh -1st - \
+	| reverse_joint_phr_tab.py \
+	| TMPDIR=. LC_ALL=C sort \
 	| gzip \
 	> $@
