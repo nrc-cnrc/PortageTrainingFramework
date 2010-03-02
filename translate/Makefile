@@ -288,7 +288,7 @@ out.bleu: ${OUT_BLEU_DEP}
 $(addsuffix .out.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
 %.out.bleu: %.out %${TGTX}
 	@echo "Calculating BLEU for $@"
-	bleumain $^ > $@
+	bleumain -c $^ > $@
 
 .PHONY: out.detok
 out.detok: $(addsuffix .out.detok, ${TEST_SET})
@@ -303,7 +303,7 @@ $(addsuffix .out.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
 #	@echo "Calculating BLEU for $@"
 #	cat $(word 2, $+) \
 #	| utf8_casemap -c l \
-#	| bleumain $< - > $@
+#	| bleumain -c $< - > $@
 
 clean.content: clean.translate
 
@@ -356,7 +356,7 @@ rat.bleu: ${RAT_BLEU_DEP}
 $(addsuffix .rat.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
 %.rat.bleu: %.rat %${TGTX}
 	@echo "Calculating BLEU for $@"
-	bleumain $^ > $@
+	bleumain -c $^ > $@
 
 .PHONY: rat.detok
 rat.detok: $(addsuffix .rat.detok, ${TEST_SET})
@@ -371,7 +371,7 @@ $(addsuffix .rat.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
 #	@echo "Calculating BLEU for $@"
 #	cat $(word 2, $+) \
 #	| utf8_casemap -c l \
-#	| bleumain $< - > $@
+#	| bleumain -c $< - > $@
 
 clean.content: clean.rescore
 
