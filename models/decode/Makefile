@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# vim:noet:ts=3
+# vim:noet:ts=3:nowrap
 #
 # $Id$
 # @author Samuel Larkin
@@ -69,6 +69,9 @@ MERT ?= cow.sh
 
 # How may cpus should each worker be using when doing MERT.
 MERT_CPUS ?= 1
+
+# What is the maximum number of iterations mert should do?
+MERT_MAX_ITER ?= 15
 
 # After this Makefile, the following targets/files are precious.
 FILES_TO_BE_LOCKED = ${DECODING_MODEL}
@@ -207,7 +210,7 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 	${MERT} \
 		-v \
 		-parallel:"-n ${PARALLELISM_LEVEL_TUNE_DECODE}" \
-		-maxiter 15 \
+		-maxiter ${MERT_MAX_ITER} \
 		-nbest-list-size 100 \
 		-filt \
 		-nofloor \
