@@ -59,6 +59,7 @@ doc-clean:
 
 .PHONY: clean
 # Thorough cleaning of everything
+clean: SHELL=${GUARD_SHELL}
 clean:
 	${RM} framework-toy.{aux,log,pdf,toc}
 

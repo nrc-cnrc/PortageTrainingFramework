@@ -155,6 +155,7 @@ clean.content: SHELL=${GUARD_SHELL}
 
 .PHONY: clean.logs
 clean: clean.logs
+clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
 	$(RM) run-parallel-log* log.* run-p.*
 

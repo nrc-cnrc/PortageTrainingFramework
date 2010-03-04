@@ -25,11 +25,19 @@ include Makefile.toolkit
 all: train
 
 
+########################################
+# Cleaning up!
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
-clean:
+clean: clean.content clean.logs
+
+clean.content: SHELL=${GUARD_SHELL}
+clean.content:
 	${RM} canoe.ini.cow ce_model.cem ce-notm.ini models
 	${RM} -r ${CE_WORKDIR_PRX}*
+
+clean.logs: SHELL=${GUARD_SHELL}
+clean.logs:
 	${RM} -r run-parallel*
 
 
@@ -47,7 +55,7 @@ models:
 	ln -s ${MODEL_DIR} $@
 
 ${CANOE_MODEL}: models
-	ln -s models/decode/${CANOE_MODEL} $@
+	ln -fs models/decode/${CANOE_MODEL} $@
 
 
 ########################################
