@@ -432,12 +432,12 @@ confidence: $(addsuffix .ce, ${TEST_SET})
 %.ce: ce_model.cem %${SRCX} %${TGTX} ${DECODING_MODEL}.% models
 	ce_translate.pl \
 		-notok -nolc \
-		-test=$(filter %${SRCX}, $+) \
+		-test=$(filter %${TGTX}, $+) \
 		-dir=ce-workdir-$* \
 		-out=$@ \
 		$(filter ${DECODING_MODEL}%, $+) \
 		ce_model.cem \
-		$(filter %${TGTX}, $+)
+		$(filter %${SRCX}, $+)
 
 ce_model.cem: SHELL=${GUARD_SHELL}
 ce_model.cem: models
