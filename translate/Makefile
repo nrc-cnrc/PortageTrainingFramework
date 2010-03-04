@@ -254,7 +254,7 @@ clean.decoding.models.%:
 
 
 
-########################################
+################################################################################
 # Translate translate_set without rescoring.
 .PHONY: out
 out: $(addsuffix .out, ${TEST_SET})
@@ -285,10 +285,9 @@ out.bleu: SHELL=${GUARD_SHELL}
 out.bleu: ${OUT_BLEU_DEP}
 	egrep Human $+
 
-$(addsuffix .out.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
-%.out.bleu: %.out %${TGTX}
-	@echo "Calculating BLEU for $@"
-	bleumain -c $^ > $@
+# Specifing dependencies for calculating BLEU scores for translation coming out
+# of the deconder.
+${OUT_BLEU_DEP}: %.out.bleu: %.out %${TGTX}
 
 .PHONY: out.detok
 out.detok: $(addsuffix .out.detok, ${TEST_SET})
@@ -326,7 +325,9 @@ check_rescoring_model:
 
 #@_LOCAL=1 [[ -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]] || (echo "ERROR: No rescoring model available!" >&2; echo "Please train ${RESCORING_MODEL_DIR} first!" >&2; false)
 
-########################################
+
+
+################################################################################
 # Rescore the translate_set
 .PHONY: rat
 rat: $(addsuffix .rat, ${TEST_SET})
@@ -353,10 +354,8 @@ rat.bleu: SHELL=${GUARD_SHELL}
 rat.bleu: ${RAT_BLEU_DEP}
 	egrep Human $+
 
-$(addsuffix .rat.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
-%.rat.bleu: %.rat %${TGTX}
-	@echo "Calculating BLEU for $@"
-	bleumain -c $^ > $@
+# Specifing dependencies for calculating BLEU scores for rescored translations.
+${RAT_BLEU_DEP}: %.rat.bleu: %.rat %${TGTX}
 
 .PHONY: rat.detok
 rat.detok: $(addsuffix .rat.detok, ${TEST_SET})
@@ -385,7 +384,60 @@ clean.rescore.%:
 
 
 
-########################################
+################################################################################
+# Confidence Estimation.
+ifdef DO_CE
+all: confidence
+endif
+
+.PHONY: confidence
+confidence: $(addsuffix .ce, ${TEST_SET})
+ifdef TRANSLATE_SET
+confidence: $(addsuffix .ce, ${TRANSLATE_SET})
+endif
+
+# All confidence estimation calculation should be queued on the cluster.
+%.ce: SHELL=${FRAMEWORK_SHELL}
+
+# If the source has no reference.
+# Here we assume that, if the user didn't include the testset as part of the
+# TEST_SET variable, this mean it doesn't have a reference counter part.
+%.ce: ce_model.cem %${SRCX} ${DECODING_MODEL}.% models
+	ce_translate.pl \
+		-notok -nolc \
+		-dir=ce-workdir-$* \
+		-out=$@ \
+		$(filter ${DECODING_MODEL}%, $+) \
+		ce_model.cem \
+		$(filter %${SRCX}, $+)
+
+# If the source has a reference.
+$(addsuffix .ce, ${TEST_SET}): %.ce: ce_model.cem %${SRCX} %${TGTX} ${DECODING_MODEL}.% models
+	ce_translate.pl \
+		-notok -nolc \
+		-test=$(filter %${TGTX}, $+) \
+		-dir=ce-workdir-$* \
+		-out=$@ \
+		$(filter ${DECODING_MODEL}%, $+) \
+		ce_model.cem \
+		$(filter %${SRCX}, $+)
+
+ce_model.cem: SHELL=${GUARD_SHELL}
+ce_model.cem: models
+	ln -fs models/confidence/$@
+
+clean.content: clean.ce
+
+.PHONY: clean.ce
+clean.ce: SHELL=${GUARD_SHELL}
+clean.ce:
+	${RM} -r ce-workdir-*
+	${RM} ce_model.cem
+	${RM} *.ce
+
+
+
+################################################################################
 # TRUECASING
 .PHONY: tc
 tc: $(addsuffix .out.tc, ${TEST_SET})
@@ -423,37 +475,6 @@ clean.truecasing.%.guard:
 
 
 
-########################################
-# Confidence Estimation.
-.PHONY: confidence
-confidence: $(addsuffix .ce, ${TEST_SET})
-
-%.ce: SHELL=${FRAMEWORK_SHELL}
-%.ce: ce_model.cem %${SRCX} %${TGTX} ${DECODING_MODEL}.% models
-	ce_translate.pl \
-		-notok -nolc \
-		-test=$(filter %${TGTX}, $+) \
-		-dir=ce-workdir-$* \
-		-out=$@ \
-		$(filter ${DECODING_MODEL}%, $+) \
-		ce_model.cem \
-		$(filter %${SRCX}, $+)
-
-ce_model.cem: SHELL=${GUARD_SHELL}
-ce_model.cem: models
-	ln -s models/confidence/$@
-
-clean.content: clean.ce
-
-.PHONY: clean.ce
-clean.ce: SHELL=${GUARD_SHELL}
-clean.ce:
-	${RM} -r ce-workdir-*
-	${RM} ce_model.cem
-	${RM} *.ce
-
-
-
 ################################################################################
 # HELPERS
 
@@ -483,20 +504,6 @@ configtool: ${DECODING_MODEL_TEMPLATE}
 
 
 ########################################
-# LINKS THE IBMX MODELS
-# Obsolete
-# ibm2.ch_given_en.gz ibm2.ch_given_en.pos.gz
-# ibm2.en_given_ch.gz ibm2.en_given_ch.pos.gz
-ibm2.%.gz:
-	ln -sf ${IBM_DIR}/ibm2.*$*.gz ibm2.$*.gz 
-	ln -sf ${IBM_DIR}/ibm2.*$*.pos.gz ibm2.$*.pos.gz
-
-ibm1.%.gz:
-	ln -sf ${IBM_DIR}/ibm1.*$*.gz ibm1.$*.gz 
-
-
-
-########################################
 # Hook to get BLEU scores
 .PHONY: bleu
 bleu: SHELL=${GUARD_SHELL}
@@ -519,6 +526,18 @@ endif
 ifdef DO_RESCORING
 detok: rat.detok
 endif
+
+
+
+########################################
+# How to calculate BLEU.
+# This target expect two files:
+#  - a translation file;
+#  - a reference file with TGTX as it extension.
+%.bleu: SHELL=${GUARD_SHELL}
+%.bleu:
+	@echo "Calculating BLEU for $@"
+	bleumain -c $(filter-out %${TGTX}, $+) $(filter %${TGTX}, $+) > $@
 
 
 
