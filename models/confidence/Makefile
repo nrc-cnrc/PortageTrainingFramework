@@ -38,7 +38,7 @@ clean.content:
 
 clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
-	${RM} -r run-parallel*
+	${RM} -r run-parallel* log.*
 
 
 
