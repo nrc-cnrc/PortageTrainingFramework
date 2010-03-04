@@ -31,7 +31,8 @@
 		${CANOE_MODEL} \
 		$* \
 		$(filter %${SRCX}, $+) \
-		$(filter %${TGTX}, $+)
+		$(filter %${TGTX}, $+) \
+	>& log.$@
 
 
 
