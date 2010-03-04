@@ -125,10 +125,14 @@ endif
 .PHONY: final_result
 final_result: SHELL=${GUARD_SHELL}
 
-final_result: $(addsuffix .translation,${TEST_SET})
+FINAL_RESULT += $(addsuffix .translation, ${TEST_SET})
 ifdef TRANSLATE_SET
-final_result: $(addsuffix .translation,${TRANSLATE_SET})
+FINAL_RESULT += $(addsuffix .translation, ${TRANSLATE_SET})
 endif
+
+final_result: ${FINAL_RESULT}
+
+# The final outputs will be named *.translation.
 %.translation: %${FINALX}
 	${POST_PROCESSING} < $< > $@
 
@@ -139,7 +143,7 @@ endif
 list_final_output: SHELL=${GUARD_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
-	@echo "$(addsuffix .translation,${TEST_SET})"
+	@echo "${FINAL_RESULT}"
 
 
 
