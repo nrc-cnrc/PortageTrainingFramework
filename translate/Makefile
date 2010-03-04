@@ -252,7 +252,7 @@ clean.content: clean.decoding.models
 
 .PHONY: clean.decoding.models
 clean.decoding.models: SHELL=${GUARD_SHELL}
-clean.decoding.models: $(foreach f, ${TEST_SET}, clean.decoding.models.$f)
+clean.decoding.models: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.decoding.models.$f)
 clean.decoding.models.%:
 	-${RM} ${DECODING_MODEL}.$*
 
@@ -380,7 +380,7 @@ clean.content: clean.rescore
 
 .PHONY: clean.rescore_trans
 clean.rescore: SHELL=${GUARD_SHELL}
-clean.rescore: $(foreach f, ${TEST_SET}, clean.rescore.$f)
+clean.rescore: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.rescore.$f)
 clean.rescore.%:
 	${RM} $*.rat $*.rat.bleu
 	${RM} $*.rat.detok $*.rat.detok.bleu
@@ -470,8 +470,8 @@ clean.content: clean.truecasing
 
 .PHONY: clean.truecasing
 clean.truecasing: SHELL=${GUARD_SHELL}
-clean.truecasing: $(foreach f, ${TEST_SET}, clean.truecasing.$f.out.guard)
-clean.truecasing: $(foreach f, ${TEST_SET}, clean.truecasing.$f.rat.guard)
+clean.truecasing: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.truecasing.$f.out.guard)
+clean.truecasing: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.truecasing.$f.rat.guard)
 clean.truecasing.%.guard:
 	${RM} $*.tc
 	${RM} $*.tc.detok
