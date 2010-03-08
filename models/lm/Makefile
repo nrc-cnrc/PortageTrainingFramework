@@ -41,12 +41,15 @@ ORDER ?= 5
 # Most steps require to load all the lm in memory, how many cpus should those jobs use.
 CPUS ?= 2
 
+# What is the lm language.
+LM_LANG ?= ${TGT_LANG}
+
 # What type of lms to build
 LM_TYPES ?= binlm
 
 # What is the corpus' name, extension and what file defines this corpus.
 # This is the corpus' name and looks like train_fr
-CORPUS_NAME ?= ${TRAIN_LM}_${TGT_LANG}
+CORPUS_NAME ?= ${TRAIN_LM}_${LM_LANG}
 
 # This indicates the corpus extension and looks like .tok.al.gz
 CORPUS_EXT  ?= ${LANGXZ}
@@ -124,6 +127,16 @@ list_final_output: SHELL=${GUARD_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
 	@echo "${LM_NAME}.binlm.gz"
+
+
+
+# TODO: We need to clean up source side language models and logs.
+#ifdef DO_CE
+#clean clean.content clean.logs: %: do_ce.%
+#
+#do_ce.%:
+#	${MAKE} LM_LANG=${SRC_LANG} DO_CE $*
+#endif
 
 
 
