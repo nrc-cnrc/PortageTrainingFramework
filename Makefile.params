@@ -85,25 +85,25 @@ export USING_CLUSTER
 
 
 ifdef USING_CLUSTER
-   PARALLELISM_LEVEL_CORPORA ?= 10
-   PARALLELISM_LEVEL_LM ?= 5
-   PARALLELISM_LEVEL_TM ?= 5
-   PARALLELISM_LEVEL_TUNE_DECODE  ?= 10
-   PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
-   PARALLELISM_LEVEL_TRANSLATE    ?= 10
-   $(warn "Running in cluster mode.")
+PARALLELISM_LEVEL_CORPORA ?= 10
+PARALLELISM_LEVEL_LM ?= 5
+PARALLELISM_LEVEL_TM ?= 5
+PARALLELISM_LEVEL_TUNE_DECODE  ?= 10
+PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
+PARALLELISM_LEVEL_TRANSLATE    ?= 10
+$(warn "Running in cluster mode.")
 else
 # Make sure we run in serial mode.
 .NOTPARALLEL:
-	# Autodetect the number of available cpus on this machine.
-	NCPUS ?= $(shell grep processor /proc/cpuinfo | \wc -l)
-	PARALLELISM_LEVEL_CORPORA ?= ${NCPUS}
-	PARALLELISM_LEVEL_LM ?= ${NCPUS}
-	PARALLELISM_LEVEL_TM ?= ${NCPUS}
-	PARALLELISM_LEVEL_TUNE_DECODE  ?= ${NCPUS}
-	PARALLELISM_LEVEL_TUNE_RESCORE ?= ${NCPUS}
-	PARALLELISM_LEVEL_TRANSLATE    ?= ${NCPUS}
-	$(warn "Running in local mode.")
+# Autodetect the number of available cpus on this machine.
+NCPUS := $(shell grep processor /proc/cpuinfo | \wc -l)
+PARALLELISM_LEVEL_CORPORA ?= ${NCPUS}
+PARALLELISM_LEVEL_LM ?= ${NCPUS}
+PARALLELISM_LEVEL_TM ?= ${NCPUS}
+PARALLELISM_LEVEL_TUNE_DECODE  ?= ${NCPUS}
+PARALLELISM_LEVEL_TUNE_RESCORE ?= ${NCPUS}
+PARALLELISM_LEVEL_TRANSLATE    ?= ${NCPUS}
+$(warn "Running in local mode.")
 endif
 export PARALLELISM_LEVEL_CORPORA
 export PARALLELISM_LEVEL_LM
