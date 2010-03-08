@@ -23,10 +23,6 @@ MAKEFILE_PARAMS ?= Makefile.params
 # If your files are not tokenize, they should have the RAWX extentsion.
 RAWX ?= .raw
 
-# Big corpora should be gzipped and will be processed with parallelize.pl to speed-up thing.
-# BIG_CORPORA defines the prefixes like train or lm-train for example.
-BIG_CORPORA ?= $(sort ${TRAIN_SET})  # Using sort to remove duplicates.
-
 # Change make's default shell to a distributed one, if working on a cluster.
 SHELL = ${FRAMEWORK_SHELL}
 
@@ -43,11 +39,26 @@ export LC_ALL ?= fr_CA.utf8
 
 
 # Where are the aligned corpora to process.
-ALIGN_CORPORA_DIR ?= ./
+ALIGN_CORPORA_DIR ?= .
+
+# If we have untokenized corpora, this is where we would find them.
+RAW_CORPORA_DIR ?= .
+
+# What tokenizer should we use.
+TOKENIZER ?= utokenize.pl -noss
+
+# We want a minimum of 100,000 lines per jobs that parallelize.pl creates.
+MINIMUM_PARALLEL_CHUNK_SIZE ?= 100000
+
 
 
 # Tells make where to find the raw corpora files.
 vpath %${ALIGNX} ${ALIGN_CORPORA_DIR}
+
+
+# This Makefile should display some help message if the user doesn't specify a
+# target.
+.DEFAULT_GOAL: help
 
 
 # Help message
@@ -101,11 +112,92 @@ list_final_output:
 	@echo ${RULE}
 	@echo ${TC}
 
+
+
+########################################
+# TOKENIZATION.
+# For the tokenization targets, we automatically detect raw files and if we
+# find any, there will be a rule to process them.  If no raw files are found
+# then the following targets are automatically disabled.
+
+## Tokenizes source corpora without sentence splitting.
+SRC_RAW_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${SRC_LANG}${RAWX}))
+SRC_TOK_LIST ?= $(SRC_RAW_LIST:${RAWX}=${ALIGNX})
+TOK += ${SRC_TOK_LIST}
+
+${SRC_TOK_LIST}: %${ALIGNX}: %${RAWX}
+	@${check_utf8}
+	RP_PSUB_OPTS="-1" \
+	${TOKENIZER} -lang=${SRC_LANG} < $< > $@
+
+
+## Tokenizes target corpora without sentence splitting.
+TGT_RAW_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${TGT_LANG}${RAWX}))
+TGT_TOK_LIST ?= $(TGT_RAW_LIST:${RAWX}=${ALIGNX})
+TOK += ${TGT_TOK_LIST}
+
+${TGT_TOK_LIST}: %${ALIGNX}: %${RAWX}
+	@${check_utf8}
+	RP_PSUB_OPTS="-1" \
+	utokenize.pl -noss -lang=${TGT_LANG} < $< > $@
+
+
+## HOW to handle big source language corpora.
+SRC_RAWZ_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${SRC_LANG}${RAWX}${GZ}))
+SRC_TOKZ_LIST ?= $(SRC_RAWZ_LIST:${RAWX}${GZ}=${ALIGNX}${GZ})
+TOK += ${SRC_TOKZ_LIST}
+
+${SRC_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
+	RP_PSUB_OPTS="-1" \
+	parallelize.pl \
+		-psub -1 \
+		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
+		-n ${PARALLELISM_LEVEL_CORPORA} \
+		"utokenize.pl -noss -lang=${SRC_LANG} < $< > $@"
+
+
+## HOW to handle big target language corpora.
+TGT_RAWZ_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${TGT_LANG}${RAWX}${GZ}))
+TGT_TOKZ_LIST ?= $(TGT_RAWZ_LIST:${RAWX}${GZ}=${ALIGNX}${GZ})
+TOK += ${TGT_TOKZ_LIST}
+
+${TGT_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
+	RP_PSUB_OPTS="-1" \
+	parallelize.pl \
+		-psub -1 \
+		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
+		-n ${PARALLELISM_LEVEL_CORPORA} \
+		"utokenize.pl -noss -lang=${TGT_LANG} < $< > $@"
+
+
+
+.PHONY: tok
+tok: ${TOK}
+
+
+
+########################################
+# TRUECASE.
 # Defines what corpora we need truecased/tokenized for the truecase model.
 .PHONY: tc
 TC = $(addsuffix _${TGT_LANG}.tc${GZ}, ${TRAIN_LM})
 tc: ${TC}
 
+# Prepare truecased file.
+%.tc: %${ALIGNX}
+	@${check_utf8}
+	RP_PSUB_OPTS="-1" \
+	cp $< $@
+
+%.tc${GZ}: %${ALIGNX}${GZ}
+	@${check_utf8}
+	RP_PSUB_OPTS="-1" \
+	cp $< $@
+
+
+
+########################################
+# LOWERCASING.
 # Defines what corpora we need in the entire pipeline.
 .PHONY: lc
 LC += $(addsuffix _${SRC_LANG}${LANGX}, ${HELDOUT_SET})
@@ -120,42 +212,6 @@ endif
 lc: ${LC}
 
 
-## Tokenizes source corpora without sentence splitting.
-#%_${SRC_LANG}${ALIGNX}: %_${SRC_LANG}${RAWX}
-#	@${check_utf8}
-#	RP_PSUB_OPTS="-1" \
-#	utokenize.pl -noss -lang=${SRC_LANG} < $< > $@
-#
-## Tokenizes target corpora without sentence splitting.
-#%_${TGT_LANG}${ALIGNX}: %_${TGT_LANG}${RAWX}
-#	@${check_utf8}
-#	RP_PSUB_OPTS="-1" \
-#	utokenize.pl -noss -lang=${TGT_LANG} < $< > $@
-#
-## HOW to handle big source language corpora.
-#$(addsuffix _${SRC_LANG}${ALIGNX}${GZ}, ${BIG_CORPORA}): %_${SRC_LANG}${ALIGNX}${GZ}: %_${SRC_LANG}${RAWX}${GZ}
-#	RP_PSUB_OPTS="-1" \
-#	parallelize.pl -psub -1 -n ${PARALLELISM_LEVEL_CORPORA} "utokenize.pl -noss -lang=${SRC_LANG} < $< > $@"
-#
-## HOW to handle big target language corpora.
-#$(addsuffix _${TGT_LANG}${ALIGNX}${GZ}, ${BIG_CORPORA}): %_${TGT_LANG}${ALIGNX}${GZ}: %_${TGT_LANG}${RAWX}${GZ}
-#	RP_PSUB_OPTS="-1" \
-#	parallelize.pl -psub -1 -n ${PARALLELISM_LEVEL_CORPORA} "utokenize.pl -noss -lang=${TGT_LANG} < $< > $@"
-
-
-
-# Prepare truecased file.
-%.tc: %${ALIGNX}
-	@${check_utf8}
-	RP_PSUB_OPTS="-1" \
-	cp $< $@
-
-%.tc${GZ}: %${ALIGNX}${GZ}
-	@${check_utf8}
-	RP_PSUB_OPTS="-1" \
-	cp $< $@
-
-
 # Constructs a lowercased corpora from its aligned version.
 %${LANGX}: %${ALIGNX}
 	@$(check_utf8)
@@ -168,6 +224,9 @@ lc: ${LC}
 	zcat $< | ${LOWERCASE} | gzip > $@
 
 
+
+########################################
+# RULES.
 # Add some markup to the source HELDOUT_SET.
 # If you have special markup, this is where you would write your code.
 .PHONY: rule
@@ -177,6 +236,7 @@ rule: ${RULE}
 	@$(check_utf8)
 	RP_PSUB_OPTS="-1" \
 	canoe-escapes.pl -add $< > $@
+
 
 
 # NOTE: here TRANSLATE_SET must contain the prefix only.
@@ -207,6 +267,7 @@ clean: clean.content clean.logs
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
 	-${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
+	-${RM} ${TOK}
 
 .PHONY: clean.logs
 clean.logs: SHELL=${GUARD_SHELL}
@@ -224,8 +285,16 @@ clean.logs:
 debug: SHELL=${GUARD_SHELL}
 debug:
 	@echo "LIST_FINAL_OUTPUT: ${LIST_FINAL_OUTPUT}"
-	@echo "BIG_CORPORA: ${BIG_CORPORA}"
 	@echo "LC: ${LC}"
+	@echo "SRC_RAW_LIST: ${SRC_RAW_LIST}"
+	@echo "SRC_TOK_LIST: ${SRC_TOK_LIST}"
+	@echo "SRC_RAW_LIST: ${TGT_RAW_LIST}"
+	@echo "SRC_TOK_LIST: ${TGT_TOK_LIST}"
+	@echo "SRC_RAWZ_LIST: ${SRC_RAWZ_LIST}"
+	@echo "SRC_TOKZ_LIST: ${SRC_TOKZ_LIST}"
+	@echo "SRC_RAWZ_LIST: ${TGT_RAWZ_LIST}"
+	@echo "SRC_TOKZ_LIST: ${TGT_TOKZ_LIST}"
+	@echo "TOK: ${TOK}"
 
 
 # Lastly include the master toolkit
