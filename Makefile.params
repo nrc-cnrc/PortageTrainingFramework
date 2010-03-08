@@ -52,10 +52,30 @@ LM_TOOLKIT = SRI
 # Train and apply rescoring if this variable is defined.
 # Comment out to disable rescoring.
 DO_RESCORING = 1
+# Automatically activate tuning rescoring if the user specifies a TUNE_RESCORE set.
+ifneq (${TUNE_RESCORE},)
+ifndef DO_RESCORING
+ifndef DISABLE_DO_RESCORING_AUTOACTIVATION_WARNING
+DO_RESCORING = 1
+$(warning "User specified a rescore tuning set, auto-activating rescoring.")
+export DISABLE_DO_RESCORING_AUTOACTIVATION_WARNING = 1
+endif
+endif
+endif
 
 # Tune and apply confidence estimation if this variable is defined.
 # Comment out to enable confidence estimation.
 #DO_CE = 1
+# Automatically activate tuning confidence estimation if the user specifies a TUNE_CE set.
+ifneq (${TUNE_CE},)
+ifndef DO_CE
+ifndef DISABLE_DO_CONFIDENCE_ESTIMATION_AUTOACTIVATION_WARNING
+DO_CE = 1
+$(warning "User specified a confidence estimation tuning set, auto-activating confidence estimation.")
+export DISABLE_DO_CONFIDENCE_ESTIMATION_AUTOACTIVATION_WARNING = 1
+endif
+endif
+endif
 
 # Train and apply truecassing if this variable is defined.
 # Comment out to disable truecasing.
@@ -91,7 +111,10 @@ PARALLELISM_LEVEL_TM ?= 5
 PARALLELISM_LEVEL_TUNE_DECODE  ?= 10
 PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
 PARALLELISM_LEVEL_TRANSLATE    ?= 10
-$(warn "Running in cluster mode.")
+ifndef DISABLE_RUNNING_MODE_WARNING
+$(warning "Running in cluster mode.")
+export DISABLE_RUNNING_MODE_WARNING = 1
+endif
 else
 # Make sure we run in serial mode.
 .NOTPARALLEL:
@@ -103,7 +126,10 @@ PARALLELISM_LEVEL_TM ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_DECODE  ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_RESCORE ?= ${NCPUS}
 PARALLELISM_LEVEL_TRANSLATE    ?= ${NCPUS}
-$(warn "Running in local mode.")
+ifndef DISABLE_RUNNING_MODE_WARNING
+$(warning "Running in local mode.")
+export DISABLE_RUNNING_MODE_WARNING = 1
+endif
 endif
 export PARALLELISM_LEVEL_CORPORA
 export PARALLELISM_LEVEL_LM
