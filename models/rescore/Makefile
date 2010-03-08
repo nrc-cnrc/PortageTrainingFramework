@@ -268,3 +268,5 @@ models: SHELL=${GUARD_SHELL}
 models:
 	ln -sf ${MODEL_DIR} $@
 
+debug:
+	echo "<${PARALLELISM_LEVEL_TUNE_RESCORE}>"
