@@ -70,13 +70,20 @@ ifdef BIDIRECTIONAL_SYSTEM
 lm: lm.${SRC_LANG}
 endif
 lm.%:
-	${MAKE} -C lm all TGT_LANG=$*
+	${MAKE} -C lm all LM_LANG=$*
 
 
 
 .PHONY: confidence
+ifdef DO_CE
+tune: confidence
+
 confidence: lm.${SRC_LANG} cow
 	${MAKE} -C confidence all
+else
+confidence:
+	@echo "Not training a confidence estimation model." >&2
+endif
 
 
 
@@ -104,9 +111,6 @@ tm:
 tune: cow
 ifdef DO_RESCORING
 tune: rat
-endif
-ifdef DO_CE
-tune: confidence
 endif
 
 
