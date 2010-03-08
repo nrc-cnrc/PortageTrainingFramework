@@ -112,7 +112,7 @@ PARALLELISM_LEVEL_TUNE_DECODE  ?= 10
 PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
 PARALLELISM_LEVEL_TRANSLATE    ?= 10
 ifndef DISABLE_RUNNING_MODE_WARNING
-$(warning "Running in cluster mode.")
+$(info "Running in cluster mode.")
 export DISABLE_RUNNING_MODE_WARNING = 1
 endif
 else
@@ -127,7 +127,7 @@ PARALLELISM_LEVEL_TUNE_DECODE  ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_RESCORE ?= ${NCPUS}
 PARALLELISM_LEVEL_TRANSLATE    ?= ${NCPUS}
 ifndef DISABLE_RUNNING_MODE_WARNING
-$(warning "Running in local mode.")
+$(info "Running in local mode.")
 export DISABLE_RUNNING_MODE_WARNING = 1
 endif
 endif
