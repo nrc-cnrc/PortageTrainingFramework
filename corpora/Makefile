@@ -227,3 +227,6 @@ debug:
 	@echo "BIG_CORPORA: ${BIG_CORPORA}"
 	@echo "LC: ${LC}"
 
+
+# Lastly include the master toolkit
+include ../Makefile.toolkit

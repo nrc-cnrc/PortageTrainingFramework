@@ -1,0 +1,44 @@
+# vim:noet:ts=3:nowrap
+# $Id$
+
+# @file Makefile.toolkit
+# @brief
+#
+# @author Samuel Larkin
+#
+# Technologies langagieres interactives / Interactive Language Technologiesm
+# Inst. de technologie de l'information / Institute for Information Technology
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2010, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2010, Her Majesty in Right of Canada
+
+
+########################################
+# HELPERS
+# How to compress a file.
+%.gz: %
+	cat $< | gzip > $@
+
+# List of files that should read-only for safety.  Mainly this list
+# should be composed of final targets from a Makefile.
+FILES_TO_BE_LOCKED ?=
+
+# Change to read-only aka "Locks" precious files.
+.PHONY: lock
+lock: SHELL=${GUARD_SHELL}
+lock:
+	-chmod u-w ${FILES_TO_BE_LOCKED}
+
+# Change to read-write aka "Unlocks" precious files.
+.PHONY: unlock
+unlock: SHELL=${GUARD_SHELL}
+unlock:
+	-chmod u+w ${FILES_TO_BE_LOCKED}
+
+# Summarizes resources usage for this system.
+.PHONY: resource_summary_sub
+resource_summary_sub: SHELL=${GUARD_SHELL}
+resource_summary_sub:
+	find -type f -name log.\* \
+	| sort \
+	| xargs p-res-mon.sh -m ${MODULE_NAME}

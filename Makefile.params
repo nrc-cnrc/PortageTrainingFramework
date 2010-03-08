@@ -174,31 +174,39 @@ endif
 GUARD_SHELL = /bin/bash
 
 ########################################
-# HELPERS
-# How to compress a file.
-%.gz: %
-	cat $< | gzip > $@
+# VALIDATING.
+ifdef DO_CE
+ifeq (${TUNE_CE},)
+$(error "When asking for confidence estimation, you must also define a TUNE_CE!")
+endif
+endif
 
-# List of files that should read-only for safety.  Mainly this list
-# should be composed of final targets from a Makefile.
-FILES_TO_BE_LOCKED ?=
+ifdef DO_RESCORING
+ifeq (${TUNE_RESCORE},)
+$(error "When asking for rescoring, you must also define a TUNE_RESCORE!")
+endif
+endif
 
-# Change to read-only aka "Locks" precious files.
-.PHONY: lock
-lock: SHELL=${GUARD_SHELL}
-lock:
-	-chmod u-w ${FILES_TO_BE_LOCKED}
+ifeq (${TRAIN_LM},)
+$(error "You must always define a training corpus for language model.")
+endif
 
-# Change to read-write aka "Unlocks" precious files.
-.PHONY: unlock
-unlock: SHELL=${GUARD_SHELL}
-unlock:
-	-chmod u+w ${FILES_TO_BE_LOCKED}
+ifeq (${TRAIN_TM},)
+$(error "You must always define a training corpus for translation model.")
+endif
 
-# Summarizes resources usage for this system.
-.PHONY: resource_summary_sub
-resource_summary_sub: SHELL=${GUARD_SHELL}
-resource_summary_sub:
-	find -type f -name log.\* \
-	| sort \
-	| xargs p-res-mon.sh -m ${MODULE_NAME}
+ifeq (${TUNE_DECODE},)
+$(error "You must always define a tuning corpus train the decoder.")
+endif
+
+ifeq (${SRC_LANG},)
+$(error "You must provide a SRC_LANG!")
+endif
+
+ifeq (${TGT_LANG},)
+$(error "You must provide a TGT_LANG!")
+endif
+
+ifeq (${SRC_LANG},${TGT_LANG})
+$(error "SRC_LANG=${SRC_LANG} cannot be the same as TGT_LANG=${TGT_LANG}!")
+endif
