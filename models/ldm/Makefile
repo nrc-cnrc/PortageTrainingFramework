@@ -15,7 +15,8 @@
 
 
 # User specific configuration.
--include Makefile.params
+MAKEFILE_PARAMS ?= Makefile.params
+-include ${MAKEFILE_PARAMS}
 
 # Mandatory include: master config file.
 include ../../Makefile.params
@@ -112,4 +113,11 @@ clean.logs:
 # resources summary
 .PHONY: summary
 summary: resource_summary_sub
+
+
+
+########################################
+# What is needed for PortageLive.
+.PHONY: portageLive
+portageLive: tpldm
 
