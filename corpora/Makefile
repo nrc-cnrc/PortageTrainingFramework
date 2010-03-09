@@ -23,6 +23,9 @@ MAKEFILE_PARAMS ?= Makefile.params
 # If your files are not tokenize, they should have the RAWX extentsion.
 RAWX ?= .raw
 
+# What is the truecase corpus extension.
+TCX ?= .tc
+
 # Change make's default shell to a distributed one, if working on a cluster.
 SHELL = ${FRAMEWORK_SHELL}
 
@@ -54,6 +57,7 @@ MINIMUM_PARALLEL_CHUNK_SIZE ?= 100000
 
 # Tells make where to find the raw corpora files.
 vpath %${ALIGNX} ${ALIGN_CORPORA_DIR}
+vpath %${RAWX}   ${RAW_CORPORA_DIR}
 
 
 # This Makefile should display some help message if the user doesn't specify a
@@ -75,12 +79,6 @@ help:
 .DELETE_ON_ERROR:
 .SUFFIXES:
 #.SECONDARY:
-
-# Where SRC_LANG/TGT_LANG  ~ en/fr
-# Where LANGX ~ .tok.al
-# Where LANGXZ ~ .tok.al.gz
-#.INTERMEDIATE: $(addsuffix _${SRC_LANG}${LANGX}, ${TRAIN_SET})
-#.INTERMEDIATE: $(addsuffix _${TGT_LANG}${LANGX}, ${TRAIN_SET})
 
 
 
@@ -184,12 +182,12 @@ TC = $(addsuffix _${TGT_LANG}.tc${GZ}, ${TRAIN_LM})
 tc: ${TC}
 
 # Prepare truecased file.
-%.tc: %${ALIGNX}
+%${TCX}: %${ALIGNX}
 	@${check_utf8}
 	RP_PSUB_OPTS="-1" \
 	cp $< $@
 
-%.tc${GZ}: %${ALIGNX}${GZ}
+%${TCX}${GZ}: %${ALIGNX}${GZ}
 	@${check_utf8}
 	RP_PSUB_OPTS="-1" \
 	cp $< $@
