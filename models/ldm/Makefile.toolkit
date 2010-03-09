@@ -83,7 +83,14 @@ vpath %${SRC_GIVEN_TGTX} ${MODEL_DIR}
 ########################################
 # How to calculate the lexicalized counts.
 LDM_COUNTS_PFX ?= ldm.counts
-# Where % = is the word alignment model type.
+# Note we are explicitely using the guard shell which will prevent sending this
+# command to the cluster queue since parallelize.pl will take care of this for
+# us.
+# You must provide this target:
+# - a source corpus with the SRCXZ suffix;
+# - a target corpus with the TGTXZ suffix;
+# - a forward word alignment model aka target given source model with the TGT_GIVEN_SRCX suffix;
+# - a backward word alignment model aka source given target model with the SRC_GIVEN_TGTX suffix.
 ${LDM_COUNTS_PFX}%: SHELL=${GUARD_SHELL}
 ${LDM_COUNTS_PFX}%:
 	parallelize.pl \
@@ -102,7 +109,8 @@ ${LDM_COUNTS_PFX}%:
 ########################################
 # How to create a lexicalized distortion models.
 LDM_MODEL_PFX ?= ldm
-.PHONY: ldm
+# You must provide this target:
+# - one or more lexicalized distortion model counts.
 ${LDM_MODEL_PFX}%${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
 ${LDM_MODEL_PFX}%${SRC_2_TGTX}:
 	RP_PSUB_OPTS="-${ESTIM_CPU}" \
@@ -116,7 +124,9 @@ ${LDM_MODEL_PFX}%${SRC_2_TGTX}:
 
 ########################################
 # How to make a lexicalized distortion model a tightly packed version.
-# This target depends on the text version of the lexicalized distortion model.
+# You must provide this target:
+# - a text version of the lexicalized distortion model.
+%.tpldm: SHELL=${FRAMEWORK_SHELL}
 %.tpldm:
 	textldm2tpldm.sh $<
 
