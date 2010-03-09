@@ -145,9 +145,11 @@ SRC_RAWZ_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${SRC_LANG}${RAWX}${GZ
 SRC_TOKZ_LIST ?= $(SRC_RAWZ_LIST:${RAWX}${GZ}=${ALIGNX}${GZ})
 TOK += ${SRC_TOKZ_LIST}
 
+${SRC_TOKZ_LIST}: SHELL=${GUARD_SHELL}
 ${SRC_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
 	RP_PSUB_OPTS="-1" \
 	parallelize.pl \
+		-nolocal \
 		-psub -1 \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
 		-n ${PARALLELISM_LEVEL_CORPORA} \
@@ -159,9 +161,11 @@ TGT_RAWZ_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${TGT_LANG}${RAWX}${GZ
 TGT_TOKZ_LIST ?= $(TGT_RAWZ_LIST:${RAWX}${GZ}=${ALIGNX}${GZ})
 TOK += ${TGT_TOKZ_LIST}
 
+${TGT_TOKZ_LIST}: SHELL=${GUARD_SHELL}
 ${TGT_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
 	RP_PSUB_OPTS="-1" \
 	parallelize.pl \
+		-nolocal \
 		-psub -1 \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
 		-n ${PARALLELISM_LEVEL_CORPORA} \
