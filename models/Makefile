@@ -17,6 +17,7 @@
 MAKEFILE_PARAMS ?= ../Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+.DEFAULT_GOAL := help
 .SUFFIXES:
 
 .PHONY: all
@@ -136,11 +137,9 @@ portageLive: portageLive_lm
 portageLive: portageLive_tc
 portageLive: portageLive_decode
 
+portageLive_decode: cow
 portageLive_%:
 	${MAKE} -C $* portageLive
-
-portageLive_decode: cow
-	${MAKE} -C decode portageLive
 
 
 
@@ -151,11 +150,9 @@ PORTAGEsharedLive: PORTAGEsharedLive_lm
 PORTAGEsharedLive: PORTAGEsharedLive_tc
 PORTAGEsharedLive: PORTAGEsharedLive_decode
 
+PORTAGEsharedLive_decode: cow
 PORTAGEsharedLive_%:
 	${MAKE} -C $* PORTAGEsharedLive
-
-PORTAGEsharedLive_decode: cow
-	${MAKE} -C decode PORTAGEsharedLive
 
 
 
