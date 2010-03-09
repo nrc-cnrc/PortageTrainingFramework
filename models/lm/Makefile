@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# vim:noet:ts=3
+# vim:noet:ts=3:nowrap
 #
 # $Id$
 # @author Samuel Larkin
@@ -19,6 +19,10 @@ include ../../Makefile.params
 # Include the config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
+
+# 
+include ../../Makefile.toolkit
+
 
 # What is this module's name.
 MODULE_NAME ?= lm
@@ -87,10 +91,11 @@ P_RES_MON ?= p-res-mon.sh -t
 
 # Tells make where to find the corpus' file and the marked file if need be.
 vpath %${CORPUS_EXT} ${CORPORA_DIR}
-vpath %.marked.gz ${CORPORA_DIR}
+vpath %.marked.gz    ${CORPORA_DIR}
 
 
 
+.DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
 
 
