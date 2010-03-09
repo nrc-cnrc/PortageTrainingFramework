@@ -15,6 +15,8 @@
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+.DEFAULT_GOAL := help
+.DELETE_ON_ERROR:
 .SUFFIXES:
 
 .PHONY: all
