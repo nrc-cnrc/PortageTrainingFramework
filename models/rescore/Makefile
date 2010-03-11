@@ -20,6 +20,10 @@ include ../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+# Lastly include the master toolkit
+include ../../Makefile.toolkit
+
+
 # What is this module's name.
 MODULE_NAME ?= rescore
 
@@ -138,16 +142,6 @@ clean.content: SHELL=${GUARD_SHELL}
 # resources summary
 .PHONY: summary
 summary: resource_summary_sub
-
-
-
-########################################
-# Hide logs.
-.PHONY: hide
-hide: SHELL=${GUARD_SHELL}
-hide:
-	mkdir -p .logs
-	mv log.* run-parallel-logs-* .logs
 
 
 

@@ -10,13 +10,14 @@
 # Technologies langagieres interactives / Interactive Language Technologiesm
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2009, Sa Majeste la Reine du Chef du Canada /
-# Copyright 2009, Her Majesty in Right of Canada
+# Copyright 2010, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2010, Her Majesty in Right of Canada
 
 
 
 -include Makefile.params
 include ../../Makefile.params
+include ../../Makefile.toolkit
 include Makefile.definition
 include Makefile.toolkit
 
@@ -71,4 +72,11 @@ ce-notm.ini: ce-notm.template ${CANOE_MODEL}
 train: ce_model.cem
 
 ce_model.cem: ce-notm.ini ${TUNE_CE_SRC} ${TUNE_CE_TGT}
+
+
+
+########################################
+# resources summary
+.PHONY: summary
+summary: resource_summary_sub
 

@@ -161,8 +161,10 @@ PORTAGEsharedLive_%:
 .PHONY: summary
 summary: SHELL=${GUARD_SHELL}
 summary:
+	@${MAKE} --no-print-directory -s -C ldm summary
 	@${MAKE} --no-print-directory -s -C lm summary
 	@${MAKE} --no-print-directory -s -C tm summary
 	@${MAKE} --no-print-directory -s -C tc summary
 	@${MAKE} --no-print-directory -s -C decode summary
 	@${MAKE} --no-print-directory -s -C rescore summary
+	@${MAKE} --no-print-directory -s -C confidence summary

@@ -157,4 +157,4 @@ resource_summary:
 summary: SHELL=/bin/bash
 summary:
 	@p-res-mon.sh <(${MAKE} resource_summary)
-	@du -sch models/lm/*lm.gz models/tm/{ibm,hmm,jpt,cpt}* models/tc translate
+	@du -sch models/ldm models/lm/*lm.gz models/tm/{ibm,hmm,jpt,cpt}* models/tc translate

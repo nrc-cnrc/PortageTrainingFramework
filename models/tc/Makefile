@@ -20,6 +20,10 @@ include ../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+# Lastly include the master toolkit
+include ../../Makefile.toolkit
+
+
 # What is this module's name.
 MODULE_NAME ?= tc
 
@@ -111,16 +115,6 @@ clean.content clean.logs : %:
 .PHONY: summary
 summary: resource_summary_sub
 
-
-
-########################################
-# Hide logs.
-.PHONY: hide
-hide: SHELL=${GUARD_SHELL}
-hide:
-	mkdir -p .logs
-	-ls log.* >& /dev/null && mv log.* .logs
-	-ls run-parallel-logs-* >& /dev/null && mv run-parallel-logs-* .logs
 
 
 ########################################
