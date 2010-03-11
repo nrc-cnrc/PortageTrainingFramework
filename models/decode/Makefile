@@ -81,6 +81,7 @@ MERT_MAX_ITER ?= 15
 FILES_TO_BE_LOCKED = ${DECODING_MODEL}
 
 
+.DEFAULT_GOAL := help
 .SECONDARY:
 .DELETE_ON_ERROR:
 
@@ -160,8 +161,15 @@ check_template:
 
 ########################################
 # Create canoe.ini from template.
-CPTS ?= $(subst /,\/,$(wildcard models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz))
-LMS  ?= $(subst /,\/,$(wildcard models/lm/*${TGT_LANG}*.binlm.gz))
+ifdef USE_LDM
+LDM ?= $(wildcard models/ldm/ldm.*.${SRC_LANG}2${TGT_LANG}.gz)
+DISTORTION ?= -dist-phrase-swap -dist-limit-ext -lex-dist-model-file ${LDM} -distortion-model WordDisplacement:back-lex\#m:back-lex\#s:back-lex\#d:fwd-lex\#m:fwd-lex\#s:fwd-lex\#d
+else
+DISTORTION ?= -distortion-model WordDisplacement
+endif
+
+CPTS ?= $(wildcard models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz)
+LMS  ?= $(wildcard models/lm/*${TGT_LANG}*.binlm.gz)
 ${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}  models
 	@ls models/tm/cpt.* &> /dev/null || \
@@ -173,14 +181,15 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}  models
 	cat $< \
 	| sed -e 's/<SL>/${SRC_LANG}/g' \
 	      -e 's/<TL>/${TGT_LANG}/g' \
-	      -e 's/<CPTS>/${CPTS}/g' \
-	      -e 's/<LMS>/${LMS}/g' \
+	      -e 's#<CPTS>#${CPTS}#g' \
+	      -e 's#<LMS>#${LMS}#g' \
 	      -e 's/^\(\[\(weight-f\|ftm\)\]\)/##mid##\1/' \
 	> tmp.$@
 	WT=$$(perl -e 'print 1; print ":1" foreach (2..`configtool nt tmp.$@`)'); \
 	cat tmp.$@ \
 	| sed -e "s/^##mid##//" \
 	      -e "s/<ENABLE_FTM>/$$WT/" \
+	| configtool -p "args:${DISTORTION}" - \
 	> $@
 	rm tmp.$@
 	configtool check $@
