@@ -52,30 +52,10 @@ LM_TOOLKIT = SRI
 # Train and apply rescoring if this variable is defined.
 # Comment out to disable rescoring.
 DO_RESCORING = 1
-# Automatically activate tuning rescoring if the user specifies a TUNE_RESCORE set.
-ifneq (${TUNE_RESCORE},)
-ifndef DO_RESCORING
-ifndef DISABLE_DO_RESCORING_AUTOACTIVATION_WARNING
-DO_RESCORING = 1
-$(warning "User specified a rescore tuning set, auto-activating rescoring.")
-export DISABLE_DO_RESCORING_AUTOACTIVATION_WARNING = 1
-endif
-endif
-endif
 
 # Tune and apply confidence estimation if this variable is defined.
 # Comment out to enable confidence estimation.
 #DO_CE = 1
-# Automatically activate tuning confidence estimation if the user specifies a TUNE_CE set.
-ifneq (${TUNE_CE},)
-ifndef DO_CE
-ifndef DISABLE_DO_CONFIDENCE_ESTIMATION_AUTOACTIVATION_WARNING
-DO_CE = 1
-$(warning "User specified a confidence estimation tuning set, auto-activating confidence estimation.")
-export DISABLE_DO_CONFIDENCE_ESTIMATION_AUTOACTIVATION_WARNING = 1
-endif
-endif
-endif
 
 # Train and apply truecassing if this variable is defined.
 # Comment out to disable truecasing.
