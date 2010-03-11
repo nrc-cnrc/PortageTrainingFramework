@@ -27,6 +27,8 @@ all: tune
 
 
 
+########################################
+# HELP MESSAGE.
 .PHONY: help
 help:
 	@echo "please run in order for this framework to run properly:"
@@ -44,7 +46,8 @@ help:
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
 
 
-
+########################################
+# CLEANING.
 .PHONY: clean hide clean.logs clean.content
 # Thorough cleaning of everything
 # Hide logs from user's view into .logs
@@ -58,11 +61,10 @@ clean hide clean.logs clean.content: %:
 
 
 
+################################################################################
+# MINIMUM MANDATORY TARGETS.
 .PHONY: models
 models: lm tm
-ifdef DO_TRUECASING
-models: tc
-endif
 
 
 
@@ -74,6 +76,48 @@ lm: lm.${SRC_LANG}
 endif
 lm.%:
 	${MAKE} -C lm all LM_LANG=$*
+
+
+
+.PHONY: tm
+# Create the Translation Model (TM).
+tm:
+	${MAKE} -C tm all
+
+
+
+.PHONY: tune
+# Tune the required models.
+tune: decode
+
+
+
+.PHONY: cow
+# Run COW to tune the decoding model.
+decode cow: models
+	${MAKE} -C decode all
+
+
+
+.PHONY: rat
+# Run RAT to tune the rescoring model.
+rescore rat: decode
+	${MAKE} -C rescore all
+
+
+
+################################################################################
+# Targets based on master Makefile.params
+.PHONY: ldm
+ifdef USE_LDM
+models: ldm
+
+ldm: tm
+	${MAKE} -C ldm all
+else
+ldm:
+	@echo "Not training a lexicalized distortion model." >&2
+endif
 
 
 
@@ -100,6 +144,8 @@ endif
 .PHONY: tc
 # Create models for truecasing (TC).
 ifdef DO_TRUECASING
+models: tc
+
 tc:
 	${MAKE} -C tc all
 else
@@ -109,33 +155,9 @@ endif
 
 
 
-.PHONY: tm
-# Create the Translation Model (TM).
-tm:
-	${MAKE} -C tm all
-
-
-
-.PHONY: tune
-# Tune the required models.
-tune: cow
 ifdef DO_RESCORING
-tune: rat
+tune: rescore
 endif
-
-
-
-.PHONY: cow
-# Run COW to tune the decoding model.
-cow: models
-	${MAKE} -C decode all
-
-
-
-.PHONY: rat
-# Run RAT to tune the rescoring model.
-rat: cow
-	${MAKE} -C rescore all
 
 
 

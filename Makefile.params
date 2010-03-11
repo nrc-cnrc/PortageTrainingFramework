@@ -57,6 +57,10 @@ DO_RESCORING = 1
 # Comment out to enable confidence estimation.
 #DO_CE = 1
 
+# Train and use a Lexicalized Distortion Model.
+# Comment out to disable using a Lexicalized Distortion Model.
+#USE_LDM = 1
+
 # Train and apply truecassing if this variable is defined.
 # Comment out to disable truecasing.
 DO_TRUECASING = 1
