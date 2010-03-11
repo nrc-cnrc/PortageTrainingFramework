@@ -48,6 +48,7 @@ hide: SHELL=${GUARD_SHELL}
 hide:
 	mkdir -p .logs
 	-mv log.* run-parallel-logs-* .logs
+	-ls * | egrep '\.[joe][0-9]{1,6}' | xargs -i mv {} .logs
 
 
 
