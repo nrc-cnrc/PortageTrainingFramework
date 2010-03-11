@@ -17,6 +17,8 @@
 MAKEFILE_PARAMS ?= ../Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+SHELL = ${GUARD_SHELL}
+
 .DEFAULT_GOAL := help
 .SUFFIXES:
 
@@ -78,6 +80,13 @@ lm.%:
 .PHONY: confidence
 ifdef DO_CE
 tune: confidence
+
+portageLive: portageLive_lm_src
+
+PORTAGEsharedLive: portageLive_lm_src
+
+portageLive_lm_src:
+	${MAKE} -C lm tplm LM_LANG=${SRC_LANG}
 
 confidence: lm.${SRC_LANG} cow
 	${MAKE} -C confidence all
