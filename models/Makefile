@@ -132,7 +132,7 @@ PORTAGEsharedLive: portageLive_lm_src
 portageLive_lm_src:
 	${MAKE} -C lm tplm LM_LANG=${SRC_LANG}
 
-confidence: lm.${SRC_LANG} cow
+confidence: lm.${SRC_LANG} decode
 	${MAKE} -C confidence all
 else
 confidence:
