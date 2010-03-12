@@ -157,6 +157,7 @@ HMM3_MODEL_PFX ?= hmm3
 HMM3_MODEL_CPUS ?= 2
 HMM3_MODEL_PARALLELISM_LEVEL ?= 10
 HMM3_MODEL_WORKERS ?= 10
+NEW_HMM ?= -newhmm
 
 ${HMM3_MODEL_PFX}%${L1_GIVEN_L2X}: HMM3_DIR=-r
 ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
@@ -164,7 +165,7 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	${CAT} -n ${HMM3_MODEL_PARALLELISM_LEVEL} -pn ${HMM3_MODEL_WORKERS} \
 		-v ${HMM3_DIR} \
 		-n1 0 -n2 5 \
-		-hmm -newhmm -start-dist -final-dist -anchor -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 \
+		-hmm ${NEW_HMM} -end-dist -anchor -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 \
 		-bin \
 		-i $< \
 		${HMM3_MODEL_EXTRAS} \
