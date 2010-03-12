@@ -82,7 +82,7 @@ FILES_TO_BE_LOCKED = ${LM_NAME}*
 # Enable monitoring of memory usage.
 MONITOR_MEMORY_USAGE ?=
 
-#
+# If you need to provide ngram-count some extra parameters.
 EXTRA_NGRAM_COUNT_OPTIONS ?=
 
 # Resource monitoring.
@@ -100,6 +100,7 @@ vpath %.marked.gz    ${CORPORA_DIR}
 
 
 
+########################################
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
@@ -113,19 +114,13 @@ help:
 
 
 
+########################################
 .PHONY: all
 all: ${LM_TYPES}
 
 
 
-.PHONY: all_lm
-# All valid/possible LMs
-all_lm: arpa
-all_lm: blmt
-all_lm: quantize
-all_lm: Qblmt
-all_lm: binlm
-
+########################################
 # What the user can expect from this module.
 .PHONY: list_final_output
 list_final_output: SHELL=${GUARD_SHELL}
@@ -135,29 +130,21 @@ list_final_output:
 
 
 
-# TODO: We need to clean up source side language models and logs.
-#ifdef DO_CE
-#clean clean.content clean.logs: %: do_ce.%
-#
-#do_ce.%:
-#	${MAKE} LM_LANG=${SRC_LANG} DO_CE $*
-#endif
+########################################
+# resources summary
+.PHONY: summary
+summary: resource_summary_sub
 
 
 
+########################################
+# CLEANING.
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
 
 .PHONY: clean.content
 clean: clean.content
 clean.content: SHELL=${GUARD_SHELL}
-
-
-
-########################################
-# resources summary
-.PHONY: summary
-summary: resource_summary_sub
 
 
 
@@ -188,6 +175,7 @@ PORTAGEsharedLive: binlm
 
 
 
+########################################
 # Adds sentence start and end markers
 .PHONY: mark
 mark: ${CORPUS_NAME}.marked.gz
@@ -206,10 +194,11 @@ clean.content: clean.mark
 .PHONY: clean.mark
 clean.mark: SHELL=${GUARD_SHELL}
 clean.mark:
-	${RM} ${CORPUS_NAME}.marked.gz
+	${RM} *.marked.gz
 
 
 
+########################################
 # iARPA
 # Compressed irstlm format
 .PHONY: irstlm
@@ -236,11 +225,12 @@ clean.content: clean.irstlm
 .PHONY: clean.irstlm
 clean.irstlm: SHELL=${GUARD_SHELL}
 clean.irstlm:
-	${RM} ${LM_NAME}.ilm.gz
-	${RM} -r stat
+	${RM} *.ilm.gz
+	${RM} -r stat*
 
 
 
+########################################
 # arpa text compressed format
 .PHONY: arpa
 arpa: ${LM_NAME}.lm.gz
@@ -302,10 +292,11 @@ clean.content: clean.arpa
 .PHONY: clean.arpa
 clean.arpa: SHELL=${GUARD_SHELL}
 clean.arpa:
-	${RM} ${LM_NAME}.lm.gz
+	${RM} *.lm.gz
 
 
 
+########################################
 # BINAIRY FORMAT
 # arpa bin compressed format
 .PHONY: blmt
@@ -326,10 +317,11 @@ clean.content: clean.blmt
 .PHONY: clean.blmt
 clean.blmt: SHELL=${GUARD_SHELL}
 clean.blmt:
-	${RM} ${LM_NAME}.blmt
+	${RM} *.blmt
 
 
 
+########################################
 # qARPA format
 .PHONY: quantize
 quantize: $(LM_NAME).qlm.gz
@@ -349,10 +341,11 @@ clean.content: clean.quantize
 .PHONY: clean.quantize
 clean.quantize: SHELL=${GUARD_SHELL}
 clean.quantize:
-	${RM} $(LM_NAME).qlm.gz
+	${RM} *.qlm.gz
 
 
 
+########################################
 # Quantinze binairy
 .PHONY: Qblmt
 Qblmt: ${LM_NAME}.Qblmt
@@ -372,10 +365,11 @@ clean.content: clean.Qblmt
 .PHONY: clean.Qblmt
 clean.Qblmt: SHELL=${GUARD_SHELL}
 clean.Qblmt:
-	${RM} ${LM_NAME}.Qblmt
+	${RM} *.Qblmt
 
 
 
+########################################
 # Sort the arpa format
 .PHONY: sort_arpa
 sort_arpa: ${LM_NAME}.lm.sorted.gz
@@ -390,10 +384,11 @@ clean.content: clean.sort_arpa
 .PHONY: clean.sort_arpa
 clean.sort_arpa: SHELL=${GUARD_SHELL}
 clean.sort_arpa:
-	${RM} ${LM_NAME}.lm.sorted.gz
+	${RM} *.lm.sorted.gz
 
 
 
+########################################
 # Portage's bin lm format
 .PHONY: binlm
 binlm: ${LM_NAME}.binlm.gz
@@ -411,10 +406,11 @@ clean.content: clean.binlm
 .PHONY: clean.binlm
 clean.binlm: SHELL=${GUARD_SHELL}
 clean.binlm:
-	${RM} ${LM_NAME}.binlm.gz
+	${RM} *.binlm.gz
 
 
 
+########################################
 # Pruning ARPA format => ARPA format
 .PHONY: prune
 prune: ${LM_NAME}.plm.gz
@@ -428,6 +424,7 @@ prune: ${LM_NAME}.plm.gz
 
 
 
+########################################
 # Create Tightly Packed Language Model.
 .PHONY: tplm
 tplm: ${LM_NAME}.tplm
@@ -441,12 +438,24 @@ clean.content: clean.tplm
 .PHONY: clean.tplm
 clean.tplm: SHELL=${GUARD_SHELL}
 clean.tplm:
-	${RM} ${LM_NAME}.tplm
+	${RM} *.tplm
+
+
+
+################################################################################
+# HELPERS
+########################################
+# All valid/possible LMs
+.PHONY: all_lm
+all_lm: arpa
+all_lm: blmt
+all_lm: quantize
+all_lm: Qblmt
+all_lm: binlm
 
 
 
 ########################################
-# HELPERS
 # Check if the environment is set
 .PHONY: test
 test: SHELL=${GUARD_SHELL}
@@ -455,6 +464,7 @@ test:
 
 
 
+########################################
 # For debugging purpose
 .PHONY: check_setup
 check_setup: SHELL=${GUARD_SHELL}
