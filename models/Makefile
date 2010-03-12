@@ -92,16 +92,18 @@ tune: decode
 
 
 
-.PHONY: cow
+.PHONY: cow decode
 # Run COW to tune the decoding model.
-decode cow: models
+cow: decode
+decode: models
 	${MAKE} -C decode all
 
 
 
-.PHONY: rat
+.PHONY: rat rescore
 # Run RAT to tune the rescoring model.
-rescore rat: decode
+rat: rescore
+rescore: decode
 	${MAKE} -C rescore all
 
 
