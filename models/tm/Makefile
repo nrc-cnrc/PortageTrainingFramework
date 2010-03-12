@@ -161,7 +161,8 @@ clean.content: SHELL=${GUARD_SHELL}
 clean: clean.logs
 clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
-	$(RM) run-parallel-log* log.* run-p.*
+	${RM} run-parallel-log* log.* run-p.*
+	${RM} -r .logs
 
 
 
