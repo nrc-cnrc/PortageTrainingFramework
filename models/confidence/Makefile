@@ -22,8 +22,19 @@ include Makefile.definition
 include Makefile.toolkit
 
 
+.DEFAULT_GOAL := help
+.DELETE_ON_ERROR:
+
 .PHONY: all
 all: train
+
+
+
+.PHONY: help
+help: SHELL=${GUARD_SHELL}
+help:
+	@echo "Tuning a Confidence Estimation Model."
+	@echo "Valid target are: clean & all"
 
 
 ########################################
