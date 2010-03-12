@@ -57,8 +57,9 @@ DECODING_MODEL_TEMPLATE ?= ${DECODING_MODEL_DIR}/${DECODING_MODEL}
 RESCORING_MODEL_DIR ?= models/rescore
 RESCORING_MODEL     ?= rescore-model
 
-# Indicates where to find the IBM models.
-IBM_DIR ?= models/TM
+# Indidcates where to find the confidence estimation model.
+CONFIDENCE_MODEL_DIR ?= models/confidence
+CONFIDENCE_MODEL     ?= ce_model.cem
 
 # Will indicate to make where to find the SETs (dev & test & eval)
 CORPORA_DIR ?= ../corpora
@@ -85,6 +86,7 @@ POST_PROCESSING ?= cat
 TRANS_CPUS ?= 1
 
 
+.DEFAULT_GOAL := help
 .SECONDARY:
 .SUFFIXES:
 .DELETE_ON_ERROR:
@@ -96,8 +98,8 @@ vpath %${RULEX} ${CORPORA_DIR}
 
 vpath ${DECODING_MODEL}  ${DECODING_MODEL_DIR}  models/decode
 vpath ${RESCORING_MODEL} ${RESCORING_MODEL_DIR} models/rescore
-vpath ${TRUECASING_LM}   ${TRUECASING_DIR}
-vpath ${TRUECASING_MAP}  ${TRUECASING_DIR}
+vpath ${TRUECASING_LM}   ${TRUECASING_DIR} models/tc
+vpath ${TRUECASING_MAP}  ${TRUECASING_DIR} models/tc
 
 
 
@@ -400,29 +402,31 @@ endif
 # If the source has no reference.
 # Here we assume that, if the user didn't include the testset as part of the
 # TEST_SET variable, this mean it doesn't have a reference counter part.
-%.ce: ce_model.cem %${SRCX} ${DECODING_MODEL}.% models
+%.ce: ${CONFIDENCE_MODEL} %${SRCX} ${DECODING_MODEL}.% models
 	ce_translate.pl \
 		-notok -nolc \
 		-dir=ce-workdir-$* \
 		-out=$@ \
 		$(filter ${DECODING_MODEL}%, $+) \
-		ce_model.cem \
-		$(filter %${SRCX}, $+)
+		$(filter ${CONFIDENCE_MODEL}, $+) \
+		$(filter %${SRCX}, $+) \
+	2> log.$@
 
 # If the source has a reference.
-$(addsuffix .ce, ${TEST_SET}): %.ce: ce_model.cem %${SRCX} %${TGTX} ${DECODING_MODEL}.% models
+$(addsuffix .ce, ${TEST_SET}): %.ce: ${CONFIDENCE_MODEL} %${SRCX} %${TGTX} ${DECODING_MODEL}.% models
 	ce_translate.pl \
 		-notok -nolc \
 		-test=$(filter %${TGTX}, $+) \
 		-dir=ce-workdir-$* \
 		-out=$@ \
 		$(filter ${DECODING_MODEL}%, $+) \
-		ce_model.cem \
-		$(filter %${SRCX}, $+)
+		$(filter ${CONFIDENCE_MODEL}, $+) \
+		$(filter %${SRCX}, $+) \
+	2> log.$@
 
-ce_model.cem: SHELL=${GUARD_SHELL}
-ce_model.cem: models
-	ln -fs models/confidence/$@
+${CONFIDENCE_MODEL}: SHELL=${GUARD_SHELL}
+${CONFIDENCE_MODEL}: models
+	ln -fs ${CONFIDENCE_MODEL_DIR}/$@
 
 clean.content: clean.ce
 
@@ -430,7 +434,7 @@ clean.content: clean.ce
 clean.ce: SHELL=${GUARD_SHELL}
 clean.ce:
 	${RM} -r ce-workdir-*
-	${RM} ce_model.cem
+	${RM} ${CONFIDENCE_MODEL}
 	${RM} *.ce
 
 
