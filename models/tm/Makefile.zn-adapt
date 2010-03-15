@@ -1,0 +1,137 @@
+#!/usr/bin/make -f
+# vim:noet:ts=3:nowrap
+# $Id$
+
+# @file Makefile
+# @brief What are the dependencies to train a zn-adapted conditional phrase table.
+#
+# @author Samuel Larkin
+#
+# Technologies langagieres interactives / Interactive Language Technologiesm
+# Inst. de technologie de l'information / Institute for Information Technology
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2010, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2010, Her Majesty in Right of Canada
+
+
+# Mandatory include: master config file.
+include ../../Makefile.params
+
+# Include the config file.
+MAKEFILE_PARAMS ?= Makefile.params
+-include ${MAKEFILE_PARAMS}
+
+# Lets rename the language identifiers for the toolkit.
+lang1 = ${SRC_LANG}
+lang2 = ${TGT_LANG}
+
+L1X = _${SRC_LANG}${LANGXZ}
+L2X = _${TGT_LANG}${LANGXZ}
+
+include Makefile.toolkit
+
+# Lastly include the master toolkit
+include ../../Makefile.toolkit
+# This Makefile only works properly if lang1 is lexicographically before lang2.
+
+SHELL = run-parallel.sh
+
+CORPORA_DIR ?= ../../corpora
+
+TRAIN_TM        ?= train
+TRAIN_TM_BASE   ?= $(TRAIN_TM:-all=)
+TRAIN_TM_ALL    ?= $(TRAIN_TM_BASE:=-all)
+TRAIN_TM_DOMAIN ?= $(TRAIN_TM_BASE:=-domain)
+TRAIN_TM_OTHER  ?= $(TRAIN_TM_BASE:=-other)
+
+domain_files ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_DOMAIN}*${LANGXZ}))
+other_files  ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}))
+
+
+
+ifeq ("${domain_files}", "")
+$(error "Make couldn't find the domain files.")
+endif
+
+ifeq ("${other_files}", "")
+$(error "Make couldn't find the domain files.")
+endif
+
+
+
+vpath %${LANGXZ} ${CORPORA_DIR}
+
+.DEFAULT_GOAL := help
+.DELETE_ON_ERROR:
+.SUFFIXES:
+.SECONDARY:
+
+.PHONY: all
+all: zn-adapt
+
+.PHONY: zn-adapt
+zn-adapt: ${CPT_MODEL_PFX}.zn-adapt.${L1_2_L2X}
+zn-adapt: ${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}
+
+
+# Train word alignment models on in domain data.
+${IBM1_MODEL_PFX}.${TRAIN_TM_DOMAIN}%: IBM1_MODEL_CPUS = 1
+${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}%: HMM3_MODEL_CPUS = 1
+
+${IBM1_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L2_GIVEN_L1X}: ${domain_files}
+${IBM1_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L1_GIVEN_L2X}: ${domain_files}
+
+${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L2_GIVEN_L1X}: ${domain_files}
+${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L1_GIVEN_L2X}: ${domain_files}
+
+
+# Train word alignment models on all data.
+${IBM1_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X}: ${domain_files} ${other_files}
+${IBM1_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}: ${domain_files} ${other_files}
+
+${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X}: ${domain_files} ${other_files}
+${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}: ${domain_files} ${other_files}
+
+${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X}: ${domain_files} ${other_files}
+${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}: ${domain_files} ${other_files}
+
+
+# Create joint frequency counts.
+# Extract phrase alignment using HMM3 models.
+${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${domain_files}
+${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${other_files}
+
+# Extract phrase alignment using IBM2 models.
+${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${domain_files}
+${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${other_files}
+
+
+# Create zn-adapted phrase table.
+${CPT_MODEL_PFX}.zn-adapt.${L1_2_L2X}: ${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L1_GIVEN_L2X}
+${CPT_MODEL_PFX}.zn-adapt.${L1_2_L2X}: ${JPT_MODEL_PFX}.merged.${JOINTX}
+
+${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}: ${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L1_GIVEN_L2X}
+${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}: ${JPT_MODEL_PFX}.merged.${RJOINTX}
+
+
+# To be able to use faster joint2cond, we must merge into one single jpt files.
+.INTERMEDIATE: ${JPT_MODEL_PFX}.merged.${JOINTX}
+${JPT_MODEL_PFX}.merged.${JOINTX}: ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX} ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX} ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX} ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}
+	merge_counts $@ $+
+
+
+
+########################################
+# HELPERS
+debug: SHELL=bash
+debug:
+	@echo "CORPORA_DIR: ${CORPORA_DIR}"
+	@echo "TRAIN_TM_BASE: ${TRAIN_TM_BASE}"
+	@echo "TRAIN_TM_ALL: ${TRAIN_TM_ALL}"
+	@echo "domain_files: ${domain_files}"
+	@echo "other_files: ${other_files}"
+
