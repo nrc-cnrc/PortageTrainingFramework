@@ -13,3 +13,13 @@
 
 
 # User defines for models/tm/.
+
+# If you want to use 4 cpus when training an ibm1 model for TRAIN_TM.
+#${IBM1_MODEL_PFX}.${TRAIN_TM}%:  IBM1_MODEL_CPUS=4
+
+# If you need to provide extra parameters when you build the ibm1 model for TRAIN_TM.
+#${IBM1_MODEL_PFX}.${TRAIN_TM}%:  IBM1_MODEL_EXTRAS=my params
+#${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  IBM1_MODEL_EXTRAS=Your params
+
+#IBM2_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
+#IBM2_SMOOTHERS_DESCRIPTION ?= -rf-zn-kn3
