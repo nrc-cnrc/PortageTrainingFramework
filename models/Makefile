@@ -52,6 +52,7 @@ help:
 # Thorough cleaning of everything
 # Hide logs from user's view into .logs
 clean hide clean.logs clean.content: %:
+	${MAKE} -C ldm $@
 	${MAKE} -C lm $@
 	${MAKE} -C tm $@
 	${MAKE} -C tc $@
