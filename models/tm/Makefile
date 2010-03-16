@@ -13,7 +13,7 @@
 # Copyright 2008, Her Majesty in Right of Canada
 
 
-# Source file requirements
+# Source file requirements.
 # <PREFIX>_<LANGUAGE>.<LANGX>
  
 # Variables we use from ../../Makefile.params:
@@ -22,21 +22,18 @@
 # Mandatory include: master config file.
 include ../../Makefile.params
 
+# This is the Makefile that contains all targets required to build Translation
+# Models and some variable's defintion that might be used by the user in its
+# Makefile.params.
+include Makefile.toolkit
+
 # Lastly include the master toolkit
 include ../../Makefile.toolkit
 
-# Include the config file.
+# Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
-# Lets rename the language identifiers for the toolkit.
-lang1 = ${SRC_LANG}
-lang2 = ${TGT_LANG}
-
-L1X = _${SRC_LANG}${LANGXZ}
-L2X = _${TGT_LANG}${LANGXZ}
-
-include Makefile.toolkit
 
 
 # What is this module's name.
@@ -46,34 +43,10 @@ MODULE_NAME ?= tm
 # This will require that run-parallel.sh -c RP_OPTS be functional.
 SHELL = ${FRAMEWORK_SHELL}
 
-# Where we can find the parallel corpora
+# Where we can find the parallel corpora.
 CORPORA_DIR ?= ../../corpora
 
-# Already defined in the master config file.
-#SRC_LANG ?= en
-#TGT_LANG ?= fr
-#LANGX    ?= .lc
-#LANGXZ   ?= ${langx}.gz
-
-## Map source and target language to shorter variable name.
-#SRC  ?= ${SRC_LANG}
-#TGT  ?= ${TGT_LANG}
-#SRCX ?= _${SRC}${LANGXZ}
-#TGTX ?= _${TGT}${LANGXZ}
-#
-## IBM / HMM models extension
-#SRC_GIVEN_TGT  = ${SRC}_given_${TGT}
-#TGT_GIVEN_SRC  = ${TGT}_given_${SRC}
-#SRC_GIVEN_TGTX = ${SRC_GIVEN_TGT}.gz
-#TGT_GIVEN_SRCX = ${TGT_GIVEN_SRC}.gz
-#
-## conditional phrase table extension
-#SRC_2_TGT  = ${SRC}2${TGT}
-#TGT_2_SRC  = ${TGT}2${SRC}
-#SRC_2_TGTX = ${SRC_2_TGT}.gz
-#TGT_2_SRCX = ${TGT_2_SRC}.gz
-
-# What parallel corpora is to be used for creating the models
+# What parallel corpora is to be used for creating the models.
 TRAIN_TM ?= train
 
 # This script might produce directory and we want to easily remove them.
@@ -84,7 +57,7 @@ FILES_TO_BE_LOCKED = ibm* hmm* jpt* cpt*
 
 
 
-# Allows to search for alignment files in corpus
+# Allows to search for alignment files in corpus.
 vpath %${L1X} ${CORPORA_DIR}
 vpath %${L2X} ${CORPORA_DIR}
 

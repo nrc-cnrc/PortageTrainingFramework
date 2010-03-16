@@ -12,14 +12,35 @@
 # Copyright 2010, Her Majesty in Right of Canada
 
 
-# User defines for models/tm/.
+########################################
+# User defines for models/tm.
+# Syntax is:
+#<VARIABLE_NAME> = <VALUE>
+
+
+########################################
+# EXAMPLES.
+#IBM1_MODEL_EXTRAS=my params
+
+
+########################################
+# EXPERT EXAMPLES.
+# Syntax is:
+#<TARGET_NAME>: <VARIABLE_NAME> = <VALUE>
 
 # If you want to use 4 cpus when training an ibm1 model for TRAIN_TM.
 #${IBM1_MODEL_PFX}.${TRAIN_TM}%:  IBM1_MODEL_CPUS=4
 
 # If you need to provide extra parameters when you build the ibm1 model for TRAIN_TM.
 #${IBM1_MODEL_PFX}.${TRAIN_TM}%:  IBM1_MODEL_EXTRAS=my params
+
+# Or if you want to provide extra parameters for the forward ibm2 model.
 #${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  IBM1_MODEL_EXTRAS=Your params
 
-#IBM2_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
-#IBM2_SMOOTHERS_DESCRIPTION ?= -rf-zn-kn3
+# Example that changes the smoothers for the ibm2 conditional phrase table.
+#CPT_SMOOTHERS = -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
+#IBM2_SMOOTHERS_DESCRIPTION = -rf-zn-kn3
+
+# If you know that creating hmm3 conditional phrase tables require a lot of
+# memory, you can boost the number of cpus only for cpt.hmm3.
+#${CPT_MODEL_PFX}.${HMM3_MODEL_PFX}%: CPT_CPUS=16

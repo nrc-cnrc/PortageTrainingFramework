@@ -13,47 +13,109 @@
 # Copyright 2009, Her Majesty in Right of Canada
 
 
+-include ../../Makefile.params
 
 SHELL = ${FRAMEWORK_SHELL}
 
 export LANG   = en_CA.utf8
 export LC_ALL = en_CA.utf8
 
-L1X ?= _${lang1}.lc.gz
-L2X ?= _${lang2}.lc.gz
 
-# IBM / HMM models extension
+# Lets rename the language identifiers for the toolkit.
+lang1 = ${SRC_LANG}
+lang2 = ${TGT_LANG}
+
+# Language file extension.
+L1X = _${SRC_LANG}${LANGXZ}
+L2X = _${TGT_LANG}${LANGXZ}
+
+# IBM / HMM models extension.
 L1_GIVEN_L2  ?= ${lang1}_given_${lang2}
 L2_GIVEN_L1  ?= ${lang2}_given_${lang1}
 L1_GIVEN_L2X ?= ${L1_GIVEN_L2}.gz
 L2_GIVEN_L1X ?= ${L2_GIVEN_L1}.gz
 
-# conditional phrase table extension
+# conditional phrase table extension.
 L1_2_L2  ?= ${lang1}2${lang2}
 L2_2_L1  ?= ${lang2}2${lang1}
 L1_2_L2X ?= ${L1_2_L2}.gz
 L2_2_L1X ?= ${L2_2_L1}.gz
 
-# Joint phrase table extension
+# Joint phrase table extension.
 JOINT  ?= ${lang1}-${lang2}
 JOINTX ?= ${JOINT}.gz
 RJOINT  ?= ${lang2}-${lang1}
 RJOINTX ?= ${RJOINT}.gz
 
 # Lets define a parallelism level if the user forgets about it.
-#PARALLELISM_LEVEL_TM := $(shell grep processor /proc/cpuinfo | \wc -l)
+PARALLELISM_LEVEL_TM ?= $(shell grep processor /proc/cpuinfo | \wc -l)
 
-# Maximum phrase length
+# Maximum phrase length.
 M ?= 8
 
-# What program to use to train models
+# What program to use to train models.
 CAT ?= cat.sh
 
 # What program to use to create conditional pt from joint probs.
 JOINT2COND_PHRASE_TABLE ?= joint2cond_phrase_tables -reduce-mem
 
-# Track memory usage
+# Track memory usage.
 P_RES_MON ?= p-res-mon.sh -t
+
+
+########################################
+# IBM1 MODELS.
+IBM1_MODEL_PFX ?= ibm1
+IBM1_MODEL_CPUS ?= 1
+IBM1_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+IBM1_MODEL_WORKERS ?= ${IBM1_MODEL_PARALLELISM_LEVEL}
+IBM1_MODEL_EXTRAS ?=
+
+########################################
+# IBM2 MODELS.
+IBM2_MODEL_PFX ?= ibm2
+IBM2_MODEL_CPUS ?= 1
+IBM2_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+IBM2_MODEL_WORKERS ?= ${IBM2_MODEL_PARALLELISM_LEVEL}
+IBM2_MODEL_EXTRAS ?=
+
+########################################
+# HMM1 MODELS.
+HMM1_MODEL_PFX ?= hmm1
+HMM1_MODEL_CPUS ?= 1
+HMM1_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+HMM1_MODEL_WORKERS ?= ${HMM1_MODEL_PARALLELISM_LEVEL}
+HMM1_MODEL_EXTRAS ?=
+
+########################################
+# HMM2 MODELS.
+HMM2_MODEL_PFX ?= hmm2
+HMM2_MODEL_CPUS ?= 1
+HMM2_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+HMM2_MODEL_WORKERS ?= ${HMM2_MODEL_PARALLELISM_LEVEL}
+HMM2_MODEL_EXTRAS ?=
+
+########################################
+# HMM3 MODELS.
+HMM3_MODEL_PFX ?= hmm3
+HMM3_MODEL_CPUS ?= 1
+HMM3_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+HMM3_MODEL_WORKERS ?= ${HMM3_MODEL_PARALLELISM_LEVEL}
+HMM3_MODEL_EXTRAS ?=
+NEW_HMM ?= -newhmm
+
+########################################
+# JPT MODELS.
+JPT_MODEL_PFX ?= jpt
+JPT_CPUS ?= 1
+JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+JPT_WORKERS ?= ${JPT_PARALLELISM_LEVEL}
+
+########################################
+# CPT MODELS.
+CPT_MODEL_PFX ?= cpt
+CPT_CPUS ?= 4
+CPT_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother
 
 
 
@@ -87,12 +149,6 @@ endif
 ########################################
 # IBM1 MODELS
 # requires: source and target corpora.
-IBM1_MODEL_PFX ?= ibm1
-IBM1_MODEL_CPUS ?= 1
-IBM1_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-IBM1_MODEL_WORKERS ?= ${IBM1_MODEL_PARALLELISM_LEVEL}
-IBM1_MODEL_EXTRAS ?=
-
 ${IBM1_MODEL_PFX}%${L1_GIVEN_L2X}: IBM1_DIR=-r
 ${IBM1_MODEL_PFX}.%.gz:
 	RP_PSUB_OPTS="-${IBM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
@@ -109,12 +165,6 @@ ${IBM1_MODEL_PFX}.%.gz:
 
 ########################################
 # IBM2 MODELS
-IBM2_MODEL_PFX ?= ibm2
-IBM2_MODEL_CPUS ?= 1
-IBM2_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-IBM2_MODEL_WORKERS ?= ${IBM2_MODEL_PARALLELISM_LEVEL}
-IBM2_MODEL_EXTRAS ?=
-
 ${IBM2_MODEL_PFX}%${L1_GIVEN_L2X}: IBM2_DIR=-r
 ${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	RP_PSUB_OPTS="-${IBM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
@@ -133,12 +183,6 @@ ${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 
 ########################################
 # HMM1 MODELS
-HMM1_MODEL_PFX ?= hmm1
-HMM1_MODEL_CPUS ?= 1
-HMM1_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-HMM1_MODEL_WORKERS ?= ${HMM1_MODEL_PARALLELISM_LEVEL}
-HMM1_MODEL_EXTRAS ?=
-
 ${HMM1_MODEL_PFX}%${L1_GIVEN_L2X}: HMM1_DIR=-r
 ${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	RP_PSUB_OPTS="-${HMM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
@@ -157,12 +201,6 @@ ${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 
 ########################################
 # HMM2 MODELS
-HMM2_MODEL_PFX ?= hmm2
-HMM2_MODEL_CPUS ?= 1
-HMM2_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-HMM2_MODEL_WORKERS ?= ${HMM2_MODEL_PARALLELISM_LEVEL}
-HMM2_MODEL_EXTRAS ?=
-
 ${HMM2_MODEL_PFX}%${L1_GIVEN_L2X}: HMM2_DIR=-r
 ${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	RP_PSUB_OPTS="-${HMM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
@@ -181,13 +219,6 @@ ${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 
 ########################################
 # HMM3 MODELS
-HMM3_MODEL_PFX ?= hmm3
-HMM3_MODEL_CPUS ?= 1
-HMM3_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-HMM3_MODEL_WORKERS ?= ${HMM3_MODEL_PARALLELISM_LEVEL}
-HMM3_MODEL_EXTRAS ?=
-NEW_HMM ?= -newhmm
-
 ${HMM3_MODEL_PFX}%${L1_GIVEN_L2X}: HMM3_DIR=-r
 ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	RP_PSUB_OPTS="-${HMM3_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
@@ -206,11 +237,6 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 
 ########################################
 # JPT MODELS
-JPT_MODEL_PFX ?= jpt
-JPT_CPUS ?= 1
-JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-JPT_WORKERS ?= ${JPT_PARALLELISM_LEVEL}
-
 ${JPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: JPT_MODEL_TYPE=-ibm 1
 ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: JPT_MODEL_TYPE=-ibm 2
 ${JPT_MODEL_PFX}.hmm%: JPT_MODEL_TYPE=-hmm
@@ -233,12 +259,6 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 
 ########################################
 # CPT MODELS
-CPT_MODEL_PFX ?= cpt
-CPT_CPUS ?= 4
-#CPT_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
-CPT_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother
-
-
 ${CPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
 ${CPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
 ${CPT_MODEL_PFX}.hmm%: WORD_MODEL_TYPE=-hmm
