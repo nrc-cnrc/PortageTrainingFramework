@@ -316,7 +316,7 @@ clean.translate.%:
 
 
 check_rescoring_model: SHELL=${GUARD_SHELL}
-check_rescoring_model:
+check_rescoring_model: models
 	@if [[ ! -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]]; then \
 		echo "ERROR: No rescoring model available!" >&2; \
 		echo "Please train ${RESCORING_MODEL_DIR} first!" >&2; \
