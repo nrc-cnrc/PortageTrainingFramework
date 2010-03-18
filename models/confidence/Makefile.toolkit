@@ -26,7 +26,6 @@
 		-train \
 		-notok -nolc \
 		-k=5 \
-		-dir=${CE_WORKDIR_PRX}$* \
 		-desc=$(filter %${INIX}, $+) \
 		${CANOE_MODEL} \
 		$* \

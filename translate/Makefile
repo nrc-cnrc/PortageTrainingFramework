@@ -405,7 +405,6 @@ endif
 %.ce: ${CONFIDENCE_MODEL} %${SRCX} ${DECODING_MODEL}.% models
 	ce_translate.pl \
 		-notok -nolc \
-		-dir=ce-workdir-$* \
 		-out=$@ \
 		$(filter ${DECODING_MODEL}%, $+) \
 		$(filter ${CONFIDENCE_MODEL}, $+) \
@@ -417,7 +416,6 @@ $(addsuffix .ce, ${TEST_SET}): %.ce: ${CONFIDENCE_MODEL} %${SRCX} %${TGTX} ${DEC
 	ce_translate.pl \
 		-notok -nolc \
 		-test=$(filter %${TGTX}, $+) \
-		-dir=ce-workdir-$* \
 		-out=$@ \
 		$(filter ${DECODING_MODEL}%, $+) \
 		$(filter ${CONFIDENCE_MODEL}, $+) \
