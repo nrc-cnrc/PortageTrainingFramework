@@ -94,3 +94,14 @@ ce_model.cem: ce-notm.ini ${TUNE_CE_SRC} ${TUNE_CE_TGT}
 .PHONY: summary
 summary: resource_summary_sub
 
+
+
+########################################
+# Prepare what is needed for portageLive
+.PHONY: portageLive
+ifdef DO_CE
+portageLive: train
+else
+portageLive:
+	$(error "Exception this target shouldn't be called.")
+endif
