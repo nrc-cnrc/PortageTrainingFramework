@@ -255,7 +255,7 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 		-w 1 \
 		-o $@ \
 		GPT \
-		-v -m 8 ${JPT_MODEL_TYPE} \
+		-v -m ${M} ${JPT_MODEL_TYPE} \
 		-1 ${lang1} -2 ${lang2} \
 		${JPT_EXTRAS} \
 		$(filter %${L2_GIVEN_L1X}, $+) $(filter %${L1_GIVEN_L2X}, $+) \
