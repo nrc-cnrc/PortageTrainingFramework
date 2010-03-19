@@ -202,6 +202,7 @@ ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UN
 		-msrc $< \
 		-f $(wordlist 2,5,$+) \
 	>& log.$@
+	_LOCAL=1 rm -rf workdir-${TUNE_RESCORE_RULE}-${NBEST_SIZE}best
 
 clean.content: clean.rescore_train
 

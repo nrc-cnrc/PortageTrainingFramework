@@ -347,6 +347,7 @@ $(addsuffix .rat, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
 		$(word 2,$+) \
 	>& log.$@ \
 	&& mv $*${RULEX}.rat $@
+	_LOCAL=1 rm -rf workdir-$*${RULEX}-${NBEST_SIZE}best
 
 RAT_BLEU_DEP = $(addsuffix .rat.bleu, ${TEST_SET})
 .PHONY: rat.bleu
