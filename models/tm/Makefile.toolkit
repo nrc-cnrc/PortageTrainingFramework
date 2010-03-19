@@ -103,7 +103,7 @@ HMM3_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 HMM3_MODEL_WORKERS ?= ${HMM3_MODEL_PARALLELISM_LEVEL}
 HMM3_MODEL_EXTRAS ?=
 # This autodetect portage shared, thus to not alter.
-NEW_HMM := $(strip $(shell train_ibm -h 2>&1 | grep -om1 newhmm))
+NEW_HMM := -$(strip $(shell train_ibm -h 2>&1 | grep -om1 newhmm))
 
 ########################################
 # JPT MODELS.
