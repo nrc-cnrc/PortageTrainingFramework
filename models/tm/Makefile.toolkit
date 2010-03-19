@@ -102,7 +102,8 @@ HMM3_MODEL_CPUS ?= 1
 HMM3_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 HMM3_MODEL_WORKERS ?= ${HMM3_MODEL_PARALLELISM_LEVEL}
 HMM3_MODEL_EXTRAS ?=
-NEW_HMM ?= -newhmm
+# This autodetect portage shared, thus to not alter.
+NEW_HMM := $(strip $(shell train_ibm -h 2>&1 | grep -om1 newhmm))
 
 ########################################
 # JPT MODELS.
@@ -116,6 +117,11 @@ JPT_WORKERS ?= ${JPT_PARALLELISM_LEVEL}
 CPT_MODEL_PFX ?= cpt
 CPT_CPUS ?= 4
 CPT_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother
+
+########################################
+# FUNCTIONS.
+# Joins two parallel lists of words.
+interleave = $(strip $(subst \, , $(join ${1}, $(addprefix \, ${2}))))
 
 
 
@@ -158,7 +164,7 @@ ${IBM1_MODEL_PFX}.%.gz:
 		-bin \
 		${IBM1_MODEL_EXTRAS} \
 		$@ \
-		$(filter %${L1X} %${L2X}, $+) \
+		$(call interleave, $(filter %${L1X}, $+), $(filter %${L2X}, $+)) \
 		>& log.$(basename $@)
 
 
@@ -176,7 +182,7 @@ ${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		-i $(filter ${IBM1_MODEL_PFX}.%.gz, $^) \
 		${IBM2_MODEL_EXTRAS} \
 		$@ \
-		$(filter %${L1X} %${L2X}, $+) \
+		$(call interleave, $(filter %${L1X}, $+), $(filter %${L2X}, $+)) \
 		>& log.$(basename $@)
 
 
@@ -194,7 +200,7 @@ ${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		-i $(filter ${IBM1_MODEL_PFX}.%.gz, $^) \
 		${HMM1_MODEL_EXTRAS} \
 		$@ \
-		$(filter %${L1X} %${L2X}, $+) \
+		$(call interleave, $(filter %${L1X}, $+), $(filter %${L2X}, $+)) \
 		>& log.$(basename $@)
 
 
@@ -212,7 +218,7 @@ ${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		-i $(filter ${IBM1_MODEL_PFX}.%.gz, $^) \
 		${HMM2_MODEL_EXTRAS} \
 		$@ \
-		$(filter %${L1X} %${L2X}, $+) \
+		$(call interleave, $(filter %${L1X}, $+), $(filter %${L2X}, $+)) \
 		>& log.$(basename $@)
 
 
@@ -230,13 +236,14 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		-i $(filter ${IBM1_MODEL_PFX}.%.gz, $^) \
 		${HMM3_MODEL_EXTRAS} \
 		$@ \
-		$(filter %${L1X} %${L2X}, $+) \
+		$(call interleave, $(filter %${L1X}, $+), $(filter %${L2X}, $+)) \
 		>& log.$(basename $@)
 
 
 
 ########################################
 # JPT MODELS
+#		$(filter-out %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $+)
 ${JPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: JPT_MODEL_TYPE=-ibm 1
 ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: JPT_MODEL_TYPE=-ibm 2
 ${JPT_MODEL_PFX}.hmm%: JPT_MODEL_TYPE=-hmm
@@ -252,7 +259,7 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 		-1 ${lang1} -2 ${lang2} \
 		${JPT_EXTRAS} \
 		$(filter %${L2_GIVEN_L1X}, $+) $(filter %${L1_GIVEN_L2X}, $+) \
-		$(filter-out %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $+) \
+		$(call interleave, $(filter %${L1X}, $(filter-out %${L1_GIVEN_L2X} %${L2_GIVEN_L1X}, $+)), $(filter %${L2X}, $(filter-out %${L1_GIVEN_L2X} %${L2_GIVEN_L1X}, $+))) \
 		>& log.$(basename $@)
 
 
@@ -329,3 +336,4 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 	| TMPDIR=. LC_ALL=C sort \
 	| gzip \
 	> $@
+
