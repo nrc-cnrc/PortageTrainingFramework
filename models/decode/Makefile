@@ -241,7 +241,7 @@ clean.cow:
 .PHONY: portageLive
 portageLive: check_canoe_live
 
-ONE_CPT = one.cpt.en2fr.gz
+ONE_CPT ?= one.cpt.en2fr.gz
 
 # Make a single phrase table from all the phraase tables.
 ${ONE_CPT}: SHELL=${FRAMEWORK_SHELL}
