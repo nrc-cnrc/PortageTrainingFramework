@@ -15,7 +15,10 @@
 
 
 
--include Makefile.params
+# Include the config file.
+MAKEFILE_PARAMS ?= Makefile.params
+-include ${MAKEFILE_PARAMS}
+
 include ../../Makefile.params
 include ../../Makefile.toolkit
 include Makefile.definition
