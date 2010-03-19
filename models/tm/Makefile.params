@@ -16,6 +16,8 @@
 # User defines for models/tm.
 # Syntax is:
 #<VARIABLE_NAME> = <VALUE>
+# WARNING: you cannot override SRC_LANG or TGT_LANG!
+# Please change SRC_LANG/TGT_LANG in the ./Makefile.params.
 
 
 ########################################
