@@ -171,9 +171,6 @@ export PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
 export TRUECASING_MAP ?= ${TRAIN_LM}_${TGT_LANG}.map
 export TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-3g.binlm${GZ}
 
-# Define the following variable if you want to create forward and backward phrase tables
-#export BIDIRECTIONAL_SYSTEM = 1
-
 
 
 

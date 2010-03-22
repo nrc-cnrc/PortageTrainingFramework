@@ -72,9 +72,6 @@ models: lm tm
 .PHONY: lm
 # Create the Language Model (LM).
 lm: lm.${TGT_LANG}
-ifdef BIDIRECTIONAL_SYSTEM
-lm: lm.${SRC_LANG}
-endif
 lm.%:
 	${MAKE} -C lm all LM_LANG=$*
 
