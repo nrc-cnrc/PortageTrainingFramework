@@ -86,6 +86,16 @@ POST_PROCESSING ?= cat
 TRANS_CPUS ?= 1
 
 
+# We will create a link towards models this funky way instead of having a
+# target to link to models because a target.  This will ensure the presence of
+# the symbolic link and also make sure we don't rely on it to be older than any
+# targets otherwise as soon as the user modifies a file or add something to
+# models/, this would trigger the timestamp of models to be updated thus making
+# it a newer target thus forcing remaking everything.
+SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
+
+
+
 .DEFAULT_GOAL := help
 .SECONDARY:
 .SUFFIXES:
@@ -153,12 +163,6 @@ list_final_output:
 
 
 
-########################################
-# What is require to setup this module.
-.PHONY: setup
-setup: models
-
-
 # An alias that indicate what/how to translate the translation set without
 # rescoring.
 .PHONY: translate
@@ -191,6 +195,8 @@ clean:
 .PHONY: clean.content
 clean: clean.content
 clean.content: SHELL=${GUARD_SHELL}
+clean.content:
+	-${RM} *.translation
 
 
 
@@ -215,6 +221,7 @@ clean.logs:
 ########################################
 # If there is no decoding model available, warn the user since we do not know
 # how to make the decoding model in this module.
+${DECODING_MODEL}: SHELL=${GUARD_SHELL}
 ${DECODING_MODEL}::
 	@echo "Unable to make $@ please run make in models/decode." >&2
 	false
@@ -222,7 +229,7 @@ ${DECODING_MODEL}::
 
 
 check_decoding_model: SHELL=${GUARD_SHELL}
-check_decoding_model: models
+check_decoding_model:
 	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
 		echo "ERROR: Please train ${DECODING_MODEL_DIR} first!" >&2; \
 		false; \
@@ -235,7 +242,7 @@ check_decoding_model: models
 # You could add some specific target if you need to customize a canoe.ini.cow
 # for a particular file.
 ${DECODING_MODEL}.%: SHELL=${GUARD_SHELL}
-${DECODING_MODEL}.%: check_decoding_model models
+${DECODING_MODEL}.%: check_decoding_model
 	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
 # example: increase the beam threshold and stack size.
@@ -316,7 +323,7 @@ clean.translate.%:
 
 
 check_rescoring_model: SHELL=${GUARD_SHELL}
-check_rescoring_model: models
+check_rescoring_model:
 	@if [[ ! -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]]; then \
 		echo "ERROR: No rescoring model available!" >&2; \
 		echo "Please train ${RESCORING_MODEL_DIR} first!" >&2; \
@@ -332,7 +339,7 @@ check_rescoring_model: models
 .PHONY: rat
 rat: $(addsuffix .rat, ${TEST_SET})
 $(addsuffix .rat, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
-%.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} models check_rescoring_model
+%.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} check_rescoring_model
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${TRANS_CPUS}" \
 	rat.sh \
@@ -341,10 +348,10 @@ $(addsuffix .rat, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
 		trans \
 		-v \
 		-K ${NBEST_SIZE} \
-		-msrc $(word 3, $+) \
-		-f $< \
+		-msrc $(filter %${RULEX}, $+) \
+		-f $(filter ${DECODING_MODEL}.%, $+) \
 		${RESCORING_MODEL_DIR}/${RESCORING_MODEL} \
-		$(word 2,$+) \
+		$(filter %${SRCX}, $+) \
 	>& log.$@ \
 	&& mv $*${RULEX}.rat $@
 
@@ -402,7 +409,7 @@ endif
 # If the source has no reference.
 # Here we assume that, if the user didn't include the testset as part of the
 # TEST_SET variable, this mean it doesn't have a reference counter part.
-%.ce: ${CONFIDENCE_MODEL} %${SRCX} ${DECODING_MODEL}.% models
+%.ce: ${CONFIDENCE_MODEL} %${SRCX} ${DECODING_MODEL}.%
 	ce_translate.pl \
 		-notok -nolc \
 		-out=$@ \
@@ -412,7 +419,7 @@ endif
 	2> log.$@
 
 # If the source has a reference.
-$(addsuffix .ce, ${TEST_SET}): %.ce: ${CONFIDENCE_MODEL} %${SRCX} %${TGTX} ${DECODING_MODEL}.% models
+$(addsuffix .ce, ${TEST_SET}): %.ce: ${CONFIDENCE_MODEL} %${SRCX} %${TGTX} ${DECODING_MODEL}.%
 	ce_translate.pl \
 		-notok -nolc \
 		-test=$(filter %${TGTX}, $+) \
@@ -423,7 +430,7 @@ $(addsuffix .ce, ${TEST_SET}): %.ce: ${CONFIDENCE_MODEL} %${SRCX} %${TGTX} ${DEC
 	2> log.$@
 
 ${CONFIDENCE_MODEL}: SHELL=${GUARD_SHELL}
-${CONFIDENCE_MODEL}: models
+${CONFIDENCE_MODEL}:
 	ln -fs ${CONFIDENCE_MODEL_DIR}/$@
 
 clean.content: clean.ce
@@ -444,7 +451,7 @@ tc: $(addsuffix .out.tc, ${TEST_SET})
 ifdef DO_RESCORING
 tc: $(addsuffix .rat.tc, ${TEST_SET})
 endif
-%.tc: % models
+%.tc: %
 	@[[ -f ${TRUECASING_DIR}/${TRUECASING_LM} ]]  || (echo "Can't access truecasing lm ${TRUECASING_DIR}/${TRUECASING_LM}"; false) >&2
 	@[[ -f ${TRUECASING_DIR}/${TRUECASING_MAP} ]] || (echo "Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}"; false) >&2
 	@echo "TrueCasing $@"
@@ -483,15 +490,6 @@ clean.truecasing.%.guard:
 %.detok: %
 	@echo "Detokenizing $<"
 	${DETOKENIZER} -lang=${TGT_LANG} $< $@
-
-
-
-########################################
-# This is mainly a hack to fix the hierachy tree problem inherent to the
-# decoding model content.
-models: SHELL=${GUARD_SHELL}
-models:
-	ln -sf ${MODEL_DIR} $@
 
 
 
