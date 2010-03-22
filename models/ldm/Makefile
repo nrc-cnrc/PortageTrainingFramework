@@ -31,6 +31,15 @@ include Makefile.toolkit
 # What is this module's name.
 MODULE_NAME ?= ldm
 
+# Find out about what are the word alignment models the user asked for.
+AVAILABLE_WORD_ALIGNMENT_MODELS := $(PT_TYPES:_cpt=)
+
+# Hack to be able to substitute spaces.
+EMPTY :=
+
+# What will we use for the LDM's name.
+LDM_NAME ?= $(subst ${EMPTY} ${EMPTY},+,$(sort ${AVAILABLE_WORD_ALIGNMENT_MODELS}))
+
 # For the lock target, let's specify what file we want to put read-only.
 FILES_TO_BE_LOCKED = ${LDM_COUNTS_PFX}* ${LDM_MODEL_PFX}*
 
@@ -51,9 +60,14 @@ all: ldm
 .PHONY: ldm.counts
 ldm.counts: ${LDM_COUNTS_PFX}.ibm2.gz ${LDM_COUNTS_PFX}.hmm3.gz
 
-# Where % = is the word alignment model type.
 ${LDM_COUNTS_PFX}.ibm2.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
 ${LDM_COUNTS_PFX}.ibm2.gz: ibm2.${TRAIN_TM}.${TGT_GIVEN_SRCX} ibm2.${TRAIN_TM}.${SRC_GIVEN_TGTX}
+
+${LDM_COUNTS_PFX}.hmm1.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
+${LDM_COUNTS_PFX}.hmm1.gz: hmm1.${TRAIN_TM}.${TGT_GIVEN_SRCX} hmm1.${TRAIN_TM}.${SRC_GIVEN_TGTX}
+
+${LDM_COUNTS_PFX}.hmm2.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
+${LDM_COUNTS_PFX}.hmm2.gz: hmm2.${TRAIN_TM}.${TGT_GIVEN_SRCX} hmm2.${TRAIN_TM}.${SRC_GIVEN_TGTX}
 
 ${LDM_COUNTS_PFX}.hmm3.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
 ${LDM_COUNTS_PFX}.hmm3.gz: hmm3.${TRAIN_TM}.${TGT_GIVEN_SRCX} hmm3.${TRAIN_TM}.${SRC_GIVEN_TGTX}
@@ -63,10 +77,10 @@ ${LDM_COUNTS_PFX}.hmm3.gz: hmm3.${TRAIN_TM}.${TGT_GIVEN_SRCX} hmm3.${TRAIN_TM}.$
 ########################################
 # LEXICALIZED DISTORTION MODEL.
 .PHONY: ldm
-ldm: ${LDM_MODEL_PFX}.hmm3+ibm2.${SRC_2_TGTX}
+ldm: ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}
 
-${LDM_MODEL_PFX}.hmm3+ibm2.${SRC_2_TGTX}: ${LDM_COUNTS_PFX}.ibm2.gz ${LDM_COUNTS_PFX}.hmm3.gz
-
+# We will build a Lexicalized Distortion Model based on all available word alignment models.
+${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}: $(addsuffix .gz,$(addprefix ${LDM_COUNTS_PFX}., ${AVAILABLE_WORD_ALIGNMENT_MODELS}))
 
 
 ########################################
