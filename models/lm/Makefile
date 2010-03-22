@@ -438,7 +438,7 @@ clean.content: clean.tplm
 .PHONY: clean.tplm
 clean.tplm: SHELL=${GUARD_SHELL}
 clean.tplm:
-	${RM} *.tplm
+	${RM} -r *.tplm
 
 
 
