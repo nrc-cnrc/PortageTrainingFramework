@@ -80,6 +80,11 @@ MERT_MAX_ITER ?= 15
 # After this Makefile, the following targets/files are precious.
 FILES_TO_BE_LOCKED = ${DECODING_MODEL}
 
+########################################
+# SETUP
+SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
+
+
 
 .DEFAULT_GOAL := help
 .SECONDARY:
@@ -163,15 +168,27 @@ check_template:
 # Create canoe.ini from template.
 ifdef USE_LDM
 LDM ?= $(wildcard models/ldm/ldm.*.${SRC_LANG}2${TGT_LANG}.gz)
+ifeq ("$(strip ${LDM})","")
+$(warning "No LDMs, Please train some ldm in models/ldm.")
+endif
+
 DISTORTION ?= -dist-phrase-swap -dist-limit-ext -lex-dist-model-file ${LDM} -distortion-model WordDisplacement:back-lex\#m:back-lex\#s:back-lex\#d:fwd-lex\#m:fwd-lex\#s:fwd-lex\#d
 else
 DISTORTION ?= -distortion-model WordDisplacement
 endif
 
 CPTS ?= $(wildcard models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz)
+ifeq ("$(strip ${CPTS})","")
+$(warning "No CPTs, Is it possible that you haven't trained at least one translation model?")
+endif
+
 LMS  ?= $(wildcard models/lm/*${TGT_LANG}*.binlm.gz)
+ifeq ("$(strip ${LMS})","")
+$(warning "No LMs, Is it possible that you haven't trained at least one language model?")
+endif
+
 ${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
-${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}  models
+${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	@ls models/tm/cpt.* &> /dev/null || \
 		(echo "ERROR: Is it possible that you haven't trained at least one translation model?" >&2; \
 		false;)
@@ -276,6 +293,12 @@ check_canoe_live: SHELL=${GUARD_SHELL}
 check_canoe_live: canoe.ini.cow.live
 	configtool check $<
 
+clean: clean.cpt
+.PHONY: clean.cpt
+clean.cpt: SHELL=${GUARD_SHELL}
+clean.cpt:
+	-${RM} -r canoe.ini.cow.hardFilter canoe.ini.cow.live cpt.fr2en.gz cpt.fr2en.tppt one.cpt.en2fr.gz
+
 
 
 ########################################
@@ -292,13 +315,3 @@ PORTAGEsharedLive: portageLive
 
 ################################################################################
 # HELPERS
-
-########################################
-# This is mainly a hack to fix the hierachy tree problem inherent to the
-# decoding model content.
-.PHONY: symlink
-symlink: models
-
-models: SHELL=${GUARD_SHELL}
-models:
-	ln -sf ${MODEL_DIR} $@
