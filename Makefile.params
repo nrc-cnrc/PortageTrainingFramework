@@ -9,6 +9,12 @@
 # Copyright 2008, Sa Majeste la Reine du Chef du Canada
 # Copyright 2008, Her Majesty in Right of Canada
 
+# Print the Portage Copyright no matter where we start from -- but only once.
+ifndef DISPLAYED_PORTAGE_COPYRIGHT
+   $(info $(shell portage_info))
+   export DISPLAYED_PORTAGE_COPYRIGHT=1
+endif
+
 ################################################################################
 # User definable variables
 

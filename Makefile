@@ -149,12 +149,14 @@ prepare.corpora:
 # Resource Summary
 .PHONY: resource_summary
 resource_summary: SHELL=${GUARD_SHELL}
+resource_summary: export PORTAGE_INTERNAL_CALL=1
 resource_summary:
 	@${MAKE} --no-print-directory -s -C models summary
 	@${MAKE} --no-print-directory -s -C translate summary
 
 .PHONY: summary
 summary: SHELL=/bin/bash
+summary: export PORTAGE_INTERNAL_CALL=1
 summary:
 	@p-res-mon.sh <(${MAKE} resource_summary)
 	@du -sch models/ldm models/lm/*lm.gz models/tm/{ibm,hmm,jpt,cpt}* models/tc translate
