@@ -99,6 +99,7 @@ clean: clean.content
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
 	${RM} -r ${LDM_COUNTS_PFX}* ${LDM_MODEL_PFX}*
+	-${RM} -r parallelize.pl.*
 
 
 
