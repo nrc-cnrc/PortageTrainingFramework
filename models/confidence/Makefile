@@ -24,6 +24,17 @@ include ../../Makefile.toolkit
 include Makefile.definition
 include Makefile.toolkit
 
+########################################
+# SETUP
+SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
+
+# Make sure the user setup this framework to generate proper models for
+# Confidence Estimation.
+ifndef DO_CE
+$(error "If you don't setup DO_CE in ./Makefile.params, you won't get all the required models build automatically in the framework.")
+endif
+
+
 
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
@@ -58,25 +69,18 @@ clean.logs:
 
 
 ########################################
-# SETTING UP the environment.
-#.PHONY: setup
-setup: SHELL=${GUARD_SHELL}
-setup:
-	[[ -e models ]] || ln -s ${MODEL_DIR} models
+# DECODING MODEL.
+${CANOE_MODEL}:
 	[[ -f "models/decode/${CANOE_MODEL}" ]] || ( echo "You must tune a canoe.ini.cow first!" >&2; false )
-	[[ -f ${CANOE_MODEL} ]] || ln -s models/decode/${CANOE_MODEL}
-
-models:
-	ln -s ${MODEL_DIR} $@
-
-${CANOE_MODEL}: models
 	ln -fs models/decode/${CANOE_MODEL} $@
+	configtool check $@
+
 
 
 ########################################
 # Creating the initial model from the template.
-ce-notm.ini: SHELL=${GUARD_SHELL}
-ce-notm.ini: ce-notm.template ${CANOE_MODEL}
+ce-notm${INIX}: SHELL=${GUARD_SHELL}
+ce-notm${INIX}: ce-notm.template ${CANOE_MODEL}
 
 
 
@@ -85,7 +89,7 @@ ce-notm.ini: ce-notm.template ${CANOE_MODEL}
 .PHONY: train
 train: ce_model.cem
 
-ce_model.cem: ce-notm.ini ${TUNE_CE_SRC} ${TUNE_CE_TGT}
+ce_model.cem: ce-notm${INIX} ${TUNE_CE_SRC} ${TUNE_CE_TGT}
 
 
 
@@ -105,3 +109,4 @@ else
 portageLive:
 	$(error "Exception this target shouldn't be called.")
 endif
+
