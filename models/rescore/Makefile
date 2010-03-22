@@ -82,6 +82,11 @@ FILES_TO_BE_LOCKED = ${RESCORING_MODEL}
 # How many cpus should each worker should be using when translating.
 RAT_TRANS_CPUS ?= 1
 
+########################################
+# SETUP
+SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
+
+
 
 .SECONDARY:
 .SUFFIXES:
@@ -115,13 +120,6 @@ list_final_output: SHELL=${GUARD_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
 	@echo "${RESCORING_MODEL}"
-
-
-
-# Unfortunately, this script requires setup.
-.PHONY: setup
-setup: SHELL=${GUARD_SHELL}
-setup: symlink
 
 
 
@@ -173,9 +171,9 @@ check_decoding_model: setup
 # requires: a trained decoding model.
 # This provides the default rescore-model.ini.
 ${UNTUNED_RESCORING_MODEL}: SHELL=${GUARD_SHELL}
-${UNTUNED_RESCORING_MODEL}: models ${RESCORING_MODEL_TEMPLATE}
+${UNTUNED_RESCORING_MODEL}: ${RESCORING_MODEL_TEMPLATE}
 	set -o pipefail; configtool rescore-model:ffvals ${DECODING_MODEL_DIR}/${DECODING_MODEL} | cut -f 1 -d ' ' > $@
-	cat ${lastword $+} \
+	cat $< \
 	| sed -e "s#IBM\\(.\\)FWD#${IBM_DIR}/ibm\\1.${TGT_GIVEN_SRCX}#" \
 	      -e "s#IBM\\(.\\)BKW#${IBM_DIR}/ibm\\1.${SRC_GIVEN_TGTX}#" \
 	      -e "s#HMM\\(.\\)FWD#${IBM_DIR}/hmm\\1.${TGT_GIVEN_SRCX}#" \
@@ -219,7 +217,7 @@ clean.rescore_train:
 # You could add some specific target if you need to customize a decoding model
 # for a particular testset.
 ${DECODING_MODEL}.%: SHELL=${GUARD_SHELL}
-${DECODING_MODEL}.%: models
+${DECODING_MODEL}.%:
 	echo ${DECODING_MODEL}
 	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
 		echo "Please run ${DECODING_MODEL_DIR} first!"; \
@@ -248,20 +246,13 @@ clean.decoding.model:
 # Check the decoding model config file.
 .PHONY: configtool
 configtool: SHELL=${GUARD_SHELL}
-configtool: ${DECODING_MODEL_DIR}/${DECODING_MODEL} models
+configtool: ${DECODING_MODEL_DIR}/${DECODING_MODEL}
 	configtool check $<
 
 
 
 ########################################
-# This is mainly a hack to fix the hierachy tree problem inherent to the
-# decoding model content.
-.PHONY: symlink
-symlink: models
-
-models: SHELL=${GUARD_SHELL}
-models:
-	ln -sf ${MODEL_DIR} $@
-
+# DEBUGGING
+debug: SHELL=${GUARD_SHELL}
 debug:
 	echo "<${PARALLELISM_LEVEL_TUNE_RESCORE}>"
