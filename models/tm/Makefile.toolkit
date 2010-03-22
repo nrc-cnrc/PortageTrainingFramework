@@ -102,10 +102,8 @@ HMM3_MODEL_CPUS ?= 1
 HMM3_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 HMM3_MODEL_WORKERS ?= ${HMM3_MODEL_PARALLELISM_LEVEL}
 HMM3_MODEL_EXTRAS ?=
-# This autodetect portage shared, thus to not alter.
-ifneq ("$(strip $(shell train_ibm -h 2>&1 | grep -om1 newhmm))","")
-NEW_HMM ?= -newhmm
-endif
+# Autodetect whether -newhmm is supported (i.e., it's not in PORTAGEshared).
+NEW_HMM := $(addprefix(-, $(strip $(shell train_ibm -h 2>&1 | grep -om1 newhmm)))
 
 ########################################
 # JPT MODELS.
