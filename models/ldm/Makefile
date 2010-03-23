@@ -86,9 +86,9 @@ ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}: $(addsuffix .gz,$(addprefix ${LDM_CO
 ########################################
 # TIGHTLY PACKED LEXICAZILED DISTORTION MODEL.
 .PHONY: tpldm
-tpldm: ${LDM_MODEL_PFX}.hmm3+ibm2.${SRC_2_TGT}.tpldm
+tpldm: ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm
 
-${LDM_MODEL_PFX}.hmm3+ibm2.${SRC_2_TGT}.tpldm: ${LDM_MODEL_PFX}.hmm3+ibm2.${SRC_2_TGTX}
+${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm: ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}
 
 
 
