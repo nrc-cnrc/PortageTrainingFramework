@@ -62,6 +62,10 @@ TUNE_DECODE_TGT  = ${TUNE_DECODE}${TGTX}
 # Specific PSUB options
 PSUB_OPTS ?= 
 
+# Extra canoe parameters that a user would want to include in its canoe.ini.
+# i.e. -d 1:1:1:1:1:1:1 -load-first
+CANOE_INI_EXTRAS ?=
+
 # Indicates the nbest list size.
 NBEST_SIZE ?= 1000
 
@@ -206,7 +210,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	cat tmp.$@ \
 	| sed -e "s/^##mid##//" \
 	      -e "s/<ENABLE_FTM>/$$WT/" \
-	| configtool -p "args:${DISTORTION}" - \
+	| configtool -p "args:${DISTORTION} ${CANOE_INI_EXTRAS}" - \
 	> $@
 	rm tmp.$@
 	configtool check $@
