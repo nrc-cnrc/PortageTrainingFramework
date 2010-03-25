@@ -124,6 +124,8 @@ check_setup:
 .PHONY: portageLive
 portageLive:
 	${MAKE} -C models portageLive
+	@echo "from the root of the framework, you now have all that is required for portageLive."
+	@echo "rsync -Larz models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>"
 
 
 

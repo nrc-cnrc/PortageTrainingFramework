@@ -259,8 +259,25 @@ clean.cow:
 # Instructions for portageLive
 # NOTE: you cannot apply weights if you plan to do some rescoring.
 
+PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models
 .PHONY: portageLive
-portageLive: check_canoe_live
+portageLive: SHELL=${GUARD_SHELL}
+portageLive: canoe.ini.cow.live check_canoe_live
+	configtool tp $< \
+	| sed -e 's#\(cpt.${SRC_LANG}2${TGT_LANG}.tppt\)#models/tm/\1#' \
+	> ../portageLive/canoe.ini.cow
+	mkdir -p ${PORTAGE_LIVE_DEST_DIR}/tm
+	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/tm/*
+	cd ${PORTAGE_LIVE_DEST_DIR}/tm && ln -fs `configtool list-tm ../../../decode/$<` .
+	${MAKE} -C ../lm $(shell configtool list-lm $< | sed -e 's#.*/##')
+	mkdir -p ${PORTAGE_LIVE_DEST_DIR}/lm
+	cd ${PORTAGE_LIVE_DEST_DIR}/lm && ln -fs `configtool list-lm ../../../decode/$<` .
+	if [[ `configtool list-ldm $<` ]]; then \
+		${MAKE} -C ../ldm $(shell configtool list-ldm $< | sed -e 's#.*/##'); \
+		mkdir -p ${PORTAGE_LIVE_DEST_DIR}/ldm; \
+		${RM} -r ${PORTAGE_LIVE_DEST_DIR}/ldm/*; \
+		cd ${PORTAGE_LIVE_DEST_DIR}/ldm && ln -fs `configtool list-ldm ../../../decode/$<` .; \
+	fi
 
 ONE_CPT ?= one.cpt.en2fr.gz
 
@@ -297,11 +314,12 @@ check_canoe_live: SHELL=${GUARD_SHELL}
 check_canoe_live: canoe.ini.cow.live
 	configtool check $<
 
-clean: clean.cpt
-.PHONY: clean.cpt
-clean.cpt: SHELL=${GUARD_SHELL}
-clean.cpt:
+clean: clean.portageLive
+.PHONY: clean.portageLive
+clean.portageLive: SHELL=${GUARD_SHELL}
+clean.portageLive:
 	-${RM} -r canoe.ini.cow.hardFilter canoe.ini.cow.live cpt.fr2en.gz cpt.fr2en.tppt one.cpt.en2fr.gz
+	-${RM} -r portageLive
 
 
 

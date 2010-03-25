@@ -134,6 +134,10 @@ summary: resource_summary_sub
 
 ########################################
 # What is needed for PortageLive.
-.PHONY: portageLive
-portageLive: tpldm
+PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/ldm
 
+.PHONY: portageLive
+portageLive: ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm
+	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
+	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../ldm/$< .

@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# vim:noet:ts=3
+# vim:noet:ts=3:nowrap
 #
 # $Id$
 # @author Samuel Larkin
@@ -119,9 +119,15 @@ summary: resource_summary_sub
 
 ########################################
 # portageLive easy target.
+PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/tc
 .PHONY: portageLive
 portageLive: ${TRUECASING_MAP}.tppt
 portageLive: ${TRAIN_LM}_${TGT_LANG}-kn-3g.tplm
+portageLive:
+	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
+	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../tc/$(filter %.tppt, $+) tc-map.${TGT_LANG}.tppt
+	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../tc/$(filter %.tplm, $+) tc-lm.${TGT_LANG}.tplm
 
 
 

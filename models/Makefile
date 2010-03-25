@@ -112,6 +112,9 @@ rescore: decode
 ifdef USE_LDM
 models: ldm
 
+portageLive: portageLive_models_ldm
+portageLive_models_decode: portageLive_models_ldm
+
 ldm: tm
 	${MAKE} -C ldm all
 else
@@ -125,11 +128,13 @@ endif
 ifdef DO_CE
 tune: confidence
 
-portageLive: portageLive_lm_src
+portageLive: portageLive_models_lm_src
+portageLive: portageLive_models_confidence
 
-PORTAGEsharedLive: portageLive_lm_src
+PORTAGEsharedLive: portageLive_models_lm_src
+PORTAGEsharedLive: portageLive_models_confidence
 
-portageLive_lm_src:
+portageLive_models_lm_src:
 	${MAKE} -C lm tplm LM_LANG=${SRC_LANG}
 
 confidence: lm.${SRC_LANG} decode
@@ -164,12 +169,16 @@ endif
 ########################################
 # Prepare portageLive models.
 .PHONY: portageLive
-portageLive: portageLive_lm
-portageLive: portageLive_tc
-portageLive: portageLive_decode
+portageLive: portageLive_models_lm
+portageLive: portageLive_models_tc
+portageLive: portageLive_models_decode
+portageLive:
+	pwd > $@/README
+	portage_info >> $@/README
 
-portageLive_decode: cow
-portageLive_%:
+# We need this dependency since decode will copy the tplms for portageLive.
+portageLive_models_decode: portageLive_models_lm
+portageLive_models_%:
 	${MAKE} -C $* portageLive
 
 
@@ -177,12 +186,11 @@ portageLive_%:
 ########################################
 # Prepare PORTAGEsharedLive models.
 .PHONY: PORTAGEsharedLive
-PORTAGEsharedLive: PORTAGEsharedLive_lm
-PORTAGEsharedLive: PORTAGEsharedLive_tc
-PORTAGEsharedLive: PORTAGEsharedLive_decode
+PORTAGEsharedLive: PORTAGEsharedLive_models_lm
+PORTAGEsharedLive: PORTAGEsharedLive_models_tc
+PORTAGEsharedLive: PORTAGEsharedLive_models_decode
 
-PORTAGEsharedLive_decode: cow
-PORTAGEsharedLive_%:
+PORTAGEsharedLive_models_%:
 	${MAKE} -C $* PORTAGEsharedLive
 
 
