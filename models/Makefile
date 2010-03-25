@@ -134,8 +134,10 @@ portageLive: portageLive_models_confidence
 PORTAGEsharedLive: portageLive_models_lm_src
 PORTAGEsharedLive: portageLive_models_confidence
 
+portageLive_models_confidence: portageLive_models_lm_src
+
 portageLive_models_lm_src:
-	${MAKE} -C lm tplm LM_LANG=${SRC_LANG}
+	${MAKE} -C lm portageLive LM_LANG=${SRC_LANG}
 
 confidence: lm.${SRC_LANG} decode
 	${MAKE} -C confidence all
