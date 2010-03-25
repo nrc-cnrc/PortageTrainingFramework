@@ -16,12 +16,12 @@
 ########################################
 # Tuning a confidence model.
 # Requires:
-# - a confidence estimation <model>.ini
+# - a confidence estimation <model>${INIX}
 # - a source corpus ${SRCX}
 # - a target corpus ${TGTX}
 # %.cem: ce-notm.ini ${TUNE_CE_SRC} ${TUNE_CE_TGT}
-%.cem: SHELL=${FRAMEWORK_SHELL}
-%.cem:
+%${CEMX}: SHELL=${FRAMEWORK_SHELL}
+%${CEMX}:
 	ce_translate.pl \
 		-train \
 		-notok -nolc \

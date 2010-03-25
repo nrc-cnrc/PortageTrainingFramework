@@ -24,6 +24,9 @@ TGT_GIVEN_SRC  ?= ${TRAIN_TM}.${TGT_LANG}_given_${SRC_LANG}
 SRC_GIVEN_TGTX ?= ${SRC_GIVEN_TGT}.gz
 TGT_GIVEN_SRCX ?= ${TGT_GIVEN_SRC}.gz
 
+# Defining the extension for a Confidence Estimation Model.
+CEMX ?= .cem
+
 # Defining the extension for a ini file.
 INIX ?= .ini
 

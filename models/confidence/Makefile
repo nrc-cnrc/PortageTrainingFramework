@@ -24,6 +24,9 @@ include ../../Makefile.toolkit
 include Makefile.definition
 include Makefile.toolkit
 
+# Confidence Estimation model's name.
+CE_MODEL_NAME ?= ce_model
+
 ########################################
 # SETUP
 SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
@@ -59,7 +62,7 @@ clean: clean.content clean.logs
 
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
-	${RM} canoe.ini.cow ce_model.cem ce-notm.ini models
+	${RM} canoe.ini.cow *${CEMX} ce-notm.ini models
 	${RM} -r ${CE_WORKDIR_PRX}*
 
 clean.logs: SHELL=${GUARD_SHELL}
@@ -80,16 +83,16 @@ ${CANOE_MODEL}:
 ########################################
 # Creating the initial model from the template.
 ce-notm${INIX}: SHELL=${GUARD_SHELL}
-ce-notm${INIX}: ce-notm.template ${CANOE_MODEL}
+ce-notm${INIX}: ce-notm${TEMPLATEX} ${CANOE_MODEL}
 
 
 
 ########################################
 # Tuning a confidence model.
 .PHONY: train
-train: ce_model.cem
+train: ${CE_MODEL_NAME}${CEMX}
 
-ce_model.cem: ce-notm${INIX} ${TUNE_CE_SRC} ${TUNE_CE_TGT}
+${CE_MODEL_NAME}${CEMX}: ce-notm${INIX} ${TUNE_CE_SRC} ${TUNE_CE_TGT}
 
 
 
