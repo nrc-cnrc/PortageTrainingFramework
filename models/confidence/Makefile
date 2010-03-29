@@ -114,18 +114,21 @@ portageLive: ${CE_MODEL_NAME}${CEMX}
 	sed -i -e 's/binlm.gz/tplm/' tmp.live/model
 	cd tmp.live && tar zcf ../../portageLive/$< *
 	rm -r tmp.live
-	MODELS=(`tar zxOf ../portageLive/$< model | egrep -o '[^/]+\.tplm' | tr "\n" " "`); \
+	MODELS=(`test -e ../portageLive/ce_model.cem && tar zxOf ../portageLive/$< model | egrep -o '[^/]+\.tplm' | tr "\n" " "`); \
 	if [[ $$MODELS ]]; then \
 		${MAKE} -C ../lm $${MODELS[@]}; \
 		mkdir -p ../portageLive/models/lm; \
-		echo $${MODELS[@]/#/..\/..\/..\/lm\/}; \
-		cd ../portageLive/models/lm && ln -fs $${MODELS[@]/#/..\/..\/..\/lm\/} .; \
+		MODELS=($${MODELS[@]/#/..\/..\/..\/lm\/}); \
+		echo $${MODELS[@]} >&2; \
+		cd ../portageLive/models/lm && ln -fs $${MODELS[@]} .; \
 	fi
-	MODELS=(`tar zxOf ../portageLive/$< model | egrep -o '[^/]+.(en_given_fr|fr_given_en).gz' | tr "\n" " "`); \
+	MODELS=(`test -e ../portageLive/ce_model.cem && tar zxOf ../portageLive/$< model | egrep -o '[^/]+.(en_given_fr|fr_given_en).gz' | tr "\n" " "`); \
 	if [[ $$MODELS ]]; then \
-		echo $${MODELS[@]/#/..\/..\/..\/tm\/}; \
+		MODELS=($${MODELS[@]/%.gz/*}); \
+		MODELS=($${MODELS[@]/#/..\/..\/..\/tm\/}); \
+		echo $${MODELS[@]} >&2; \
 		mkdir -p ../portageLive/models/tm; \
-		cd ../portageLive/models/tm && ln -fs $${MODELS[@]/#/..\/..\/..\/tm\/} .; \
+		cd ../portageLive/models/tm && ln -fs $${MODELS[@]} .; \
 	fi
 else
 portageLive:
