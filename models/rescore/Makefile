@@ -28,7 +28,7 @@ include ../../Makefile.toolkit
 MODULE_NAME ?= rescore
 
 # TODO: Make this Makefile work with run-parallel.sh -c
-export SHELL = ${FRAMEWORK_SHELL}
+export SHELL = ${GUARD_SHELL}
 
 # Define languages info.
 #SRC_LANG ?= en
@@ -139,6 +139,7 @@ clean.content: SHELL=${GUARD_SHELL}
 ########################################
 # resources summary
 .PHONY: summary
+summary: SHELL=${GUARD_SHELL}
 summary: resource_summary_sub
 
 
@@ -187,6 +188,7 @@ ${UNTUNED_RESCORING_MODEL}: ${RESCORING_MODEL_TEMPLATE}
 .PHONY: train
 train: ${RESCORING_MODEL}
 
+${RESCORING_MODEL}:  SHELL=${FRAMEWORK_SHELL}
 ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
 	@_LOCAL=1 echo "Tuning the rescoring model."
 	RP_PSUB_OPTS="-${RAT_TRANS_CPUS} -N $@" \

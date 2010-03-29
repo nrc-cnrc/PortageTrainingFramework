@@ -73,6 +73,7 @@ clean.logs:
 
 ########################################
 # DECODING MODEL.
+${CANOE_MODEL}: SHELL=${GUARD_SHELL}
 ${CANOE_MODEL}:
 	[[ -f "models/decode/${CANOE_MODEL}" ]] || ( echo "You must tune a canoe.ini.cow first!" >&2; false )
 	ln -fs models/decode/${CANOE_MODEL} $@
@@ -82,7 +83,6 @@ ${CANOE_MODEL}:
 
 ########################################
 # Creating the initial model from the template.
-ce-notm${INIX}: SHELL=${GUARD_SHELL}
 ce-notm${INIX}: ce-notm${TEMPLATEX} ${CANOE_MODEL}
 
 
@@ -99,6 +99,7 @@ ${CE_MODEL_NAME}${CEMX}: ce-notm${INIX} ${TUNE_CE_SRC} ${TUNE_CE_TGT}
 ########################################
 # resources summary
 .PHONY: summary
+summary: SHELL=${GUARD_SHELL}
 summary: resource_summary_sub
 
 

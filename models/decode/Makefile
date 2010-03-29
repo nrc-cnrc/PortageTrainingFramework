@@ -28,7 +28,7 @@ include ../../Makefile.toolkit
 MODULE_NAME ?= decode
 
 # TODO: Make this Makefile work with run-parallel.sh -c
-export SHELL = ${FRAMEWORK_SHELL}
+export SHELL = ${GUARD_SHELL}
 
 # Define languages info.
 #SRC_LANG ?= en
@@ -141,6 +141,7 @@ clean.content: SHELL=${GUARD_SHELL}
 ########################################
 # resources summary
 .PHONY: summary
+summary: SHELL=${GUARD_SHELL}
 summary: resource_summary_sub
 
 
@@ -228,6 +229,7 @@ clean.canoe.ini:
 # Training a decoding model.
 .PHONY: train
 train: ${DECODING_MODEL}
+${DECODING_MODEL}: SHELL=${FRAMEWORK_SHELL}
 ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TGT}
 	_LOCAL=1 mkdir -p foos
 	RP_PSUB_OPTS="-${MERT_CPUS} -N tune.decode.model" \
@@ -290,9 +292,9 @@ ${ONE_CPT}: canoe.ini.cow
 	> $@
 
 # fix the canoe.ini.cow to reflect the usage of a single phrase table.
-canoe.ini.cow.hardFilter: ${GUARD_SHELL}
+canoe.ini.cow.hardFilter: SHELL=${GUARD_SHELL}
 canoe.ini.cow.hardFilter: ${ONE_CPT} canoe.ini.cow
-	configtool rep-multi-prob:$< canoe.ini.cow > $@
+	configtool rep-multi-prob:$+ > $@
 
 
 # When using Portage, the default behavior should be to create tppt models.
