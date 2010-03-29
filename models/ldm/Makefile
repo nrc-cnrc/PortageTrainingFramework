@@ -31,7 +31,8 @@ include Makefile.toolkit
 # What is this module's name.
 MODULE_NAME ?= ldm
 
-# Find out about what are the word alignment models the user asked for.
+# Find out about what are the word alignment models the user asked for by
+# stripping out the _cpt suffix.
 AVAILABLE_WORD_ALIGNMENT_MODELS := $(PT_TYPES:_cpt=)
 
 # Hack to be able to substitute spaces.
@@ -95,6 +96,16 @@ ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm: ${LDM_MODEL_PFX}.${LDM_NAME}.${
 ################################################################################
 # HELPERS.
 ########################################
+# Word alignment models.
+# These targets will most likely not be called since the framework should have
+# taken care of creating those models in the first place.  They are here to be
+# to try make -n before running the framework.
+%${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}:
+	${MAKE} -C ../tm $@
+
+
+
+########################################
 # HELP OPTIONS
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
@@ -141,3 +152,4 @@ portageLive: ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../ldm/$< .
+
