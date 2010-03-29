@@ -27,9 +27,6 @@ include ../Makefile.toolkit
 # What is this module's name.
 MODULE_NAME ?= translate
 
-# TODO: Make this Makefile work with run-parallel.sh -c
-export SHELL = ${FRAMEWORK_SHELL}
-
 # Define languages info.
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
@@ -203,6 +200,7 @@ clean.content:
 ########################################
 # resources summary
 .PHONY: summary
+summary: SHELL=${GUARD_SHELL}
 summary: resource_summary_sub
 
 
@@ -268,11 +266,11 @@ out: $(addsuffix .out, ${TEST_SET})
 ifdef DO_RESCORING
 # if we are doing rescoring, we can save us some work by going straight to
 # rescoring and extracting the 1 best instead of calculating it twice.
-$(addsuffix .out, ${TEST_SET}): SHELL=${GUARD_SHELL}
+%.out: SHELL=${GUARD_SHELL}
 %.out: %.rat
 	cp workdir-$*${RULEX}-${NBEST_SIZE}best/1best $@
 else
-$(addsuffix .out, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
+%.out: SHELL=${FRAMEWORK_SHELL}
 %.out: ${DECODING_MODEL}.% %${RULEX}
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${TRANS_CPUS}" \
@@ -298,7 +296,7 @@ ${OUT_BLEU_DEP}: %.out.bleu: %.out %${TGTX}
 
 .PHONY: out.detok
 out.detok: $(addsuffix .out.detok, ${TEST_SET})
-$(addsuffix .out.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
+%.out.detok: SHELL=${GUARD_SHELL}
 
 # Invalid, can't compare the detokenized translation with a tokenized and
 # lowercase reference.
@@ -338,7 +336,7 @@ check_rescoring_model:
 # Rescore the translate_set
 .PHONY: rat
 rat: $(addsuffix .rat, ${TEST_SET})
-$(addsuffix .rat, ${TEST_SET}): SHELL=${FRAMEWORK_SHELL}
+%.rat: SHELL=${FRAMEWORK_SHELL}
 %.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} check_rescoring_model
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${TRANS_CPUS}" \
@@ -366,7 +364,7 @@ ${RAT_BLEU_DEP}: %.rat.bleu: %.rat %${TGTX}
 
 .PHONY: rat.detok
 rat.detok: $(addsuffix .rat.detok, ${TEST_SET})
-$(addsuffix .rat.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
+%.rat.detok: SHELL=${GUARD_SHELL}
 
 # Invalid, can't compare the detokenized translation with a tokenized and
 # lowercase reference.
@@ -451,10 +449,11 @@ tc: $(addsuffix .out.tc, ${TEST_SET})
 ifdef DO_RESCORING
 tc: $(addsuffix .rat.tc, ${TEST_SET})
 endif
+%.tc: SHELL=${FRAMEWORK_SHELL}
 %.tc: %
-	@[[ -f ${TRUECASING_DIR}/${TRUECASING_LM} ]]  || (echo "Can't access truecasing lm ${TRUECASING_DIR}/${TRUECASING_LM}"; false) >&2
-	@[[ -f ${TRUECASING_DIR}/${TRUECASING_MAP} ]] || (echo "Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}"; false) >&2
-	@echo "TrueCasing $@"
+	@_LOCAL=1 [[ -f ${TRUECASING_DIR}/${TRUECASING_LM} ]]  || (echo "Can't access truecasing lm ${TRUECASING_DIR}/${TRUECASING_LM}"; false) >&2
+	@_LOCAL=1 [[ -f ${TRUECASING_DIR}/${TRUECASING_MAP} ]] || (echo "Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}"; false) >&2
+	@_LOCAL=1 echo "TrueCasing $@"
 	truecase.pl \
 		--ucBOSEncoding=UTF-8 \
 		-text=$< \
@@ -487,6 +486,7 @@ clean.truecasing.%.guard:
 
 ########################################
 # General detokenizeer.
+%.detok: SHELL=${GUARD_SHELL}
 %.detok: %
 	@echo "Detokenizing $<"
 	${DETOKENIZER} -lang=${TGT_LANG} $< $@
@@ -496,6 +496,7 @@ clean.truecasing.%.guard:
 ########################################
 # Check the canoe.ini config file.
 .PHONY: configtool
+configtool: SHELL=${GUARD_SHELL}
 configtool: ${DECODING_MODEL_TEMPLATE}
 	configtool check $<
 
