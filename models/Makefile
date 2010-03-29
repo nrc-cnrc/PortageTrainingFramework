@@ -131,9 +131,6 @@ tune: confidence
 portageLive: portageLive_models_lm_src
 portageLive: portageLive_models_confidence
 
-PORTAGEsharedLive: portageLive_models_lm_src
-PORTAGEsharedLive: portageLive_models_confidence
-
 portageLive_models_confidence: portageLive_models_lm_src
 
 portageLive_models_lm_src:
@@ -182,18 +179,6 @@ portageLive:
 portageLive_models_decode: portageLive_models_lm
 portageLive_models_%:
 	${MAKE} -C $* portageLive
-
-
-
-########################################
-# Prepare PORTAGEsharedLive models.
-.PHONY: PORTAGEsharedLive
-PORTAGEsharedLive: PORTAGEsharedLive_models_lm
-PORTAGEsharedLive: PORTAGEsharedLive_models_tc
-PORTAGEsharedLive: PORTAGEsharedLive_models_decode
-
-PORTAGEsharedLive_models_%:
-	${MAKE} -C $* PORTAGEsharedLive
 
 
 

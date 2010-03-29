@@ -132,12 +132,7 @@ portageLive:
 
 
 ########################################
-# PORTAGEsharedLive easy target.
-.PHONY: PORTAGEsharedLive
-PORTAGEsharedLive: all
-
-
-
+# Build a truecased language model.
 # Build the truecased lm model using the convinient Makefile from models/lm.
 .PHONY: lm
 lm: SHELL=${GUARD_SHELL}

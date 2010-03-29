@@ -130,14 +130,6 @@ portageLive:
 
 
 ########################################
-# Prepare PORTAGEsharedLive models.
-.PHONY: PORTAGEsharedLive
-PORTAGEsharedLive:
-	${MAKE} -C models PORTAGEsharedLive
-
-
-
-########################################
 # If you need to preprocess your corpora, you can call this target to do the job.
 # The end result should be .al files .
 PREPARE_CORPORA_MAKEFILE ?= Makefile.prepare.corpora
