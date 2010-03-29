@@ -456,7 +456,7 @@ endif
 	@[[ -f ${TRUECASING_DIR}/${TRUECASING_MAP} ]] || (echo "Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}"; false) >&2
 	@echo "TrueCasing $@"
 	truecase.pl \
-		-uppercaseBOS \
+		--ucBOSEncoding=UTF-8 \
 		-text=$< \
 		-lm=${TRUECASING_DIR}/${TRUECASING_LM} \
 		-map=${TRUECASING_DIR}/${TRUECASING_MAP} \
