@@ -104,9 +104,16 @@ clean:
 
 .PHONY: clean.content clean.logs
 clean: clean.content clean.logs
-clean.content clean.logs : SHELL=${GUARD_SHELL}
-clean.content clean.logs : %:
-	${MAKE} -f ../lm/Makefile $@
+clean.logs: SHELL=${GUARD_SHELL}
+clean.logs: %: lm-%
+	${RM} log.* run-parallel-logs*
+
+clean.content: SHELL=${GUARD_SHELL}
+clean.content: %: lm-%
+	${RM} -r *.map *.map.tppt vocabMap2tpt.*
+
+lm-clean.content lm-clean.logs: lm-%:
+	${MAKE} -f ../lm/Makefile $*
 
 
 
