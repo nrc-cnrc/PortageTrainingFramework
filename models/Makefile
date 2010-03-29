@@ -180,6 +180,12 @@ portageLive_models_decode: portageLive_models_lm
 portageLive_models_%:
 	${MAKE} -C $* portageLive
 
+.PHONY: clean.portageLive
+clean: clean.portageLive
+clean.portageLive: SHELL=${GUARD_SHELL}
+clean.portageLive:
+	${RM} -r portageLive
+
 
 
 ########################################
