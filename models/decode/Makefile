@@ -263,8 +263,7 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models
 .PHONY: portageLive
 portageLive: SHELL=${GUARD_SHELL}
 portageLive: canoe.ini.cow.live check_canoe_live
-	configtool tp $< \
-	| sed -e 's#\(cpt.${SRC_LANG}2${TGT_LANG}.tppt\)#models/tm/\1#' \
+	sed -e 's#\(cpt.${SRC_LANG}2${TGT_LANG}.tppt\)#models/tm/\1#' < $< \
 	> ../portageLive/canoe.ini.cow
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}/tm
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/tm/*
@@ -278,6 +277,7 @@ portageLive: canoe.ini.cow.live check_canoe_live
 		${RM} -r ${PORTAGE_LIVE_DEST_DIR}/ldm/*; \
 		cd ${PORTAGE_LIVE_DEST_DIR}/ldm && ln -fs `configtool list-ldm ../../../decode/$<` .; \
 	fi
+	configtool check ../portageLive/canoe.ini.cow
 
 ONE_CPT ?= one.cpt.en2fr.gz
 
@@ -305,8 +305,9 @@ cpt.${SRC_LANG}2${TGT_LANG}.tppt canoe.ini.cow.live: canoe.ini.cow.hardFilter
 	tmtext-apply-weights.pl \
 		-hf ${APPLY_WEIGHTS_OPTIONS} \
 		-src ${SRC_LANG} -tgt ${TGT_LANG} \
-		-f $< -c canoe.ini.cow.live \
+		-f $< -c canoe.ini.cow.live.tmp \
 		-o cpt
+	configtool tp canoe.ini.cow.live.tmp > canoe.ini.cow.live && rm canoe.ini.cow.live.tmp
 
 # We need to output a new canoe.ini.cow that reflects the single tppt and applied weights.
 .PHONY: check_canoe_live
@@ -320,18 +321,6 @@ clean.portageLive: SHELL=${GUARD_SHELL}
 clean.portageLive:
 	-${RM} -r canoe.ini.cow.hardFilter canoe.ini.cow.live cpt.fr2en.gz cpt.fr2en.tppt one.cpt.en2fr.gz
 	-${RM} -r portageLive
-
-
-
-########################################
-# How to prepare PORTAGEsharedLive.
-# Same thing as portageLive except tptizing is not supported.
-# NOTE: since hard filtering a model will append FILT to the name, it is safe
-# reuse ${ONE_CPT} as the hard-filtered model's name.
-.PHONY: PORTAGEsharedLive
-PORTAGEsharedLive: APPLY_WEIGHTS_OPTIONS=
-PORTAGEsharedLive: portageLive
-	@true
 
 
 
