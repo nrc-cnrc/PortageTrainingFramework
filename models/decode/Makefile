@@ -27,9 +27,6 @@ include ../../Makefile.toolkit
 # What is this module's name.
 MODULE_NAME ?= decode
 
-# TODO: Make this Makefile work with run-parallel.sh -c
-export SHELL = ${GUARD_SHELL}
-
 # Define languages info.
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
