@@ -219,13 +219,6 @@ clean.logs:
 ########################################
 # If there is no decoding model available, warn the user since we do not know
 # how to make the decoding model in this module.
-${DECODING_MODEL}: SHELL=${GUARD_SHELL}
-${DECODING_MODEL}::
-	@echo "Unable to make $@ please run make in models/decode." >&2
-	false
-
-
-
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model:
 	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
