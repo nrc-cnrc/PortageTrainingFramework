@@ -444,8 +444,8 @@ tc: $(addsuffix .rat.tc, ${TEST_SET})
 endif
 %.tc: SHELL=${FRAMEWORK_SHELL}
 %.tc: %
-	@_LOCAL=1 [[ -f ${TRUECASING_DIR}/${TRUECASING_LM} ]]  || (echo "Can't access truecasing lm ${TRUECASING_DIR}/${TRUECASING_LM}"; false) >&2
-	@_LOCAL=1 [[ -f ${TRUECASING_DIR}/${TRUECASING_MAP} ]] || (echo "Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}"; false) >&2
+	@_LOCAL=1 test -f ${TRUECASING_DIR}/${TRUECASING_LM} || (echo "Can't access truecasing lm ${TRUECASING_DIR}/${TRUECASING_LM}"; false) >&2
+	@_LOCAL=1 test -f ${TRUECASING_DIR}/${TRUECASING_MAP} || (echo "Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}"; false) >&2
 	@_LOCAL=1 echo "TrueCasing $@"
 	truecase.pl \
 		--ucBOSEncoding=UTF-8 \
