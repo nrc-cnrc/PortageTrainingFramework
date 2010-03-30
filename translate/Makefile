@@ -82,6 +82,9 @@ POST_PROCESSING ?= cat
 # How many cpus to use when translating.
 TRANS_CPUS ?= 1
 
+# What to use to monitor resources.
+TIME_MEM ?= time-mem
+
 
 # We will create a link towards models this funky way instead of having a
 # target to link to models because a target.  This will ensure the presence of
@@ -401,6 +404,7 @@ endif
 # Here we assume that, if the user didn't include the testset as part of the
 # TEST_SET variable, this mean it doesn't have a reference counter part.
 %.ce: ${CONFIDENCE_MODEL} %${SRCX} ${DECODING_MODEL}.%
+	${TIME_MEM} \
 	ce_translate.pl \
 		-notok -nolc \
 		-out=$@ \
@@ -411,6 +415,7 @@ endif
 
 # If the source has a reference.
 $(addsuffix .ce, ${TEST_SET}): %.ce: ${CONFIDENCE_MODEL} %${SRCX} %${TGTX} ${DECODING_MODEL}.%
+	${TIME_MEM} \
 	ce_translate.pl \
 		-notok -nolc \
 		-test=$(filter %${TGTX}, $+) \
@@ -447,6 +452,7 @@ endif
 	@_LOCAL=1 test -f ${TRUECASING_DIR}/${TRUECASING_LM} || (echo "Can't access truecasing lm ${TRUECASING_DIR}/${TRUECASING_LM}"; false) >&2
 	@_LOCAL=1 test -f ${TRUECASING_DIR}/${TRUECASING_MAP} || (echo "Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}"; false) >&2
 	@_LOCAL=1 echo "TrueCasing $@"
+	${TIME_MEM} \
 	truecase.pl \
 		--ucBOSEncoding=UTF-8 \
 		-text=$< \

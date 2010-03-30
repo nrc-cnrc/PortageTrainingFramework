@@ -61,7 +61,7 @@ CORPORA_DIR ?= ../../corpora
 MODEL_DIR ?= ../tm
 
 # Resource monitoring.
-P_RES_MON ?= p-res-mon.sh -t
+TIME_MEM ?= time-mem
 
 # Number of cpu to use to create the final model.
 ESTIM_CPU ?= 4
@@ -115,7 +115,7 @@ ${LDM_MODEL_PFX}%${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
 ${LDM_MODEL_PFX}%${SRC_2_TGTX}:
 	RP_PSUB_OPTS="-${ESTIM_CPU}" \
 	zcat -f $+ \
-	| ${P_RES_MON} dmestm -s -g $(basename $@).bkoff -wtu ${WTU} -wtg ${WTG} -wt1 ${WT1} -wt2 ${WT2} \
+	| ${TIME_MEM} dmestm -s -g $(basename $@).bkoff -wtu ${WTU} -wtg ${WTG} -wt1 ${WT1} -wt2 ${WT2} \
 	2> log.$(basename $@) \
 	| gzip \
 	> $@

@@ -60,7 +60,7 @@ CAT ?= cat.sh
 JOINT2COND_PHRASE_TABLE ?= joint2cond_phrase_tables -reduce-mem
 
 # Track memory usage.
-P_RES_MON ?= p-res-mon.sh -t
+TIME_MEM ?= time-mem
 
 
 ########################################
@@ -273,7 +273,7 @@ ${CPT_MODEL_PFX}.%: CPT_PRUNE1=-prune1 100
 
 ${CPT_MODEL_PFX}%${L1_2_L2X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
-	${P_RES_MON} \
+	${TIME_MEM} \
 	${JOINT2COND_PHRASE_TABLE} \
 		-sort \
 		${CPT_PRUNE1} \
@@ -294,7 +294,7 @@ ${CPT_MODEL_PFX}%${L1_2_L2X}:
 # - reversed joint frequency files.
 ${CPT_MODEL_PFX}%${L2_2_L1X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
-	${P_RES_MON} \
+	${TIME_MEM} \
 	${JOINT2COND_PHRASE_TABLE} \
 		-sort \
 		${CPT_PRUNE1} \
@@ -314,7 +314,7 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 ########################################
 # Create tightly packed conditional phrase table.
 %.tppt: %.gz
-	${P_RES_MON} \
+	${TIME_MEM} \
 	textpt2tppt.sh $< \
 	2> log.$@
 

@@ -86,7 +86,7 @@ MONITOR_MEMORY_USAGE ?=
 EXTRA_NGRAM_COUNT_OPTIONS ?=
 
 # Resource monitoring.
-P_RES_MON ?= p-res-mon.sh -t
+TIME_MEM ?= time-mem
 
 
 # Tells make where to find the corpus' file and the marked file if need be.
@@ -236,7 +236,7 @@ ifeq (${LM_TOOLKIT}, SRI)
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${P_RES_MON} \
+	${TIME_MEM} \
 	ngram-count \
 		-interpolate \
 		-kndiscount \
@@ -251,7 +251,7 @@ else ifeq (${LM_TOOLKIT}, IRST)
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	set -o pipefail; \
-	${P_RES_MON} \
+	${TIME_MEM} \
 	compile-lm \
 		--text yes \
 		$< \
@@ -268,7 +268,7 @@ else ifeq (${LM_TOOLKIT}, MIT)
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	zcat $< \
-	| ${P_RES_MON} \
+	| ${TIME_MEM} \
 	estimate-ngram \
 		-order ${ORDER} \
 		-smoothing ModKN \
@@ -299,7 +299,7 @@ blmt: ${LM_NAME}.blmt
 %.blmt: %.ilm.gz
 	@_LOCAL=1 echo "  Creating bin.ARPA format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${P_RES_MON} \
+	${TIME_MEM} \
 	compile-lm \
 		$< \
 		$@ \
@@ -323,7 +323,7 @@ quantize: $(LM_NAME).qlm.gz
 %.qlm: %.lm.gz
 	@_LOCAL=1 echo "  qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${P_RES_MON} \
+	${TIME_MEM} \
 	quantize-lm \
 		$< \
 		$@ \
@@ -347,7 +347,7 @@ Qblmt: ${LM_NAME}.Qblmt
 %.Qblmt: %.qlm.gz
 	@_LOCAL=1 echo "  bin.qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${P_RES_MON} \
+	${TIME_MEM} \
 	compile-lm \
 		$< \
 		$@ \
@@ -369,7 +369,7 @@ sort_arpa: ${LM_NAME}.lm.sorted.gz
 
 #.SECONDARY: ${LM_NAME}.lm.sorted.gz
 %.lm.sorted.gz: %.lm.gz
-	${P_RES_MON} \
+	${TIME_MEM} \
 	lm_sort_filter.sh -lm $< $@ >& log.$(basename $@)
 
 clean.content: clean.sort_arpa
@@ -391,7 +391,7 @@ binlm: ${LM_NAME}.binlm.gz
 #
 %.binlm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${P_RES_MON} \
+	${TIME_MEM} \
 	arpalm2binlm $< $@ >& log.$(basename $@)
 
 clean.content: clean.binlm
@@ -423,7 +423,7 @@ prune: ${LM_NAME}.plm.gz
 tplm: ${LM_NAME}.tplm
 
 %.tplm: %.lm.gz
-	${P_RES_MON} \
+	${TIME_MEM} \
 	arpalm2tplm.sh $< $* 2> log.$@
 
 clean.content: clean.tplm

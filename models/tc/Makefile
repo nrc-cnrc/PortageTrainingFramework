@@ -51,7 +51,7 @@ export CORPUS_EXT = ${TCX}
 FILES_TO_BE_LOCKED = ${TRUECASING_MAP} ${TRUECASING_LM} ${TRAIN_LM}*
 
 # Resource monitoring.
-P_RES_MON ?= p-res-mon.sh -t
+TIME_MEM ?= time-mem
 
 
 # Where can we find the corpora?
@@ -161,13 +161,13 @@ map: SHELL=${GUARD_SHELL}
 map: ${TRUECASING_MAP}
 
 %.map:  %${TCX}  %${LANGXZ}
-	${P_RES_MON} \
+	${TIME_MEM} \
 	compile_truecase_map $+ \
 		> $@ \
 		2> log.$@
 
 %.map.tppt: %.map
-	${P_RES_MON} \
+	${TIME_MEM} \
 	vocabMap2tpt.sh $< \
 		2> log.$@
 

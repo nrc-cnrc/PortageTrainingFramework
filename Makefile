@@ -126,6 +126,8 @@ portageLive:
 	${MAKE} -C models portageLive
 	@echo "from the root of the framework, you now have all that is required for portageLive."
 	@echo "rsync -Larz models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>"
+	@echo "scp -r models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>"
+	@echo "cp -Lr models/portageLive/* /<DEST_DIR>"
 
 
 
@@ -148,9 +150,17 @@ resource_summary:
 	@${MAKE} --no-print-directory -s -C models summary
 	@${MAKE} --no-print-directory -s -C translate summary
 
+.PHONY: time-mem
+time-mem: SHELL=/bin/bash
+time-mem: export PORTAGE_INTERNAL_CALL=1
+time-mem:
+	@time-mem -T <(${MAKE} resource_summary) \
+	| perl -pe 'while(s/^(\t*)\t/\1   /) {1}' \
+	| expand -t 60,84,108,132
+
 .PHONY: summary
 summary: SHELL=/bin/bash
 summary: export PORTAGE_INTERNAL_CALL=1
-summary:
-	@p-res-mon.sh <(${MAKE} resource_summary)
+summary: time-mem
 	@du -sch models/ldm models/lm/*lm.gz models/tm/{ibm,hmm,jpt,cpt}* models/tc translate
+

@@ -59,4 +59,5 @@ resource_summary_sub: SHELL=${GUARD_SHELL}
 resource_summary_sub:
 	find -type f -name log.\* \
 	| sort \
-	| xargs p-res-mon.sh -m ${MODULE_NAME}
+	| xargs time-mem -T -m ${MODULE_NAME}
+
