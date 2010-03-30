@@ -131,9 +131,10 @@ list_final_output:
 
 
 ########################################
-# resources summary
-.PHONY: summary
-summary: resource_summary_sub
+# Resources Summary
+.PHONY: time-mem
+time-mem: SHELL=${GUARD_SHELL}
+time-mem: resource_summary_sub
 
 
 

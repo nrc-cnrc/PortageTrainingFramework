@@ -190,13 +190,13 @@ clean.portageLive:
 
 ########################################
 # Resource Summary
-.PHONY: summary
-summary: SHELL=${GUARD_SHELL}
-summary:
-	@${MAKE} --no-print-directory -s -C ldm summary
-	@${MAKE} --no-print-directory -s -C lm summary
-	@${MAKE} --no-print-directory -s -C tm summary
-	@${MAKE} --no-print-directory -s -C tc summary
-	@${MAKE} --no-print-directory -s -C decode summary
-	@${MAKE} --no-print-directory -s -C rescore summary
-	@${MAKE} --no-print-directory -s -C confidence summary
+.PHONY: time-mem
+time-mem: SHELL=${GUARD_SHELL}
+time-mem:
+	@${MAKE} --no-print-directory -s -C ldm time-mem
+	@${MAKE} --no-print-directory -s -C lm time-mem
+	@${MAKE} --no-print-directory -s -C tm time-mem
+	@${MAKE} --no-print-directory -s -C tc time-mem
+	@${MAKE} --no-print-directory -s -C decode time-mem
+	@${MAKE} --no-print-directory -s -C rescore time-mem
+	@${MAKE} --no-print-directory -s -C confidence time-mem

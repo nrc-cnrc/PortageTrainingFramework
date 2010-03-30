@@ -147,8 +147,8 @@ prepare.corpora:
 resource_summary: SHELL=${GUARD_SHELL}
 resource_summary: export PORTAGE_INTERNAL_CALL=1
 resource_summary:
-	@${MAKE} --no-print-directory -s -C models summary
-	@${MAKE} --no-print-directory -s -C translate summary
+	@${MAKE} --no-print-directory -s -C models time-mem
+	@${MAKE} --no-print-directory -s -C translate time-mem
 
 .PHONY: time-mem
 time-mem: SHELL=/bin/bash
