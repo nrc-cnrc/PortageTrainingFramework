@@ -101,7 +101,7 @@ ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm: ${LDM_MODEL_PFX}.${LDM_NAME}.${
 # taken care of creating those models in the first place.  They are here to be
 # to try make -n before running the framework.
 %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}:
-	${MAKE} -C ../tm $@
+	[[ -f "../tm/$@" ]] || ${MAKE} -C ../tm $@
 
 
 
