@@ -128,6 +128,7 @@ ${LDM_MODEL_PFX}%${SRC_2_TGTX}:
 # - a text version of the lexicalized distortion model.
 %.tpldm: SHELL=${FRAMEWORK_SHELL}
 %.tpldm:
+	RP_PSUB_OPTS="-${ESTIM_CPU}" \
 	textldm2tpldm.sh $<
 
 
