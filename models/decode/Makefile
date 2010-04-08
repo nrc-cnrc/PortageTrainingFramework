@@ -283,7 +283,7 @@ ONE_CPT ?= one.cpt.en2fr.gz
 # Make a single phrase table from all the phraase tables.
 ${ONE_CPT}: SHELL=${FRAMEWORK_SHELL}
 ${ONE_CPT}: canoe.ini.cow
-	RP_PSUB_OPTS="-1 -N vm.join -nodes bigtmp" \
+	RP_PSUB_OPTS="-1 -N vm.join" \
 	join_phrasetables -v `configtool list-multi-probs $<` \
 	| gzip \
 	> $@
