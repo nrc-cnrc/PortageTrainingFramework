@@ -240,7 +240,7 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 		-workdir foos \
 		-f $^ \
 		>& log.$@
-	_LOCAL=1 ${RM} -r foos multi.probs.*.FILT.gz ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
+	_LOCAL=1 ${RM} -r foos *.FILT.gz *.FILT.bkoff ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
 
 clean.content: clean.cow
 
@@ -250,7 +250,7 @@ clean.cow:
 	-${RM} -r foos canoe-parallel.* run-p.*
 	-${RM} ${DECODING_MODEL}
 	-${RM} ${UNTUNED_DECODING_MODEL} ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
-	-${RM} multi.probs.*.FILT.gz rescore-results*
+	-${RM} *.FILT.gz *.FILT.bkoff rescore-results*
 
 
 
