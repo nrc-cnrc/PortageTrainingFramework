@@ -49,7 +49,7 @@ export TEST_SET      ?= test1 test2
 # PATH.  (Only need if you are using IRSTLM - see next variable.)
 export IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 
-# Change LM_TOOLKIT's value depending on the available lm tooolkit that you
+# Change LM_TOOLKIT's value depending on the available lm toolkit that you
 # have.  If you use SRILM or MITLM, their executable scripts and programs
 # should be on your PATH.
 # LM_TOOLKIT={SRI,IRST,MIT} 

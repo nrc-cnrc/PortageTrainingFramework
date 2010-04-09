@@ -29,9 +29,11 @@ endif
 
 .PHONY: help
 help:
-	@echo "please run in order for this framework to run properly:"
+ifeq (${LM_TOOLKIT},IRST)
+	@echo "please run the following in order for this framework to run properly:"
 	@echo "export PATH=${IRSTLM}/bin:\$$PATH"
 	@echo "export IRSTLM=${IRSTLM}"
+endif
 	@echo "Your corpora are:"
 	@echo "lm: ${TRAIN_LM}"
 	@echo "tm: ${TRAIN_TM}"
