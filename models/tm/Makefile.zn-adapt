@@ -26,6 +26,9 @@ include ../../Makefile.toolkit
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+# What is this module's name.
+MODULE_NAME ?= tm
+
 SHELL = run-parallel.sh
 
 CORPORA_DIR ?= ../../corpora
@@ -125,6 +128,66 @@ help: SHELL=${GUARD_SHELL}
 help:
 	@echo "Special Makefile that produces a single phrase table with George's zn-adaptation."
 	@echo "Targets available: all"
+
+########################################
+# CLEAN-UP
+.PHONY: clean
+clean: SHELL=${GUARD_SHELL}
+
+.PHONY: clean.content
+clean: clean.content
+clean.content: SHELL=${GUARD_SHELL}
+
+
+clean.content: clean.ibm1
+
+.PHONY: clean.ibm1
+clean.ibm1: SHELL=${GUARD_SHELL}
+clean.ibm1:
+	$(RM) ${IBM1_MODEL_PFX}.*
+
+clean.content: clean.ibm2
+
+.PHONY: clean.ibm2
+clean.ibm2: SHELL=${GUARD_SHELL}
+clean.ibm2:
+	$(RM) ${IBM2_MODEL_PFX}.*
+
+clean.content: clean.hmm3
+
+.PHONY: clean.hmm3
+clean.hmm3: SHELL=${GUARD_SHELL}
+clean.hmm3:
+	$(RM) ${HMM3_MODEL_PFX}.*
+clean.content: clean.jpts
+
+.PHONY: clean.jpts
+clean.jpts: SHELL=${GUARD_SHELL}
+clean.jpts:
+	$(RM) jpt.*
+	${RM} -r JPTPAR*
+clean.content: clean.cpts
+
+.PHONY: clean.cpts
+clean.cpts: SHELL=${GUARD_SHELL}
+clean.cpts:
+	$(RM) cpt.*
+
+
+.PHONY: clean.logs
+clean: clean.logs
+clean.logs: SHELL=${GUARD_SHELL}
+clean.logs:
+	${RM} run-parallel-log* log.* run-p.*
+	${RM} -r .logs
+
+
+
+########################################
+# Resources Summary
+.PHONY: time-mem
+time-mem: SHELL=${GUARD_SHELL}
+time-mem: resource_summary_sub
 
 ########################################
 # HELPERS
