@@ -407,6 +407,7 @@ endif
 	${TIME_MEM} \
 	ce_translate.pl \
 		-notok -nolc \
+                -src=${SRC_LANG} -tgt=${TGT_LANG} \
 		-out=$@ \
 		$(filter ${DECODING_MODEL}%, $+) \
 		$(filter ${CONFIDENCE_MODEL}, $+) \
@@ -418,6 +419,7 @@ $(addsuffix .ce, ${TEST_SET}): %.ce: ${CONFIDENCE_MODEL} %${SRCX} %${TGTX} ${DEC
 	${TIME_MEM} \
 	ce_translate.pl \
 		-notok -nolc \
+                -src=${SRC_LANG} -tgt=${TGT_LANG} \
 		-test=$(filter %${TGTX}, $+) \
 		-out=$@ \
 		$(filter ${DECODING_MODEL}%, $+) \
