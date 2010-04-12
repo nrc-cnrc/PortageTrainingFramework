@@ -22,6 +22,7 @@
 # %.cem: ce-notm.ini ${TUNE_CE_SRC} ${TUNE_CE_TGT}
 %${CEMX}: SHELL=${FRAMEWORK_SHELL}
 %${CEMX}:
+	${TIME_MEM} \
 	ce_translate.pl \
 		-train \
 		-notok -nolc \

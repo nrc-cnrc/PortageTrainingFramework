@@ -13,6 +13,9 @@
 # Copyright 2010, Her Majesty in Right of Canada
 
 
+# What is this module's name.
+MODULE_NAME ?= confidence
+
 # Define languages info.
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
@@ -57,6 +60,9 @@ TUNE_CE_TGT ?= ${TUNE_CE}${TGTX}
 
 # Training workdir prefix.
 CE_WORKDIR_PRX ?= ce-workdir-
+
+# What to use to monitor resources.
+TIME_MEM ?= time-mem
 
 # Tell make where to look for certain files.
 vpath %${SRCX} ${CORPORA_DIR}
