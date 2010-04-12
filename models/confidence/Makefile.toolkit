@@ -25,6 +25,7 @@
 	${TIME_MEM} \
 	ce_translate.pl \
 		-train \
+                -src=${SRC_LANG} -tgt=${TGT_LANG} \
 		-notok -nolc \
 		-k=5 \
 		-desc=$(filter %${INIX}, $+) \
