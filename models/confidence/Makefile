@@ -19,6 +19,9 @@
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+# What is this module's name.
+MODULE_NAME ?= confidence
+
 include ../../Makefile.params
 include ../../Makefile.toolkit
 include Makefile.definition
