@@ -176,7 +176,7 @@ mark: ${CORPUS_NAME}.marked.gz
 
 #.SECONDARY: ${CORPUS_NAME}.marked.gz
 %.marked.gz: %${CORPUS_EXT}
-	@_LOCAL=1 echo "Marking $<"
+	@_LOCAL=1 echo "Marking up $<"
 	RP_PSUB_OPTS="-N $@" \
 	set -o pipefail; zcat -f $< \
 	| add-start-end.sh \
