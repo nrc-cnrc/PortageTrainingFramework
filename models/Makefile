@@ -132,6 +132,7 @@ portageLive: portageLive_models_lm_src
 portageLive: portageLive_models_confidence
 
 portageLive_models_confidence: portageLive_models_lm_src
+portageLive_models_confidence: portageLive_models_decode
 
 portageLive_models_lm_src:
 	${MAKE} -C lm portageLive LM_LANG=${SRC_LANG}
