@@ -278,7 +278,7 @@ portageLive: canoe.ini.cow.live check_canoe_live
 	fi
 	configtool check ../portageLive/canoe.ini.cow
 
-ONE_CPT ?= one.cpt.en2fr.gz
+ONE_CPT ?= one.cpt.${SRC_LANG}2${TGT_LANG}.gz
 
 # Make a single phrase table from all the phraase tables.
 ${ONE_CPT}: SHELL=${FRAMEWORK_SHELL}
@@ -318,8 +318,8 @@ clean: clean.portageLive
 .PHONY: clean.portageLive
 clean.portageLive: SHELL=${GUARD_SHELL}
 clean.portageLive:
-	-${RM} -r canoe.ini.cow.hardFilter canoe.ini.cow.live cpt.fr2en.gz cpt.fr2en.tppt one.cpt.en2fr.gz
-	-${RM} -r portageLive
+	-${RM} canoe.ini.cow.hardFilter canoe.ini.cow.live cpt.${SRC_LANG}2${TGT_LANG}.gz one.cpt.${SRC_LANG}2${TGT_LANG}.gz
+	-${RM} -r cpt.${SRC_LANG}2${TGT_LANG}.tppt portageLive
 
 
 

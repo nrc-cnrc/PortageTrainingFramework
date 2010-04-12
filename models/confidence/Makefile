@@ -126,7 +126,7 @@ portageLive: ${CE_MODEL_NAME}${CEMX}
 		echo $${MODELS[@]} >&2; \
 		cd ../portageLive/models/lm && ln -fs $${MODELS[@]} .; \
 	fi
-	MODELS=(`test -e ../portageLive/ce_model.cem && tar zxOf ../portageLive/$< model | egrep -o '[^/]+.(en_given_fr|fr_given_en).gz' | tr "\n" " "`); \
+	MODELS=(`test -e ../portageLive/ce_model.cem && tar zxOf ../portageLive/$< model | egrep -o '[^/]+.(${TGT_LANG}_given_${SRC_LANG}|${SRC_LANG}_given_${TGT_LANG}).gz' | tr "\n" " "`); \
 	if [[ $$MODELS ]]; then \
 		MODELS=($${MODELS[@]/%.gz/*}); \
 		MODELS=($${MODELS[@]/#/..\/..\/..\/tm\/}); \
