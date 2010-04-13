@@ -21,13 +21,16 @@ export LANG   = en_CA.utf8
 export LC_ALL = en_CA.utf8
 
 
+# Default language corpora extension.
+LANGXZ ?= .gz
+
 # Lets rename the language identifiers for the toolkit.
 lang1 = ${SRC_LANG}
 lang2 = ${TGT_LANG}
 
 # Language file extension.
-L1X = _${SRC_LANG}${LANGXZ}
-L2X = _${TGT_LANG}${LANGXZ}
+L1X ?= _${SRC_LANG}${LANGXZ}
+L2X ?= _${TGT_LANG}${LANGXZ}
 
 # IBM / HMM models extension.
 L1_GIVEN_L2  ?= ${lang1}_given_${lang2}
@@ -122,6 +125,9 @@ CPT_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother
 # FUNCTIONS.
 # Joins two parallel lists of words.
 interleave = $(strip $(subst \, , $(join ${1}, $(addprefix \, ${2}))))
+# Make sure we interleave only the corpora and that we exclude the models.
+# filter_interleave list1_extension list2_extension filt-out-model all-files
+filter_interleave = $(call interleave, $(filter ${1}, $(filter-out ${3}, ${4})), $(filter ${2}, $(filter-out ${3}, ${4})))
 
 
 
@@ -182,7 +188,7 @@ ${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		-i $(filter ${IBM1_MODEL_PFX}.%.gz, $^) \
 		${IBM2_MODEL_EXTRAS} \
 		$@ \
-		$(call interleave, $(filter %${L1X}, $+), $(filter %${L2X}, $+)) \
+		$(call filter_interleave, %${L1X}, %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
 		>& log.$(basename $@)
 
 
@@ -200,7 +206,7 @@ ${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		-i $(filter ${IBM1_MODEL_PFX}.%.gz, $^) \
 		${HMM1_MODEL_EXTRAS} \
 		$@ \
-		$(call interleave, $(filter %${L1X}, $+), $(filter %${L2X}, $+)) \
+		$(call filter_interleave, %${L1X}, %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
 		>& log.$(basename $@)
 
 
@@ -218,7 +224,7 @@ ${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		-i $(filter ${IBM1_MODEL_PFX}.%.gz, $^) \
 		${HMM2_MODEL_EXTRAS} \
 		$@ \
-		$(call interleave, $(filter %${L1X}, $+), $(filter %${L2X}, $+)) \
+		$(call filter_interleave, %${L1X}, %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
 		>& log.$(basename $@)
 
 
@@ -236,7 +242,7 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		-i $(filter ${IBM1_MODEL_PFX}.%.gz, $^) \
 		${HMM3_MODEL_EXTRAS} \
 		$@ \
-		$(call interleave, $(filter %${L1X}, $+), $(filter %${L2X}, $+)) \
+		$(call filter_interleave, %${L1X}, %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
 		>& log.$(basename $@)
 
 
@@ -259,7 +265,7 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 		-1 ${lang1} -2 ${lang2} \
 		${JPT_EXTRAS} \
 		$(filter %${L2_GIVEN_L1X}, $+) $(filter %${L1_GIVEN_L2X}, $+) \
-		$(call interleave, $(filter %${L1X}, $(filter-out %${L1_GIVEN_L2X} %${L2_GIVEN_L1X}, $+)), $(filter %${L2X}, $(filter-out %${L1_GIVEN_L2X} %${L2_GIVEN_L1X}, $+))) \
+		$(call filter_interleave, %${L1X}, %${L2X}, %${L1_GIVEN_L2X} %${L2_GIVEN_L1X}, $+) \
 		>& log.$(basename $@)
 
 
