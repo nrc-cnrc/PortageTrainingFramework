@@ -1,11 +1,14 @@
 \documentclass[11pt,letterpaper]{article}
 \usepackage{isolatin1}
 \usepackage{xspace}
+\usepackage{pifont}
 
 \newcommand{\phs}{\tild{s}}   % source phrase
 \newcommand{\pht}{\tild{t}}   % target phrase
 % Official typesetting of PORTAGEshared
-\newcommand{\PS}{PORTAGE\-\emph{shared}\xspace}
+\newcommand{\PS}{Portage 1.4\xspace}
+\newcommand{\tip}{\textbf{Useful tip \large{\ding{43}} }}
+\newcommand{\tipsummary}{\noindent\textbf{Tip summary \large{\ding{43}} }}
 
 \usepackage{ifpdf}
 \ifpdf
@@ -87,18 +90,19 @@ installed, which is also done by \texttt{SETUP.bash}.  Follow the
 instructions in \texttt{INSTALL} before you proceed with this document.
 
 To make sure \PS is installed properly, try \texttt{canoe -h}, \texttt{cow.sh
--h} and \texttt{tokenize.pl -h}.  If you get usage information for each of
-these programs, you should be ready to proceed.  If one of them gives you an
-error message, then some part of your installation is incomplete.  See section
-\emph{Verifying your installation} in \texttt{INSTALL} for troubleshooting
-suggestions.
+-h}, \texttt{tokenize.pl -h} and \texttt{ce.pl -h}.  If you get usage
+information for each of these programs, you should be ready to proceed.  If one
+of them gives you an error message, then some part of your installation is
+incomplete.  See section \emph{Verifying your installation} in \texttt{INSTALL}
+for troubleshooting suggestions.
 
 \subsection{Running the toy experiment}
 
 Once \PS is installed, you should make a complete copy of this framework
 directory hierarchy, because it is designed to work in place, creating the
 models within this hierarchy itself.  The philosophy of this framework is that
-each experiment is done in a separate copy of the framework.
+each experiment is done in a separate copy, where you might do various
+customizations depending on what each experiment is intended to test.
 
 For example:
 \begin{verbatim}
@@ -108,7 +112,9 @@ For example:
 \end{verbatim}
 All commands provided in the rest of this document are assumed to run in
 toy.experiment or in a subdirectory thereof, which will all be specified
-relative to toy.experiment.
+relative to toy.experiment.  Similary, whenever we quote a \texttt{cd} command,
+it will be assumed to be executed from this toy.experiment directory, not from
+the location of the previous commands.
 
 As you work through the example, the commands that you are supposed to type are
 preceded by a prompt, \texttt{>}, and the system's response is not, though
@@ -118,21 +124,29 @@ platform differences.
 
 Many of the commands are expressed as \texttt{make} targets. This has the
 advantage of requiring less typing, while still allowing you to see the actual
-commands executed by the system, which are always echoed by \texttt{make} (and
-which of course you could also type directly). \texttt{make} also lets you skip
-steps (except for the first one, since it is done manually).  For example, if
-you are not interested in any steps before decoder weight optimization, you can
-go to section~\ref{COW} and type \texttt{make tune} to begin at that point
-(although you will have to wait until the system executes the necessary
-commands to catch up). Here are some other useful make commands:
+commands executed by the system, since they are always echoed by \texttt{make}.
+(And you could also type them directly.) \texttt{make} also lets you skip
+sections in this document (except for the first one, since it is done
+manually).  For example, if you are not interested in any steps before decoder
+weight optimization, you can go to section~\ref{COW} and type \texttt{make
+tune} to begin at that point.  Make will automatically run all the commands
+required from previous sections before doing the step you specifically
+requested.  Here are some other useful make commands:
 \begin{itemize}
-\item \texttt{make all} runs all remaining steps at any point.
-\item \texttt{make clean} cleans up and returns the directory to its initial state
-\item \texttt{make -j} \emph{anything} builds the target \emph{anything} by running
-      commands in parallel whenever possible. This can be much faster if you
-      have a multiprocessor machine.
-\item \texttt{make help} displays some help and the main targets available in the
-      makefile.
+\item \texttt{make all}: run all remaining steps at any point.
+\item \texttt{make clean}: clean up and return the directory to its initial state
+\item \texttt{make -j} \emph{target} or \texttt{make -j N} \emph{target}: build
+      \emph{target} by running commands in parallel whenever possible (up to
+      N ways parallel if N is specified). This lets you take advantage of
+      multi-core capabilities of your machine, but use with caution: many
+      commands in the framework are already internally parallelized, as
+      discussed in section~\ref{FrameworkParams}.
+\item \texttt{make help} displays some help and the main targets available in
+      the makefile.
+\item \texttt{make summary} displays resource used by the framework: time and
+      memory used, as well as disk space for the runtime models (most
+      informative once training has been completed; discussed further in
+      section~\ref{FrameworkParams}).
 \end{itemize}
 
 \subsection{Overview of the Process}
@@ -143,45 +157,56 @@ sections (section numbers are in brackets):
 \item Corpus preparation (\ref{CorpusPreparation}): includes tokenization,
       alignment, lowercasing, and splitting (\ref{Splitting}).
 \item Model training (\ref{Training}): includes language model (\ref{LM}),
-      translation model (\ref{TM}), truecasing model (\ref{TC}), decoder weight
-      optimization (\ref{COW}), and rescoring model training (\ref{RAT}).
+      translation model (\ref{TM}), lexicalized distortion mode (\ref{LDM}),
+      truecasing model (\ref{TC}), decoder weight optimization (\ref{COW}),
+      rescoring model training (\ref{RAT}), and confidence estimation model
+      training (\ref{CE}).
 \item Translating and testing (\ref{TranslatingTesting}): includes
-      translating (\ref{Translating}), truecasing (\ref{Truecasing}) and
-      testing (\ref{Testing}).
+      decoding (\ref{Decoding}), rescoring (\ref{RATTrans}), confidence
+      estimation(\ref{CETrans}), truecasing (\ref{Truecasing}) and testing
+      (\ref{Testing}).
 \end{enumerate}
 These steps are fairly standard, but of course there are many variants on the
-sample process illustrated here. For more information, see the Portage HTML
-user documentation (found in
-\texttt{PORTAGEshared/doc/user-manual.html} on the CD).
-For detailed information on a particular program, run it
-with the \texttt{-h} flag.
+sample process illustrated here. For more information, see the \PS
+user manual (found in \texttt{PORTAGEshared/doc/user-manual.html} on the CD).
+For detailed information on a particular program, run it with the \texttt{-h}
+flag (or see \texttt{PORTAGEshared/doc/usage.html} on the CD).
 
 \section{Corpus Preparation} \label{CorpusPreparation}
 
 Corpus preparation involves converting raw document pairs into tokenized,
 sentence-aligned files in the format expected by Portage.  We provide a
 tokenizer, a sentence aligner and sample corpus pre-processing scripts with
-\PS, which can help you with these steps.  For details, see section \emph{Text
-Processing} in the user manual.
+\PS, which can help you with these steps.  We also provide a tool to extract
+text from a translation memory in TMX format.  For details, see section
+\emph{Text Processing} in the user manual.
+
+We don't actually perform any of the steps mentioned above in this toy example
+because they are highly dependent on your actual data.  You should plan to
+invest some time in preprocessing your data well if you want to obtain good
+results with \PS.
 
 \subsection{Splitting the Corpus} \label{Splitting}
 
 The tokenized, sentence-aligned corpus must be split into separate portions in
 order to run experiments. Distinct, non-overlapping sub-corpora are required
-for model training (see section~\ref{Training}), for optimizing decoder weights
-(section~\ref{COW}) and rescoring weights (section~\ref{RAT}), and for testing
+for model training (see section~\ref{Training}), for tuning decoder weights
+(section~\ref{COW}) and rescoring weights (section~\ref{RAT}), for confidence
+estimation (if you use it; section~\ref{CE}), and for testing
 (section~\ref{Testing}).\footnote{In this example, we use separate corpora for
-  tuning decoder and rescoring weights, but this is not necessary.}  Typically,
-the latter three corpora are around 1000 segments each.  If the corpus is
-chronological, then it is a good idea to choose these three corpora from the
-most recent material, which is likely to resemble future text more closely.
+tuning decoder and rescoring weights, but this is not necessary.  However,
+confidence estimation must absolutely have its own separate tuning set.}
+Typically, the tuning and testing corpora are around 1000 segments each.  If
+the corpus is chronological, then it is a good idea to choose these corpora
+from the most recent material, which is likely to resemble future text more
+closely.
 
 Since proper splitting of a corpus needs to take into account its structure
-and nature, these steps are not handled by the experimental
-framework. For the toy experiment, we provide small data sets that can be found
-here: \texttt{PORTAGEshared/test-suite/unit-testing/framework-toy}.  These sets
-are very small to reduce running time, so the resulting translations are of
-poor quality.
+and nature, these steps are not handled by the experimental framework. For the
+toy experiment, we provide small data sets that can be found here:
+\texttt{PORTAGEshared/test-suite/unit-testing/framework-toy}.  These sets are
+very small, to minimize running time, so the resulting translations are of poor
+quality.
 
 To drop these sets into the framework, simply copy them (or make symbolic
 links) into your copy's corpora directory:
@@ -192,16 +217,18 @@ links) into your copy's corpora directory:
        100    2330   13680 corpora/dev1_fr.al
        100    2095   11462 corpora/dev2_en.al
        100    2443   13905 corpora/dev2_fr.al
+       100    2383   13061 corpora/devCE_en.al
+       100    2840   16209 corpora/devCE_fr.al
        100    2379   13292 corpora/test_en.al
        100    2616   15622 corpora/test_fr.al
-      8992  184569  994516 corpora/train_en.al
-      8992  211240 1194385 corpora/train_fr.al
+      8892  182186  981455 corpora/train_en.al
+      8892  208400 1178176 corpora/train_fr.al
      18584  409787 2268451 total
 \end{verbatim}
 
 In your own experiments, the files you need to copy into \texttt{corpora}
-should be in original truecase (if you're using truecasing), tokenized,
-sentence-split and aligned, just like the ones we provide here.
+should be plain text in original truecase (if you're using truecasing),
+tokenized, sentence-split and aligned, just like the ones we provide here.
 
 \subsection{Setting framework parameters} \label{FrameworkParams}
 
@@ -213,16 +240,19 @@ the other way around, which is the default;
 \item set \texttt{TRAIN\_LM} and \texttt{TRAIN\_TM} to
 \texttt{train} instead of \texttt{lm-train} and \texttt{tm-train} since we
 won't be using a separate corpora to train the translation and language models;
+\item set \texttt{TUNE\_CE} to \texttt{devCE};
 \item set \texttt{TEST\_SET} to \texttt{test} instead of the default
-  \texttt{test1 test2};
+  \texttt{test1 test2}, since we only have one test set;
 \item select a language modeling option (see below for more info about this
   choice): 
 \begin{itemize}
-\item to use SRILM, no change is required;
-\item to use IRSLTM, comment out the \texttt{LM\_TOOLKIT\_SRI} variable and set
-the \texttt{IRSTLM} variable to the location where IRSTLM is installed;
-\item to use neither, comment out both \texttt{LM\_TOOLKIT\_SRI} and
-\texttt{IRSTLM}.
+\item to use SRILM make sure the \texttt{LM\_TOOLKIT} variable is set to
+\texttt{SRI};
+\item to use MITLM, set the \texttt{LM\_TOOLKIT} variable to \texttt{MIT};
+\item to use IRSLTM, set the \texttt{LM\_TOOLKIT} variable to \texttt{IRST} and
+set the \texttt{IRSTLM} variable to the location where IRSTLM is installed;
+\item to use none of the above (for this toy example only), leave
+\texttt{LM\_TOOLKIT} set to any valid value.
 \end{itemize}
 \end{itemize}
 In this toy experiment, we will use the default value for all other parameters.
@@ -230,22 +260,23 @@ In this toy experiment, we will use the default value for all other parameters.
 While in \texttt{Makefile.params}, you should read through all the variables in
 the \emph{User definable variables} section of the file.  This is where most of
 the configurable behaviours are set, such as whether to do rescoring and/or
-truecasing, what LM toolkit you are using (if any), etc. 
+truecasing, what LM toolkit you are using (if any), levels of parallelism, etc. 
 
-We recommend you use SRILM (www.speech.sri.com/projects/srilm/) as your
+We recommend you use SRILM (http://www.speech.sri.com/projects/srilm/) as your
 language modeling toolkit, if your licensing requirements permit it; if not,
-you can use IRSTLM instead (irstlm.sourceforge.net).\footnote{Another options
-is the CMU SLM (www.speech.cs.cmu.edu/ SLM\_info.html).} If you have neither
-toolkit at the moment, we provide trained language models that you can drop
-into the framework to finish this toy experiment while skipping language model
-training. To use IRSTLM, in addition to the edits described above, you need to
-type \texttt{make help} and cut and paste the two export commands, unless
-you've already done the equivalent steps while installing IRSTLM:
+we recommend MITLM (http://code.google.com/p/mitlm/), another excellent LM
+toolkit, which allows commercial use.  If you have no toolkit at the moment, we
+provide trained language models that you can drop into the framework to finish
+this toy experiment while skipping language model training. To use IRSTLM, in
+addition to the edits described above, you need to type \texttt{make help} and
+cut and paste the two export commands, unless you've already done the
+equivalent steps while installing IRSTLM:
 \begin{verbatim}
-   > make help | head -3
-   please run in order for this framework to run properly:
+   > make help | grep -1 irstlm
+   please run the following in order for this framework to run properly:
    export PATH=$PORTAGE/pkgs/irstlm/bin:$PATH
    export IRSTLM=$PORTAGE/pkgs/irstlm
+   Your corpora are:
    > export PATH=$PORTAGE/pkgs/irstlm/bin:$PATH
    > export IRSTLM=$PORTAGE/pkgs/irstlm
 \end{verbatim}
@@ -255,22 +286,43 @@ Another set of parameters you might want to adjust are the various
 take advantage of multi-processor computers and/or multi-node computing
 clusters, doing tasks in parellel where possible.  If you're not running on a
 cluster, the number of CPUs on your machine is a good choice for all five
-variables (the default is conservatively set to 1).  If you are running on a
-cluster, the framework uses \texttt{qsub} to submit jobs, via the
-\texttt{run-parallel.sh} and \texttt{psub} scripts, and you can set the five
-variables according to resources available to you.
+variables (this is the default).  If you are running on a cluster, the
+framework uses \texttt{qsub} to submit jobs, via the \texttt{run-parallel.sh}
+and \texttt{psub} scripts, and you can set the five variables according to
+resources available to you.
 
-One more thing you will notice about this framework is that most commands run
-by make are preceeded by \texttt{RP\_PSUB\_OPTS=...} or \texttt{\_LOCAL=1}.
-These only have an impact when running on a cluster, and are written in such a
-way that they are ignored otherwise.  When working on a cluster, commands
+When running this framework, you might notice that most commands are preceded
+by control variables \texttt{RP\_PSUB\_OPTS=...} or \texttt{\_LOCAL=1}.  These
+strings only have an impact when running on a cluster, and are written in such
+a way that they are ignored otherwise.  When working on a cluster, commands
 preceded by \texttt{\_LOCAL=1} are inexpensive ones that get run directly
-instead of being submitted to the queue, while \texttt{RP\_PSUB\_OPTS=...} is
-used to specify additional options to \texttt{psub}, which is used in \PS to
-encapsulate the invocation of \texttt{qsub}.  If your cluster has specific
-usage rules or if you require additional parameters to \texttt{qsub}, you might
-want to customize \texttt{psub} itself or add options as required in this
-framework.
+instead of being submitted to the queueing system, while
+\texttt{RP\_PSUB\_OPTS=...} is used to specify additional options to
+\texttt{psub}, which is used in \PS to encapsulate the invocation of
+\texttt{qsub}.  If your cluster has specific usage rules or if you require
+additional parameters to \texttt{qsub}, you might want to customize
+\texttt{psub} itself or add options as required in this framework.
+
+\tip Many commands in this framework will also be preceded by \texttt{time-mem}.
+This utility script measures the time taken by a command, just like the
+standard \texttt{time} utility, as well as memory usage.  At any time while
+things are running, or afterwards, you can type \texttt{make summary} to get a
+summary of resources used by all components of the framework.  While things are
+running, you may get some error messages, but these are safe to ignore: the
+report should still reflect the situation so far.  The output of \texttt{make
+time-mem} can be very useful to determine which steps are taking the most time
+and/or the most memory.  They can help you determine if you have enough
+computing resources to process your corpora.  They can also help you determine
+the cost of various choices you can make in Portage.  You can also type
+\texttt{make summary} to get the \texttt{time-mem} information as well as the
+space on disk of the models needed at runtime, such as would be deployed on a
+translation server.
+
+\tipsummary \texttt{make summary}; \texttt{make time-mem}
+
+For the sake of brevity, when we quote executed commands in this document, we
+only show the command itself, leaving out \texttt{time-mem} and the control
+variables mentioned above.
 
 \subsection{Lowercasing and adding escapes}
 
@@ -290,12 +342,13 @@ The decoder, \texttt{canoe}, treats \texttt{<}, \texttt{>} and \verb*X\X as
 special characters, in order to support markup for special translation rules.
 We won't use any markup in this example, but we still need to escape any 
 occurrences of the three special characters (in the source language only, since
-this is only for the input to \texttt{canoe}).
+this is only required for the input to \texttt{canoe}).
 
 \begin{verbatim}
    > make rule
    canoe-escapes.pl -add dev1_fr.lc > dev1_fr.rule
    canoe-escapes.pl -add dev2_fr.lc > dev2_fr.rule
+   canoe-escapes.pl -add devCE_fr.lc > devCE_fr.rule
    canoe-escapes.pl -add test_fr.lc > test_fr.rule
 \end{verbatim}
 
@@ -306,12 +359,13 @@ this is only for the input to \texttt{canoe}).
 This step creates various models and parameter files that are required for
 translation. There are five steps in training: creating a language model,
 creating a truecasing model, creating translation models, optimizing decoder
-weights, and creating a rescoring model.
+weights, and creating a rescoring model.  When using confidence estimation, the
+CE model also has to be trained.
 
 \subsection{Creating a Language Model} \label{LM}
 
 Portage does not come with programs for language model training. However, it
-accepts models in the widely-used ``DARPA'' format which is produced by
+accepts models in the widely-used ``ARPA'' format which is produced by
 toolkits such as SRILM or IRSTLM. The following sections describe the training
 process for SRILM, IRSTLM, and for using the pre-trained models.\footnote{In
 this toy example, we only use the target language part of the parallel training
@@ -321,8 +375,8 @@ language, you can use them to train additional language models.  The framework
 does not support training multiple language models, but you can train them
 externally and add them to the \texttt{canoe.ini.template} file (see
 section~\ref{COW}).} Commands are assumed to be issued from the
-\texttt{toy.experiment} directory (\texttt{cd ..} from the corpora directory if
-you have not already done so).
+\texttt{toy.experiment} directory (so run \texttt{cd ..} from the corpora
+directory if you have not already done so).
 
 \subsubsection{SRILM}
 
@@ -330,7 +384,8 @@ If you are using the SRILM toolkit, here is the command used to produce this
 model:
 \begin{verbatim}
    > make lm
-   make -C models/lm all 
+   make -C models lm
+   make -C lm all LM_LANG=en
    Creating ARPA text format train_en-kn-5g.lm.gz
    ngram-count -interpolate -kndiscount -order 5 \
       -text ../../corpora/train_en.lc.gz -lm train_en-kn-5g.lm.gz \
@@ -339,8 +394,28 @@ model:
       >& log.train_en-kn-5g.binlm
 \end{verbatim}
 The first command executed, \texttt{ngram-count}, produces the language model
-itself in ``DARPA'' format.  The second command, \texttt{arpalm2binlm},
-converts it into the Portage binary language model format for quicker loading.
+itself in ``ARPA'' format.  The second command, \texttt{arpalm2binlm},
+converts it into the Portage binary language model format for fast loading.
+
+
+\subsubsection{MITLM}
+
+If you are using the MITLM toolkit, here is the command used to produce the
+model needed for this example, \texttt{train\_en-kn-5g.binlm.gz}:
+\begin{verbatim}
+   > make lm
+   make -C models lm
+   make -C lm all LM_LANG=en
+   Creating ARPA text format train_en-kn-5g.lm.gz
+   zcat ../../corpora/train_en.lc.gz \
+      | estimate-ngram -order 5 -smoothing ModKN -text /dev/stdin \
+        -write-lm train_en-kn-5g.lm.gz 2> log.train_en-kn-5g.lm
+   arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \
+      >& log.train_en-kn-5g.binlm
+\end{verbatim}
+The first command executed, \texttt{estimate-ngram}, produces the language
+model itself in ``ARPA'' format.  The second command, \texttt{arpalm2binlm},
+converts it into the Portage binary language model format for fast loading.
 
 
 \subsubsection{IRSTLM}
@@ -349,36 +424,37 @@ If you are using the IRSTLM toolkit, here is the command used to produce the
 model needed for this example, \texttt{train\_en-kn-5g.binlm.gz}:
 \begin{verbatim}
    > make lm
-   make -C models/lm all
-   Marking ../../corpora/train_en.lc.gz
+   make -C models lm
+   make -C lm all LM_LANG=en
+   Marking up ../../corpora/train_en.lc.gz
    zcat -f ../../corpora/train_en.lc.gz \
       | add-start-end.sh \
       | gzip -c \
       > train_en.marked.gz
    Creating IRSTLM train_en-kn-5g.ilm.gz
-   build-lm.sh -p -t stat.$$ -n 5 -k 1 -s kneser-ney \
+   build-lm.sh -p -t stat.$$ -n 5 -k 4 -s kneser-ney \
       -i "gunzip -c train_en.marked.gz" -o train_en-kn-5g.ilm.gz \
       >& log.train_en-kn-5g.ilm
    Creating ARPA text format train_en-kn-5g.lm.gz
-   compile-lm --text yes train_en-kn-5g.ilm.gz unsorted.train_en-kn-5g.lm \
-      >& log.train_en-kn-5g.lm \
-   set -o pipefail; \
-      compile-lm --text yes train_en-kn-5g.ilm.gz /dev/stdout \
-      | egrep -v '^Saving in txt format to' \
-      | lm_sort.pl | gzip > train_en-kn-5g.lm.gz
+   compile-lm --text yes train_en-kn-5g.ilm.gz /dev/stdout \
+        2> log.train_en-kn-5g.lm \
+        | egrep -v '^Saving in txt format to' \
+        | lm_sort.pl \
+        | gzip > train_en-kn-5g.lm.gz
    arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \
       >& log.train_en-kn-5g.binlm
 \end{verbatim}
 The first three commands executed, \texttt{add-start-end.sh},
 \texttt{build-lm.sh} and \texttt{compile-lm}, construct the language model in
-``DARPA'' format using IRSTLM software.  The script
+``ARPA'' format using IRSTLM software.  The script
 \texttt{lm\_sort.pl} reorders the contents of the LM to maximize the
 compression ratio \texttt{gzip} can achieve.  The sort step is unecessary with
 a small language model, but can significantly reduce final file sizes with very
 large language models.\footnote{We didn't do this sorting step with SRILM,
 since its output already compresses well.}  The last command,
 \texttt{arpalm2binlm}, converts the language model into the Portage binary
-language model format for quicker loading.
+language model format for fast loading.
+
 
 \subsubsection{Using the pre-trained model}
 
@@ -392,10 +468,10 @@ without a language modeling toolkit.
 \subsection{Creating a Truecasing Model} \label{TC}
 
 Decoding is done in lowercase to reduce data sparseness, but at the end of the
-translation process, you might want to restore proper mixed case to your
-output.  We call this step truecasing.  To train a truecasing model, you need
-both a lowercased and the original ``truecase'' version of the training corpus
-in the target language.
+translation process, you will probably want to restore proper mixed case to
+your output.  We call this step truecasing.  To train a truecasing model, you
+need both a lowercased and the original ``truecase'' version of the training
+corpus in the target language.
 
 The truecasing model consists of two different models: a ``casemap'', which
 maps each lower case words to its possible truecase variants, and a standard
@@ -403,85 +479,100 @@ language model trained on the truecase corpus.
 
 \begin{verbatim}
    > make tc
-   make -C models/tc all
+   make -C models tc
+   make -C tc all
    compile_truecase_map ../../corpora/train_en.tc.gz \
       ../../corpora/train_en.lc.gz \
-      > train_en.map
+      > train_en.map 2> log.train_en.map
    [commands to train the truecase LM]
 \end{verbatim}
-The first command, \texttt{compile\_truecase\_map}, compiles the casemap using
-by reading the truecase and lowercased version of the corpus simultaneously.
+The first command, \texttt{compile\_truecase\_map}, compiles the casemap
+by reading the truecase and lowercased versions of the corpus simultaneously.
 The next commands will depend on your choice of LM toolkit, training a language
 model as in section~\ref{LM} above, but using the truecase corpus,
-\texttt{train\_en.tc.gz}, instead of the lowercased version,
-\texttt{train\_en.lc.gz}, as above.
+\texttt{train\_en.tc.gz}, instead of the lowercased version.
 
 If you have not installed any LM toolkit, we provide the file
 \texttt{train\_en-kn-3g.lm.gz} in
 \texttt{PORTAGEshared/test-suite/unit-testing/framework-toy/tc}.  You can copy
 that file into \texttt{models/tc} and and type \texttt{make tc} to proceed with
-the rest of this example, although you won't be able to complete your own
-experiments without a language modeling toolkit.
+the rest of this example.
 
 \subsection{Creating a Translation Model} \label{TM}
 
-Creating a translation model involves two main steps: training IBM and HMM word
-alignment models in both directions, then using them to extract phrase pairs
+Creating a translation model involves two main steps: 1) training IBM and HMM word
+alignment models in both directions, then 2) using them to extract phrase pairs
 from the corpus.  We illustrate the use of two separate phrase tables: one
-from IBM2 word alignments, and one from HMM word alignments.  You can do all
-this by typing \texttt{make tm} in your \texttt{toy.experiment} directory, but
-we'll break it down into several steps here.
+from IBM2 word alignments, and one from HMM word alignments (we recommended
+doing the same for your experiments as well).  You can do all this by typing
+\texttt{make tm} in your \texttt{toy.experiment} directory, but we will break
+it down into several steps here.
 
 \subsubsection{Creating a Translation Model Using IBM2 Alignments} \label{IBM2}
 
 \subsubsection*{Training IBM2 Models}
 
-First we train IBM2 word alignment models, which require training IBM1 models
+First we train IBM2 word alignment models, which requires training IBM1 models
 as a prerequisite.  We do this for both directions.
 \begin{verbatim}
    > cd models/tm
    > make ibm2_model
-   Generating ibm1.train.en_given_fr.gz
-   cat.sh -n 1 -pn 1 -v -n1 5 -n2 0 ibm1.train.en_given_fr.gz 
+   cat.sh -n 4 -pn 4 -v -n1 5 -n2 0 -bin ibm1.train.en_given_fr.gz 
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
       >& log.ibm1.train.en_given_fr
-   Generating ibm2.train.en_given_fr.gz
-   cat.sh -n 1 -pn 1 -v -m -n1 0 -n2 5 -slen 20 -tlen 20 -bksize 20 \
+   cat.sh -n 4 -pn 4 -v -r -n1 5 -n2 0 -bin ibm1.train.fr_given_en.gz \
+      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
+      >& log.ibm1.train.fr_given_en
+   cat.sh -n 4 -pn 4 -v -n1 0 -n2 5 -slen 20 -tlen 20 -bksize 20 -bin \
       -i ibm1.train.en_given_fr.gz ibm2.train.en_given_fr.gz \
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
       >& log.ibm2.train.en_given_fr
-   Generating ibm1.train.fr_given_en.gz
-   cat.sh -n 1 -pn 1 -v -r -n1 5 -n2 0 ibm1.train.fr_given_en.gz \
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
-      >& log.ibm1.train.fr_given_en
-   Generating ibm2.train.fr_given_en.gz
-   cat.sh -n 1 -pn 1 -v -r -n1 0 -n2 5 -slen 20 -tlen 20 -bksize 20 \
+   cat.sh -n 4 -pn 4 -v -r -n1 0 -n2 5 -slen 20 -tlen 20 -bksize 20 -bin \
       -i ibm1.train.fr_given_en.gz ibm2.train.fr_given_en.gz \
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
       >& log.ibm2.train.fr_given_en
 \end{verbatim}
 The \texttt{train\_ibm} program could have been used directly, but we use
 \texttt{cat.sh} instead, which runs \texttt{train\_ibm} in parallel. Here
-the options \texttt{-n 1 -pn 1} disable all parallelism, because we ran it on a
-non-clustered computer, but the degree of parallelism used is controlled by the
-\texttt{PARALLELISM\_LEVEL\_TM} variable in \texttt{Makefile.params}.
+the options \texttt{-n 4 -pn 4} mean 4-ways parallel, because we are quoting
+commands run on a quad core, and the default is the use the number of CPUs
+available, as controlled by the \texttt{PARALLELISM\_LEVEL\_TM} variable in
+\texttt{Makefile.params}.
 
 The commands above write log files containing information about training.  For
 example, the IBM log files show convergence and pruning statistics for each
 iteration:
 \begin{verbatim}
    > grep -h ppx log.ibm[12]*en_given_fr
-   iter 1 (IBM1): prev ppx = 359.673, size = 1476170 word pairs; took 7 second(s).
-   iter 2 (IBM1): prev ppx = 109.736, size = 1364397 word pairs; took 6 second(s).
-   iter 3 (IBM1): prev ppx = 66.6961, size = 1194591 word pairs; took 6 second(s).
-   iter 4 (IBM1): prev ppx = 53.0032, size = 1025745 word pairs; took 5 second(s).
-   iter 5 (IBM1): prev ppx = 48.0923, size = 882560 word pairs; took 5 second(s).
-   parallel iter (IBM2): prev ppx = 45.9329, size = 882290 word pairs.
-   parallel iter (IBM2): prev ppx = 29.5655, size = 881943 word pairs.
-   parallel iter (IBM2): prev ppx = 23.6397, size = 857564 word pairs.
-   parallel iter (IBM2): prev ppx = 20.9975, size = 748588 word pairs.
-   parallel iter (IBM2): prev ppx = 19.6976, size = 623553 word pairs.
+   parallel iter (IBM1): prev ppx = 356.599, size = 1461411 word pairs.
+   parallel iter (IBM1): prev ppx = 109.263, size = 1350718 word pairs.
+   parallel iter (IBM1): prev ppx = 66.443, size = 1182917 word pairs.
+   parallel iter (IBM1): prev ppx = 52.8037, size = 1016137 word pairs.
+   parallel iter (IBM1): prev ppx = 47.908, size = 874686 word pairs.
+   parallel iter (IBM2): prev ppx = 45.755, size = 874415 word pairs.
+   parallel iter (IBM2): prev ppx = 29.4005, size = 874073 word pairs.
+   parallel iter (IBM2): prev ppx = 23.4925, size = 849903 word pairs.
+   parallel iter (IBM2): prev ppx = 20.8623, size = 741721 word pairs.
+   parallel iter (IBM2): prev ppx = 19.5686, size = 617726 word pairs.
 \end{verbatim}
+
+The log files also contain time and memory resource information, which you can
+summarize at any level just as you can globally:
+\begin{verbatim}
+   > make time-mem
+   find -type f -name log.\* \
+           | sort \
+           | xargs time-mem -T -m tm
+\end{verbatim}
+\begin{scriptsize}
+\begin{verbatim}
+   log.ibm1.train.en_given_fr:TIME-MEM  WALL TIME: 1m3s   CPU TIME: 28s   VSZ: 0.071G  RSS: 0.010G
+   log.ibm1.train.fr_given_en:TIME-MEM  WALL TIME: 1m0s   CPU TIME: 28s   VSZ: 0.072G  RSS: 0.009G
+   log.ibm2.train.en_given_fr:TIME-MEM  WALL TIME: 57s    CPU TIME: 24s   VSZ: 0.071G  RSS: 0.011G
+   log.ibm2.train.fr_given_en:TIME-MEM  WALL TIME: 58s    CPU TIME: 24s   VSZ: 0.084G  RSS: 0.012G
+tm:TIME-MEM                             WALL TIME: 3m58s  CPU TIME: 1m44s VSZ: 0.084G  RSS: 0.012G
+\end{verbatim}
+\end{scriptsize}
 
 The IBM models are written to files \texttt{ibm[12].*} and contain word
 translation/alignment probabilities.
@@ -492,143 +583,201 @@ Now we extract the joint-count phrase table from the same parallel corpus,
 using IBM2 word alignment models in both directions together.
 \begin{verbatim}
    > make ibm2_jpt
-   Generating jpt.ibm2.train.fr-en.gz
-   gen-jpt-parallel.sh -n 1 -o jpt.ibm2.train.fr-en.gz GPT \
-      -v -j -w 1 -m 8 -ibm 2 -1 fr -2 en \
+   gen-jpt-parallel.sh -n 4 -nw 4 -w 1 -o jpt.ibm2.train.fr-en.gz GPT \
+      -v -m 8 -ibm 2 -1 fr -2 en \
       ibm2.train.en_given_fr.gz ibm2.train.fr_given_en.gz \
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
       2> log.jpt.ibm2.train.fr-en
 \end{verbatim}
-The joint-count phrase table contains the raw joint occurrence frequency for
+The joint-count phrase table contains the co-occurrence frequency for
 each phrase pair observed in the parallel corpus.
 
 \subsubsection*{Training Conditional Phrase Tables}
 
-Finally we compute the conditional phrase table, using three different
+Finally we compute the conditional phrase table, using two different
 smoothers to calculate the probabilities.\footnote{In general, we often obtain
-  better translation quality when using phrase probabilities estimated from relative
-frequencies (``RFSmoother'') along with relative frequencies with Kneser-Ney smoothing
-(``KNSmoother'') and Zens-Ney lexical smoothing (``ZNSmoother''). Other
-smoothing options are also available.}
-Although
-output together in the same phrase table, they are separate probability models,
-whose relative weights will be tuned during decoder weight optimization (see
-section~\ref{COW}).
+better translation quality when using phrase probabilities estimated from
+relative frequencies (``RFSmoother'') along with probability estimates
+calculated using Zens-Ney lexical smoothing (``ZNSmoother''). Other smoothing
+options are also available.  We also used to include Kneser-Ney smoothing by
+default, but in recent work it has not helped much, so we don't anymore.}
+Although saved together in the same phrase table, they are separate probability
+models, whose relative weights will be tuned during decoder weight optimization
+(see section~\ref{COW}).
 \begin{verbatim}
    > make ibm2_cpt
-   Generating cpt.ibm2-rf-zn-kn3.train.fr2en.gz
-   joint2cond_phrase_tables -sort -prune1 100 -ibm 2 -v -i -z \
-      -1 fr -2 en -s RFSmoother -s ZNSmoother -s "KNSmoother 3" \
+   joint2cond_phrase_tables -sort -prune1 100 -v -i -z -ibm 2 \
+      -1 fr -2 en -s RFSmoother -s ZNSmoother \
       -multipr fwd -o cpt.ibm2-rf-zn-kn3.train \
       -ibm_l2_given_l1  ibm2.train.en_given_fr.gz \
       -ibm_l1_given_l2  ibm2.train.fr_given_en.gz \
       jpt.ibm2.train.fr-en.gz \
       >& log.cpt.ibm2-rf-zn-kn3.train.fr2en
 \end{verbatim}
-The phrase table \texttt{cpt.ibm2.train.fr-en.gz}, jointly with its HMM counterpart
-(see below), is the main source of information for French to English
-translation.  Each of its lines is of the form:
+The phrase table \texttt{cpt.ibm2-rf-zn.train.fr2en.gz}, jointly with its HMM
+counterpart (see below), is the main source of information for French to
+English translation.  Each of its lines is of the form:
 \begin{verbatim}
-   fr ||| en ||| p(fr|en) p(en|fr)
+   fr ||| en ||| p1(fr|en) p2(fr|en) p1(en|fr) p2(en|fr)
 \end{verbatim}
 where \texttt{fr} is a French source phrase, \texttt{en} is an English target
 phrase, \texttt{p(fr|en)} is the probability that \texttt{fr} is the
-translation of \texttt{en}, and \texttt{p(en|fr)} is the probability that
-\texttt{en} is the translation of \texttt{fr}.
+translation of \texttt{en} (the ``backward'' probability), and
+\texttt{p(en|fr)} is the probability that \texttt{en} is the translation of
+\texttt{fr} (the ``forward'' probability).  In our example here, \texttt{p1} is
+the relative-frequency estimate of this probability, while \texttt{p2} is the
+Zens-Ney lexical smoothing based estimate, because those are the smoothers we
+chose.  There can be any number of forward and backward probability estimates,
+reflecting the number of smoothers you use.
+%
 Here are two sample lines from this file:
 \begin{footnotesize}
 \begin{verbatim}
-   > zgrep '| proposed regulations |' cpt.ibm2-rf-zn-kn3.train.fr2en.gz 
-   projets de règlement ||| proposed regulations ||| 0.66 0.012 0.35 1 0.01 0.52
-   règlements proposés ||| proposed regulations ||| 0.33 1.2e-6 0.05 1 0.39 0.14
+   > zgrep '| proposed regulations |' cpt.ibm2-rf-zn.train.fr2en.gz 
+   projets de règlement ||| proposed regulations ||| 0.67 1.2e-6 1 0.013
+   règlements proposés ||| proposed regulations ||| 0.33 0.013 1 0.39
 \end{verbatim}
 \end{footnotesize}
-You'll notice there are in fact six numbers per line.\footnote{With more
-  digits than shown here.}  That's because we used
-three smoothers: we have three estimates of \texttt{p(fr|en)} followed by three
-estimates of \texttt{p(en|fr)}.  Also, this example is carefully chosen;
-because of the small size of the training corpus, many other entries in the
-phrase table are not such good translations.
+Note that this example is carefully chosen; because of the small size of the
+training corpus, many other entries in the phrase table are not such good
+translations.
 
 \subsubsection{Creating a Translation Model Using HMM Alignments} \label{HMM}
 
 Now we repeat the same steps using HMM word alignment models, using the
-``liang'' variant (\texttt{hmm2}).
+``hmm3'' variant, which is the default.  This variant corresponds to the HMM
+parameter settings we recommend using as a starting point.
 \begin{verbatim}
-   > make hmm2_cpt
-   Generating hmm2.train.en_given_fr.gz
-   cat.sh -n 1 -pn 1 -v -n1 0 -n2 5 -mimic liang \
-      -i ibm1.train.en_given_fr.gz hmm2.train.en_given_fr.gz \
+   > make hmm3_cpt
+   cat.sh -n 4 -pn 4 -v -n1 0 -n2 5 -hmm -end-dist -anchor -max-jump 20 \
+      -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 -bin \
+      -i ibm1.train.en_given_fr.gz hmm3.train.en_given_fr.gz \
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
-      >& log.hmm2.train.en_given_fr
-   Generating hmm2.train.fr_given_en.gz
-   cat.sh -n 1 -pn 1 -v -r -n1 0 -n2 5 -mimic liang \
-      -i ibm1.train.fr_given_en.gz hmm2.train.fr_given_en.gz \
+      >& log.hmm3.train.en_given_fr
+   cat.sh -n 4 -pn 4 -v -r -n1 0 -n2 5 -hmm -end-dist -anchor -max-jump 20 \
+      -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 -bin \
+      -i ibm1.train.fr_given_en.gz hmm3.train.fr_given_en.gz \
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
-      >& log.hmm2.train.fr_given_en
-   Generating jpt.hmm2.train.fr-en.gz
-   gen-jpt-parallel.sh -n 1 -o jpt.hmm2.train.fr-en.gz \
-      GPT -v -j -w 1 -m 8 -hmm -1 fr -2 en \
-      hmm2.train.en_given_fr.gz hmm2.train.fr_given_en.gz \
+      >& log.hmm3.train.fr_given_en
+   gen-jpt-parallel.sh -n 4 -nw 4 -w 1 -o jpt.hmm3.train.fr-en.gz \
+      GPT -v -m 8 -hmm -1 fr -2 en \
+      hmm3.train.en_given_fr.gz hmm3.train.fr_given_en.gz \
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
-      2> log.jpt.hmm2.train.fr-en
-   Generating cpt.hmm2-rf-zn-kn3.train.fr2en.gz
-   joint2cond_phrase_tables -sort -prune1 100 -hmm -v -i -z \
-      -1 fr -2 en -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3" \
-      -multipr fwd -o  cpt.hmm2-rf-zn-kn3.train  \
-      -ibm_l2_given_l1  hmm2.train.en_given_fr.gz \
-      -ibm_l1_given_l2  hmm2.train.fr_given_en.gz \
-      jpt.hmm2.train.fr-en.gz \
-      >& log.cpt.hmm2-rf-zn-kn3.train.fr2en
+      >& log.jpt.hmm3.train.fr-en
+   joint2cond_phrase_tables -reduce-mem -sort -prune1 100 -v -i -z -hmm \
+      -1 fr -2 en -s RFSmoother -s ZNSmoother \
+      -multipr fwd -o cpt.hmm3-rf-zn.train  \
+      -ibm_l2_given_l1  hmm3.train.en_given_fr.gz \
+      -ibm_l1_given_l2  hmm3.train.fr_given_en.gz \
+      jpt.hmm3.train.fr-en.gz \
+      >& log.cpt.hmm3-rf-zn.train.fr2en
 \end{verbatim}
 
 There are many variants of the HMM models.  In this framework, we've included
-recipes to produce two of them: one similar to the baseline described in Liang
-et al (ACL 2006), invoked via the \texttt{hmm2\_*} targets; and
-one with lexically conditioned jump parameters, following He (WMT-2006),
-invoked via the \texttt{hmm1\_*} targets. Many other variants are available, as
-documented by \texttt{train\_ibm -h}. To select one or more of them, you'll
-need to modify \texttt{models/tm/Makefile}.  It's probably easier to modify the
-commands associated with the \texttt{hmm1\_model} and \texttt{hmm2\_model}
-targets than to create new targets.
+recipes to produce three of them: one with lexically conditioned jump
+parameters, following He (WMT-2006), invoked via the \texttt{hmm1\_*} targets;
+one similar to the baseline described in Liang et al (ACL 2006), invoked via
+the \texttt{hmm2\_*} targets; and one tuned in-house on French-English
+material, invoked via the \texttt{hmm3\_*} targets.  Many other variants are
+available, as documented by \texttt{train\_ibm -h}. To select one or more of
+them, you'll need to modify \texttt{models/tm/Makefile}.  It's probably easier
+to modify the commands associated with the \texttt{hmm1\_model},
+\texttt{hmm2\_model} or \texttt{hmm3\_model} targets than to create new
+targets.
 
-To install your choice as the default, change the \texttt{PT\_TYPES} variable
-in \texttt{toy.experiment/Makefile.params} to, for instance, \texttt{ibm2\_cpt
-hmm2\_cpt}: this variable enumerates which models you want to generate when you
-type \texttt{make all}. ({\bf Warning}: if you plan to ``automate'' any of the steps
-in this example using \texttt{make all}, you must set \texttt{PT\_TYPES} to
-\texttt{ibm2\_cpt hmm2\_cpt} in order to have this work properly.)
-All models you generate will be used in subsequent steps,
-so only generate the ones you intend to use.  (You should work in different
-copies of the framework if you want to experiment with different variants.)
+To modify the default, change the \texttt{PT\_TYPES} variable in
+\texttt{toy.experiment/Makefile.params} to, for instance, \texttt{ibm2\_cpt
+hmm1\_cpt}: this variable enumerates which models you want to generate when you
+type \texttt{make all}.  All models you generate will be used in subsequent
+steps, so only generate the ones you intend to use.  (You should work in
+different copies of the framework if you want to experiment with different
+variants.)
+
+\subsection{Creating a Lexicalized Distortion Model} \label{LDM}
+
+Lexicalized Distortion Models (LDMs) are not used by default in this
+framework.  If you want to enable their creation and use, you should set
+\texttt{USE\_LDM} to 1 in \texttt{Makefile.params}.
+
+The LDM is created in two steps: 1) counting occurrences of the different types
+of distortion instances over the training corpus, using the program
+\texttt{dmcount}, and 2) estimating scores from these counts, using the program
+\texttt{dmestm}.  If you trained more than one phrase table, as we did above,
+the first step is repeated for each phrase table.
+\begin{small}
+\begin{verbatim}
+   > cd models/ldm
+   > make all
+   parallelize.pl -nolocal -psub -1 -n 30 -np 30 -w 100000 \
+      -s ../../corpora/train_fr.lc.gz -s ../../corpora/train_en.lc.gz \
+      'dmcount -v -m 8 \
+       ../tm/ibm2.train.en_given_fr.gz ../tm/ibm2.train.fr_given_en.gz \
+       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
+       > ldm.counts.ibm2.gz' \
+      >& log.ldm.counts.ibm2
+   parallelize.pl -nolocal -psub -1 -n 30 -np 30 -w 100000 \
+      -s ../../corpora/train_fr.lc.gz -s ../../corpora/train_en.lc.gz \
+      'dmcount -v -m 8 \
+       ../tm/hmm3.train.en_given_fr.gz ../tm/hmm3.train.fr_given_en.gz 
+       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
+       > ldm.counts.hmm3.gz' \
+      >& log.ldm.counts.hmm3
+   zcat -f ldm.counts.ibm2.gz ldm.counts.hmm3.gz \
+      | time-mem dmestm -s -g ldm.hmm3+ibm2.fr2en.bkoff \
+        -wtu 5 -wtg 5 -wt1 5 -wt2 5 2> log.ldm.hmm3+ibm2.fr2en \
+      | gzip > ldm.hmm3+ibm2.fr2en.gz
+\end{verbatim}
+\end{small}
+
+Estimating lexicalized distortion parameters (step 2, \texttt{dmestm}) might
+require a lot of memory, sometimes two to three times as much as training
+phrase tables.  As mentioned before, you can use \texttt{make time-mem} to see
+your resource usage after the process has completed to place your resource
+allocation.  We generally observe a small gain in translation quality (as
+measured by BLEU) when using LDMs, although you will need to determine,
+depending on your situation, whether this gain is worth the added memory and
+time requirements.
+
+\tip The commands for step 1 illustrate the use of one of our generic utilities:
+\texttt{parallelize.pl}.  This script can be used to parallelize the execution
+of any command where each input line is processed independently.  It takes care
+of splitting the input(s) into chunks, running the chunks in parallel, and
+concatenating (or otherwise merging) the outputs.  In this example the output
+from all instances of \texttt{dmcount} is simply concatenated together, which
+works correctly because \texttt{dmestm} tallies counts when it sees repeated
+phrase pairs.  Run \texttt{parallelize.pl -h} for more details.
+
+\tipsummary \texttt{parallelize.pl}
+
 
 \subsection{Optimizing Decoder Weights} \label{COW}
 
 The language and translation models are the main sources of information used
-for translation, which is performed by the \texttt{canoe} decoder. In order to get
+for translation, which is performed by the \texttt{canoe} decoder.  Here we
+also trained an LDM as an additional source of information.  In order to get
 reasonable translation quality, the weights on these (and other) sources of
 information need to be tuned. The tuning process is carried out by a script
-called \texttt{cow.sh}, which runs \texttt{canoe} several times. \texttt{cow.sh}
-requires a configuration file for \texttt{canoe}, called \texttt{canoe.ini} by
-default.
+called \texttt{cow.sh}, which runs \texttt{canoe} several times.
+\texttt{cow.sh} takes in an initial \texttt{canoe.ini} configuration file, and
+produces an optimized configuration file, \texttt{canoe.ini.cow}.
 
-You can do all the steps below by typing \texttt{make cow} in your
-\texttt{toy.experiment} directory, but we'll break it down into several steps
-here.
+You can do all the steps below by typing \texttt{make decode} or
+\texttt{make cow} in your \texttt{toy.experiment} directory, but we'll break it
+down into several steps here.
 
 \subsubsection{The Decoder Configuration File: canoe.ini}
 
 In this framework, we start with a template configuration file,
 \texttt{models/decode/ canoe.ini.template}:
 \begin{verbatim}
-   > cd ../..          # only needed if you were still in models/tm
    > cd models/decode
-   > head -5 canoe.ini.template
+   > cat canoe.ini.template
    [ttable-multi-prob]
      <CPTS>
    [lmodel-file]
      <LMS>
    [weight-f] <ENABLE_FTM>
+   ...
 \end{verbatim}
 
 The framework will automatically insert the phrase tables and language models
@@ -648,58 +797,79 @@ translation model weights by \texttt{canoe} and their tuning by
 the corresponding model is present, forward weights are disabled by default.
 In this framework, if you don't want to use forward weights, comment out or
 delete the \texttt{[weight-f]} line in \texttt{canoe.ini.template}.
+\item If \texttt{USE\_LDM} is set in \texttt{Makefile.params}, special
+processing is also done to insert the necessary LDM parameters into the
+\texttt{canoe.ini}.
 \end{itemize}
 
 So we make the \texttt{canoe.ini} file:
 \begin{verbatim}
    > make canoe.ini
-   ln -sf ../../models models
    cat canoe.ini.template \
       | sed -e 's/<SL>/fr/g' \
             -e 's/<TL>/en/g' \
-            -e 's/<CPTS>/models\/tm\/cpt.ibm2-rf-zn-kn3.train.fr2en.gz [...] \
-            -e 's/<LMS>/models\/lm\/train_en-kn-5g.binlm.gz/g' \
-      > canoe.ini
+            -e 's#<CPTS>#models/tm/cpt.hmm3-rf-zn.train.fr2en.gz [...]' \
+            -e 's#<LMS>#models/lm/train_en-kn-5g.binlm.gz#g' \
+            -e 's/^\(\[\(weight-f\|ftm\)\]\)/##mid##\1/' \
+           > tmp.canoe.ini
+   WT=$(perl -e 'print 1; print ":1" foreach (2..`configtool nt tmp.canoe.ini`)'); \
+   cat tmp.canoe.ini \
+      | sed -e "s/^##mid##//" -e "s/<ENABLE_FTM>/$WT/" \
+      | configtool -p "args:-dist-phrase-swap -dist-limit-ext -lex-dist-[...] \
+           > canoe.ini
+   rm tmp.canoe.ini
    configtool check canoe.ini
    ok
 \end{verbatim}
-The first command above creates a soft link to the models directory---this way,
+This command silently creates a soft link to the models directory---this way,
 all models appear to be relative to the current directly, which makes it easier
 to find them.  We'll create such symlinks everywhere we need access to the
-models.  The next command replaces the template parameters by the appropriate
-values.  The final command, \texttt{configtool check canoe.ini}, confirms that the
-\texttt{canoe.ini} file produced is error-free---it checks that all parameters
-are compatible and that all models can be found.
+models.  The sed commands replace the template parameters by the appropriate
+values.  The first \texttt{configtool} command inserts the lexicalized
+distortion parameters if necessary.  The final command, \texttt{configtool
+check canoe.ini}, confirms that the \texttt{canoe.ini} file produced is
+error-free---it checks that all parameters are compatible and that all models
+can be found.
 
 Here is the result:
 \begin{verbatim}
    > cat canoe.ini
-   [ttable-multi-prob]
-     models/tm/cpt.hmm2-rf-zn-kn3.train.fr2en.gz
-     models/tm/cpt.ibm2-rf-zn-kn3.train.fr2en.gz
-   [lmodel-file]
-     models/lm/train_en-kn-5g.binlm.gz
-   [weight-f] 1:1:1:1:1:1
+   [ttable-multi-prob] 
+      models/tm/cpt.hmm3-rf-zn.train.fr2en.gz
+      models/tm/cpt.ibm2-rf-zn.train.fr2en.gz
+   [lex-dist-model-file] 
+      models/ldm/ldm.hmm3+ibm2.fr2en.gz
+   [lmodel-file] 
+      models/lm/train_en-kn-5g.binlm.gz
+   [weight-f] 1:1:1:1
    [ttable-limit] 30
    [ttable-threshold] 0
    [stack] 20000
    [beam-threshold] 0.001
    [distortion-limit] 7
-   [distortion-model] WordDisplacement
+   [dist-limit-ext]
+   [dist-phrase-swap]
+   [distortion-model] 
+      WordDisplacement
+      back-lex#m
+      back-lex#s
+      back-lex#d
+      fwd-lex#m
+      fwd-lex#s
+      fwd-lex#d
    [segmentation-model] none
-   [cube-pruning]
    [bypass-marked]
+   [cube-pruning]
 \end{verbatim}
 
-When using this framework, do not modify \texttt{canoe.ini}
-directly.\footnote{If you're working in a different setting, you might set your
-decoding parameters directly in your canoe.ini.}  To change the training
-parameters for language models or phrase tables, modify the parameters or
-Makefiles appropriately in \texttt{models/LM} and \texttt{models/TM} and
-regenerate those models.  Be careful, though: the \texttt{canoe.ini} file will
-include all models generated in the same framework, so you should work in
-different copies of the framework if you want to experiment with different
-training parameters for those models.
+When using this framework, do not modify \texttt{canoe.ini} directly.  To
+change the training parameters for language models or phrase tables, modify the
+parameters or Makefiles appropriately in \texttt{models/lm} and
+\texttt{models/tm} and regenerate those models.  Be careful, though: the
+\texttt{canoe.ini} file will include all models generated in the same
+framework, so you should work in different copies of the framework if you want
+to experiment with different training parameters for those models.  \tip Soft
+links can save you a lot of duplicated work if you have related experiments.
 
 To change the other decoding parameters, modify \texttt{canoe.ini.template}.
 For example, you can add additional language models (trained outside the
@@ -715,27 +885,28 @@ use.
 
 Besides the configuration file, the other main arguments required by
 \texttt{cow.sh} are a directory in which to store temporary files, a source
-file and one or more correct (ie human) translations of the source
+file and one or more correct (i.e., human) translations of the source
 file.\footnote{This example uses only one translation, but when multiple
-alternative translations are available, it can be advantageous to use them.}
+alternative translations are available, it is advantageous to use them.}
 Here we call the temporary directory \texttt{foos}, and use the \texttt{dev1}
 files for weight tuning:
 \begin{verbatim}
    > make all
    mkdir -p foos
-   cow.sh -v -parallel:"-n 1" -maxiter 15 -nbest-list-size 100 \
+   cow.sh -v -parallel:"-n 4" -maxiter 15 -nbest-list-size 100 \
       -filt -nofloor -workdir foos -f canoe.ini
       ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc \
       >& log.canoe.ini.cow
    rm -f -r foos multi.probs.*.FILT.gz canoe.ini.FILT canoe.ini.FILT.cow
 \end{verbatim}
-Because \texttt{cow.sh} takes a while to run (a good two to three hours in this
-example)\footnote{Running time for \texttt{cow.sh} can be reduced by executing it
-in parallel. Do \texttt{cow.sh -h} to see documentation on this option; modify
+Because \texttt{cow.sh} takes a while to run (between 30 minutes and three
+hours in this example, depending on your system)\footnote{Running time for
+\texttt{cow.sh} can be reduced by executing it in parallel. Do \texttt{cow.sh
+-h} to see documentation on this option; modify
 \texttt{PARALLELISM\_LEVEL\_TUNE\_DECODE} in \texttt{Makefile.params} to adjust
 cow parallelism in this framework.} and writes large amounts of logging
 information, it is usually a good idea to redirect all of its output to a log
-file, as shown here; and also to run it in the background (not done here).
+file, as is done here; and also to run it in the background (not done here).
 Progress is most easily monitored by looking at the file
 \texttt{rescore-results},\footnote{The scripts \texttt{best-rr-val} and
 \texttt{all-best-rr-vals} can be handy if you're monitoring multiple
@@ -744,84 +915,102 @@ section~\ref{Testing} for a description), as well as the current weights, for
 each iteration. Note that the BLEU score does not necessarily increase
 monotonically, as can be seen in several places in the \texttt{rescore-results}
 file obtained with this example:
-\begin{tiny}
+% cat rescore-results | perl -pe 's/(\.\d\d)\d+(:| \S|$)/\1\2/g; s/   -d/  -d/' | cut -c1-85
+\begin{scriptsize}
 \begin{verbatim}
 > cat rescore-results
-BLEU score: 0.141236   -d 1 -w 0 -lm 1 -tm 1:1:1:1:1:1 -ftm 1:1:1:1:1:1
-BLEU score: 0.000000   -d 0.145 -w -0.971 -lm 0.600 -tm -0.48:-0.18:-0.28:0.19:-1:0.09 -ftm 0.17:-0.22:-0.06:-0.28:-0.09:-0.07
-BLEU score: 0.065014   -d 1 -w -0.066 -lm 0.040 -tm -0.05:-0.01:0.03:0.00:-0.01:0.00 -ftm 0.06:0.00:-0.03:-0.00:0.00:-0.00
-BLEU score: 0.122222   -d 2.74e-05 -w -1 -lm 0.296 -tm -0.09:-0.01:-0.10:-0.02:0.00:0.02 -ftm 0.24:0.19:0.00:0.12:0.12:0.04
-BLEU score: 0.173738   -d 0.219 -w -1 -lm 0.572 -tm 0.10:0.00:-0.00:0.03:0.00:-0.01 -ftm 0.02:0.28:-0.00:-0.00:-0.05:0.05
-BLEU score: 0.177699   -d 0.362 -w 0.193 -lm 1 -tm 0.53:-0.00:-0.09:-0.08:0.00:-0.02 -ftm -0.05:0.57:-0.18:-0.04:0.03:0.08
-BLEU score: 0.060503   -d 0.021 -w -0.078 -lm 1 -tm 0.48:-0.01:0.00:-0.00:-0.00:0.00 -ftm 0.00:-0.03:0.01:-0.00:-0.01:0.00
-BLEU score: 0.186415   -d 0.141 -w -0.603 -lm 1 -tm 0.38:0.00:0.01:-0.00:-0.00:-0.00 -ftm 0.04:0.38:-0.02:0.01:-0.05:0.01
-BLEU score: 0.189153   -d 0.159 -w 0.049 -lm 1 -tm 0.44:-0.01:0.00:0.00:-0.00:0.00 -ftm 0.23:0.09:-0.31:0.02:0.00:-0.02
-BLEU score: 0.197739   -d 0.172 -w 0.120 -lm 1 -tm 0.43:-0.00:0.00:0.00:-0.00:-0.00 -ftm 0.22:0.15:-0.33:0.02:0.00:-0.01
-BLEU score: 0.200836   -d 0.224 -w 0.118 -lm 1 -tm 0.46:-0.00:0.00:0.00:-0.00:-5.60e-05 -ftm 0.23:0.16:-0.33:0.02:0.00:-0.01
-BLEU score: 0.172499   -d 0.117 -w -0.289 -lm 0.261 -tm 0.12:0.00:-0.00:0.00:-0.04:0.03 -ftm 1:0.26:-0.54:0.05:0.02:-0.02
-BLEU score: 0.192449   -d 0.199 -w -0.387 -lm 1 -tm 0.17:0.00:0.00:-0.04:-0.01:0.00 -ftm 0.93:0.25:-0.63:0.06:0.02:-0.02
-BLEU score: 0.193263   -d 0.205 -w -0.396 -lm 1 -tm 0.18:0.02:-0.00:-0.04:-0.00:-0.00 -ftm 0.99:0.22:-0.68:0.07:0.01:-0.01
-BLEU score: 0.173176   -d 0.048 -w 0.003 -lm 1 -tm 0.62:-0.00:-0.21:0.07:-0.00:0.00 -ftm 0.00:0.30:0.00:-0.03:0.00:-0.00
+BLEU score: 0.165623  -d 1:1:1:1:1:1:1 -w 0 -lm 1 -tm 1:1:1:1 -ftm 1:1:1:1
+BLEU score: 0.012741  -d 0.03:0.05:-1:-0.01:-0.00:-0.00:-0.01 -w -0.11 -lm 0.38 -tm 0
+BLEU score: 0.105025  -d 0.75:0.31:-0.23:-1:-0.04:-0.24:-0.07 -w -0.35 -lm 0.76 -tm 0
+BLEU score: 0.042423  -d 0.56:0.24:-0.00:0.56:0.85:0.21:-0.11 -w 0.03 -lm 1 -tm -0.16
+BLEU score: 0.183071  -d 1:0.36:-0.55:-0.00:0.22:0.35:-0.69 -w -0.17 -lm 0.81 -tm 0.1
+BLEU score: 0.201546  -d 0.82:0.84:-0.03:0.17:1:0.06:-0.25 -w -0.42 -lm 0.75 -tm 0.09
+BLEU score: 0.186689  -d 0.52:1:-0.07:-0.05:0.01:0.05:-0.00 -w -0.34 -lm 0.61 -tm 0.0
+BLEU score: 0.162512  -d 0.28:-0.84:-0.09:0.28:0.06:-0.19:-0.08 -w -0.39 -lm 1 -tm -0
+BLEU score: 0.185599  -d 0.70:0.43:-0.04:-0.16:1:-0.06:-0.02 -w -0.07 -lm 0.40 -tm -0
+BLEU score: 0.190144  -d 0.93:-1:-0.01:0.64:0.73:0.04:-0.52 -w 0.02 -lm 0.99 -tm 0.49
+BLEU score: 0.184154  -d 0.25:0.56:0.04:-0.03:0.08:0.02:-0.02 -w -0.35 -lm 1 -tm 0.13
+BLEU score: 0.177097  -d 0.55:1:0.01:-0.36:-0.04:0.20:-0.24 -w -0.53 -lm 0.53 -tm 0.1
+BLEU score: 0.201575  -d 0.89:1:-0.20:-0.11:0.30:0.32:-0.17 -w -0.42 -lm 0.55 -tm 0.1
+BLEU score: 0.202520  -d 0.77:0.54:-0.11:-0.11:-0.02:-0.00:-0.01 -w -0.22 -lm 1 -tm 0
+BLEU score: 0.198976  -d 1:0.41:-0.30:0.00:0.05:0.79:-0.62 -w -0.19 -lm 0.69 -tm 0.08
 \end{verbatim}
-\end{tiny}
-When the last iteration still shows an improvement (which is not the case here),
-it is sometimes a sign that we should have allowed \texttt{cow.sh} to run more
-iterations, by setting the \texttt{-maxiter} option to a higher value.  Here,
-it looks like we achieved convergence after ten iterations.  You will notice
-that there are six weights after \texttt{-tm}: three for the backward
-probability estimates in the phrase table created using IBM2 models, and three
+\end{scriptsize}
+When the last iteration still shows an improvement (which is almost the case
+here), it is sometimes a sign that we should have allowed \texttt{cow.sh} to
+run more iterations, by setting the \texttt{-maxiter} option to a higher value.
+Here, it looks like we achieved convergence at the 14th iterations; it might
+have been worth doing a few more.  You will notice that there are four weights
+after \texttt{-tm} (truncated in the output shown above): two for the backward
+probability estimates in the phrase table created using IBM2 models, and two
 for the phrase table created using HMM models.  For the same reason, there are
-six weights after \texttt{-ftm}.
+four weights after \texttt{-ftm}.  There are seven weights after \texttt{-d}
+because we used the standard WordDisplacement model (``distortion penalty''),
+as well as the six-feature lexicalized distortion model.
 
-While \texttt{cow.sh} is working, it saves n-best lists and other intermediate
-files to a temporary work directory called \texttt{foos}. To prevent these
-(large) files from being automatically cleaned up on completion, remove the
-\texttt{rm} command executed after \texttt{cow.sh} in \texttt{Makefile}.  A lot
-of information is also logged to \texttt{log.canoe.ini.cow}; this can be
-summarized using the program \texttt{cowpie.sh}.
+While \texttt{cow.sh} is working, it saves $n$-best lists and other intermediate
+files to a temporary work directory called \texttt{foos}. If you wish to
+prevent these (large) files from being automatically cleaned up on completion,
+remove the \texttt{rm} command executed after \texttt{cow.sh} in
+\texttt{Makefile}.  A lot of information is also logged to
+\texttt{log.canoe.ini.cow}; this can be summarized using the program
+\texttt{cowpie.sh}.
 
 The final output from \texttt{cow.sh} is written to the file
 \texttt{canoe.ini.cow} (assuming the original configuration file was called
 \texttt{canoe.ini}). This duplicates the contents of \texttt{canoe.ini}, but
-adds the optimal weights learned on the development corpus:
+adds the weights tuned on the development corpus:
+% cat canoe.ini.cow | perl -pe 's/(\.\d\d\d\d\d\d)\d+/\1/g; s/(\.\d\d\d\d)\d+/\1/g if /weight-d/; s/^/   /'
+\begin{small}
 \begin{verbatim}
    > cat canoe.ini.cow
-[ttable-multi-prob] 
-   models/tm/cpt.ibm2-rf-zn-kn3.train.fr2en.gz
-   models/tm/cpt.hmm2-rf-zn-kn3.train.fr2en.gz
-[lmodel-file] 
-   models/lm/train_en-kn-5g.binlm.gz
-[weight-d] 0.224038288
-[weight-w] 0.1183493733
-[weight-l] 1
-[weight-t] 0.465875:-0.006479:0.004425:0.004474:-0.000445:-5.607e-05
-[weight-f] 0.233136:0.162551:-0.337420:0.023109:0.000215:-0.019836
-[ttable-limit] 30
-[ttable-threshold] 0
-[stack] 20000
-[beam-threshold] 0.001
-[distortion-limit] 7
-[distortion-model] 
-   WordDisplacement
-[segmentation-model] none
-[bypass-marked]
-[cube-pruning]
+   [ttable-multi-prob] 
+      models/tm/cpt.hmm3-rf-zn.train.fr2en.gz
+      models/tm/cpt.ibm2-rf-zn.train.fr2en.gz
+   [lex-dist-model-file] 
+      models/ldm/ldm.hmm3+ibm2.fr2en.gz
+   [lmodel-file] 
+      models/lm/train_en-kn-5g.binlm.gz
+   [weight-d] 0.7798:0.5448:-0.1166:-0.1103:-0.0254:-0.0067:-0.0162
+   [weight-w] -0.227432
+   [weight-l] 1
+   [weight-t] 0.115227:0.004537:0.093380:0.004068
+   [weight-f] 0.020464:0.003510:0.032827:0.066267
+   [ttable-limit] 30
+   [ttable-threshold] 0
+   [stack] 20000
+   [beam-threshold] 0.001
+   [distortion-limit] 7
+   [dist-limit-ext]
+   [dist-phrase-swap]
+   [distortion-model] 
+      WordDisplacement
+      back-lex#m
+      back-lex#s
+      back-lex#d
+      fwd-lex#m
+      fwd-lex#s
+      fwd-lex#d
+   [segmentation-model] none
+   [bypass-marked]
+   [cube-pruning]
 \end{verbatim}
+\end{small}
 where the \texttt{weight-} parameters pertain to, respectively, the distortion
-model, the word-length penalty, the language model, the translation models
-(backward scores), and the forward scores of the translation models. The
-language model usually obtains the highest weight, as in this case.\footnote{A
-note of warning about the LM weight: following Doug Paul's ``DARPA'' LM format,
-all LM formats we know use base-10 log probs (including our own binary LM
-format), but canoe interprets them as natural logs: throughout PORTAGEshared,
-logs are natural by default, not base 10.  This known bug has minimal impact;
-correcting it simply requires multiplying the desired -weight-l values by
-log(10), which cow, rat and rescore\_train do implicitly.  We chose not to fix
-it to avoid having to adjust all previously tuned sets of weights.}
+model, the word-length penalty, the language model, the backward socres of the
+translation models, and the forward scores of the translation models. The
+language model often obtains the highest weight; here it has the second highest
+weight.\footnote{A note of warning about the LM weight: following Doug Paul's
+``ARPA'' LM format, all LM formats we know use base-10 log probs (including our
+own binary LM and TPLM formats), but canoe interprets them as natural logs:
+throughout \PS, logs are natural by default, not base 10.  This known bug has
+minimal impact; correcting it simply requires multiplying the desired -weight-l
+values by log(10), which cow, rat and rescore\_train do implicitly.  We chose
+not to fix it to avoid having to adjust all previously tuned sets of weights.}
 
 \subsection{Training a Rescoring Model} \label{RAT}
 
-The final training step is to create a model for rescoring n-best
+The next training step is to create a model for rescoring $n$-best
 lists. Rescoring means having \texttt{canoe} generate a list of $n$ (typically
 1000) translation hypotheses for each source sentence, then choosing the best
 translations from among these. The advantage of this procedure is that the
@@ -829,21 +1018,22 @@ choice can be made on the basis of information that is too expensive for
 \texttt{canoe} to use during search. This step usually gives a modest
 improvement over the results obtained using \texttt{canoe} alone. Sometimes,
 however, it gives no significant improvement while being fairly slow, so if
-translation speed is an issue, you will probably want to skip rescoring.  In
-this framework, rescoring is automatically bypassed unless
-\texttt{DO\_RESCORING} is set to 1 in \texttt{Makefile.params}.
+translation speed is an issue, you might want to skip rescoring; experiment
+with your own data to determine the best choice.  In this framework, rescoring
+is automatically bypassed unless \texttt{DO\_RESCORING} is set to 1 in
+\texttt{Makefile.params}.
 
-Training a rescoring model involves generating n-best lists, then calculating
+Training a rescoring model involves generating $n$-best lists, then calculating
 the values of selected \emph{features} for each hypothesis in each list. A
 feature is any real-valued function that is intended to capture the relation
 between a source sentence and a translation hypothesis. A rescoring model
 consists of a vector of feature weights set so as to optimize translation
 performance when a weighted combination of feature values is used to reorder
-the n-best lists.
+the $n$-best lists.
 
-You can do all the steps below by typing \texttt{make rat} in your
-\texttt{toy.experiment} directory, but we'll break it down into several steps
-here.
+You can do all the steps below by typing \texttt{make rescore} or
+\texttt{make rat} in your \texttt{toy.experiment} directory, but we'll break it
+down as usual.
 
 \subsubsection{The Input Rescoring Model}
 
@@ -851,22 +1041,16 @@ Training is carried out by the \texttt{rat.sh} script. This takes as input a
 rescoring model that specifies which features to use, and it returns optimal
 weights for these features.
 
-Before you proceed, you need to manually edit \texttt{rescore-model.template}
-and change all occurrences of \texttt{HMM1} to \texttt{HMM2}, since we
-generated the second HMM model variant for word alignment models (see
-section~\ref{HMM}).
-
 The default model created by this framework contains a small set of useful
 features:
 \begin{verbatim}
-   > cd ../..          # only needed if you were still in models/decode
    > cd models/rescore
    > make rescore-model.ini
-   ln -sf ../../models models
-   set -o pipefail; configtool rescore-model:ffvals models/decode/canoe.ini.cow \
+   set -o pipefail; configtool rescore-model:ffvals \
+      models/decode/canoe.ini.cow \
       | cut -f 1 -d ' ' > rescore-model.ini
    cat rescore-model.template \
-      | sed -e "s#IBM1FWD#models/tm/ibm1.train.en_given_fr.gz#" \
+      | sed -e "s#IBM\\(.\\)FWD#models/tm/ibm\\1.train.en_given_fr.gz#" \
       [...]
       >> rescore-model.ini
    > cat rescore-model.ini
@@ -885,17 +1069,19 @@ features:
    FileFF:ffvals,13
    FileFF:ffvals,14
    FileFF:ffvals,15
-   # NB: this omits some features that are slow to compute. Use rescore_train -H
-   # for a complete list.
+   FileFF:ffvals,16
+   FileFF:ffvals,17
+   # NB: this omits some features that are slow to compute.
+   # Use rescore_train -H for a complete list.
    LengthFF
    IBM1TgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz
    IBM1SrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz
    IBM2TgtGivenSrc:models/tm/ibm2.train.en_given_fr.gz
    IBM2SrcGivenTgt:models/tm/ibm2.train.fr_given_en.gz
-   HMMTgtGivenSrc:models/tm/hmm2.train.en_given_fr.gz
-   HMMSrcGivenTgt:models/tm/hmm2.train.fr_given_en.gz
-   HMMVitTgtGivenSrc:models/tm/hmm2.train.en_given_fr.gz
-   HMMVitSrcGivenTgt:models/tm/hmm2.train.fr_given_en.gz
+   HMMTgtGivenSrc:models/tm/hmm3.train.en_given_fr.gz
+   HMMSrcGivenTgt:models/tm/hmm3.train.fr_given_en.gz
+   HMMVitTgtGivenSrc:models/tm/hmm3.train.en_given_fr.gz
+   HMMVitSrcGivenTgt:models/tm/hmm3.train.fr_given_en.gz
    IBM1WTransTgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz
    IBM1WTransSrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz
    IBM1DeletionTgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz
@@ -924,7 +1110,10 @@ arguments \emph{Args}.  For example,
 \texttt{IBM2TgtGivenSrc:model/tm/ibm2.train.en\_given\_fr.gz} says to calculate
 the feature \texttt{IBM2TgtGivenSrc} using the IBM model
 \texttt{model/tm/ibm2.train.en\_given\_fr.gz}, which we trained earlier. To
-see a list of all available features, type \texttt{rescore\_train -H}.
+see a list of all available features, type \texttt{rescore\_train -H}.  In this
+framework, you should set your features in \texttt{rescore-model.template}.
+The special tokens all in upper case (\texttt{IBM1FWD}, etc) you see in the
+provided template are replaced by the actual models you trained earlier.
 \end{itemize}
 
 Lines starting with \texttt{\#} are comments and are ignored by the software.
@@ -932,20 +1121,21 @@ Lines starting with \texttt{\#} are comments and are ignored by the software.
 \subsubsection{Running RAT (Rescore And Translate)}
 
 Apart from the rescoring model, {\tt rat.sh} needs a source file and one or
-more alternative translations for it (same as {\tt cow.sh}). These may be the
+more reference translations for it (same as {\tt cow.sh}). These may be the
 same files used for {\tt cow.sh}, but it is sometimes better to use different
 ones, so here we use {\tt dev2}:\footnote{As with \texttt{cow.sh}, you can
 speed this up using parallelism, in this case via the -n option to
 \texttt{rat.sh}, given before the \texttt{train} token (type \texttt{rat.sh -h}
-for details), controlled in this framework via the variable
-\texttt{PARALLELISM\_LEVEL\_TUNE\_RESCORE} in \texttt{Makefile.params}.}
+for details). In this framework, parallelism is controlled via the
+\texttt{PARALLELISM\_LEVEL\_TUNE\_RESCORE} variable in
+\texttt{Makefile.params}.}
 \begin{verbatim}
-   > make train
+   > make all
    cat models/decode/canoe.ini.cow > canoe.ini.cow.dev2
    configtool check canoe.ini.cow.dev2
    ok
    Tuning the rescoring model.
-   rat.sh -lb -n 1 train -v -K 1000 -o rescore-model \
+   rat.sh -lb -n 4 train -v -K 1000 -o rescore-model \
       -msrc ../../corpora/dev2_fr.rule \
       -f canoe.ini.cow.dev2 rescore-model.ini \
       ../../corpora/dev2_fr.lc ../../corpora/dev2_en.lc \
@@ -955,104 +1145,190 @@ for details), controlled in this framework via the variable
 The output from \texttt{rat.sh} is written to the file \texttt{rescore-model}:
 \begin{verbatim}
    > cat rescore-model
-   FileFF:ffvals,1 0.001726045622
-   FileFF:ffvals,2 -0.0259773694
-   FileFF:ffvals,3 0.16128923
-   FileFF:ffvals,4 -0.03746621311
-   FileFF:ffvals,5 -0.005731543992
-   FileFF:ffvals,6 0.002639640123
-   FileFF:ffvals,7 0.002885707887
-   FileFF:ffvals,8 -0.0003304783895
-   FileFF:ffvals,9 0.001620606054
-   FileFF:ffvals,10 0.05822454765
-   FileFF:ffvals,11 -0.0004374884011
-   FileFF:ffvals,12 0.26722911
-   FileFF:ffvals,13 0.004129589535
-   FileFF:ffvals,14 -0.003426758107
-   FileFF:ffvals,15 9.72241105e-05
+   FileFF:ffvals,1 0.146268636
+   FileFF:ffvals,2 0.0670145303
+   FileFF:ffvals,3 -0.02778978646
+   FileFF:ffvals,4 0.00745564606
+   FileFF:ffvals,5 0.09763943404
+   FileFF:ffvals,6 0.007505016867
+   FileFF:ffvals,7 -0.0189950224
+   FileFF:ffvals,8 -0.001560098957
+   FileFF:ffvals,9 0.4941229522
+   FileFF:ffvals,10 -0.005742284469
+   FileFF:ffvals,11 0.001069668098
+   FileFF:ffvals,12 0.00296442234
+   FileFF:ffvals,13 0.001270559616
+   FileFF:ffvals,14 0.2126453966
+   FileFF:ffvals,15 0.05735969171
+   FileFF:ffvals,16 0.02654521167
+   FileFF:ffvals,17 0.0006618340849
    # NB: this omits some features that are slow to compute. Use rescore_train -H 0
    # for a complete list. 0
-   LengthFF -0.01664732769
-   IBM1TgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz 0.009676812217
-   IBM1SrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz 0.1746531278
-   IBM2TgtGivenSrc:models/tm/ibm2.train.en_given_fr.gz 0.003220736515
-   IBM2SrcGivenTgt:models/tm/ibm2.train.fr_given_en.gz 0.00194059615
-   HMMTgtGivenSrc:models/tm/hmm2.train.en_given_fr.gz -0.003876003204
-   HMMSrcGivenTgt:models/tm/hmm2.train.fr_given_en.gz 0.005696662236
-   HMMVitTgtGivenSrc:models/tm/hmm2.train.en_given_fr.gz -0.003361413721
-   HMMVitSrcGivenTgt:models/tm/hmm2.train.fr_given_en.gz 0.0005181525485
-   IBM1WTransTgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz -0.001264916151
-   IBM1WTransSrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz 0.004323456902
-   IBM1DeletionTgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz 0.3903803825
-   IBM1DeletionSrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz -1
-   nbestWordPostSrc:1#<ffval-wts>#<pfx> -0.002481580013
-   nbestWordPostTrg:1#<ffval-wts>#<pfx> -0.01662635989
-   nbestPhrasePostSrc:1#<ffval-wts>#<pfx> 0.1024738029
-   nbestPhrasePostTrg:1#<ffval-wts>#<pfx> 0.06133669615
-   nbestNgramPost:2#1#<ffval-wts>#<pfx> 0.004936590791
-   nbestSentLenPost:1#<ffval-wts>#<pfx> -0.05364471301
-   ParMismatch 0.001803340274
-   QuotMismatch:ef 0.001308475621
+   LengthFF 8.133889787e-05
+   IBM1TgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz -0.0004155421047
+   IBM1SrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz 0.01087670028
+   IBM2TgtGivenSrc:models/tm/ibm2.train.en_given_fr.gz 0.001760463929
+   IBM2SrcGivenTgt:models/tm/ibm2.train.fr_given_en.gz 0.007245813031
+   HMMTgtGivenSrc:models/tm/hmm3.train.en_given_fr.gz -0.002211559098
+   HMMSrcGivenTgt:models/tm/hmm3.train.fr_given_en.gz -0.003535788739
+   HMMVitTgtGivenSrc:models/tm/hmm3.train.en_given_fr.gz -0.004286592826
+   HMMVitSrcGivenTgt:models/tm/hmm3.train.fr_given_en.gz 0.001487048925
+   IBM1WTransTgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz 0.0112076886
+   IBM1WTransSrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz -0.01906388812
+   IBM1DeletionTgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz -1
+   IBM1DeletionSrcGivenTgt:models/tm/ibm1.train.fr_given_en.gz 0.4333989322
+   nbestWordPostSrc:1#<ffval-wts>#<pfx> -0.004983890336
+   nbestWordPostTrg:1#<ffval-wts>#<pfx> 0.001077609486
+   nbestPhrasePostSrc:1#<ffval-wts>#<pfx> -0.0001558708027
+   nbestPhrasePostTrg:1#<ffval-wts>#<pfx> 0.0002006395371
+   nbestNgramPost:2#1#<ffval-wts>#<pfx> 0.02301278338
+   nbestSentLenPost:1#<ffval-wts>#<pfx> -0.1470126659
+   ParMismatch 6.123407275e-06
+   QuotMismatch:ef -5.882521691e-06
    #CacheLM:<src>.id 0
-   RatioFF 0.04762249812
+   RatioFF -0.8815089464
 \end{verbatim}
-This is identical to {\tt rescore-model.ini}, except that each feature is now
-assigned a weight. Other by-products created by {\tt rat.sh} are found in the
-working directory \texttt{workdir-dev2\_fr.lc-1000best} and include the nbest
-lists \texttt{1000best.gz}, and the corresponding decoder features
-\texttt{ffvals.gz} and additional features \texttt{ff.*}. All of these files
-are compressed to save space.
+This a copy of {\tt rescore-model.ini} with a weight assigned to each feature.
+Other by-products created by {\tt rat.sh} are found in the working directory
+\texttt{workdir-dev2\_fr.lc-1000best} and include the $n$-best lists
+\texttt{1000best.gz}, and the corresponding decoder features \texttt{ffvals.gz}
+and additional features \texttt{ff.*}. All of these files are compressed to
+save space. These files are automatically deleted unless there is a problem.
+Remove the \texttt{rm} command executed after \texttt{rat.sh} in Makefile if
+you want to preserve them.
+
+\subsection{Training a Confidence Estimation Model} \label{CE}
+
+If you are going to use confidence estimation (CE), the final step is to train a
+model to estimate the confidence of the system on the decoder's output.  This
+model uses features about the source text, the target text, translation memory
+information if available, and so on, to come up with a confidence score between
+0 and 1.  As we mentioned before, it is critical that the data used to tune the
+CE model be completely unseen data.  It can't have been part of your training
+data or the data you used to tune the decoder weights or the rescoring model.
+Otherwise the confidence estimates produced will not be useful.
+
+At this stage we have to go back over one previous step.  We did not train all
+the models we need for CE: we need an LM for the source
+language.  Edit \texttt{Makefile.params} in the main directory and set
+\texttt{DO\_CE} to 1.  If you run \texttt{make confidence} in the main
+directory, all necessary steps will be done automatically.  As usual, we'll
+break it down a bit.
+\begin{verbatim}
+   > cd models
+   > make lm.fr
+   [...]
+\end{verbatim}
+This command will build the source-side LM, using the toolkit you selected
+earlier.
+
+Now we can worth on the CE model itself.  Note that our CE module does not
+currently work with rescoring, only with decoding.  We build on the decoder
+model tuned in section~\ref{COW}.  
+
+Just as for decoding and rescoring, CE works with a model described in a text
+file.  In this framework we provide a template model that does not use a
+translation memory.  If you have access to the results of looking up your
+source text in a translation memory, it is worth incorporating them into your
+CE model.  In the template provided here, all the translation memory related
+features are commented out.  See doc/README.confidence for more details.
+
+Now we build the input CE model file:
+\begin{verbatim}
+   > cd models/confidence
+   > make ce-notm.ini
+   ln -fs models/decode/canoe.ini.cow canoe.ini.cow
+   configtool check canoe.ini.cow
+   cat ce-notm.template \
+      | sed -e "s#IBM\\(.\\)FWD#models/tm/ibm\\1.train.en_given_fr.gz#" \
+            -e "s#IBM\\(.\\)BKW#models/tm/ibm\\1.train.fr_given_en.gz#" \
+            -e "s#HMM\\(.\\)FWD#models/tm/hmm\\1.train.en_given_fr.gz#" \
+            -e "s#HMM\\(.\\)BKW#models/tm/hmm\\1.train.fr_given_en.gz#" \
+            -e "s#LM_SRC#models\/lm\/train_fr-kn-5g.binlm.gz#" \
+            -e "s#LM_TGT#models\/lm\/train_en-kn-5g.binlm.gz#" \
+      > ce-notm.ini
+\end{verbatim}
+
+The result is a \texttt{ce-notm.ini} file with the LMs and IBM models filed in,
+which we now feed to \texttt{ce\_translate.pl -train}.  The output will be a
+trained CE model.
+
+\begin{verbatim}
+   > make all
+   ce_translate.pl -n=4 -train -src=fr -tgt=en -notok -nolc -k=5 \
+      -desc=ce-notm.ini canoe.ini.cow ce_model \
+      ../../corpora/devCE_fr.lc ../../corpora/devCE_en.lc \
+      >& log.ce_model.cem
+\end{verbatim}
+
+The trained model is saved to file \texttt{ce\_model.cem}.  This file is
+actually a gzipped-tarred archive, so you could examine it using the
+command \texttt{tar -xOzf ce\_model.cem | less}.
+However, the contents don't have much intuitive meaning, so this is
+only useful for curiosity's sake.
 
 \section{Translating and Testing} \label{TranslatingTesting}
 
 \subsection{Translating} \label{Translating}
 
-Once training is complete, the system can be used to translate.
-\begin{verbatim}
-   > cd ../..          # only needed if you were still in models/rescore
-   > cd translate
-\end{verbatim}
+Once training is complete, the system can be used to translate new text or our
+test corpus.
 
 Some of the steps below will be performed if you do \texttt{make translate} in
 your \texttt{toy.experiment} directory, but the final output you need depends
-on what you're doing, and might not be produced by default.
+on what you're doing, and might not be produced by default.  The actual output
+produced depends on the various \texttt{DO\_*} variables in
+\texttt{Makefile.params}.
 
-\subsubsection{Decoding Only}
+\subsubsection{Decoding Only} \label{Decoding}
 
-As mentioned earlier, there are two options for translating. The simplest is to
-decode using the configuration file produced by \texttt{cow.sh}.  Earlier in
-this toy experiment, we set \texttt{DO\_RESCORING} in \texttt{Makefile.params},
-which we need to override manually here to demonstrate translation by decoding
-only:
+As mentioned before, there are three options for translating. The simplest is
+to decode using the configuration file produced by \texttt{cow.sh} and stop.
+Earlier in this toy experiment, we set \texttt{DO\_RESCORING} in
+\texttt{Makefile.params}, which we need to change now to
+demonstrate translation by decoding only.  Edit \texttt{Makefile.params} and
+comment out the line that says \texttt{DO\_RESCORING = 1}.\footnote{You can
+accomplish the same result by adding \texttt{DO\_RESCORING=} to the make
+command line, i.e., type \texttt{make translate DO\_RESCORING=} instead of just
+\texttt{make translate}.  This syntax can always be used to override a variable
+definition on a given call to \texttt{make}.}
 \begin{verbatim}
-   > make translate DO_RESCORING=
-   ln -sf ../models models
+   > cd translate
+   > # edit ../Makefile.params and comment out DO_RESCORING = 1
+   > make translate
    cat models/decode/canoe.ini.cow > canoe.ini.cow.test
    configtool check canoe.ini.cow.test
    ok
    Generating test.out
-   canoe-parallel.sh -lb -n 1 canoe -f canoe.ini.cow.test \
+   canoe-parallel.sh -lb -n 4 canoe -f canoe.ini.cow.test \
       < ../corpora/test_fr.rule > test.out 2> log.test.out
 \end{verbatim}
 This produces the output file \texttt{test.out}, containing one line for each
 source line in \texttt{test\_fr.rule}.
 
-\subsubsection{Decoding and Rescoring}
+\subsubsection{Decoding plus Rescoring} \label{RATTrans}
 
-If you executed the command in the Decoding Only section above, please run
-\texttt{make clean} before proceeding.
+If you executed the commands in the Decoding Only section above, please run
+\texttt{make clean} before proceeding.  Also, edit \texttt{Makefile.params}
+again and set or uncomment \texttt{DO\_RESCORING = 1}.
+\begin{verbatim}
+   > cd translate
+   > # edit ../Makefile.params and set or uncomment DO_RESCORING = 1
+   > make clean
+\end{verbatim}
 
-The other option for translating is to generate nbest lists and rescore them
-using the model generated in section~\ref{RAT}. To do this, we use the {\tt
-rat.sh} script again, but this time in translation mode:
+The second option for translating is to generate $n$-best lists and rescore
+them using the model generated in section~\ref{RAT}. To do this, we first run
+the decoder model tuned in section~\ref{COW}, and then the rescoring model
+tuned in section~\ref{RAT}.  The \texttt{rat.sh} script, used in translation
+mode, performs both steps for us:
 \begin{verbatim}
    > make translate
-   ln -sf ../models models
    cat models/decode/canoe.ini.cow > canoe.ini.cow.test
    configtool check canoe.ini.cow.test
    ok
    Generating test.rat
-   rat.sh -lb -n 1 trans -v -K 1000 \
+   rat.sh -lb -n 4 trans -v -K 1000 \
       -msrc ../corpora/test_fr.rule -f canoe.ini.cow.test \
       models/rescore/rescore-model ../corpora/test_fr.lc \
       >& log.test.rat \
@@ -1060,33 +1336,67 @@ rat.sh} script again, but this time in translation mode:
    cp workdir-test_fr.rule-1000best/1best test.out
 \end{verbatim}
 This produces both \texttt{test.out}, the output of the decoder, and
-\texttt{test.rat}, the best translation according to the rescoring model.
+\texttt{test.rat}, the best translation according to the rescoring model.  The
+file \texttt{test.out} should be identical to the one produced in
+section~\ref{Decoding}, although they might differ in minor ways because of
+rounding differences.
+
+\subsubsection{Decoding plus Confidence Estimation} \label{CETrans}
+
+Again, if you executed the commands in either of the previous two sections,
+please run \texttt{make clean} before proceeding.
+\begin{verbatim}
+   > cd translate
+   > make clean
+\end{verbatim}
+
+The third option for translating is to run the decoder and then estimate the
+confidence of the system on the output of the decoder.  This option is not
+currently compatible with rescoring: the confidence estimate is for the
+one-best output of the decoder.  We use the decoder model tuned in
+section~\ref{COW}, and then the CE model trained in section~\ref{CE}.  The
+program \texttt{ce\_translate.pl} handles both of these steps:
+\begin{verbatim}
+   > make confidence
+   ln -fs models/confidence/ce_model.cem
+   ce_translate.pl -n=4 -notok -nolc -src=fr -tgt=en \
+      -test=../corpora/test_en.lc -out=test.ce \
+      canoe.ini.cow.test ce_model.cem \
+      ../corpora/test_fr.lc \
+      2> log.test.ce
+\end{verbatim}
+The main output file, \texttt{test.ce}, is different from the \texttt{test.out}
+file we saw in the two previous steps in that 1) a confidence estimate is added
+at the beginning of each line, and 2) the output has already been detokenized.
+But the translations are actually the same as in \texttt{test.out}, with some
+postprocessing performed on them.
 
 \subsubsection{Truecasing and Detokenizing} \label{Truecasing}
 
-If you inspect the output files, you will notice that they contain only
-lowercase, tokenized text. Two postprocessing step is required to restore normal
-case and normally spaced text: truecasing and detokenizing.
+If you inspect the output files, you will notice that they contain lowercase,
+tokenized text. Two postprocessing step are required to restore normal case and
+normally spaced text: truecasing and detokenizing.
 
 Truecasing is done by the \texttt{truecase.pl} script using the model trained
 previously:
 \begin{verbatim}
    > make tc
    TrueCasing test.out.tc
-   truecase.pl \
-                   -uppercaseBOS \
-                   -text=test.out \
-                   -lm=models/tc/train_en-kn-3g.binlm.gz \
-                   -map=models/tc/train_en.map \
-                   > test.out.tc 2> log.test.out.tc
+   truecase.pl --ucBOSEncoding=UTF-8 -text=test.out \
+      -lm=models/tc/train_en-kn-3g.binlm.gz \
+      -map=models/tc/train_en.map \
+      > test.out.tc 2> log.test.out.tc
    TrueCasing test.rat.tc
-   truecase.pl \
-                   -uppercaseBOS \
-                   -text=test.rat \
-                   -lm=models/tc/train_en-kn-3g.binlm.gz \
-                   -map=models/tc/train_en.map \
-                   > test.rat.tc 2> log.test.rat.tc
+   truecase.pl --ucBOSEncoding=UTF-8 -text=test.rat \
+      -lm=models/tc/train_en-kn-3g.binlm.gz \
+      -map=models/tc/train_en.map \
+      > test.rat.tc 2> log.test.rat.tc
 \end{verbatim}
+Note the \texttt{--ucBOSEncoding=UTF-8} option: it tells the truecaser to
+upper-case the beginning of each sentence (BOS), assuming the output is encoded
+in UTF-8.  This program works with other encodings, as do most \PS programs,
+but the framework assumes UTF-8 in its text preprocessing (lowercasing,
+tokenization) and postprocessing (truecasing, detokenization).
 
 Detokenizing is done by the script \texttt{udetokenize.pl}, which has
 hand-coded rules to detokenize French or English, encoded in utf-8.  Other
@@ -1106,51 +1416,69 @@ supported by \texttt{detokenize.pl}.
    udetokenize.pl -lang=en test.rat test.rat.detok
 \end{verbatim}
 
+Detokenizing is not performed on \texttt{test.ce} here, because it was already
+done by \texttt{ce\_translate.pl}.  Truecasing can also be performed by
+\texttt{ce\_translate.pl}, but this is not integrated in the framework yet.
+% TODO fix the framework so that it does handle truecasing.
+
 \subsection{Testing} \label{Testing}
 
-Translation quality can be evaluated using BLEU score, which is a measure of
-how well the translation matches an alternative translation that is known to be
-correct. It is based on the number of short word sequences that the two
-translations have in common, and varies between 0 for no matches to 1 for a
-perfect match. BLEU is calculated by the program {\tt bleumain}:
+Translation quality can be evaluated automatically using the BLEU metric, which
+is a measure of how well the translation matches one or more reference
+translations that are known to be correct (normally human translations). It is
+based on the number of short word sequences that the translation has in common
+with the references, and varies between 0 for no matches to 1 for a perfect
+match. BLEU is calculated by the program {\tt bleumain}:
 \begin{verbatim}
    > make bleu
    Calculating BLEU for test.out.bleu
-   bleumain test.out ../corpora/test_en.lc > test.out.bleu
+   bleumain -c test.out ../corpora/test_en.lc > test.out.bleu
    Calculating BLEU for test.rat.bleu
-   bleumain test.rat ../corpora/test_en.lc > test.rat.bleu
-   grep BLEU *.bleu
-   test.out.bleu:BLEU score: 0.171809
-   test.rat.bleu:BLEU score: 0.184020
+   bleumain -c test.rat ../corpora/test_en.lc > test.rat.bleu
+   grep Human *.bleu
+   test.out.bleu:Human readable value: 18.89 +/- 3.36
+   test.rat.bleu:Human readable value: 18.22 +/- 3.47
 \end{verbatim}
-The output from {\tt bleumain} contains match statistics of various orders,
-followed by the global BLEU score, as shown above.
+The full output from {\tt bleumain}, saved in \texttt{*.bleu}, contains match
+statistics of various orders, followed by the global BLEU score with a 95\%
+confidence interval, as shown above.
 
-The result above can also be obtained by typing \texttt{make eval}, or just
-\texttt{make}, in your \texttt{toy.experiment} directory.
+The result above can also be obtained by typing \texttt{make eval}, or
+\texttt{make all}, in your \texttt{toy.experiment} directory.
 
 Here, we only calculate the BLEU scores on the lowercase output, using the
 lowercase reference, but you can get BLEU scores for the truecased output by
 giving the truecase translation and reference(s) to \texttt{bleumain}.
 
 These results indicate that the translation produced by rescoring is slightly
-better than the one produced by plain decoding. Given the small size of the
+worse than the one produced by plain decoding. Given the small size of the
 test set, it seems unlikely that the difference is statistically
 significant. To test this hypothesis, we can use {\tt bleucompare}, which does
 a comparison using pairwise bootstrap resampling:
 \begin{verbatim}
    > bleucompare test.rat test.out REFS ../corpora/test_en.lc 
    Comparing using BLEU
-   test.rat got max BLEU score in 97.8% of samples
-   test.out got max BLEU score in 2.2% of samples
+   test.rat got max BLEU score in 12.6% of samples
+   test.out got max BLEU score in 87.4% of samples
 \end{verbatim}
-This indicates that the difference is in fact significant at the 98\% level.
-(Note that you may get completely different results here, since the training
-corpus used is much too small to produce reliable results.)
+This indicates that the difference is only significant at the $p=87\%$ level, which
+is not normally considered significant.  (Note that you may get completely
+different results here, since the training corpus used is much too small to
+produce reliable results.)
+
+\section{PortageLive}
+
+TODO: give a brief note about using the PortageLive targets.
+
+\section{Resource Summary}
+
+TODO: Add a global example of make summary and/or time-mem.
 
 \section{Final Note}
 Because of differences in rounding, optimization, random number generation,
-etc.\ between systems, results, especially numerical ones, may vary on your
-platform and are shown in this document only as a reference for the user.
+compilers, hardware, etc., results, especially numerical ones, are expected to
+vary on different systems and are shown in this document only as an indication
+of the type of output to expect, especially given the trivial size of the
+corpus used.
 
 \end{document}
