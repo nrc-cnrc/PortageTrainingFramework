@@ -158,7 +158,7 @@ time-mem: export PORTAGE_INTERNAL_CALL=1
 time-mem:
 	@time-mem -T <(${MAKE} resource_summary) \
 	| perl -pe 's/[0-9]+:TIME-MEM/TIME-MEM/; while(s/^(\t*)\t/\1   /) {1}' \
-	| expand -t 60,84,108,132
+	| expand-auto.pl
 
 .PHONY: summary
 summary: SHELL=/bin/bash
