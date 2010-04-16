@@ -24,8 +24,9 @@
 %${CEMX}:
 	${TIME_MEM} \
 	ce_translate.pl \
+		-n=${PARALLELISM_LEVEL_TUNE_CONFIDENCE} \
 		-train \
-                -src=${SRC_LANG} -tgt=${TGT_LANG} \
+		-src=${SRC_LANG} -tgt=${TGT_LANG} \
 		-notok -nolc \
 		-k=5 \
 		-desc=$(filter %${INIX}, $+) \

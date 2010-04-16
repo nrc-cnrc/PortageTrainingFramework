@@ -406,8 +406,9 @@ endif
 %.ce: ${CONFIDENCE_MODEL} %${SRCX} ${DECODING_MODEL}.%
 	${TIME_MEM} \
 	ce_translate.pl \
+		-n=${PARALLELISM_LEVEL_TRANSLATE} \
 		-notok -nolc \
-                -src=${SRC_LANG} -tgt=${TGT_LANG} \
+		-src=${SRC_LANG} -tgt=${TGT_LANG} \
 		-out=$@ \
 		$(filter ${DECODING_MODEL}%, $+) \
 		$(filter ${CONFIDENCE_MODEL}, $+) \
@@ -418,8 +419,9 @@ endif
 $(addsuffix .ce, ${TEST_SET}): %.ce: ${CONFIDENCE_MODEL} %${SRCX} %${TGTX} ${DECODING_MODEL}.%
 	${TIME_MEM} \
 	ce_translate.pl \
+		-n=${PARALLELISM_LEVEL_TRANSLATE} \
 		-notok -nolc \
-                -src=${SRC_LANG} -tgt=${TGT_LANG} \
+		-src=${SRC_LANG} -tgt=${TGT_LANG} \
 		-test=$(filter %${TGTX}, $+) \
 		-out=$@ \
 		$(filter ${DECODING_MODEL}%, $+) \
