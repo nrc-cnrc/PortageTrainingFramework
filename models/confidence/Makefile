@@ -37,7 +37,7 @@ SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
 # Make sure the user setup this framework to generate proper models for
 # Confidence Estimation.
 ifndef DO_CE
-$(error "If you don't setup DO_CE in Makefile.params, you won't get all the required models built automatically in the framework.")
+$(warning "If you don't setup DO_CE in Makefile.params, you won't get all the required models built automatically in the framework.")
 endif
 
 
