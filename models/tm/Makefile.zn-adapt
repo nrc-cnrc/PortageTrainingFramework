@@ -44,12 +44,20 @@ other_files  ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}))
 
 
 
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),clean.content)
+ifneq ($(MAKECMDGOALS),clean.logs)
+
 ifeq ("${domain_files}", "")
-$(error "Make couldn't find the domain files.")
+$(error "Make couldn't find the domain corpora files.")
 endif
 
 ifeq ("${other_files}", "")
-$(error "Make couldn't find the domain files.")
+$(error "Make couldn't find the non-domain corpora files.")
+endif
+
+endif
+endif
 endif
 
 
