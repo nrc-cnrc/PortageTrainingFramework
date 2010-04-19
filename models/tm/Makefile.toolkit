@@ -249,7 +249,6 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 
 ########################################
 # JPT MODELS
-#		$(filter-out %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $+)
 ${JPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: JPT_MODEL_TYPE=-ibm 1
 ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: JPT_MODEL_TYPE=-ibm 2
 ${JPT_MODEL_PFX}.hmm%: JPT_MODEL_TYPE=-hmm
