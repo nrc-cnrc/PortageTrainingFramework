@@ -93,14 +93,15 @@ LDM_COUNTS_PFX ?= ldm.counts
 # - a backward word alignment model aka source given target model with the SRC_GIVEN_TGTX suffix.
 ${LDM_COUNTS_PFX}%: SHELL=${GUARD_SHELL}
 ${LDM_COUNTS_PFX}%:
+	bash -c '[[ "`echo "$(filter-out %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)" | \wc -w`" = 2 ]] || ! echo "ERROR: You cannot provide more than one pair of corpora to create $@."'
 	parallelize.pl \
 		-nolocal \
 		-psub -${COUNT_CPUS} \
 		-n ${COUNT_PARALLEL_LEVEL} \
 		-np ${COUNT_PARALLEL_WORKERS} \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
-		-s $(filter %${SRCXZ}, $+) \
-		-s $(filter %${TGTXZ}, $+) \
+		-s $(filter %${SRCXZ}, $(filter-out %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)) \
+		-s $(filter %${TGTXZ}, $(filter-out %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)) \
 		'dmcount -v -m 8 $(filter %${TGT_GIVEN_SRCX}, $+) $(filter %${SRC_GIVEN_TGTX}, $+) $(filter %${SRCXZ}, $+) $(filter %${TGTXZ}, $+) > $@' \
 	>& log.$(basename $@)
 
