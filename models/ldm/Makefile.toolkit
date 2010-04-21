@@ -67,6 +67,21 @@ TIME_MEM ?= time-mem
 ESTIM_CPU ?= 4
 
 
+########################################
+# FUNCTIONS.
+# Joins two parallel lists of words.
+interleave = $(strip $(subst \, , $(join ${1}, $(addprefix \, ${2}))))
+# Retrieve the first argument after filtering the second argument from the
+# third argument which is a list.  pfilter for portage_filter which won't
+# collide with make's filter.
+# pfilter, wanted_extension, unwanted_extension, all-file-list
+pfilter = $(filter ${1}, $(filter-out ${2}, ${3}))
+# Make sure we interleave only the corpora and that we exclude the models.
+# filter_interleave, list1_extension, list2_extension, filt-out-model, all-file-list
+filter_interleave = $(call interleave, $(call pfilter, ${1}, ${3}, ${4}), $(call pfilter, ${2}, ${3}, ${4}))
+
+
+
 
 # Where can I find the corpora.
 vpath %${SRCX}  ${CORPORA_DIR}
@@ -100,9 +115,10 @@ ${LDM_COUNTS_PFX}%:
 		-n ${COUNT_PARALLEL_LEVEL} \
 		-np ${COUNT_PARALLEL_WORKERS} \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
-		-s $(filter %${SRCXZ}, $(filter-out %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)) \
-		-s $(filter %${TGTXZ}, $(filter-out %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)) \
-		'dmcount -v -m 8 $(filter %${TGT_GIVEN_SRCX}, $+) $(filter %${SRC_GIVEN_TGTX}, $+) $(filter %${SRCXZ}, $+) $(filter %${TGTXZ}, $+) > $@' \
+		-s '$(call pfilter, %${SRCXZ}, %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)' \
+		-s '$(call pfilter, %${TGTXZ}, %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)' \
+		'dmcount -v -m 8 $(filter %${TGT_GIVEN_SRCX}, $+) $(filter %${SRC_GIVEN_TGTX}, $+) \
+			$(call filter_interleave, %${SRCXZ}, %${TGTXZ}, %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+) > $@' \
 	>& log.$(basename $@)
 
 
