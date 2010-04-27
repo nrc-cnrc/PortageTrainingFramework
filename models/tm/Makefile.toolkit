@@ -59,8 +59,10 @@ M ?= 8
 # What program to use to train models.
 CAT ?= cat.sh
 
-# What program to use to create conditional pt from joint probs.
-JOINT2COND_PHRASE_TABLE ?= joint2cond_phrase_tables -reduce-mem
+# We don't need to sort if we are using -reduce-mem and sorted jpts which is
+# the case in the framework.
+JOINT2COND_PHRASE_TABLE_OPTION ?= -reduce-mem -no-sort
+
 
 # Track memory usage.
 TIME_MEM ?= time-mem
@@ -279,8 +281,7 @@ ${CPT_MODEL_PFX}.%: CPT_PRUNE1=-prune1 100
 ${CPT_MODEL_PFX}%${L1_2_L2X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
-	${JOINT2COND_PHRASE_TABLE} \
-		-sort \
+	joint2cond_phrase_tables \
 		${CPT_PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
@@ -290,6 +291,7 @@ ${CPT_MODEL_PFX}%${L1_2_L2X}:
 		-o $(subst .${L1_2_L2X},,$@) \
 		-ibm_l2_given_l1  $(filter %${L2_GIVEN_L1X}, $+) \
 		-ibm_l1_given_l2  $(filter %${L1_GIVEN_L2X}, $+) \
+		${JOINT2COND_PHRASE_TABLE_OPTION} \
 		$(filter %${JOINTX}, $+) \
 		>& log.$(basename $@)
 
@@ -300,8 +302,7 @@ ${CPT_MODEL_PFX}%${L1_2_L2X}:
 ${CPT_MODEL_PFX}%${L2_2_L1X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
-	${JOINT2COND_PHRASE_TABLE} \
-		-sort \
+	joint2cond_phrase_tables \
 		${CPT_PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
@@ -311,6 +312,7 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 		-o $(subst .${L2_2_L1X},,$@) \
 		-ibm_l2_given_l1  $(filter %${L1_GIVEN_L2X}, $+) \
 		-ibm_l1_given_l2  $(filter %${L2_GIVEN_L1X}, $+) \
+		${JOINT2COND_PHRASE_TABLE_OPTION} \
 		$(filter %.${RJOINTX}, $+) \
 		>& log.$(basename $@)
 
