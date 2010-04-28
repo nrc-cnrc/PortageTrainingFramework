@@ -51,7 +51,6 @@ endif
 doc: framework-toy.pdf
 
 %.pdf: %.tex
-	-TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 
 .PHONY: doc-clean
