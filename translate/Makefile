@@ -224,12 +224,9 @@ clean.logs:
 # how to make the decoding model in this module.
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model:
-	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
-		echo "ERROR: Please train ${DECODING_MODEL_DIR} first!" >&2; \
-		false; \
-	fi
+	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] || ! echo "Please train ${DECODING_MODEL_DIR} first!" >&2
 
-#@_LOCAL=1 [[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] || (echo "Please train ${DECODING_MODEL_DIR} first!" >&2; false)
+
 
 ########################################
 # Create a specific canoe.ini per test set.
@@ -268,7 +265,7 @@ ifdef DO_RESCORING
 else
 %.out: SHELL=${FRAMEWORK_SHELL}
 %.out: ${DECODING_MODEL}.% %${RULEX}
-	@_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@" >&2
 	RP_PSUB_OPTS="-${TRANS_CPUS}" \
 	canoe-parallel.sh \
 		-lb \
@@ -318,13 +315,8 @@ clean.translate.%:
 
 check_rescoring_model: SHELL=${GUARD_SHELL}
 check_rescoring_model:
-	@if [[ ! -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]]; then \
-		echo "ERROR: No rescoring model available!" >&2; \
-		echo "Please train ${RESCORING_MODEL_DIR} first!" >&2; \
-		false; \
-	fi
-
-#@_LOCAL=1 [[ -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]] || (echo "ERROR: No rescoring model available!" >&2; echo "Please train ${RESCORING_MODEL_DIR} first!" >&2; false)
+	@[[ -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]] \
+	|| ! echo -e "ERROR: No rescoring model available!\nPlease train ${RESCORING_MODEL_DIR} first!" >&2
 
 
 
@@ -334,7 +326,7 @@ check_rescoring_model:
 rat: $(addsuffix .rat, ${TEST_SET})
 %.rat: SHELL=${FRAMEWORK_SHELL}
 %.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} check_rescoring_model
-	@_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $@" >&2
 	RP_PSUB_OPTS="-${TRANS_CPUS}" \
 	rat.sh \
 		-lb \
@@ -453,9 +445,9 @@ tc: $(addsuffix .rat.tc, ${TEST_SET})
 endif
 %.tc: SHELL=${FRAMEWORK_SHELL}
 %.tc: %
-	@_LOCAL=1 test -f ${TRUECASING_DIR}/${TRUECASING_LM} || (echo "Can't access truecasing lm ${TRUECASING_DIR}/${TRUECASING_LM}"; false) >&2
-	@_LOCAL=1 test -f ${TRUECASING_DIR}/${TRUECASING_MAP} || (echo "Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}"; false) >&2
-	@_LOCAL=1 echo "TrueCasing $@"
+	@_LOCAL=1; [[ -f ${TRUECASING_DIR}/${TRUECASING_LM} ]]  || ! echo "Can't access truecasing lm ${TRUECASING_DIR}/${TRUECASING_LM}" >&2
+	@_LOCAL=1; [[ -f ${TRUECASING_DIR}/${TRUECASING_MAP} ]] || ! echo "Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}" >&2
+	@_LOCAL=1; echo "TrueCasing $@" >&2
 	${TIME_MEM} \
 	truecase.pl \
 		--ucBOSEncoding=UTF-8 \

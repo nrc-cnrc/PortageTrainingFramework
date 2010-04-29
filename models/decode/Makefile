@@ -159,10 +159,8 @@ clean.logs:
 .PHONY: check_template
 check_template: SHELL=${GUARD_SHELL}
 check_template:
-	@if [[ ! -f ${TEMPLATE_DIR}/${DECODING_MODEL_TEMPLATE} ]]; then \
-		echo "Cannot find this template: ${DECODING_MODEL_TEMPLATE}" >&2; \
-		false; \
-	fi
+	@[[ -f ${TEMPLATE_DIR}/${DECODING_MODEL_TEMPLATE} ]] \
+	|| !  echo "Cannot find this template: ${DECODING_MODEL_TEMPLATE}" >&2
 
 
 

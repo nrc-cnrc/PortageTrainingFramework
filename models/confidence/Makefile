@@ -78,7 +78,7 @@ clean.logs:
 # DECODING MODEL.
 ${CANOE_MODEL}: SHELL=${GUARD_SHELL}
 ${CANOE_MODEL}:
-	[[ -f "models/decode/${CANOE_MODEL}" ]] || ( echo "You must tune a canoe.ini.cow first!" >&2; false )
+	[[ -f "models/decode/${CANOE_MODEL}" ]] || ! echo "You must tune a canoe.ini.cow first!" >&2
 	ln -fs models/decode/${CANOE_MODEL} $@
 	configtool check $@
 

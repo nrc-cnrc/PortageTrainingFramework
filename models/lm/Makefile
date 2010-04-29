@@ -176,7 +176,7 @@ mark: ${CORPUS_NAME}.marked.gz
 
 #.SECONDARY: ${CORPUS_NAME}.marked.gz
 %.marked.gz: %${CORPUS_EXT}
-	@_LOCAL=1 echo "Marking up $<"
+	@_LOCAL=1 echo "Marking up $<" >&2
 	RP_PSUB_OPTS="-N $@" \
 	set -o pipefail; zcat -f $< \
 	| add-start-end.sh \
@@ -201,7 +201,7 @@ irstlm: ${LM_NAME}.ilm.gz
 # Here we've added LM_DESC to strip it out from the marked corpus file name.
 #.SECONDARY: ${LM_NAME}.ilm.gz
 %${LM_DESC}.ilm.gz: %.marked.gz
-	@_LOCAL=1 echo "  Creating IRSTLM $@"
+	@_LOCAL=1 echo "  Creating IRSTLM $@" >&2
 	_LOCAL=1 ${RM} $@
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	IRSTLM=${IRSTLM} ${BUILD_LM_PGM} \
@@ -235,7 +235,7 @@ ifeq (${LM_TOOLKIT}, SRI)
 #	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
 #
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
-	@_LOCAL=1 echo "  Creating ARPA text format $@"
+	@_LOCAL=1 echo "  Creating ARPA text format $@" >&2
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
 	ngram-count \
@@ -249,7 +249,7 @@ ifeq (${LM_TOOLKIT}, SRI)
 
 else ifeq (${LM_TOOLKIT}, IRST)
 %.lm.gz: %.ilm.gz
-	@_LOCAL=1 echo "  Creating ARPA text format $@"
+	@_LOCAL=1 echo "  Creating ARPA text format $@" >&2
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	set -o pipefail; \
 	${TIME_MEM} \
@@ -266,7 +266,7 @@ else ifeq (${LM_TOOLKIT}, IRST)
 #
 else ifeq (${LM_TOOLKIT}, MIT)
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
-	@_LOCAL=1 echo "  Creating ARPA text format $@"
+	@_LOCAL=1 echo "  Creating ARPA text format $@" >&2
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	zcat $< \
 	| ${TIME_MEM} \
@@ -298,7 +298,7 @@ blmt: ${LM_NAME}.blmt
 
 #.SECONDARY: ${LM_NAME}.blmt
 %.blmt: %.ilm.gz
-	@_LOCAL=1 echo "  Creating bin.ARPA format $@"
+	@_LOCAL=1 echo "  Creating bin.ARPA format $@" >&2
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
 	compile-lm \
@@ -322,7 +322,7 @@ quantize: $(LM_NAME).qlm.gz
 
 #.SECONDARY: ${LM_NAME}.qlm.gz
 %.qlm: %.lm.gz
-	@_LOCAL=1 echo "  qARPA $< to $@"
+	@_LOCAL=1 echo "  qARPA $< to $@" >&2
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
 	quantize-lm \
@@ -346,7 +346,7 @@ Qblmt: ${LM_NAME}.Qblmt
 
 #.SECONDARY: ${LM_NAME}.Qblmt
 %.Qblmt: %.qlm.gz
-	@_LOCAL=1 echo "  bin.qARPA $< to $@"
+	@_LOCAL=1 echo "  bin.qARPA $< to $@" >&2
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
 	compile-lm \

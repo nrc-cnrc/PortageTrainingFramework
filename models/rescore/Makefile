@@ -157,10 +157,7 @@ clean.logs:
 .PHONY: check_decoding_model
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model: setup
-	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
-		echo "Please run ${DECODING_MODEL_DIR} first!"; \
-		false; \
-	fi
+	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] || ! echo "Please run ${DECODING_MODEL_DIR} first!" >&2
 
 
 
@@ -187,7 +184,7 @@ train: ${RESCORING_MODEL}
 
 ${RESCORING_MODEL}:  SHELL=${FRAMEWORK_SHELL}
 ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
-	@_LOCAL=1 echo "Tuning the rescoring model."
+	@_LOCAL=1 echo "Tuning the rescoring model." >&2
 	RP_PSUB_OPTS="-${RAT_TRANS_CPUS} -N $@" \
 	rat.sh \
 		-lb \
@@ -218,10 +215,7 @@ clean.rescore_train:
 ${DECODING_MODEL}.%: SHELL=${GUARD_SHELL}
 ${DECODING_MODEL}.%:
 	echo ${DECODING_MODEL}
-	@if [[ ! -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]]; then \
-		echo "Please run ${DECODING_MODEL_DIR} first!"; \
-		false; \
-	fi
+	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] || !  echo "Please run ${DECODING_MODEL_DIR} first!" >&2
 	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
 #	cat $< \

@@ -108,7 +108,8 @@ LDM_COUNTS_PFX ?= ldm.counts
 # - a backward word alignment model aka source given target model with the SRC_GIVEN_TGTX suffix.
 ${LDM_COUNTS_PFX}%: SHELL=${GUARD_SHELL}
 ${LDM_COUNTS_PFX}%:
-	_LOCAL=1 bash -c '[[ "`echo "$(filter-out %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)" | \wc -w`" = 2 ]] || ! echo "ERROR: You cannot provide more than one pair of corpora to create $@."'
+	@_LOCAL=1; [[ "$(words $(filter-out %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+))" == "2" ]] \
+	|| ! echo "ERROR: You cannot provide more than one pair of corpora to create $@." >&2
 	parallelize.pl \
 		-nolocal \
 		-psub -${COUNT_CPUS} \
