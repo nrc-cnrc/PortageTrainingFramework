@@ -110,7 +110,12 @@ ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm: ${LDM_MODEL_PFX}.${LDM_NAME}.${
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	@echo "Available targets are: ldm tpldm"
+	@echo "Train a lexicalized distortion model."
+	@echo
+	@echo "To train your distortion model, type: make all"
+	@echo
+	@echo "The main targets in this Makefile are:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
 

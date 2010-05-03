@@ -107,10 +107,12 @@ all: train
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	@echo "This script allows to tune a system."
-	@echo "Possible targets are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
-	@echo "Most likely you want to do either: make all"
+	@echo "Tune a system."
+	@echo
+	@echo "To tune your models, type: make all"
+	@echo
+	@echo "The main targets in this Makefile are:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
 
@@ -160,7 +162,7 @@ clean.logs:
 check_template: SHELL=${GUARD_SHELL}
 check_template:
 	@[[ -f ${TEMPLATE_DIR}/${DECODING_MODEL_TEMPLATE} ]] \
-	|| !  echo "Cannot find this template: ${DECODING_MODEL_TEMPLATE}" >&2
+	|| ! echo "ERROR: Cannot find this template: ${DECODING_MODEL_TEMPLATE}" >&2
 
 
 
@@ -168,8 +170,8 @@ check_template:
 # Create canoe.ini from template.
 ifdef USE_LDM
 LDM ?= $(wildcard models/ldm/ldm.*.${SRC_LANG}2${TGT_LANG}.gz)
-ifeq ("$(strip ${LDM})","")
-$(warning "No LDMs, Please train some ldm in models/ldm.")
+ifeq ("","$(or $(strip ${LDM}),$(findstring clean,${MAKECMDGOALS}))")
+$(warning "No LDMs available. Have you trained at least a distortion model?")
 endif
 
 DISTORTION ?= -dist-phrase-swap -dist-limit-ext -lex-dist-model-file ${LDM} -distortion-model WordDisplacement:back-lex\#m:back-lex\#s:back-lex\#d:fwd-lex\#m:fwd-lex\#s:fwd-lex\#d
@@ -178,23 +180,21 @@ DISTORTION ?= -distortion-model WordDisplacement
 endif
 
 CPTS ?= $(wildcard models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz)
-ifeq ("$(strip ${CPTS})","")
-$(warning "No CPTs, Is it possible that you haven't trained at least one translation model?")
+ifeq ("","$(or $(strip ${CPTS}),$(findstring clean,${MAKECMDGOALS}))")
+$(warning "No CPTs available. Have you trained at least one translation model?")
 endif
 
 LMS  ?= $(wildcard models/lm/*${TGT_LANG}*.binlm.gz)
-ifeq ("$(strip ${LMS})","")
-$(warning "No LMs, Is it possible that you haven't trained at least one language model?")
+ifeq ("","$(or $(strip ${LMS}),$(findstring clean,${MAKECMDGOALS}))")
+$(warning "No LMs available. Have you trained at least one language model?")
 endif
 
 ${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
-	@ls models/tm/cpt.* &> /dev/null || \
-		(echo "ERROR: Is it possible that you haven't trained at least one translation model?" >&2; \
-		false;)
-	@ls models/lm/*.binlm.gz &> /dev/null || \
-		(echo "ERROR: Is it possible that you haven't trained at least one language model?" >&2; \
-		false;)
+	@ls models/tm/cpt.* &> /dev/null \
+	|| ! echo "ERROR: No CPTs available. Please train the translation model(s) first!" >&2
+	@ls models/lm/*.binlm.gz &> /dev/null \
+	|| ! echo "ERROR: No LMs available. Please train the language model(s) first!" >&2
 	cat $< \
 	| sed -e 's/<SL>/${SRC_LANG}/g' \
 	      -e 's/<TL>/${TGT_LANG}/g' \
@@ -282,7 +282,7 @@ ONE_CPT ?= one.cpt.${SRC_LANG}2${TGT_LANG}.gz
 ${ONE_CPT}: SHELL=${FRAMEWORK_SHELL}
 ${ONE_CPT}: canoe.ini.cow
 	RP_PSUB_OPTS="-1 -N vm.join" \
-	join_phrasetables -v `configtool list-multi-probs $<` \
+	join_phrasetables -v `configtool list-multi-probs $<` 2> log.$(basename $@)\
 	| gzip \
 	> $@
 
@@ -303,7 +303,8 @@ cpt.${SRC_LANG}2${TGT_LANG}.tppt canoe.ini.cow.live: canoe.ini.cow.hardFilter
 		-hf ${APPLY_WEIGHTS_OPTIONS} \
 		-src ${SRC_LANG} -tgt ${TGT_LANG} \
 		-f $< -c canoe.ini.cow.live.tmp \
-		-o cpt
+		-o cpt \
+		&> log.cpt.${SRC_LANG}2${TGT_LANG}
 	configtool tp canoe.ini.cow.live.tmp > canoe.ini.cow.live && rm canoe.ini.cow.live.tmp
 
 # We need to output a new canoe.ini.cow that reflects the single tppt and applied weights.

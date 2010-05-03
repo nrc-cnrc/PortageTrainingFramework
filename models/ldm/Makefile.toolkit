@@ -101,15 +101,14 @@ LDM_COUNTS_PFX ?= ldm.counts
 # Note we are explicitely using the guard shell which will prevent sending this
 # command to the cluster queue since parallelize.pl will take care of this for
 # us.
-# You must provide this target:
+# You must provide this target with:
 # - a source corpus with the SRCXZ suffix;
 # - a target corpus with the TGTXZ suffix;
 # - a forward word alignment model aka target given source model with the TGT_GIVEN_SRCX suffix;
 # - a backward word alignment model aka source given target model with the SRC_GIVEN_TGTX suffix.
 ${LDM_COUNTS_PFX}%: SHELL=${GUARD_SHELL}
 ${LDM_COUNTS_PFX}%:
-	@_LOCAL=1; [[ "$(words $(filter-out %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+))" == "2" ]] \
-	|| ! echo "ERROR: You cannot provide more than one pair of corpora to create $@." >&2
+	@_LOCAL=1; [[ $(words $(filter-out %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)) = 2 ]] || ! echo "ERROR: You must provide only one pair of corpora to create $@." >&2
 	parallelize.pl \
 		-nolocal \
 		-psub -${COUNT_CPUS} \

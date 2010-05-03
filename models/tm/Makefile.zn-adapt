@@ -43,23 +43,17 @@ domain_files ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_DOMAIN}*${LANGXZ})
 other_files  ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}))
 
 
-
-ifneq ($(MAKECMDGOALS),clean)
-ifneq ($(MAKECMDGOALS),clean.content)
-ifneq ($(MAKECMDGOALS),clean.logs)
+ifeq ("","$(or $(findstring clean,${MAKECMDGOALS}),$(findstring help,${MAKECMDGOALS}))")
 
 ifeq ("${domain_files}", "")
-$(error "Make couldn't find the domain corpora files.")
+$(error "Make couldn't find the domain corpora files: ${CORPORA_DIR}/${TRAIN_TM_DOMAIN}*${LANGXZ}")
 endif
 
 ifeq ("${other_files}", "")
-$(error "Make couldn't find the non-domain corpora files.")
+$(error "Make couldn't find the non-domain corpora files: ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}")
 endif
 
 endif
-endif
-endif
-
 
 
 vpath %${LANGXZ} ${CORPORA_DIR}
@@ -134,8 +128,14 @@ ${JPT_MODEL_PFX}.merged.${JOINTX}: ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	@echo "Special Makefile that produces a single phrase table with George's zn-adaptation."
-	@echo "Targets available: all"
+	@echo "Special Makefile to produce a single phrase table using George's ZN-adaptation."
+	@echo
+	@echo "To train your models, type: make -f Makefile.zn-adapt all"
+	@echo
+	@echo "The main targets in this Makefile are:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+
+
 
 ########################################
 # CLEAN-UP
@@ -146,27 +146,15 @@ clean: SHELL=${GUARD_SHELL}
 clean: clean.content
 clean.content: SHELL=${GUARD_SHELL}
 
+WA_MODEL_PREFIXES = ${IBM1_MODEL_PFX} ${IBM2_MODEL_PFX} ${HMM3_MODEL_PFX}
 
-clean.content: clean.ibm1
+clean.content: clean.word_alignment_models
 
-.PHONY: clean.ibm1
-clean.ibm1: SHELL=${GUARD_SHELL}
-clean.ibm1:
-	$(RM) ${IBM1_MODEL_PFX}.*
+.PHONY: clean.word_alignment_models
+clean.word_alignment_models: SHELL=${GUARD_SHELL}
+clean.word_alignment_models:
+	$(RM) $(addsuffix .*,${WA_MODEL_PREFIXES})
 
-clean.content: clean.ibm2
-
-.PHONY: clean.ibm2
-clean.ibm2: SHELL=${GUARD_SHELL}
-clean.ibm2:
-	$(RM) ${IBM2_MODEL_PFX}.*
-
-clean.content: clean.hmm3
-
-.PHONY: clean.hmm3
-clean.hmm3: SHELL=${GUARD_SHELL}
-clean.hmm3:
-	$(RM) ${HMM3_MODEL_PFX}.*
 clean.content: clean.jpts
 
 .PHONY: clean.jpts
@@ -199,7 +187,7 @@ time-mem: resource_summary_sub
 
 ########################################
 # HELPERS
-debug: SHELL=bash
+debug: SHELL=${GUARD_SHELL}
 debug:
 	@echo "CORPORA_DIR: ${CORPORA_DIR}"
 	@echo "TRAIN_TM: ${TRAIN_TM}"

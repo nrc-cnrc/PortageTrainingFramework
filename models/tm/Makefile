@@ -81,8 +81,12 @@ all: ${PT_TYPES}
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	@echo "Available targets are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
+	@echo "Train translation models."
+	@echo
+	@echo "To train your models, type: make all"
+	@echo
+	@echo "The main targets in this Makefile are:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
 
@@ -90,7 +94,7 @@ help:
 .PHONY: list_final_output
 list_final_output: SHELL=${GUARD_SHELL}
 list_final_output: $(addsuffix _list,${PT_TYPES})
-	@echo "are the expected final output."
+	@echo "are the expected final outputs."
 
 
 
@@ -124,6 +128,14 @@ time-mem: resource_summary_sub
 
 ################################################################################
 # WORD ALIGNMENT MODELS.
+
+clean.content: clean.word_alignment_models
+
+.PHONY: clean.word_alignment_models
+clean.word_alignment_models: SHELL=${GUARD_SHELL}
+clean.word_alignment_models:
+	${RM} $(addsuffix .*,${WA_MODEL_PREFIXES})
+
 .PHONY: word_alignment_models
 word_alignment_models: ibm1_model
 word_alignment_models: ibm2_model
@@ -132,9 +144,10 @@ word_alignment_models: hmm2_model
 word_alignment_models: hmm3_model
 
 
-
 ########################################
 # TRAINING THE IBM1 MODELS
+WA_MODEL_PREFIXES += ${IBM1_MODEL_PFX}
+
 .PHONY:  ibm1_model
 ibm1_model: ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
 ibm1_model: ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
@@ -142,18 +155,12 @@ ibm1_model: ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
 ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
-clean.content: clean.ibm1
-
-.PHONY: clean.ibm1
-clean.ibm1: SHELL=${GUARD_SHELL}
-clean.ibm1:
-	$(RM) ${IBM1_MODEL_PFX}.*
-
-
 
 ########################################
 # TRAINING THE IBM2 MODELS
 # requires: source and target corpora and ibm1 models.
+WA_MODEL_PREFIXES += ${IBM2_MODEL_PFX}
+
 .PHONY:  ibm2_model
 ibm2_model: ibm1_model
 ibm2_model: ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
@@ -162,18 +169,12 @@ ibm2_model: ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
 ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
-clean.content: clean.ibm2
-
-.PHONY: clean.ibm2
-clean.ibm2: SHELL=${GUARD_SHELL}
-clean.ibm2:
-	$(RM) ${IBM2_MODEL_PFX}.*
-
-
 
 ########################################
 # TRAINING THE HMM1 MODELS => He-lex
 # requires: source and target corpora and ibm1 models.
+WA_MODEL_PREFIXES += ${HMM1_MODEL_PFX}
+
 .PHONY:  hmm1_model
 hmm1_model: ibm1_model
 hmm1_model: ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
@@ -182,18 +183,12 @@ hmm1_model: ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
 ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
-clean.content: clean.hmm1
-
-.PHONY: clean.hmm1
-clean.hmm1: SHELL=${GUARD_SHELL}
-clean.hmm1:
-	$(RM) ${HMM1_MODEL_PFX}.*
-
-
 
 ########################################
 # TRAINING THE HMM2 MODELS => liang variant
 # requires: source and target corpora and ibm1 models.
+WA_MODEL_PREFIXES += ${HMM2_MODEL_PFX}
+
 .PHONY:  hmm2_model
 hmm2_model: ibm1_model
 hmm2_model: ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
@@ -202,18 +197,12 @@ hmm2_model: ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
 ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
-clean.content: clean.hmm2
-
-.PHONY: clean.hmm2
-clean.hmm2: SHELL=${GUARD_SHELL}
-clean.hmm2:
-	$(RM) ${HMM2_MODEL_PFX}.*
-
-
 
 ########################################
 # TRAINING THE HMM3 MODELS => liang variant
 # requires: source and target corpora and ibm1 models.
+WA_MODEL_PREFIXES += ${HMM3_MODEL_PFX}
+
 .PHONY:  hmm3_model
 hmm3_model: ibm1_model
 hmm3_model: ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
@@ -224,22 +213,10 @@ hmm3_model: ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
 ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
-clean.content: clean.hmm3
-
-.PHONY: clean.hmm3
-clean.hmm3: SHELL=${GUARD_SHELL}
-clean.hmm3:
-	$(RM) ${HMM3_MODEL_PFX}.*
-
 
 
 ################################################################################
 # JOINT PHRASE TABLES
-.PHONY: jpts
-jpts: ibm2_jpt
-jpts: hmm1_jpt
-jpts: hmm2_jpt
-jpts: hmm3_jpt
 
 clean.content: clean.jpts
 
@@ -248,6 +225,12 @@ clean.jpts: SHELL=${GUARD_SHELL}
 clean.jpts:
 	$(RM) jpt.*
 	${RM} -r JPTPAR*
+
+.PHONY: jpts
+jpts: ibm2_jpt
+jpts: hmm1_jpt
+jpts: hmm2_jpt
+jpts: hmm3_jpt
 
 
 ########################################
@@ -301,12 +284,6 @@ ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2
 
 ################################################################################
 # CONDITIONAL PHRASE TABLES
-.PHONY: cpts
-cpts: jpts
-cpts: ibm2_cpt
-cpts: hmm1_cpt
-cpts: hmm2_cpt
-cpts: hmm3_cpt
 
 clean.content: clean.cpts
 
@@ -314,6 +291,14 @@ clean.content: clean.cpts
 clean.cpts: SHELL=${GUARD_SHELL}
 clean.cpts:
 	$(RM) cpt.*
+
+.PHONY: cpts
+cpts: jpts
+cpts: ibm2_cpt
+cpts: hmm1_cpt
+cpts: hmm2_cpt
+cpts: hmm3_cpt
+
 
 ########################################
 # IBM CONDITIONAL PHRASE TABLES

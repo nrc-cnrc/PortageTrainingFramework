@@ -50,6 +50,7 @@ IBM_DIR ?= models/tm
 LM_DIR ?= models/lm
 
 # What is the train canoe file name.
+DECODING_MODEL_DIR ?= models/decode
 CANOE_MODEL ?= canoe.ini.cow
 
 # What source file to use to tune a confidence model.

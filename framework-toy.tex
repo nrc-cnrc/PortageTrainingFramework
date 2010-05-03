@@ -71,7 +71,7 @@ updated to reflect recommended usage of \PS.
    Conseil national de recherches Canada /
       National Research Council Canada \\
    Copyright \copyright\ 2008--2010, Sa Majest{\'e} la Reine du Chef du Canada
-   \\ Copyright \copyright\ 2008--2010, Her Majesty the Queen in Right of Canada
+   \\ Copyright \copyright\ 2008--2010, Her Majesty in Right of Canada
 \end{center}
 
 \vfill
@@ -169,9 +169,9 @@ requested. Here are some other useful make commands:
       multi-core capabilities of your machine, but use with caution: many
       commands in the framework are already internally parallelized, as
       discussed in section~\ref{FrameworkParams}.
-\item \code{make help} displays some help and the main targets available in
+\item \code{make help} display some help and the main targets available in
       the makefile.
-\item \code{make summary} displays resource used by the framework: time and
+\item \code{make summary} display the resources used by the framework: time and
       memory used, as well as disk space for the runtime models (most
       informative once training has been completed; discussed further in
       section~\ref{FrameworkParams}).
@@ -308,9 +308,9 @@ already done the equivalent steps while installing IRSTLM:
 \begin{small}
 \begin{verbatim}
    > make help | grep -B1 irstlm
-   please run the following in order for this framework to run properly:
-   export PATH=$PORTAGE/pkgs/irstlm/bin:$PATH
-   export IRSTLM=$PORTAGE/pkgs/irstlm
+   Please run the following in order for this framework to run properly:
+      export PATH=$PORTAGE/pkgs/irstlm/bin:$PATH
+      export IRSTLM=$PORTAGE/pkgs/irstlm
    > export PATH=$PORTAGE/pkgs/irstlm/bin:$PATH
    > export IRSTLM=$PORTAGE/pkgs/irstlm
 \end{verbatim}
@@ -1583,8 +1583,9 @@ copy command that dereferences symbolic links.
    [...]
    [lots of stuff happens]
    [...]
-   from the root of the framework, you now have all that is required
-   for portageLive.
+   You now have all that is needed for PortageLive.
+   From the framework root, run one of the following to transfer your 
+   PortageLive models: 
    rsync -Larz models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>
    scp -r models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>
    cp -Lr models/portageLive/* /<DEST_DIR>

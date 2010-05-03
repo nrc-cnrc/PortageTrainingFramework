@@ -30,20 +30,28 @@ endif
 .PHONY: help
 help:
 ifeq (${LM_TOOLKIT},IRST)
-	@echo "please run the following in order for this framework to run properly:"
-	@echo "export PATH=${IRSTLM}/bin:\$$PATH"
-	@echo "export IRSTLM=${IRSTLM}"
+	@echo "Please run the following in order for this framework to run properly:"
+	@echo "   export PATH=${IRSTLM}/bin:\$$PATH"
+	@echo "   export IRSTLM=${IRSTLM}"
+	@echo
 endif
 	@echo "Your corpora are:"
-	@echo "lm: ${TRAIN_LM}"
-	@echo "tm: ${TRAIN_TM}"
-	@echo "tune decode: ${TUNE_DECODE}"
-	@echo "tune rescore: ${TUNE_RESCORE}"
-	@echo "test set: ${TEST_SET}"
-	@echo "Then make all"
+	@echo "   train lm: ${TRAIN_LM}"
+	@echo "   train tm: ${TRAIN_TM}"
+	@echo "   tune decode: ${TUNE_DECODE}"
+	@echo "   tune rescore: ${TUNE_RESCORE}"
+ifneq ($(strip ${TUNE_CE}),)
+	@echo "   tune ce: ${TUNE_CE}"
+endif
+	@echo "   test set: ${TEST_SET}"
+ifneq ($(strip ${TRANSLATE_SET}),)
+	@echo "   translate set: ${TRANSLATE_SET}"
+endif
 	@echo
-	@echo "The following are the main targets in this Makefile:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
+	@echo "To run the framework, type: make all"
+	@echo
+	@echo "The main targets in this Makefile are:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
 
@@ -51,6 +59,7 @@ endif
 doc: framework-toy.pdf
 
 %.pdf: %.tex
+# latex is run twice so a correct table of contents is generated.
 	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 
@@ -126,7 +135,9 @@ check_setup:
 .PHONY: portageLive
 portageLive:
 	${MAKE} -C models portageLive
-	@echo "from the root of the framework, you now have all that is required for portageLive."
+	@echo "You now have all that is needed for PortageLive."
+	@echo "From the framework root, run one of the following to" \
+	      "transfer your PortageLive models:"
 	@echo "rsync -Larz models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>"
 	@echo "scp -r models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>"
 	@echo "cp -Lr models/portageLive/* /<DEST_DIR>"

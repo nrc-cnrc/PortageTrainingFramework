@@ -104,12 +104,20 @@ vpath %.marked.gz    ${CORPORA_DIR}
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	@echo "please run:"
-	@echo "export PATH=${BIN_DIR}:$$PATH"
-	@echo "export IRSTLM=${IRSTLM}"
-	@echo "Then make all"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
-	@echo "Define LM_TOOLKIT=SRI or LM_TOOLKIT=MIT or LM_TOOLKIT=IRST to specify the LM toolkit you want to use."
+ifeq (${LM_TOOLKIT},IRST)
+	@echo "Please run the following in order for this framework to run properly:"
+	@echo "   export PATH=${BIN_DIR}:\$$PATH"
+	@echo "   export IRSTLM=${IRSTLM}"
+	@echo
+endif
+	@echo "In Makefile.params, define LM_TOOLKIT=SRI, LM_TOOLKIT=MIT" \
+	      "or LM_TOOLKIT=IRST to specify the LM toolkit to use."
+	@echo
+	@echo "To train your language models, type: make all"
+	@echo
+	@echo "The main targets in this Makefile are:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo
 	@echo "Note: you can build some other lm by defining TRAIN_LM=<corpora_prefix>."
 
 
@@ -176,7 +184,7 @@ mark: ${CORPUS_NAME}.marked.gz
 
 #.SECONDARY: ${CORPUS_NAME}.marked.gz
 %.marked.gz: %${CORPUS_EXT}
-	@_LOCAL=1 echo "Marking up $<" >&2
+	@_LOCAL=1 echo "Marking up $<"
 	RP_PSUB_OPTS="-N $@" \
 	set -o pipefail; zcat -f $< \
 	| add-start-end.sh \
@@ -201,7 +209,7 @@ irstlm: ${LM_NAME}.ilm.gz
 # Here we've added LM_DESC to strip it out from the marked corpus file name.
 #.SECONDARY: ${LM_NAME}.ilm.gz
 %${LM_DESC}.ilm.gz: %.marked.gz
-	@_LOCAL=1 echo "  Creating IRSTLM $@" >&2
+	@_LOCAL=1 echo "  Creating IRSTLM $@"
 	_LOCAL=1 ${RM} $@
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	IRSTLM=${IRSTLM} ${BUILD_LM_PGM} \
@@ -235,7 +243,7 @@ ifeq (${LM_TOOLKIT}, SRI)
 #	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
 #
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
-	@_LOCAL=1 echo "  Creating ARPA text format $@" >&2
+	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
 	ngram-count \
@@ -249,7 +257,7 @@ ifeq (${LM_TOOLKIT}, SRI)
 
 else ifeq (${LM_TOOLKIT}, IRST)
 %.lm.gz: %.ilm.gz
-	@_LOCAL=1 echo "  Creating ARPA text format $@" >&2
+	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	set -o pipefail; \
 	${TIME_MEM} \
@@ -266,7 +274,7 @@ else ifeq (${LM_TOOLKIT}, IRST)
 #
 else ifeq (${LM_TOOLKIT}, MIT)
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
-	@_LOCAL=1 echo "  Creating ARPA text format $@" >&2
+	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	zcat $< \
 	| ${TIME_MEM} \
@@ -291,14 +299,14 @@ clean.arpa:
 
 
 ########################################
-# BINAIRY FORMAT
+# BINARY FORMAT
 # arpa bin compressed format
 .PHONY: blmt
 blmt: ${LM_NAME}.blmt
 
 #.SECONDARY: ${LM_NAME}.blmt
 %.blmt: %.ilm.gz
-	@_LOCAL=1 echo "  Creating bin.ARPA format $@" >&2
+	@_LOCAL=1 echo "  Creating bin.ARPA format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
 	compile-lm \
@@ -322,7 +330,7 @@ quantize: $(LM_NAME).qlm.gz
 
 #.SECONDARY: ${LM_NAME}.qlm.gz
 %.qlm: %.lm.gz
-	@_LOCAL=1 echo "  qARPA $< to $@" >&2
+	@_LOCAL=1 echo "  qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
 	quantize-lm \
@@ -340,13 +348,13 @@ clean.quantize:
 
 
 ########################################
-# Quantinze binairy
+# Quantize binary
 .PHONY: Qblmt
 Qblmt: ${LM_NAME}.Qblmt
 
 #.SECONDARY: ${LM_NAME}.Qblmt
 %.Qblmt: %.qlm.gz
-	@_LOCAL=1 echo "  bin.qARPA $< to $@" >&2
+	@_LOCAL=1 echo "  bin.qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
 	compile-lm \

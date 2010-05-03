@@ -163,8 +163,7 @@ list_final_output:
 
 
 
-# An alias that indicate what/how to translate the translation set without
-# rescoring.
+# An alias that indicate what/how to translate the translation set without rescoring.
 .PHONY: translate
 translate: out
 
@@ -178,10 +177,13 @@ rescore: rat
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	@echo "Translate the following testsets: $(addsuffix _${SRC_LANG}, ${TEST_SET})"
-	@echo "Possible targets are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
-	@echo "Most likely you want to do either: make all or make translate."
+	@echo "Translate the following test sets: $(addsuffix _${SRC_LANG}, ${TEST_SET})"
+	@echo
+	@echo "To translate your test sets, type: make all"
+	@echo
+	@echo "The main targets in this Makefile are:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo "Most likely you want to run either: make all or make translate."
 
 
 
@@ -222,11 +224,11 @@ clean.logs:
 ########################################
 # If there is no decoding model available, warn the user since we do not know
 # how to make the decoding model in this module.
+.PHONY: check_decoding_model
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model:
-	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] || ! echo "Please train ${DECODING_MODEL_DIR} first!" >&2
-
-
+	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] \
+	|| ! echo "ERROR: No decoding model (${DECODING_MODEL}) available. Please train ${DECODING_MODEL_DIR} first!" >&2
 
 ########################################
 # Create a specific canoe.ini per test set.
@@ -265,7 +267,7 @@ ifdef DO_RESCORING
 else
 %.out: SHELL=${FRAMEWORK_SHELL}
 %.out: ${DECODING_MODEL}.% %${RULEX}
-	@_LOCAL=1 echo "Generating $@" >&2
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${TRANS_CPUS}" \
 	canoe-parallel.sh \
 		-lb \
@@ -312,11 +314,11 @@ clean.translate.%:
 	${RM} $*.out.detok $*.out.detok.bleu
 
 
-
+.PHONY: check_rescoring_model
 check_rescoring_model: SHELL=${GUARD_SHELL}
 check_rescoring_model:
 	@[[ -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]] \
-	|| ! echo -e "ERROR: No rescoring model available!\nPlease train ${RESCORING_MODEL_DIR} first!" >&2
+	|| ! echo "ERROR: No rescoring model (${RESCORING_MODEL}) available. Please train ${RESCORING_MODEL_DIR} first!" >&2
 
 
 
@@ -326,7 +328,7 @@ check_rescoring_model:
 rat: $(addsuffix .rat, ${TEST_SET})
 %.rat: SHELL=${FRAMEWORK_SHELL}
 %.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} check_rescoring_model
-	@_LOCAL=1 echo "Generating $@" >&2
+	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${TRANS_CPUS}" \
 	rat.sh \
 		-lb \
@@ -393,9 +395,10 @@ endif
 %.ce: SHELL=${FRAMEWORK_SHELL}
 
 # If the source has no reference.
-# Here we assume that, if the user didn't include the testset as part of the
-# TEST_SET variable, this mean it doesn't have a reference counter part.
+# Here we assume that, if the user didn't include the test set as part of the
+# TEST_SET variable, then it doesn't have a reference counter part.
 %.ce: ${CONFIDENCE_MODEL} %${SRCX} ${DECODING_MODEL}.%
+	@_LOCAL=1 echo "Generating $@"
 	${TIME_MEM} \
 	ce_translate.pl \
 		-n=${PARALLELISM_LEVEL_TRANSLATE} \
@@ -409,6 +412,7 @@ endif
 
 # If the source has a reference.
 $(addsuffix .ce, ${TEST_SET}): %.ce: ${CONFIDENCE_MODEL} %${SRCX} %${TGTX} ${DECODING_MODEL}.%
+	@_LOCAL=1 echo "Generating $@"
 	${TIME_MEM} \
 	ce_translate.pl \
 		-n=${PARALLELISM_LEVEL_TRANSLATE} \
@@ -445,9 +449,9 @@ tc: $(addsuffix .rat.tc, ${TEST_SET})
 endif
 %.tc: SHELL=${FRAMEWORK_SHELL}
 %.tc: %
-	@_LOCAL=1; [[ -f ${TRUECASING_DIR}/${TRUECASING_LM} ]]  || ! echo "Can't access truecasing lm ${TRUECASING_DIR}/${TRUECASING_LM}" >&2
-	@_LOCAL=1; [[ -f ${TRUECASING_DIR}/${TRUECASING_MAP} ]] || ! echo "Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}" >&2
-	@_LOCAL=1; echo "TrueCasing $@" >&2
+	@_LOCAL=1; [[ -f ${TRUECASING_DIR}/${TRUECASING_LM} ]] || ! echo "ERROR: Can't access truecasing lm ${TRUECASING_DIR}/${TRUECASING_LM}" >&2
+	@_LOCAL=1; [[ -f ${TRUECASING_DIR}/${TRUECASING_MAP} ]] || ! echo "ERROR: Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}" >&2
+	@_LOCAL=1 echo "TrueCasing $@"
 	${TIME_MEM} \
 	truecase.pl \
 		--ucBOSEncoding=UTF-8 \

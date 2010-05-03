@@ -69,11 +69,13 @@ vpath %${RAWX}   ${RAW_CORPORA_DIR}
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	@echo "This script tokenizes and lowercases all corpora described by CORPORA_SET"
-	@echo "Type: make all"
+	@echo "Tokenize and lowercase all corpora listed in CORPORA_SET."
+	@echo "CORPORA_SET: ${CORPORA_SET}"
 	@echo
-	@echo "The following are the main targets in this Makefile:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
+	@echo "To prepare the corpora, type: make all"
+	@echo
+	@echo "The main targets in this Makefile are:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
 .DELETE_ON_ERROR:

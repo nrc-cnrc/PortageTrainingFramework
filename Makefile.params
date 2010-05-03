@@ -11,7 +11,7 @@
 
 # Print the Portage Copyright no matter where we start from -- but only once.
 ifndef DISPLAYED_PORTAGE_COPYRIGHT
-   $(info $(shell portage_info))
+   $(shell portage_info)
    export DISPLAYED_PORTAGE_COPYRIGHT=1
 endif
 
@@ -106,14 +106,14 @@ PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
 PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= 10
 PARALLELISM_LEVEL_TRANSLATE    ?= 10
 ifndef DISABLE_RUNNING_MODE_WARNING
-$(info Running in cluster mode.)
+$(shell echo -e "Running in cluster mode.\n" >&2)
 export DISABLE_RUNNING_MODE_WARNING = 1
 endif
 else
 # Make sure we run in serial mode.
 .NOTPARALLEL:
 # Autodetect the number of available cpus on this machine.
-NCPUS := $(shell grep processor /proc/cpuinfo | \wc -l)
+NCPUS := $(shell grep processor /proc/cpuinfo | wc -l)
 PARALLELISM_LEVEL_CORPORA ?= ${NCPUS}
 PARALLELISM_LEVEL_LM ?= ${NCPUS}
 PARALLELISM_LEVEL_TM ?= ${NCPUS}
@@ -122,7 +122,7 @@ PARALLELISM_LEVEL_TUNE_RESCORE ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= ${NCPUS}
 PARALLELISM_LEVEL_TRANSLATE    ?= ${NCPUS}
 ifndef DISABLE_RUNNING_MODE_WARNING
-$(info Running in local mode.)
+$(shell echo -e "Running in local mode.\n" >&2)
 export DISABLE_RUNNING_MODE_WARNING = 1
 endif
 endif

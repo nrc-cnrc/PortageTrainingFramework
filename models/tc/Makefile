@@ -60,18 +60,25 @@ vpath %${LANGXZ} ${CORPORA_DIR}
 
 
 
+.DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
 #.INTERMEDIATE: ${TRAIN_LM}_${TGT_LANG}.marked.gz
 
 
 
-.PHONY:
+.PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	@echo "This script build a language model and a map for truecasing."
-	@echo "Define LM_TOOLKIT=SRI or LM_TOOLKIT=MIT if you have and want to use SRILM or MITLM instead of IRSTLM."
-	@echo "Your corpora: ${TRAIN_LM}.${TCX}"
-	@echo "type: make all"
+	@echo "Train a language model and a map for truecasing."
+	@echo
+	@echo "In Makefile.params, define LM_TOOLKIT=SRI, LM_TOOLKIT=MIT" \
+	      "or LM_TOOLKIT=IRST to specify the LM toolkit to use."
+	@echo "Your truecasing corpus is: ${TRAIN_LM}_${TGT_LANG}${TCX}"
+	@echo
+	@echo "To train your truecasing model, type: make all"
+	@echo
+	@echo "The main targets in this Makefile are:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
 .PHONY: all

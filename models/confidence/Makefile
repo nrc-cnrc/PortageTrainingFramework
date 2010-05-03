@@ -37,7 +37,7 @@ SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
 # Make sure the user setup this framework to generate proper models for
 # Confidence Estimation.
 ifndef DO_CE
-$(warning If you don't setup DO_CE in Makefile.params, you won't get all the required models built automatically in the framework.)
+$(warning You must set DO_CE in Makefile.params, or some required models will not be built automatically.)
 endif
 
 
@@ -53,8 +53,12 @@ all: train
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	@echo "Tuning a Confidence Estimation Model."
-	@echo "Valid target are: clean & all"
+	@echo "Tune a Confidence Estimation Model."
+	@echo
+	@echo "To tune your CE model, type: make all"
+	@echo
+	@echo "The main targets in this Makefile are:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
 ########################################
@@ -78,7 +82,8 @@ clean.logs:
 # DECODING MODEL.
 ${CANOE_MODEL}: SHELL=${GUARD_SHELL}
 ${CANOE_MODEL}:
-	[[ -f "models/decode/${CANOE_MODEL}" ]] || ! echo "You must tune a canoe.ini.cow first!" >&2
+	@[[ -f "${DECODING_MODEL_DIR}/${CANOE_MODEL}" ]] \
+	|| ! echo "ERROR: No decoding model (${CANOE_MODEL}) available. Please train ${DECODING_MODEL_DIR} first!" >&2
 	ln -fs models/decode/${CANOE_MODEL} $@
 	configtool check $@
 

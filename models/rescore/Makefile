@@ -85,6 +85,7 @@ SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
 
 
 
+.DEFAULT_GOAL := help
 .SECONDARY:
 .SUFFIXES:
 .DELETE_ON_ERROR:
@@ -105,9 +106,11 @@ all: train
 help: SHELL=${GUARD_SHELL}
 help:
 	@echo "Train a rescoring model."
-	@echo "Possible targets are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: ##'
-	@echo "Most likely you want to do either: make all"
+	@echo
+	@echo "To train rescoring, type: make all"
+	@echo
+	@echo "The main targets in this Makefile are:"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
 
@@ -156,8 +159,9 @@ clean.logs:
 # Check if there is a trained decoding model available
 .PHONY: check_decoding_model
 check_decoding_model: SHELL=${GUARD_SHELL}
-check_decoding_model: setup
-	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] || ! echo "Please run ${DECODING_MODEL_DIR} first!" >&2
+check_decoding_model:
+	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] \
+	|| ! echo "ERROR: No decoding model (${DECODING_MODEL}) available. Please train ${DECODING_MODEL_DIR} first!" >&2
 
 
 
@@ -184,7 +188,7 @@ train: ${RESCORING_MODEL}
 
 ${RESCORING_MODEL}:  SHELL=${FRAMEWORK_SHELL}
 ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
-	@_LOCAL=1 echo "Tuning the rescoring model." >&2
+	@_LOCAL=1 echo "Tuning the rescoring model."
 	RP_PSUB_OPTS="-${RAT_TRANS_CPUS} -N $@" \
 	rat.sh \
 		-lb \
@@ -196,7 +200,7 @@ ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UN
 		-msrc $< \
 		-f $(wordlist 2,5,$+) \
 	>& log.$@
-	_LOCAL=1 rm -rf workdir-${TUNE_RESCORE_RULE}-${NBEST_SIZE}best
+	_LOCAL=1 ${RM} -r workdir-${TUNE_RESCORE_RULE}-${NBEST_SIZE}best
 
 clean.content: clean.rescore_train
 
@@ -213,9 +217,7 @@ clean.rescore_train:
 # You could add some specific target if you need to customize a decoding model
 # for a particular testset.
 ${DECODING_MODEL}.%: SHELL=${GUARD_SHELL}
-${DECODING_MODEL}.%:
-	echo ${DECODING_MODEL}
-	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] || !  echo "Please run ${DECODING_MODEL_DIR} first!" >&2
+${DECODING_MODEL}.%: check_decoding_model
 	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
 #	cat $< \
