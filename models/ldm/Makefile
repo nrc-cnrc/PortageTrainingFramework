@@ -98,10 +98,11 @@ ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm: ${LDM_MODEL_PFX}.${LDM_NAME}.${
 ########################################
 # Word alignment models.
 # These targets will most likely not be called since the framework should have
-# taken care of creating those models in the first place.  They are here to be
-# to try make -n before running the framework.
-%${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}:
-	[[ -f "../tm/$@" ]] || ${MAKE} -C ../tm $@
+# taken care of creating those models in the first place.
+# They are here to be to try make -n before running the framework.
+# Disabled because it breaks the building of ldm.counts if actually invoked.
+#%${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}:
+#	[[ -f "../tm/$@" ]] || ${MAKE} -C ../tm $@
 
 
 
