@@ -972,11 +972,15 @@ adjust cow parallelism in this framework.} and writes large amounts of logging
 information, it is usually a good idea to redirect all of its output to a log
 file, as is done here; and also to run it in the background (not done here).
 Progress is most easily monitored by looking at the file
-\code{rescore-results},\footnote{The scripts \code{best-rr-val} and
-\code{all-best-rr-vals} can be handy if you are monitoring multiple
-experiments.} which shows the translation quality (measured by BLEU score---see
+\code{rescore-results},
+which shows the translation quality (measured by BLEU score---see
 section~\ref{Testing} for a description), as well as the current weights, for
-each iteration. Note that the BLEU score does not necessarily increase
+each iteration.
+
+\tip \margintip The scripts \code{best-rr-val} and \code{all-best-rr-vals} can
+be handy if you are monitoring multiple experiments. \tipend
+
+Note that the BLEU score does not necessarily increase
 monotonically, as can be seen in several places in the \code{rescore-results}
 file obtained with this example:
 % cat rescore-results | perl -pe 's/(\.\d\d)\d+(:| \S|$)/\1\2/g; s/   -d/  -d/' | cut -c1-92
@@ -1016,9 +1020,15 @@ While \code{cow.sh} is working, it saves $n$-best lists and other intermediate
 files to a temporary work directory called \code{foos}. If you wish to
 prevent these (large) files from being automatically cleaned up on completion,
 remove the \code{rm} command executed after \code{cow.sh} in
-\code{Makefile}. In addition, a lot of information is also logged to
-\code{log.canoe.ini.cow}; this can be summarized using the command
-\code{cowpie.py log.canoe.ini.cow} (type \code{cowpie.py -h} for details).
+\code{Makefile}.
+
+\tip \margintip A lot of information is logged to \code{log.canoe.ini.cow};
+this can be summarized using the command \code{cowpie.py log.canoe.ini.cow}
+(type \code{cowpie.py -h} for details). \tipend
+
+\tip \margintip The scripts \code{cow-timing.pl} and
+\code{canoe-timing-stats.pl} provide detailed running time information for the
+various components of \code{cow.sh}. \tipend
 
 The final output from \code{cow.sh} is written to the file
 \code{canoe.ini.cow} (assuming the original configuration file was called
