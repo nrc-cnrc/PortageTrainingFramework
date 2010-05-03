@@ -92,7 +92,13 @@ TIME_MEM ?= time-mem
 # targets otherwise as soon as the user modifies a file or add something to
 # models/, this would trigger the timestamp of models to be updated thus making
 # it a newer target thus forcing remaking everything.
+ifneq (${MAKECMDGOALS},clean)
+ifneq (${MAKECMDGOALS},clean.content)
+ifneq (${MAKECMDGOALS},clean.logs)
 SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
+endif
+endif
+endif
 
 
 
@@ -191,14 +197,13 @@ help:
 # Clean up
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
-clean:
-	${RM} models
 
 .PHONY: clean.content
 clean: clean.content
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
 	-${RM} *.translation
+	${RM} models
 
 
 

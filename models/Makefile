@@ -188,7 +188,7 @@ portageLive_models_%:
 	${MAKE} -C $* portageLive
 
 .PHONY: clean.portageLive
-clean: clean.portageLive
+clean clean.content: clean.portageLive
 clean.portageLive: SHELL=${GUARD_SHELL}
 clean.portageLive:
 	${RM} -r portageLive

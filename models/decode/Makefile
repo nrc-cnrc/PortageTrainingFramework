@@ -83,7 +83,14 @@ FILES_TO_BE_LOCKED = ${DECODING_MODEL}
 
 ########################################
 # SETUP
+ifneq (${MAKECMDGOALS},clean)
+ifneq (${MAKECMDGOALS},clean.content)
+ifneq (${MAKECMDGOALS},clean.logs)
+$(info "MAKECMDGOALS: ${MAKECMDGOALS})
 SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
+endif
+endif
+endif
 
 
 
@@ -128,12 +135,13 @@ list_final_output:
 # Clean up
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
-clean:
-	${RM} models
+
 
 .PHONY: clean.content
 clean: clean.content
 clean.content: SHELL=${GUARD_SHELL}
+clean.content:
+	${RM} models
 
 
 
@@ -313,7 +321,7 @@ check_canoe_live: SHELL=${GUARD_SHELL}
 check_canoe_live: canoe.ini.cow.live
 	configtool check $<
 
-clean: clean.portageLive
+clean.content: clean.portageLive
 .PHONY: clean.portageLive
 clean.portageLive: SHELL=${GUARD_SHELL}
 clean.portageLive:
