@@ -146,7 +146,7 @@ ${LDM_MODEL_PFX}%${SRC_2_TGTX}:
 %.tpldm: SHELL=${FRAMEWORK_SHELL}
 %.tpldm:
 	RP_PSUB_OPTS="-${ESTIM_CPU}" \
-	textldm2tpldm.sh $<
+	${TIME_MEM} textldm2tpldm.sh $< &> log.$*.tpldm
 
 
 
