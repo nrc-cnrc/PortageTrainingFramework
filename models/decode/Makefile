@@ -78,6 +78,9 @@ MERT_CPUS ?= 1
 # What is the maximum number of iterations mert should do?
 MERT_MAX_ITER ?= 15
 
+# Track memory usage.
+TIME_MEM ?= time-mem
+
 # After this Makefile, the following targets/files are precious.
 FILES_TO_BE_LOCKED = ${DECODING_MODEL}
 
@@ -290,6 +293,7 @@ ONE_CPT ?= one.cpt.${SRC_LANG}2${TGT_LANG}.gz
 ${ONE_CPT}: SHELL=${FRAMEWORK_SHELL}
 ${ONE_CPT}: canoe.ini.cow
 	RP_PSUB_OPTS="-1 -N vm.join" \
+	${TIME_MEM} \
 	join_phrasetables -v `configtool list-multi-probs $<` 2> log.$(basename $@)\
 	| gzip \
 	> $@
@@ -307,6 +311,7 @@ canoe.ini.cow.live: SHELL=${FRAMEWORK_SHELL}
 cpt.${SRC_LANG}2${TGT_LANG}.tppt: SHELL=${FRAMEWORK_SHELL}
 cpt.${SRC_LANG}2${TGT_LANG}.tppt canoe.ini.cow.live: canoe.ini.cow.hardFilter
 	RP_PSUB_OPTS="-8 -N vm.tppt" \
+	${TIME_MEM} \
 	tmtext-apply-weights.pl \
 		-hf ${APPLY_WEIGHTS_OPTIONS} \
 		-src ${SRC_LANG} -tgt ${TGT_LANG} \
@@ -326,7 +331,7 @@ clean.content: clean.portageLive
 clean.portageLive: SHELL=${GUARD_SHELL}
 clean.portageLive:
 	-${RM} canoe.ini.cow.hardFilter canoe.ini.cow.live cpt.${SRC_LANG}2${TGT_LANG}.gz one.cpt.${SRC_LANG}2${TGT_LANG}.gz
-	-${RM} -r cpt.${SRC_LANG}2${TGT_LANG}.tppt portageLive
+	-${RM} -r cpt.${SRC_LANG}2${TGT_LANG}.tppt
 
 
 
