@@ -167,6 +167,7 @@ resource_summary:
 time-mem: SHELL=/bin/bash
 time-mem: export PORTAGE_INTERNAL_CALL=1
 time-mem:
+	@echo "Resource summary for `pwd`:"
 	@time-mem -T <(${MAKE} resource_summary) \
 	| perl -pe 's/[0-9]+:TIME-MEM/TIME-MEM/' \
 	| expand-auto.pl
@@ -175,5 +176,19 @@ time-mem:
 summary: SHELL=/bin/bash
 summary: export PORTAGE_INTERNAL_CALL=1
 summary: time-mem
-	@du -sch models/ldm models/lm/*lm.gz models/tm/{ibm,hmm,jpt,cpt}* models/tc translate
+	@echo
+	@echo "Disk usage for all models:"
+	@if [[ ! -e models/portageLive ]]; then \
+	   GLOBIGNORE=*/log.*; \
+	      du -sch models/confidence/*.cem models/ldm models/lm/*lm* \
+	      models/tm/{ibm,hmm,jpt,cpt}* models/tc translate;\
+	else \
+	   GLOBIGNORE=*/log.*; \
+	      du -sch models/confidence/*.cem models/ldm models/lm/*lm* \
+	      models/tm/{ibm,hmm,jpt,cpt}* models/tc models/decode/*.{tppt,gz} \
+	      translate; \
+	   echo; \
+	   echo "Disk usage for portageLive models:"; \
+	   du -hL models/portageLive; \
+	fi
 

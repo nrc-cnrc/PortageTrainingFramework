@@ -1612,16 +1612,16 @@ fully expanded:
    > du -hL models/portageLive/
    12M     models/portageLive/models/ldm/ldm.hmm3+ibm2.fr2en.tpldm
    12M     models/portageLive/models/ldm
-   11M     models/portageLive/models/tm/cpt.fr2en.tppt
-   22M     models/portageLive/models/tm
-   652K    models/portageLive/models/tc/tc-map.en.tppt
-   1.2M    models/portageLive/models/tc/tc-lm.en.tplm
-   1.8M    models/portageLive/models/tc
-   1.3M    models/portageLive/models/lm/train_fr-kn-5g.tplm
-   1.3M    models/portageLive/models/lm/train_en-kn-5g.tplm
-   2.6M    models/portageLive/models/lm
-   39M     models/portageLive/models
-   39M     models/portageLive/
+   12M     models/portageLive/models/tm/cpt.fr2en.tppt
+   23M     models/portageLive/models/tm
+   804K    models/portageLive/models/tc/tc-map.en.tppt
+   1.1M    models/portageLive/models/tc/tc-lm.en.tplm
+   1.9M    models/portageLive/models/tc
+   1.4M    models/portageLive/models/lm/train_fr-kn-5g.tplm
+   1.5M    models/portageLive/models/lm/train_en-kn-5g.tplm
+   2.9M    models/portageLive/models/lm
+   40M     models/portageLive/models
+   40M     models/portageLive
 \end{verbatim}
 \end{small}
 
@@ -1633,45 +1633,53 @@ usage from all the parts of the framework, as shown in Figure~\ref{FigTimeMem}.
 
 \begin{sidewaysfigure}
 \caption{Time and memory resource summary}
-\label{FigTimeMem}.
+\label{FigTimeMem}
 \begin{footnotesize}
 \begin{verbatim}
 > make time-mem
-      log.ldm.counts.hmm3:ldm:TIME-MEM              WALL TIME: 32s        CPU TIME: 30s         VSZ: 0.075G     RSS: 0.008G
-      log.ldm.counts.ibm2:ldm:TIME-MEM              WALL TIME: 10s        CPU TIME: 8s          VSZ: 0.075G     RSS: 0.007G
-      log.ldm.hmm3+ibm2.fr2en:ldm:TIME-MEM          WALL TIME: 16s        CPU TIME: 12s         VSZ: 0.059G     RSS: 0.008G
-   ldm:TIME-MEM                                     WALL TIME: 58s        CPU TIME: 50s         VSZ: 0.075G     RSS: 0.008G
-      log.train_en-kn-5g.binlm:lm:TIME-MEM          WALL TIME: 3s         CPU TIME: 2s          VSZ: 0.059G     RSS: 0.006G
-      log.train_en-kn-5g.lm:lm:TIME-MEM             WALL TIME: 2s         CPU TIME: 1s          VSZ: 0.065G     RSS: 0.012G
-      log.train_fr-kn-5g.binlm:lm:TIME-MEM          WALL TIME: 4s         CPU TIME: 3s          VSZ: 0.064G     RSS: 0.009G
-      log.train_fr-kn-5g.lm:lm:TIME-MEM             WALL TIME: 2s         CPU TIME: 1s          VSZ: 0.065G     RSS: 0.013G
-   lm:TIME-MEM                                      WALL TIME: 11s        CPU TIME: 7s          VSZ: 0.065G     RSS: 0.013G
-      log.cpt.hmm3-rf-zn.train.fr2en:tm:TIME-MEM    WALL TIME: 22s        CPU TIME: 22s         VSZ: 0.070G     RSS: 0.009G
-      log.cpt.ibm2-rf-zn.train.fr2en:tm:TIME-MEM    WALL TIME: 8s         CPU TIME: 6s          VSZ: 0.070G     RSS: 0.009G
-      log.hmm3.train.en_given_fr:tm:TIME-MEM        WALL TIME: 1m36s      CPU TIME: 6m37s       VSZ: 0.071G     RSS: 0.009G
-      log.hmm3.train.fr_given_en:tm:TIME-MEM        WALL TIME: 1m21s      CPU TIME: 6m3s        VSZ: 0.071G     RSS: 0.010G
-      log.ibm1.train.en_given_fr:tm:TIME-MEM        WALL TIME: 34s        CPU TIME: 1m8s        VSZ: 0.075G     RSS: 0.009G
-      log.ibm1.train.fr_given_en:tm:TIME-MEM        WALL TIME: 38s        CPU TIME: 1m8s        VSZ: 0.075G     RSS: 0.009G
-      log.ibm2.train.en_given_fr:tm:TIME-MEM        WALL TIME: 42s        CPU TIME: 57s         VSZ: 0.071G     RSS: 0.016G
-      log.ibm2.train.fr_given_en:tm:TIME-MEM        WALL TIME: 1m1s       CPU TIME: 56s         VSZ: 0.071G     RSS: 0.009G
-      log.jpt.hmm3.train.fr-en:tm:TIME-MEM          WALL TIME: 24s        CPU TIME: 35s         VSZ: 0.157G     RSS: 0.011G
-      log.jpt.ibm2.train.fr-en:tm:TIME-MEM          WALL TIME: 22s        CPU TIME: 12s         VSZ: 0.157G     RSS: 0.011G
-   tm:TIME-MEM                                      WALL TIME: 7m8s       CPU TIME: 18m4s       VSZ: 0.157G     RSS: 0.016G
-      log.train_en-kn-3g.binlm:tc:TIME-MEM          WALL TIME: 2s         CPU TIME: 1s          VSZ: 0.068G     RSS: 0.008G
-      log.train_en-kn-3g.lm:tc:TIME-MEM             WALL TIME: 13s        CPU TIME: 0s          VSZ: 0.065G     RSS: 0.012G
-      log.train_en.map:tc:TIME-MEM                  WALL TIME: 1s         CPU TIME: 0s          VSZ: 0.046G     RSS: 0.007G
-   tc:TIME-MEM                                      WALL TIME: 16s        CPU TIME: 1s          VSZ: 0.068G     RSS: 0.012G
-      log.canoe.ini.cow:decode:TIME-MEM             WALL TIME: 25m20s     CPU TIME: 1h6m20s     VSZ: 0.525G     RSS: 0.459G
-   decode:TIME-MEM                                  WALL TIME: 25m20s     CPU TIME: 1h6m20s     VSZ: 0.525G     RSS: 0.459G
-      log.rescore-model:rescore:TIME-MEM            WALL TIME: 4m23s      CPU TIME: 15m25s      VSZ: 0.105G     RSS: 0.022G
-   rescore:TIME-MEM                                 WALL TIME: 4m23s      CPU TIME: 15m25s      VSZ: 0.105G     RSS: 0.022G
-      log.ce_model.cem:confidence:TIME-MEM          WALL TIME: 26s        CPU TIME: 2m14s       VSZ: 0.094G     RSS: 0.010G
-   confidence:TIME-MEM                              WALL TIME: 26s        CPU TIME: 2m14s       VSZ: 0.094G     RSS: 0.010G
-      log.test.ce:translate:TIME-MEM                WALL TIME: 29s        CPU TIME: 2m29s       VSZ: 0.094G     RSS: 0.010G
-      log.test.rat:translate:TIME-MEM               WALL TIME: 4m31s      CPU TIME: 16m5s       VSZ: 0.091G     RSS: 0.019G
-      log.test.rat.tc:translate:TIME-MEM            WALL TIME: 1s         CPU TIME: 0s          VSZ: 0.049G     RSS: 0.009G
-   translate:TIME-MEM                               WALL TIME: 5m1s       CPU TIME: 18m34s      VSZ: 0.094G     RSS: 0.019G
-TIME-MEM                                            WALL TIME: 43m43s     CPU TIME: 2h1m35s     VSZ: 0.525G     RSS: 0.459G
+Resource summary for $PORTAGE/toy.experiment:
+      log.ldm.counts.hmm3:TIME-MEM              WALL TIME: 31s      CPU TIME: 26s        VSZ: 0.088G   RSS: 0.009G
+      log.ldm.counts.ibm2:TIME-MEM              WALL TIME: 11s      CPU TIME: 6s         VSZ: 0.049G   RSS: 0.006G
+      log.ldm.hmm3+ibm2.fr2en:TIME-MEM          WALL TIME: 15s      CPU TIME: 12s        VSZ: 0.059G   RSS: 0.008G
+      log.ldm.hmm3+ibm2.fr2en.tpldm:TIME-MEM    WALL TIME: 40s      CPU TIME: 37s        VSZ: 0.095G   RSS: 0.029G
+   ldm:TIME-MEM                                 WALL TIME: 1m37s    CPU TIME: 1m21s      VSZ: 0.095G   RSS: 0.029G
+      log.train_en-kn-5g.binlm:TIME-MEM         WALL TIME: 3s       CPU TIME: 2s         VSZ: 0.073G   RSS: 0.009G
+      log.train_en-kn-5g.lm:TIME-MEM            WALL TIME: 2s       CPU TIME: 1s         VSZ: 0.068G   RSS: 0.015G
+      log.train_en-kn-5g.tplm:TIME-MEM          WALL TIME: 19s      CPU TIME: 4s         VSZ: 0.048G   RSS: 0.008G
+      log.train_fr-kn-5g.binlm:TIME-MEM         WALL TIME: 4s       CPU TIME: 3s         VSZ: 0.063G   RSS: 0.009G
+      log.train_fr-kn-5g.lm:TIME-MEM            WALL TIME: 2s       CPU TIME: 1s         VSZ: 0.069G   RSS: 0.015G
+      log.train_fr-kn-5g.tplm:TIME-MEM          WALL TIME: 19s      CPU TIME: 4s         VSZ: 0.062G   RSS: 0.009G
+   lm:TIME-MEM                                  WALL TIME: 49s      CPU TIME: 15s        VSZ: 0.073G   RSS: 0.015G
+      log.cpt.hmm3-rf-zn.train.fr2en:TIME-MEM   WALL TIME: 19s      CPU TIME: 21s        VSZ: 0.058G   RSS: 0.008G
+      log.cpt.ibm2-rf-zn.train.fr2en:TIME-MEM   WALL TIME: 6s       CPU TIME: 6s         VSZ: 0.057G   RSS: 0.007G
+      log.hmm3.train.en_given_fr:TIME-MEM       WALL TIME: 2m0s     CPU TIME: 3m19s      VSZ: 0.077G   RSS: 0.013G
+      log.hmm3.train.fr_given_en:TIME-MEM       WALL TIME: 1m17s    CPU TIME: 2m42s      VSZ: 0.073G   RSS: 0.009G
+      log.ibm1.train.en_given_fr:TIME-MEM       WALL TIME: 59s      CPU TIME: 42s        VSZ: 0.074G   RSS: 0.010G
+      log.ibm1.train.fr_given_en:TIME-MEM       WALL TIME: 55s      CPU TIME: 42s        VSZ: 0.074G   RSS: 0.014G
+      log.ibm2.train.en_given_fr:TIME-MEM       WALL TIME: 50s      CPU TIME: 33s        VSZ: 0.087G   RSS: 0.010G
+      log.ibm2.train.fr_given_en:TIME-MEM       WALL TIME: 55s      CPU TIME: 34s        VSZ: 0.074G   RSS: 0.011G
+      log.jpt.hmm3.train.fr-en:TIME-MEM         WALL TIME: 17s      CPU TIME: 30s        VSZ: 0.160G   RSS: 0.011G
+      log.jpt.ibm2.train.fr-en:TIME-MEM         WALL TIME: 17s      CPU TIME: 12s        VSZ: 0.160G   RSS: 0.016G
+   tm:TIME-MEM                                  WALL TIME: 7m55s    CPU TIME: 9m41s      VSZ: 0.160G   RSS: 0.016G
+      log.train_en-kn-3g.binlm:TIME-MEM         WALL TIME: 3s       CPU TIME: 1s         VSZ: 0.063G   RSS: 0.009G
+      log.train_en-kn-3g.lm:TIME-MEM            WALL TIME: 15s      CPU TIME: 0s         VSZ: 0.065G   RSS: 0.012G
+      log.train_en-kn-3g.tplm:TIME-MEM          WALL TIME: 13s      CPU TIME: 2s         VSZ: 0.048G   RSS: 0.007G
+      log.train_en.map:TIME-MEM                 WALL TIME: 0s       CPU TIME: 0s         VSZ: 0.054G   RSS: 0.010G
+      log.train_en.map.tppt:TIME-MEM            WALL TIME: 11s      CPU TIME: 0s         VSZ: 0.062G   RSS: 0.008G
+   tc:TIME-MEM                                  WALL TIME: 42s      CPU TIME: 3s         VSZ: 0.065G   RSS: 0.012G
+      log.canoe.ini.cow:TIME-MEM                WALL TIME: 21m6s    CPU TIME: 58m35s     VSZ: 0.551G   RSS: 0.482G
+      log.cpt.fr2en:TIME-MEM                    WALL TIME: 1m4s     CPU TIME: 1m3s       VSZ: 0.083G   RSS: 0.014G
+      log.one.cpt.fr2en:TIME-MEM                WALL TIME: 29s      CPU TIME: 7s         VSZ: 0.062G   RSS: 0.008G
+   decode:TIME-MEM                              WALL TIME: 22m39s   CPU TIME: 59m45s     VSZ: 0.551G   RSS: 0.482G
+      log.rescore-model:TIME-MEM                WALL TIME: 3m52s    CPU TIME: 12m57s     VSZ: 0.081G   RSS: 0.018G
+   rescore:TIME-MEM                             WALL TIME: 3m52s    CPU TIME: 12m57s     VSZ: 0.081G   RSS: 0.018G
+      log.ce_model.cem:TIME-MEM                 WALL TIME: 26s      CPU TIME: 1m4s       VSZ: 0.086G   RSS: 0.009G
+   confidence:TIME-MEM                          WALL TIME: 26s      CPU TIME: 1m4s       VSZ: 0.086G   RSS: 0.009G
+      log.test.ce:TIME-MEM                      WALL TIME: 26s      CPU TIME: 1m6s       VSZ: 0.092G   RSS: 0.010G
+      log.test.rat:TIME-MEM                     WALL TIME: 10s      CPU TIME: 7s         VSZ: 0.073G   RSS: 0.010G
+      log.test.rat.tc:TIME-MEM                  WALL TIME: 1s       CPU TIME: 0s         VSZ: 0.050G   RSS: 0.009G
+   translate:TIME-MEM                           WALL TIME: 37s      CPU TIME: 1m13s      VSZ: 0.092G   RSS: 0.010G
+TIME-MEM                                        WALL TIME: 38m37s   CPU TIME: 1h26m19s   VSZ: 0.551G   RSS: 0.482G
 \end{verbatim}
 \end{footnotesize}
 \end{sidewaysfigure}
@@ -1704,11 +1712,16 @@ by the models.  When you run \code{make summary}, you will first get the
 \begin{verbatim}
    > make summary
    [output from time-mem plus:]
-   13M     models/ldm
+   
+   Disk usage for all models:
+   12K     models/confidence/ce_model.cem
+   25M     models/ldm
    804K    models/lm/train_en-kn-5g.binlm.gz
    944K    models/lm/train_en-kn-5g.lm.gz
+   1.5M    models/lm/train_en-kn-5g.tplm
    912K    models/lm/train_fr-kn-5g.binlm.gz
    1.1M    models/lm/train_fr-kn-5g.lm.gz
+   1.4M    models/lm/train_fr-kn-5g.tplm
    4.7M    models/tm/ibm1.train.en_given_fr.gz
    4.6M    models/tm/ibm1.train.fr_given_en.gz
    3.7M    models/tm/ibm2.train.en_given_fr.gz
@@ -1723,14 +1736,32 @@ by the models.  When you run \code{make summary}, you will first get the
    1.3M    models/tm/jpt.ibm2.train.fr-en.gz
    11M     models/tm/cpt.hmm3-rf-zn.train.fr2en.gz
    3.2M    models/tm/cpt.ibm2-rf-zn.train.fr2en.gz
-   1.7M    models/tc
-   34M     translate
-   91M     total
+   3.9M    models/tc
+   12M     models/decode/cpt.fr2en.tppt
+   11M     models/decode/cpt.fr2en.gz
+   14M     models/decode/one.cpt.fr2en.gz
+   9.8M    translate
+   119M    total
+   
+   Disk usage for portageLive models:
+   12M     models/portageLive/models/ldm/ldm.hmm3+ibm2.fr2en.tpldm
+   12M     models/portageLive/models/ldm
+   12M     models/portageLive/models/tm/cpt.fr2en.tppt
+   23M     models/portageLive/models/tm
+   804K    models/portageLive/models/tc/tc-map.en.tppt
+   1.1M    models/portageLive/models/tc/tc-lm.en.tplm
+   1.9M    models/portageLive/models/tc
+   1.4M    models/portageLive/models/lm/train_fr-kn-5g.tplm
+   1.5M    models/portageLive/models/lm/train_en-kn-5g.tplm
+   2.9M    models/portageLive/models/lm
+   40M     models/portageLive/models
+   40M     models/portageLive
 \end{verbatim}
 \end{small}
 
 This report differs from a simple \code{du -h} in that it looks specifically
-for the model files.
+for the model files. It also shows the size of the portageLive models prepared 
+for deployment on a run-time translation server.
 
 \section{Final Note}
 Because of differences in rounding, optimization, random number generation,
