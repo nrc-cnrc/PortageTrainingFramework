@@ -336,7 +336,7 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 # produces an INVALID jpt for merge_counts.  Prefer the version using LC_ALL=C
 # sort rather than tmtext_sort.
 %.${RJOINTX}: %.${JOINTX}
-	@_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1; echo "Generating $@" >&2
 	RP_PSUB_OPTS="-1 -N $@" \
 	zcat $< \
 	| reverse_joint_phr_tab.py \
