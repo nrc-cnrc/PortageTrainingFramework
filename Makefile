@@ -56,7 +56,7 @@ endif
 
 
 .PHONY: doc
-doc: framework-toy.pdf
+doc: tutorial.pdf
 
 %.pdf: %.tex
 # latex is run twice so a correct table of contents is generated.
@@ -66,15 +66,15 @@ doc: framework-toy.pdf
 .PHONY: doc-clean
 # Clean auxiliary files from make doc, but not the .pdf itself.
 doc-clean:
-	${RM} framework-toy.{aux,log,toc}
+	${RM} tutorial.{aux,log,toc} framework-toy.{aux,log,toc}
 
 
 
 .PHONY: clean
-# Thorough cleaning of everything
+# Thorough cleaning of everything, including their old names
 clean: SHELL=${GUARD_SHELL}
-clean:
-	${RM} framework-toy.{aux,log,pdf,toc}
+clean: doc-clean
+	${RM} tutorial.pdf framework-toy.pdf
 
 
 
