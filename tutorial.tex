@@ -1567,6 +1567,19 @@ This indicates that the difference is not significant.  (Note that you may get
 completely different results here, since the training corpus used is much too
 small to produce reliable results.)
 
+\section{Translating New Text}
+
+The translation methods shown in the previous section work well with the test
+set you dropped into the \code{corpora} directory, but it is not convenient for
+translating new text.  You can use the \code{translate.pl} script for new text.
+It is aware of the way this framework works and where it puts its models, so it
+makes it easy to carry out the whole translation pipeline: tokenization,
+lowercasing, decoding, truecasing, detokenization, with optional plugins you
+can use to insert ad hoc code to handle special cases correctly.  See
+\code{translate.pl -h} for details.  The \code{translate.sh} script you will
+find in the framework calls \code{translate.pl} with some of the options
+automatically filled in from the parameters you set in \code{Makefile.params}.
+
 \section{PortageLive}
 
 Now that we have a fully trained and tested system, you might want to deploy it
