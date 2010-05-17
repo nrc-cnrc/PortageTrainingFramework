@@ -229,7 +229,7 @@ clean.logs:
 ########################################
 # If there is no decoding model available, warn the user since we do not know
 # how to make the decoding model in this module.
-.PHONY: check_decoding_model
+#.PHONY: check_decoding_model # Cannot be phony or else it will trigger always remaking targets.
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model:
 	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] \
@@ -319,7 +319,7 @@ clean.translate.%:
 	${RM} $*.out.detok $*.out.detok.bleu
 
 
-.PHONY: check_rescoring_model
+#.PHONY: check_rescoring_model # Cannot be phony or else it will trigger always remaking targets.
 check_rescoring_model: SHELL=${GUARD_SHELL}
 check_rescoring_model:
 	@[[ -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]] \
