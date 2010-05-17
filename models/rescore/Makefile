@@ -157,7 +157,7 @@ clean.logs:
 
 ########################################
 # Check if there is a trained decoding model available
-.PHONY: check_decoding_model
+#.PHONY: check_decoding_model  # Cannot be phony or it will always trigger remaking all targets.
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model:
 	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] \
