@@ -143,11 +143,6 @@ done
 
 [[ $QUIET ]] && Q_OPT="-quiet"
 
-CMD="translate.pl ${MODE} ${SRC_OPT} ${TGT_OPT} ${TC_OPT} ${CANOE_INI_OPT} ${V_OPT} ${Q_OPT} ${SOURCE_FILE}"
-if [[ $NOTREALLY ]]; then
-   echo $CMD
-else
-   run_cmd $CMD
-fi
+run_cmd "translate.pl ${MODE} ${SRC_OPT} ${TGT_OPT} ${TC_OPT} ${CANOE_INI_OPT} ${V_OPT} ${Q_OPT} ${SOURCE_FILE}"
 
 exit 0
