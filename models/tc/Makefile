@@ -136,6 +136,7 @@ time-mem: resource_summary_sub
 # portageLive easy target.
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/tc
 .PHONY: portageLive
+portageLive: SHELL=${GUARD_SHELL}
 portageLive: ${TRUECASING_MAP}.tppt
 portageLive: ${TRAIN_LM}_${TGT_LANG}-kn-3g.tplm
 portageLive:
@@ -168,12 +169,14 @@ lm: ${TRUECASING_LM}
 map: SHELL=${GUARD_SHELL}
 map: ${TRUECASING_MAP}
 
+%.map:  SHELL=${FRAMEWORK_SHELL}
 %.map:  %${TCX}  %${LANGXZ}
 	${TIME_MEM} \
 	compile_truecase_map $+ \
 		> $@ \
 		2> log.$@
 
+%.map.tppt:  SHELL=${FRAMEWORK_SHELL}
 %.map.tppt: %.map
 	${TIME_MEM} \
 	vocabMap2tpt.sh $< \
@@ -183,5 +186,6 @@ map: ${TRUECASING_MAP}
 
 .PHONY: clean.map
 clean.content: clean.map
+clean.map: SHELL=${GUARD_SHELL}
 clean.map:
 	-${RM} ${TRUECASING_MAP}
