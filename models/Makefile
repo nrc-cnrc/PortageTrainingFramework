@@ -182,6 +182,13 @@ portageLive:
 	pwd > $@/README
 	portage_info >> $@/README
 
+portageLive: portageLive/translate.sh
+portageLive/translate.sh:
+	mkdir -p $(dir $@)
+	echo "#!/bin/bash" > $@
+	cd $(dir $@) && ../../translate.sh -n >> $(notdir $@)
+	chmod 755 $@
+
 # We need this dependency since decode will copy the tplms for portageLive.
 portageLive_models_decode: portageLive_models_lm
 portageLive_models_%:
