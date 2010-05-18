@@ -43,9 +43,11 @@ Options:
   -do|-decode-only    translate without rescoring and confidence estimation
   -wr|-with-rescoring translate with rescoring
   -wc|-with-ce        translate with confidence estimation
-  -h(elp)             print this help message
   -v(erbose)          increment the verbosity level by 1 (may be repeated)
+  -q(uiet)            make terminal output as quiet as possible
   -d(ebug)            print debugging information
+  -n(otreally)        just print the commands to execute, don't run them.
+  -h(elp)             print this help message
 
 ==EOF==
 
@@ -60,7 +62,9 @@ while [ $# -gt 0 ]; do
    -wr|-with-rescoring) WITH_RESCORING=1;;
    -wc|-with-ce)        WITH_CE=1;;
    -v|-verbose)         VERBOSE=$(( $VERBOSE + 1 ));;
+   -q|-quiet)           QUIET=1;;
    -d|-debug)           DEBUG=1;;
+   -n|-notreally)       NOTREALLY=1;;
    -h|-help)            usage;;
    --)                  shift; break;;
    -*)                  error_exit "Unknown option $1.";;
@@ -126,10 +130,10 @@ if [[ ${TEXT} =~ '= *([^ ]*)' ]] && [[ ${BASH_REMATCH[1]} == 1 ]]; then
    done
    if [[ ${TPLM_CNT} -gt 0 ]]; then
       TC_OPT="-tctp"
-      verbose 1 "Using tightly packed truecasing model (-tctp)." >&2
+      verbose 1 "Using tightly packed truecasing model (-tctp)."
    else
       TC_OPT="-tc"
-      verbose 1 "Using text truecasing model (-tc)." >&2
+      verbose 1 "Using text truecasing model (-tc)."
    fi
 fi
 
@@ -137,6 +141,13 @@ for (( V=$VERBOSE; $V>0; V=$V-1 )) ; do
    V_OPT="$V_OPT -v"
 done
 
-run_cmd "translate.pl ${MODE} ${SRC_OPT} ${TGT_OPT} ${TC_OPT} ${CANOE_INI_OPT} ${V_OPT} ${SOURCE_FILE}"
+[[ $QUIET ]] && Q_OPT="-quiet"
+
+CMD="translate.pl ${MODE} ${SRC_OPT} ${TGT_OPT} ${TC_OPT} ${CANOE_INI_OPT} ${V_OPT} ${Q_OPT} ${SOURCE_FILE}"
+if [[ $NOTREALLY ]]; then
+   echo $CMD
+else
+   run_cmd $CMD
+fi
 
 exit 0
