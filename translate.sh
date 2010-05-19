@@ -125,9 +125,13 @@ fi
 TEXT=`grep -E '^ *DO_TRUECASING *\??=' ${MAKEFILE_PARAMS}`
 if [[ ${TEXT} =~ '= *([^ ]*)' ]] && [[ ${BASH_REMATCH[1]} == 1 ]]; then
    TPLM_CNT=0
-   for NAME in `dirname ${CANOE_INI}`/models/tc/*.tplm; do
-      [[ $(basename ${NAME}) =~ '^log.*$' ]] || TPLM_CNT=$(( $TPLM_CNT + 1 ))
-   done
+   TPLM=( `dirname ${CANOE_INI}`/models/tc/*.tplm )
+   if [[ ! "${TPLM[*]}" =~ '\*' ]]; then
+   	  # found files with .tplm extension - need to exclude any log files.
+      for NAME in ${TPLM[*]}; do
+         [[ $(basename ${NAME}) =~ '^log.*$' ]] || TPLM_CNT=$(( $TPLM_CNT + 1 ))
+      done
+   fi
    if [[ ${TPLM_CNT} -gt 0 ]]; then
       TC_OPT="-tctp"
       verbose 1 "Using tightly packed truecasing model (-tctp)."
@@ -135,6 +139,8 @@ if [[ ${TEXT} =~ '= *([^ ]*)' ]] && [[ ${BASH_REMATCH[1]} == 1 ]]; then
       TC_OPT="-tc"
       verbose 1 "Using text truecasing model (-tc)."
    fi
+else
+   verbose 1 "Not truecasing."
 fi
 
 for (( V=$VERBOSE; $V>0; V=$V-1 )) ; do
@@ -143,6 +149,9 @@ done
 
 [[ $QUIET ]] && Q_OPT="-quiet"
 
+# Make sure plugins in the plugins directory in the framework will be used by translate.pl.
+export PATH="${ROOTDIR}/plugins:$PATH"
+
 run_cmd "translate.pl ${MODE} ${SRC_OPT} ${TGT_OPT} ${TC_OPT} ${CANOE_INI_OPT} ${V_OPT} ${Q_OPT} ${SOURCE_FILE}"
 
-exit 0
+exit
