@@ -95,7 +95,7 @@ TIME_MEM ?= time-mem
 ifneq (${MAKECMDGOALS},clean)
 ifneq (${MAKECMDGOALS},clean.content)
 ifneq (${MAKECMDGOALS},clean.logs)
-SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
+$(shell ln -fs ${MODEL_DIR})
 endif
 endif
 endif
@@ -407,7 +407,7 @@ endif
 	${TIME_MEM} \
 	ce_translate.pl \
 		-n=${PARALLELISM_LEVEL_TRANSLATE} \
-		-notok -nolc \
+		-notok -nolc -nl=s \
 		-src=${SRC_LANG} -tgt=${TGT_LANG} \
 		-out=$@ \
 		$(filter ${DECODING_MODEL}%, $+) \
@@ -421,7 +421,7 @@ $(addsuffix .ce, ${TEST_SET}): %.ce: ${CONFIDENCE_MODEL} %${SRCX} %${TGTX} ${DEC
 	${TIME_MEM} \
 	ce_translate.pl \
 		-n=${PARALLELISM_LEVEL_TRANSLATE} \
-		-notok -nolc \
+		-notok -nolc -nl=s \
 		-src=${SRC_LANG} -tgt=${TGT_LANG} \
 		-test=$(filter %${TGTX}, $+) \
 		-out=$@ \
@@ -439,7 +439,7 @@ clean.content: clean.ce
 .PHONY: clean.ce
 clean.ce: SHELL=${GUARD_SHELL}
 clean.ce:
-	${RM} -r ce-workdir-*
+	${RM} -r ce-workdir-* ce_work_*
 	${RM} ${CONFIDENCE_MODEL}
 	${RM} *.ce
 
@@ -481,6 +481,7 @@ clean.truecasing: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.truecasing.$f
 clean.truecasing.%.guard:
 	${RM} $*.tc
 	${RM} $*.tc.detok
+	${RM} canoe_tc_tmp_*.tm
 
 
 
