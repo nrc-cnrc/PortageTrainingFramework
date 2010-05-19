@@ -19,6 +19,8 @@ MAKEFILE_PARAMS ?= ../Makefile.params
 
 SHELL = ${GUARD_SHELL}
 
+$(shell mkdir -p portageLive)
+
 .DEFAULT_GOAL := help
 .SUFFIXES:
 
@@ -193,6 +195,12 @@ portageLive/translate.sh: portageLive_models_decode
 portageLive_models_decode: portageLive_models_lm
 portageLive_models_%:
 	${MAKE} -C $* portageLive
+
+ifneq ("$(wildcard ../plugins)","")
+portageLive: portageLive/plugins
+portageLive/plugins:
+	ln -fs ../../plugins $@
+endif
 
 .PHONY: clean.portageLive
 clean clean.content: clean.portageLive
