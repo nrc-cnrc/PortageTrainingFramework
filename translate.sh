@@ -19,6 +19,9 @@ if [[ "${SH_UTILS}" == "" ]]; then
 fi
 source ${SH_UTILS}
 
+print_nrc_copyright translate.sh 2010
+export PORTAGE_INTERNAL_CALL=1
+
 usage() {
    for msg in "$@"; do
       echo $msg >&2
