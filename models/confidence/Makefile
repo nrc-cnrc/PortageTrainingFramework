@@ -32,7 +32,7 @@ CE_MODEL_NAME ?= ce_model
 
 ########################################
 # SETUP
-SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
+$(shell ln -fs ${MODEL_DIR})
 
 # Make sure the user setup this framework to generate proper models for
 # Confidence Estimation.

@@ -89,8 +89,7 @@ FILES_TO_BE_LOCKED = ${DECODING_MODEL}
 ifneq (${MAKECMDGOALS},clean)
 ifneq (${MAKECMDGOALS},clean.content)
 ifneq (${MAKECMDGOALS},clean.logs)
-$(info "MAKECMDGOALS: ${MAKECMDGOALS})
-SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
+$(shell ln -fs ${MODEL_DIR})
 endif
 endif
 endif

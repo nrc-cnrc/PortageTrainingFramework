@@ -81,7 +81,7 @@ RAT_TRANS_CPUS ?= 1
 
 ########################################
 # SETUP
-SETUP_FORCE_MODELS_LINKS := $(shell ln -fs ${MODEL_DIR})
+$(shell ln -fs ${MODEL_DIR})
 
 
 
