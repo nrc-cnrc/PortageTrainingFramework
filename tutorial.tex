@@ -233,7 +233,7 @@ closely.
 Since proper splitting of a corpus must take into account its structure
 and nature, these steps are not handled by the experimental framework. For the
 toy experiment, we provide small data sets that can be found here:
-\url{PORTAGEshared/test-suite/unit-testing/framework-toy}. These sets
+\url{PORTAGEshared/test-suite/tutorial-data}. These sets
 are very small, to minimize running time, so the resulting translations are of
 poor quality. In this toy experiment, the tuning and testing corpora contain
 just 100 segments each.
@@ -242,7 +242,7 @@ To drop these sets into the framework, simply copy them (or make symbolic
 links) into your copy's corpora directory:
 \begin{small}
 \begin{verbatim}
-   > cp $PORTAGE/test-suite/unit-testing/framework-toy/*.al \
+   > cp $PORTAGE/test-suite/tutorial-data/*.al \
         corpora/
    > wc corpora/*.al
        100    2115   11589 corpora/dev1_en.al
@@ -503,7 +503,7 @@ language model format for fast loading.
 
 If you have not installed any LM toolkit, we provide a pre-trained
 language model, \code{train_en-\linebreak[0]kn-5g.lm.gz} in
-\url{PORTAGEshared/test-suite/unit-testing/framework-toy/lm}. You can
+\url{PORTAGEshared/test-suite/tutorial-data/lm}. You can
 copy that file into \code{models/lm} and then type \code{make lm} to
 proceed with the rest of this example, although you won't be able to train on
 new text without a language modeling toolkit.
@@ -538,7 +538,7 @@ language model as in section~\ref{LM} above, but using the truecase corpus,
 
 If you have not installed any LM toolkit, we provide the file
 \code{train_en-kn-3g.lm.gz} in
-\url{PORTAGEshared/test-suite/unit-testing/framework-toy/tc}.  You can
+\url{PORTAGEshared/test-suite/tutorial-data/tc}.  You can
 copy that file into \code{models/tc} and and type \code{make tc} to proceed
 with the rest of this example.
 
