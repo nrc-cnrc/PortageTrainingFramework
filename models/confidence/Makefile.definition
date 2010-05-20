@@ -60,7 +60,7 @@ TUNE_CE_SRC ?= ${TUNE_CE}${SRCX}
 TUNE_CE_TGT ?= ${TUNE_CE}${TGTX}
 
 # Training workdir prefix.
-CE_WORKDIR_PRX ?= ce-workdir-
+CE_WORKDIR_PRX ?= ce_work_
 
 # What to use to monitor resources.
 TIME_MEM ?= time-mem
