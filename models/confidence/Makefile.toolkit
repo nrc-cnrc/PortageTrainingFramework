@@ -27,7 +27,7 @@
 		-n=${PARALLELISM_LEVEL_TUNE_CONFIDENCE} \
 		-train \
 		-src=${SRC_LANG} -tgt=${TGT_LANG} \
-		-notok -nolc \
+		-notok -nolc -nl=s \
 		-k=5 \
 		-desc=$(filter %${INIX}, $+) \
 		${CANOE_MODEL} \
