@@ -99,22 +99,21 @@ list_final_output: $(addsuffix _list,${PT_TYPES})
 
 
 ########################################
-# CLEAN-UP
-.PHONY: clean
+# Clean up
+.PHONY: clean clean.content clean.logs hide.logs
 clean: SHELL=${GUARD_SHELL}
+clean: clean.content clean.logs
 
-.PHONY: clean.content
-clean: clean.content
 clean.content: SHELL=${GUARD_SHELL}
 
-
-
-.PHONY: clean.logs
-clean: clean.logs
 clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
 	${RM} run-parallel-log* log.* run-p.*
 	${RM} -r .logs
+
+# Hide logs from user's view into .logs
+hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: hide_logs_sub
 
 
 

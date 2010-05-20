@@ -13,9 +13,11 @@
 # Copyright 2009, Sa Majeste la Reine du Chef du Canada /
 # Copyright 2009, Her Majesty in Right of Canada
 
+# Mandatory include: master config file.
+include ../Makefile.params
 
-MAKEFILE_PARAMS ?= ../Makefile.params
--include ${MAKEFILE_PARAMS}
+# Lastly include the master toolkit
+include ../Makefile.toolkit
 
 SHELL = ${GUARD_SHELL}
 
@@ -55,11 +57,15 @@ endif
 
 
 ########################################
-# CLEANING.
-.PHONY: clean hide clean.logs clean.content
+# Clean up
+.PHONY: clean clean.content clean.logs hide.logs
+clean: SHELL=${GUARD_SHELL}
+clean: clean.content clean.logs
+
 # Thorough cleaning of everything
-# Hide logs from user's view into .logs
-clean hide clean.logs clean.content: %:
+# hide.logs hides logs from user's view into .logs
+clean.content clean.logs hide.logs: SHELL=${GUARD_SHELL}
+clean.content clean.logs hide.logs: %:
 	${MAKE} -C ldm $@
 	${MAKE} -C lm $@
 	${MAKE} -C tm $@
@@ -67,6 +73,21 @@ clean hide clean.logs clean.content: %:
 	${MAKE} -C decode $@
 	${MAKE} -C rescore $@
 	${MAKE} -C confidence $@
+
+
+
+########################################
+# Resource Summary
+.PHONY: time-mem
+time-mem: SHELL=${GUARD_SHELL}
+time-mem:
+	@${MAKE} --no-print-directory -s -C ldm time-mem
+	@${MAKE} --no-print-directory -s -C lm time-mem
+	@${MAKE} --no-print-directory -s -C tm time-mem
+	@${MAKE} --no-print-directory -s -C tc time-mem
+	@${MAKE} --no-print-directory -s -C decode time-mem
+	@${MAKE} --no-print-directory -s -C rescore time-mem
+	@${MAKE} --no-print-directory -s -C confidence time-mem
 
 
 
@@ -207,18 +228,3 @@ clean clean.content: clean.portageLive
 clean.portageLive: SHELL=${GUARD_SHELL}
 clean.portageLive:
 	${RM} -r portageLive
-
-
-
-########################################
-# Resource Summary
-.PHONY: time-mem
-time-mem: SHELL=${GUARD_SHELL}
-time-mem:
-	@${MAKE} --no-print-directory -s -C ldm time-mem
-	@${MAKE} --no-print-directory -s -C lm time-mem
-	@${MAKE} --no-print-directory -s -C tm time-mem
-	@${MAKE} --no-print-directory -s -C tc time-mem
-	@${MAKE} --no-print-directory -s -C decode time-mem
-	@${MAKE} --no-print-directory -s -C rescore time-mem
-	@${MAKE} --no-print-directory -s -C confidence time-mem

@@ -10,44 +10,44 @@
 # Copyright 2008, Her Majesty in Right of Canada
 
 # Print the Portage Copyright no matter where we start from -- but only once.
-ifndef DISPLAYED_PORTAGE_COPYRIGHT
+ifeq (${MAKELEVEL},0)
    $(shell portage_info)
-   export DISPLAYED_PORTAGE_COPYRIGHT=1
 endif
 
 ################################################################################
 # User definable variables
 
 # This is the from/source language
-export SRC_LANG ?= en
+SRC_LANG ?= en
 # This is the to/target language
-export TGT_LANG ?= fr
+TGT_LANG ?= fr
 
 # Here we specify the stem of the corpora files.
-# files should look like this: <PREFIX>_<LANGUAGE>.al
-# Warning: only TEST_SET can contain more than one <PREFIX>
-# i.e. test1_fr.al
+# Files should look like this: <PREFIX>_<LANGUAGE>.al
+# e.g. test1_fr.al
+# Warning: only TEST_SET may contain more than one <PREFIX>.
+
 # TRAIN_LM is used to create a language model.
-export TRAIN_LM      ?= lm-train
+TRAIN_LM      ?= lm-train
 # TRAIN_TM is used to create the translation table.
-export TRAIN_TM      ?= tm-train
+TRAIN_TM      ?= tm-train
 # TUNE_DECODE is used to train cow.
-export TUNE_DECODE   ?= dev1
+TUNE_DECODE   ?= dev1
 # TUNE_RESCORE is used to train rat.
-export TUNE_RESCORE  ?= dev2
+TUNE_RESCORE  ?= dev2
 # TUNE_CE is used to train confidence estimation.
 # Note: it's OK for TUNE_DECODE and TUNE_RESCORE to be the same file, but
 # TUNE_CE must be completely distinct, not only from all training data, but
 # also from all other tuning data.
-#export TUNE_CE       ?= dev3
+#TUNE_CE       ?= dev3
 # TEST_SET are used to estimate the quality of the system.
-export TEST_SET      ?= test1 test2
+TEST_SET      ?= test1 test2
 # Uncomment if you have source text, that doesn't have a reference, to translate.
 #TRANSLATE_SET ?=
 
 # The prefix_root where we can find IRSTLM/bin, which must also be on your
 # PATH.  (Only need if you are using IRSTLM - see next variable.)
-export IRSTLM ?= $(PORTAGE)/pkgs/irstlm
+IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 
 # Change LM_TOOLKIT's value depending on the available lm toolkit that you
 # have.  If you use SRILM or MITLM, their executable scripts and programs
@@ -85,7 +85,7 @@ DO_TRUECASING = 1
 
 # If you are on a cluster but you want to force single computer mode,
 # uncomment the following line:
-#export NOCLUSTER = 1
+#NOCLUSTER = 1
 
 # Automatically detects if we are on a cluster.
 ifeq ($(strip $(shell which-test.sh qsub && echo "true")),true)
@@ -94,7 +94,6 @@ endif
 ifdef NOCLUSTER
    USING_CLUSTER =
 endif
-export USING_CLUSTER
 
 
 ifdef USING_CLUSTER
@@ -105,9 +104,8 @@ PARALLELISM_LEVEL_TUNE_DECODE  ?= 10
 PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
 PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= 10
 PARALLELISM_LEVEL_TRANSLATE    ?= 10
-ifndef DISABLE_RUNNING_MODE_WARNING
-$(shell echo -e "Running in cluster mode.\n" >&2)
-export DISABLE_RUNNING_MODE_WARNING = 1
+ifeq (${MAKELEVEL},0)
+   $(shell echo -e "Running in cluster mode.\n" >&2)
 endif
 else
 # Make sure we run in serial mode.
@@ -121,64 +119,56 @@ PARALLELISM_LEVEL_TUNE_DECODE  ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_RESCORE ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= ${NCPUS}
 PARALLELISM_LEVEL_TRANSLATE    ?= ${NCPUS}
-ifndef DISABLE_RUNNING_MODE_WARNING
-$(shell echo -e "Running in local mode.\n" >&2)
-export DISABLE_RUNNING_MODE_WARNING = 1
+ifeq (${MAKELEVEL},0)
+   $(shell echo -e "Running in local mode.\n" >&2)
 endif
 endif
-export PARALLELISM_LEVEL_CORPORA
-export PARALLELISM_LEVEL_LM
-export PARALLELISM_LEVEL_TM
-export PARALLELISM_LEVEL_TUNE_DECODE
-export PARALLELISM_LEVEL_TUNE_RESCORE
-export PARALLELISM_LEVEL_TUNE_CONFIDENCE
-export PARALLELISM_LEVEL_TRANSLATE
 
 
 ################################################################################
 # Advanced configuration variables
 
 # Compress extension.
-export GZ ?= .gz
+GZ ?= .gz
 
 # Raw file's extension.
-export ALIGNX ?= .al
+ALIGNX ?= .al
 
 # Extension for rule files which must also be source file.
-export RULEX ?= _${SRC_LANG}.rule
+RULEX ?= _${SRC_LANG}.rule
 
 # Language extension for phrase table corpora.
 # Extension for corpora.
-export LANGX  ?= .lc
+LANGX  ?= .lc
 # Extension for compressed corpora.
-export LANGXZ ?= ${LANGX}${GZ}
+LANGXZ ?= ${LANGX}${GZ}
 
 # Language pair for this system.
-export LANGS ?= ${SRC_LANG} ${TGT_LANG}
+LANGS ?= ${SRC_LANG} ${TGT_LANG}
 
 # Define the corpora.
-export TRAIN_SET    ?= ${TRAIN_LM} ${TRAIN_TM}
-export HELDOUT_SET  ?= ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET}
-export CORPORA_SET  ?= ${TRAIN_SET} ${HELDOUT_SET}
+TRAIN_SET    ?= ${TRAIN_LM} ${TRAIN_TM}
+HELDOUT_SET  ?= ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET}
+CORPORA_SET  ?= ${TRAIN_SET} ${HELDOUT_SET}
 
 # Define what type of phrase table we want to generate.
 # Can be: {ibm2_cpt | hmm1_cpt | hmm2_cpt | hmm3_cpt}
 # WARNING: changes here must be manually reflected in
 # models/rescore/rescore-model.template and models/confidence/ce-notm.template:
 # look for upper case tokens like HMM3FWD and similar ones nearby.
-export PT_TYPES ?= ibm2_cpt hmm3_cpt
+PT_TYPES ?= ibm2_cpt hmm3_cpt
 
 # Define what type of language model we want to generate.
-export LM_TYPES ?= binlm
+LM_TYPES ?= binlm
 
 # Parameters for models/decode/Makefile
-#export TEMPLATE_DIR    ?= ${ROOT_DIR}/models/decode
-export PREFIX_DEV_COW  ?= ${TUNE_DECODE}
-export PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
+#TEMPLATE_DIR    ?= ${ROOT_DIR}/models/decode
+PREFIX_DEV_COW  ?= ${TUNE_DECODE}
+PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
 
 # Defines the truecasing model filename.
-export TRUECASING_MAP ?= ${TRAIN_LM}_${TGT_LANG}.map
-export TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-3g.binlm${GZ}
+TRUECASING_MAP ?= ${TRAIN_LM}_${TGT_LANG}.map
+TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-3g.binlm${GZ}
 
 
 
@@ -196,7 +186,7 @@ endif
 GUARD_SHELL = /bin/bash
 
 ########################################
-# VALIDATING.
+# VALIDATION
 ifdef DO_CE
 ifeq (${TUNE_CE},)
 $(error "When asking for confidence estimation, you must also define a TUNE_CE!")

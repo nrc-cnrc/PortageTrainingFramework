@@ -195,15 +195,21 @@ help:
 
 ########################################
 # Clean up
-.PHONY: clean
+.PHONY: clean clean.content clean.logs hide.logs
 clean: SHELL=${GUARD_SHELL}
+clean: clean.content clean.logs
 
-.PHONY: clean.content
-clean: clean.content
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
-	-${RM} *.translation
-	${RM} models
+	${RM} *.translation models canoe.ini.cow
+
+clean.logs: SHELL=${GUARD_SHELL}
+clean.logs:
+	${RM} log.* run-parallel-logs*
+
+# Hide logs from user's view into .logs
+hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: hide_logs_sub
 
 
 
@@ -212,17 +218,6 @@ clean.content:
 .PHONY: time-mem
 time-mem: SHELL=${GUARD_SHELL}
 time-mem: resource_summary_sub
-
-
-
-########################################
-# Clean the log files.
-clean: clean.logs
-
-.PHONY: clean.logs
-clean.logs: SHELL=${GUARD_SHELL}
-clean.logs:
-	${RM} log.* run-parallel-logs*
 
 
 
@@ -255,7 +250,7 @@ clean.content: clean.decoding.models
 clean.decoding.models: SHELL=${GUARD_SHELL}
 clean.decoding.models: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.decoding.models.$f)
 clean.decoding.models.%:
-	-${RM} ${DECODING_MODEL}.$*
+	${RM} ${DECODING_MODEL}.$*
 
 
 

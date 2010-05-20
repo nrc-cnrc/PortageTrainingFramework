@@ -12,8 +12,11 @@
 # Copyright 2008, Sa Majeste la Reine du Chef du Canada
 # Copyright 2008, Her Majesty in Right of Canada
 
-MAKEFILE_PARAMS ?= Makefile.params
--include ${MAKEFILE_PARAMS}
+# Mandatory include: master config file.
+include Makefile.params
+
+# Lastly include the master toolkit
+include Makefile.toolkit
 
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
@@ -63,38 +66,30 @@ doc: tutorial.pdf
 	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 
-.PHONY: doc-clean
-# Clean auxiliary files from make doc, but not the .pdf itself.
-doc-clean:
-	${RM} tutorial.{aux,log,toc} framework-toy.{aux,log,toc}
-
-
-
-.PHONY: clean
+########################################
+# Clean up
+.PHONY: clean clean.content clean.doc clean.logs hide.logs
 # Thorough cleaning of everything, including their old names
 clean: SHELL=${GUARD_SHELL}
-clean: doc-clean
+clean: clean.content clean.logs clean.doc
 	${RM} tutorial.pdf framework-toy.pdf
 
-
-
-.PHONY: clean.content
-clean: clean.content clean.logs
-clean.content clean.logs: SHELL=${GUARD_SHELL}
-clean.content clean.logs: %:
+# hide.logs hides logs from user's view into .logs
+clean.content clean.logs hide.logs: SHELL=${GUARD_SHELL}
+clean.content clean.logs hide.logs: %:
 	${MAKE} -C corpora $@
 	${MAKE} -C models $@
 	${MAKE} -C translate $@
 
-
-
-.PHONY: hide
-# Hide logs from user's view into .logs
-hide:
-	${MAKE} -C models hide
+# Clean auxiliary files from make doc, but not the .pdf itself.
+clean.doc: SHELL=${GUARD_SHELL}
+clean.doc:
+	${RM} tutorial.{aux,log,toc} framework-toy.{aux,log,toc}
 
 
 
+########################################
+# Prepare the corpora.
 .PHONY: corpora
 corpora: check_setup
 	${MAKE} -C corpora all

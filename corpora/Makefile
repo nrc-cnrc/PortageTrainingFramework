@@ -20,6 +20,9 @@ include ../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+# Lastly include the master toolkit
+include ../Makefile.toolkit
+
 # If your files are not tokenize, they should have the RAWX extentsion.
 RAWX ?= .raw
 
@@ -262,24 +265,25 @@ endef
 
 
 ########################################
-# How to clean-up.
-.PHONY: clean
+# Clean up
+.PHONY: clean clean.content clean.logs hide.logs
 clean: SHELL=${GUARD_SHELL}
 clean: clean.content clean.logs
 
-.PHONY: clean.content
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
-	-${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
-	-${RM} ${TOK}
+	${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
+	${RM} ${TOK}
 
-.PHONY: clean.logs
 clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
-	-${RM} run-parallel-logs-*
-	-${RM} log.*
-	-${RM} .logs
+	${RM} run-parallel-logs-*
+	${RM} log.*
+	${RM} .logs
 
+# Hide logs from user's view into .logs
+hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: hide_logs_sub
 
 
 
@@ -299,7 +303,3 @@ debug:
 	@echo "SRC_RAWZ_LIST: ${TGT_RAWZ_LIST}"
 	@echo "SRC_TOKZ_LIST: ${TGT_TOKZ_LIST}"
 	@echo "TOK: ${TOK}"
-
-
-# Lastly include the master toolkit
-include ../Makefile.toolkit

@@ -81,7 +81,13 @@ RAT_TRANS_CPUS ?= 1
 
 ########################################
 # SETUP
+ifneq (${MAKECMDGOALS},clean)
+ifneq (${MAKECMDGOALS},clean.content)
+ifneq (${MAKECMDGOALS},clean.logs)
 $(shell ln -fs ${MODEL_DIR})
+endif
+endif
+endif
 
 
 
@@ -123,16 +129,24 @@ list_final_output:
 
 
 
+########################################
 # Clean up
-.PHONY: clean
+.PHONY: clean clean.content clean.logs hide.logs
 clean: SHELL=${GUARD_SHELL}
-clean:
+clean: clean.content clean.logs
+
+clean.content: SHELL=${GUARD_SHELL}
+clean.content:
 	${RM} -r canoe-parallel.* run-p.*
 	${RM} models
 
-.PHONY: clean.content
-clean: clean.content
-clean.content: SHELL=${GUARD_SHELL}
+clean.logs: SHELL=${GUARD_SHELL}
+clean.logs:
+	${RM} log.* run-parallel-logs*
+
+# Hide logs from user's view into .logs
+hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: hide_logs_sub
 
 
 
@@ -145,19 +159,8 @@ time-mem: resource_summary_sub
 
 
 ########################################
-# Clean logs
-clean: clean.logs
-
-.PHONY: clean.logs
-clean.logs: SHELL=${GUARD_SHELL}
-clean.logs:
-	-${RM} log.* run-parallel-logs*
-
-
-
-########################################
 # Check if there is a trained decoding model available
-#.PHONY: check_decoding_model  # Cannot be phony or it will always trigger remaking all targets.
+# Cannot be phony or it will always trigger remaking all targets.
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model:
 	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] \

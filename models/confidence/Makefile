@@ -32,7 +32,13 @@ CE_MODEL_NAME ?= ce_model
 
 ########################################
 # SETUP
+ifneq (${MAKECMDGOALS},clean)
+ifneq (${MAKECMDGOALS},clean.content)
+ifneq (${MAKECMDGOALS},clean.logs)
 $(shell ln -fs ${MODEL_DIR})
+endif
+endif
+endif
 
 # Make sure the user setup this framework to generate proper models for
 # Confidence Estimation.
@@ -62,8 +68,8 @@ help:
 
 
 ########################################
-# Cleaning up!
-.PHONY: clean
+# Clean up
+.PHONY: clean clean.content clean.logs hide.logs
 clean: SHELL=${GUARD_SHELL}
 clean: clean.content clean.logs
 
@@ -75,6 +81,18 @@ clean.content:
 clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
 	${RM} -r run-parallel* log.*
+
+# Hide logs from user's view into .logs
+hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: hide_logs_sub
+
+
+
+########################################
+# Resources Summary
+.PHONY: time-mem
+time-mem: SHELL=${GUARD_SHELL}
+time-mem: resource_summary_sub
 
 
 
@@ -101,14 +119,6 @@ ce-notm${INIX}: ce-notm${TEMPLATEX} ${CANOE_MODEL}
 train: ${CE_MODEL_NAME}${CEMX}
 
 ${CE_MODEL_NAME}${CEMX}: ce-notm${INIX} ${TUNE_CE_SRC} ${TUNE_CE_TGT}
-
-
-
-########################################
-# Resources Summary
-.PHONY: time-mem
-time-mem: SHELL=${GUARD_SHELL}
-time-mem: resource_summary_sub
 
 
 

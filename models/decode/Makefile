@@ -134,16 +134,23 @@ list_final_output:
 
 
 
+########################################
 # Clean up
-.PHONY: clean
+.PHONY: clean clean.content clean.logs hide.logs
 clean: SHELL=${GUARD_SHELL}
+clean: clean.content clean.logs
 
-
-.PHONY: clean.content
-clean: clean.content
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
 	${RM} models
+
+clean.logs: SHELL=${GUARD_SHELL}
+clean.logs:
+	${RM} log.* run-parallel-logs*
+
+# Hide logs from user's view into .logs
+hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: hide_logs_sub
 
 
 
@@ -152,17 +159,6 @@ clean.content:
 .PHONY: time-mem
 time-mem: SHELL=${GUARD_SHELL}
 time-mem: resource_summary_sub
-
-
-
-########################################
-# Clean logs.
-clean: clean.logs
-
-.PHONY: clean.logs
-clean.logs: SHELL=${GUARD_SHELL}
-clean.logs:
-	${RM} log.* run-parallel-logs*
 
 
 
@@ -226,7 +222,7 @@ clean.content: clean.canoe.ini
 .PHONY: clean.canoe.ini
 clean.canoe.ini: SHELL=${GUARD_SHELL}
 clean.canoe.ini:
-	-${RM} ${DECODING_MODEL}
+	${RM} ${DECODING_MODEL}
 
 
 
@@ -255,10 +251,10 @@ clean.content: clean.cow
 .PHONY: clean.cow
 clean.cow: SHELL=${GUARD_SHELL}
 clean.cow:
-	-${RM} -r foos canoe-parallel.* run-p.*
-	-${RM} ${DECODING_MODEL}
-	-${RM} ${UNTUNED_DECODING_MODEL} ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
-	-${RM} *.FILT.gz *.FILT.bkoff rescore-results*
+	${RM} -r foos canoe-parallel.* run-p.*
+	${RM} ${DECODING_MODEL}
+	${RM} ${UNTUNED_DECODING_MODEL} ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
+	${RM} *.FILT.gz *.FILT.bkoff rescore-results*
 
 
 
@@ -329,8 +325,8 @@ clean.content: clean.portageLive
 .PHONY: clean.portageLive
 clean.portageLive: SHELL=${GUARD_SHELL}
 clean.portageLive:
-	-${RM} canoe.ini.cow.hardFilter canoe.ini.cow.live cpt.${SRC_LANG}2${TGT_LANG}.gz one.cpt.${SRC_LANG}2${TGT_LANG}.gz
-	-${RM} -r cpt.${SRC_LANG}2${TGT_LANG}.tppt
+	${RM} canoe.ini.cow.hardFilter canoe.ini.cow.live cpt.${SRC_LANG}2${TGT_LANG}.gz one.cpt.${SRC_LANG}2${TGT_LANG}.gz
+	${RM} -r cpt.${SRC_LANG}2${TGT_LANG}.tppt
 
 
 

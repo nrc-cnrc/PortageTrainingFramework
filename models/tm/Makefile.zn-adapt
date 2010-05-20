@@ -138,13 +138,22 @@ help:
 
 
 ########################################
-# CLEAN-UP
-.PHONY: clean
+# Clean up
+.PHONY: clean clean.content clean.logs hide.logs
 clean: SHELL=${GUARD_SHELL}
+clean: clean.content clean.logs
 
-.PHONY: clean.content
-clean: clean.content
 clean.content: SHELL=${GUARD_SHELL}
+
+clean.logs: SHELL=${GUARD_SHELL}
+clean.logs:
+	${RM} run-parallel-log* log.* run-p.*
+	${RM} -r .logs
+
+# Hide logs from user's view into .logs
+hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: hide_logs_sub
+
 
 WA_MODEL_PREFIXES = ${IBM1_MODEL_PFX} ${IBM2_MODEL_PFX} ${HMM3_MODEL_PFX}
 
@@ -162,20 +171,13 @@ clean.jpts: SHELL=${GUARD_SHELL}
 clean.jpts:
 	$(RM) jpt.*
 	${RM} -r JPTPAR*
+
 clean.content: clean.cpts
 
 .PHONY: clean.cpts
 clean.cpts: SHELL=${GUARD_SHELL}
 clean.cpts:
 	$(RM) cpt.*
-
-
-.PHONY: clean.logs
-clean: clean.logs
-clean.logs: SHELL=${GUARD_SHELL}
-clean.logs:
-	${RM} run-parallel-log* log.* run-p.*
-	${RM} -r .logs
 
 
 

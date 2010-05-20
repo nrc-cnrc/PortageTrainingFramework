@@ -121,24 +121,23 @@ help:
 
 
 ########################################
-# CLEAN-UP
-.PHONY: clean
+# Clean up
+.PHONY: clean clean.content clean.logs hide.logs
 clean: SHELL=${GUARD_SHELL}
+clean: clean.content clean.logs
 
-.PHONY: clean.content
-clean: clean.content
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
 	${RM} -r ${LDM_COUNTS_PFX}* ${LDM_MODEL_PFX}*
-	-${RM} -r parallelize.pl.*
+	${RM} -r parallelize.pl.*
 
-
-
-.PHONY: clean.logs
-clean: clean.logs
 clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
 	$(RM) run-parallel-log* log.* run-p.*
+
+# Hide logs from user's view into .logs
+hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: hide_logs_sub
 
 
 

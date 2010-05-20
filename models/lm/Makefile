@@ -32,7 +32,7 @@ SHELL = ${FRAMEWORK_SHELL}
 
 # Defines the IRST environment variables.
 # Where is IRSTLM located
-export IRSTLM ?= $(PORTAGE)/pkgs/irstlm
+IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 # Where are IRSTLM's binaries located
 BIN_DIR ?= ${IRSTLM}/bin
 
@@ -139,34 +139,30 @@ list_final_output:
 
 
 ########################################
-# Resources Summary
-.PHONY: time-mem
-time-mem: SHELL=${GUARD_SHELL}
-time-mem: resource_summary_sub
-
-
-
-########################################
-# CLEANING.
-.PHONY: clean
+# Clean up
+.PHONY: clean clean.content clean.logs hide.logs
 clean: SHELL=${GUARD_SHELL}
+clean: clean.content clean.logs
 
-.PHONY: clean.content
-clean: clean.content
 clean.content: SHELL=${GUARD_SHELL}
 
-
-
-# How to clean the language models.
-clean: clean.logs
-
-# Sometimes we only want to get ride of the logs.
-.PHONY: clean.logs
 clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
 	${RM} log.*
 	${RM} run-parallel-logs-*
 	${RM} -r .logs
+
+# Hide logs from user's view into .logs
+hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: hide_logs_sub
+
+
+
+########################################
+# Resources Summary
+.PHONY: time-mem
+time-mem: SHELL=${GUARD_SHELL}
+time-mem: resource_summary_sub
 
 
 

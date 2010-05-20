@@ -12,6 +12,10 @@
 # Copyright 2010, Sa Majeste la Reine du Chef du Canada /
 # Copyright 2010, Her Majesty in Right of Canada
 
+# Make sure plugins in the plugins directory will be used by the framework.
+ifeq (${MAKELEVEL},0)
+   export PATH := $(abspath $(dir $(lastword ${MAKEFILE_LIST}))plugins):${PATH}
+endif
 
 ################################################################################
 # HELPERS
@@ -43,9 +47,9 @@ unlock:
 
 ########################################
 # Hide logs.
-.PHONY: hide
-hide: SHELL=${GUARD_SHELL}
-hide:
+.PHONY: hide_logs_sub
+hide_logs_sub: SHELL=${GUARD_SHELL}
+hide_logs_sub:
 	mkdir -p .logs
 	-mv log.* run-parallel-logs-* .logs
 	-ls * | egrep '\.[joe][0-9]{1,6}' | xargs -i mv {} .logs
@@ -53,7 +57,7 @@ hide:
 
 
 ########################################
-# Summarizes resources usage for this system.
+# Summarize resources usage for this system.
 .PHONY: resource_summary_sub
 resource_summary_sub: SHELL=${GUARD_SHELL}
 resource_summary_sub:

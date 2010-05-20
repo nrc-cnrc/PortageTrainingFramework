@@ -102,18 +102,10 @@ list_final_output:
 
 
 ########################################
-# Clean up targets
-.PHONY: clean
+# Clean up
+.PHONY: clean clean.content clean.logs hide.logs
 clean: SHELL=${GUARD_SHELL}
-clean:
-
-
-
-.PHONY: clean.content clean.logs
 clean: clean.content clean.logs
-clean.logs: SHELL=${GUARD_SHELL}
-clean.logs: %: lm-%
-	${RM} log.* run-parallel-logs*
 
 clean.content: SHELL=${GUARD_SHELL}
 clean.content: %: lm-%
@@ -121,6 +113,14 @@ clean.content: %: lm-%
 
 lm-clean.content lm-clean.logs: lm-%:
 	${MAKE} -f ../lm/Makefile $*
+
+clean.logs: SHELL=${GUARD_SHELL}
+clean.logs: %: lm-%
+	${RM} log.* run-parallel-logs*
+
+# Hide logs from user's view into .logs
+hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: hide_logs_sub
 
 
 
@@ -188,4 +188,4 @@ map: ${TRUECASING_MAP}
 clean.content: clean.map
 clean.map: SHELL=${GUARD_SHELL}
 clean.map:
-	-${RM} ${TRUECASING_MAP}
+	${RM} ${TRUECASING_MAP}
