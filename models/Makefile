@@ -184,11 +184,11 @@ portageLive:
 	pwd > $@/README
 	portage_info >> $@/README
 
-portageLive: portageLive/translate.sh
-portageLive/translate.sh: portageLive_models_decode
+portageLive: portageLive/soap-translate.sh
+portageLive/soap-translate.sh: portageLive_models_decode
 	mkdir -p $(dir $@)
 	echo "#!/bin/bash" > $@
-	cd $(dir $@) && echo "`../../translate.sh -n` -f=\`dirname \$$0\`/canoe.ini.cow" >> $(notdir $@)
+	cd $(dir $@) && echo "`../../translate.sh -n $(and ${DO_RESCORING}, -with-rescoring)` -f=\`dirname \$$0\`/canoe.ini.cow" >> $(notdir $@)
 	chmod 755 $@
 
 # We need this dependency since decode will copy the tplms for portageLive.
