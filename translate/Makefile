@@ -309,6 +309,8 @@ clean.content: clean.translate
 .PHONY: clean.translate
 clean.translate: SHELL=${GUARD_SHELL}
 clean.translate: $(foreach f, ${TEST_SET}, clean.translate.$f)
+	${RM} -r canoe-parallel.* run-p.*
+
 clean.translate.%:
 	${RM} $*.out $*.out.bleu
 	${RM} $*.out.detok $*.out.detok.bleu
@@ -372,6 +374,8 @@ clean.content: clean.rescore
 .PHONY: clean.rescore_trans
 clean.rescore: SHELL=${GUARD_SHELL}
 clean.rescore: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.rescore.$f)
+	${RM} -r canoe-parallel.* run-p.*
+
 clean.rescore.%:
 	${RM} $*.rat $*.rat.bleu
 	${RM} $*.rat.detok $*.rat.detok.bleu
