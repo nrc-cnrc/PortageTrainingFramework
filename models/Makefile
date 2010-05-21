@@ -21,7 +21,13 @@ include ../Makefile.toolkit
 
 SHELL = ${GUARD_SHELL}
 
-$(shell mkdir -p portageLive)
+ifeq ("portageLive","$(findstring portageLive,${MAKECMDGOALS})")
+   $(info mkdir -p portageLive)
+   # Don't do the mkdir on a dryrun (-n).
+   ifeq ("","$(findstring n,${MAKEFLAGS})")
+      $(shell mkdir -p portageLive)
+   endif
+endif
 
 .DEFAULT_GOAL := help
 .SUFFIXES:
