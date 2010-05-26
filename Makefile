@@ -130,6 +130,10 @@ check_setup:
 .PHONY: portageLive
 portageLive:
 	${MAKE} -C models portageLive
+ifdef DO_RESCORING
+	@echo "WARNING: portageLive is not compatible with rescoring." \
+	      "You will have to do some manual tweaking."
+endif
 	@echo "You now have all that is needed for PortageLive."
 	@echo "From the framework root, run one of the following to" \
 	      "transfer your PortageLive models:"
