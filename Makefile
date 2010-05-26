@@ -131,12 +131,15 @@ check_setup:
 portageLive:
 	${MAKE} -C models portageLive
 ifdef DO_RESCORING
-	@echo "WARNING: portageLive is not compatible with rescoring." \
-	      "You will have to do some manual tweaking."
+	@echo ""
+	@echo "WARNING: the portageLive target does not install rescoring models."
+	@echo "You will have to install them manually before you continue."
+	@echo "Note that not all rescoring features are compatible with PortageLive."
+	@echo ""
 endif
 	@echo "You now have all that is needed for PortageLive."
-	@echo "From the framework root, run one of the following to" \
-	      "transfer your PortageLive models:"
+	@echo "From the framework root, run one of the following to"
+	@echo "transfer your PortageLive models:"
 	@echo "rsync -Larz models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>"
 	@echo "scp -r models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>"
 	@echo "cp -Lr models/portageLive/* /<DEST_DIR>"
