@@ -65,7 +65,7 @@ vpath %${RAWX}   ${RAW_CORPORA_DIR}
 
 # This Makefile should display some help message if the user doesn't specify a
 # target.
-.DEFAULT_GOAL: help
+.DEFAULT_GOAL := help
 
 
 # Help message
