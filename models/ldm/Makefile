@@ -154,8 +154,14 @@ time-mem: resource_summary_sub
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/ldm
 
 .PHONY: portageLive
+portageLive: SHELL=${GUARD_SHELL}
+ifdef USE_LDM
 portageLive: ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../ldm/$< .
+else
+portageLive:
+	@echo "Not using a lexicalized distortion model." >&2
+endif
 

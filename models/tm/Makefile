@@ -374,3 +374,29 @@ hmm3_cpt: ${hmm3_cpt_list}
 ${HMM3_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X} ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}
 ${HMM3_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X} ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
 
+
+
+################################################################################
+# Tightly Packed Phrase Table.
+# We need the full file name to be able to trigger all tppt.
+# PT_TYPE is what the user asked for so we need to change ibm2_cpt =>
+# ibm2_cpt_list and evaluate its content which will be the text phrase table
+# file name.  Then we only need to change the text file name to tightly packed
+# file name.
+tppt_list = $(addsuffix .tppt, $(basename $(foreach a, $(PT_TYPES:=_list), ${$a})))
+
+.PHONY: tppt
+tppt: ${tppt_list}
+
+
+
+################################################################################
+# Transform model for PortageLive
+PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/tm
+.PHONY: portageLive
+portageLive: SHELL=${GUARD_SHELL}
+portageLive: ${tppt_list}
+	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
+	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../tm/, $+) .
+

@@ -258,75 +258,37 @@ clean.cow:
 
 
 
-########################################
+################################################################################
 # Instructions for portageLive
 # NOTE: you cannot apply weights if you plan to do some rescoring.
 
-PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models
+PORTAGE_LIVE_DEST_DIR ?= ../portageLive
+CANOE_LIVE            ?= ${PORTAGE_LIVE_DEST_DIR}/${DECODING_MODEL}
+
 .PHONY: portageLive
 portageLive: SHELL=${GUARD_SHELL}
-portageLive: canoe.ini.cow.live check_canoe_live
-	sed -e 's#\(cpt.${SRC_LANG}2${TGT_LANG}.tppt\)#models/tm/\1#' < $< \
-	> ../portageLive/canoe.ini.cow
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}/tm
-	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/tm/*
-	cd ${PORTAGE_LIVE_DEST_DIR}/tm && ln -fs `configtool list-tm ../../../decode/$<` .
-	${MAKE} -C ../lm $(shell configtool list-lm $< | sed -e 's#.*/##')
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}/lm
-	cd ${PORTAGE_LIVE_DEST_DIR}/lm && ln -fs `configtool list-lm ../../../decode/$<` .
-	if [[ `configtool list-ldm $<` ]]; then \
-		${MAKE} -C ../ldm $(shell configtool list-ldm $< | sed -e 's#.*/##'); \
-		mkdir -p ${PORTAGE_LIVE_DEST_DIR}/ldm; \
-		${RM} -r ${PORTAGE_LIVE_DEST_DIR}/ldm/*; \
-		cd ${PORTAGE_LIVE_DEST_DIR}/ldm && ln -fs `configtool list-ldm ../../../decode/$<` .; \
-	fi
-	configtool check ../portageLive/canoe.ini.cow
-
-ONE_CPT ?= one.cpt.${SRC_LANG}2${TGT_LANG}.gz
-
-# Make a single phrase table from all the phraase tables.
-${ONE_CPT}: SHELL=${FRAMEWORK_SHELL}
-${ONE_CPT}: canoe.ini.cow
-	RP_PSUB_OPTS="-1 -N vm.join" \
-	${TIME_MEM} \
-	join_phrasetables -v `configtool list-multi-probs $<` 2> log.$(basename $@)\
-	| gzip \
-	> $@
-
-# fix the canoe.ini.cow to reflect the usage of a single phrase table.
-canoe.ini.cow.hardFilter: SHELL=${GUARD_SHELL}
-canoe.ini.cow.hardFilter: ${ONE_CPT} canoe.ini.cow
-	configtool rep-multi-prob:$+ > $@
+portageLive: ${CANOE_LIVE}
 
 
-# When using Portage, the default behavior should be to create tppt models.
-APPLY_WEIGHTS_OPTIONS ?= -tppt
-# Hard filter & tpptize the single phrase table.
-canoe.ini.cow.live: SHELL=${FRAMEWORK_SHELL}
-cpt.${SRC_LANG}2${TGT_LANG}.tppt: SHELL=${FRAMEWORK_SHELL}
-cpt.${SRC_LANG}2${TGT_LANG}.tppt canoe.ini.cow.live: canoe.ini.cow.hardFilter
-	RP_PSUB_OPTS="-8 -N vm.tppt" \
-	${TIME_MEM} \
-	tmtext-apply-weights.pl \
-		-hf ${APPLY_WEIGHTS_OPTIONS} \
-		-src ${SRC_LANG} -tgt ${TGT_LANG} \
-		-f $< -c canoe.ini.cow.live.tmp \
-		-o cpt \
-		&> log.cpt.${SRC_LANG}2${TGT_LANG}
-	configtool tp canoe.ini.cow.live.tmp > canoe.ini.cow.live && rm canoe.ini.cow.live.tmp
+.PHONY: portageLive_models
+portageLive_models_%: SHELL=${GUARD_SHELL}
+portageLive_models_%:
+	${MAKE} -C ../$* portageLive
 
-# We need to output a new canoe.ini.cow that reflects the single tppt and applied weights.
-.PHONY: check_canoe_live
-check_canoe_live: SHELL=${GUARD_SHELL}
-check_canoe_live: canoe.ini.cow.live
-	configtool check $<
+
+${CANOE_LIVE}: SHELL=${GUARD_SHELL}
+${CANOE_LIVE}: portageLive_models_lm portageLive_models_tm portageLive_models_ldm
+${CANOE_LIVE}: ${DECODING_MODEL}
+	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	configtool -p tp $< > $@
+	configtool check $@
+
 
 clean.content: clean.portageLive
 .PHONY: clean.portageLive
 clean.portageLive: SHELL=${GUARD_SHELL}
 clean.portageLive:
-	${RM} canoe.ini.cow.hardFilter canoe.ini.cow.live cpt.${SRC_LANG}2${TGT_LANG}.gz one.cpt.${SRC_LANG}2${TGT_LANG}.gz
-	${RM} -r cpt.${SRC_LANG}2${TGT_LANG}.tppt
+	${RM} ${CANOE_LIVE}
 
 
 

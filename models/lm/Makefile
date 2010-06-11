@@ -168,8 +168,13 @@ time-mem: resource_summary_sub
 
 ########################################
 # Transform model for PortageLive
+PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/lm
 .PHONY: portageLive
-portageLive: tplm
+portageLive: SHELL=${GUARD_SHELL}
+portageLive: ${LM_NAME}.tplm
+	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
+	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../lm/, $+) .
 
 
 

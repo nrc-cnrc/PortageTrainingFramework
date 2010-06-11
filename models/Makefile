@@ -205,6 +205,7 @@ endif
 # Prepare portageLive models.
 .PHONY: portageLive
 portageLive: portageLive_models_lm
+portageLive: portageLive_models_tm
 portageLive: portageLive_models_tc
 portageLive: portageLive_models_decode
 portageLive:
@@ -219,7 +220,7 @@ portageLive/soap-translate.sh: portageLive_models_decode
 	chmod 755 $@
 
 # We need this dependency since decode will copy the tplms for portageLive.
-portageLive_models_decode: portageLive_models_lm
+portageLive_models_decode: portageLive_models_lm portageLive_models_tm
 portageLive_models_%:
 	${MAKE} -C $* portageLive
 
