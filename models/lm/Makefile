@@ -283,8 +283,9 @@ else ifeq (${LM_TOOLKIT}, MIT)
 		-order ${ORDER} \
 		-smoothing ModKN \
 		-text /dev/stdin \
-		-write-lm $@ \
+		-write-lm tmp.$@ \
 	2> log.$(basename $@)
+	zcat tmp.$@ | egrep -v '		|	 | 	|  ' | gzip > $@ && rm tmp.$@
 
 else
 	$(error "Invalid value for LM_TOOLKIT: ${LM_TOOLKIT}")
