@@ -124,7 +124,7 @@ endif
 
 ########################################
 .PHONY: all
-all: ${LM_TYPES} arpa
+all: ${LM_TYPES}
 
 
 
@@ -274,7 +274,7 @@ else ifeq (${LM_TOOLKIT}, IRST)
 #	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
 #
 else ifeq (${LM_TOOLKIT}, MIT)
-tmp.%${LM_DESC}.lm.gz: %${CORPUS_EXT}
+%${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	zcat $< \
@@ -285,10 +285,6 @@ tmp.%${LM_DESC}.lm.gz: %${CORPUS_EXT}
 		-text /dev/stdin \
 		-write-lm $@ \
 	2> log.$(basename $@)
-
-%.lm.gz: %.binlm.gz
-	${TIME_MEM} \
-	binlm2arpalm $< $@ 2> log.$(basename $@).1
 
 else
 	$(error "Invalid value for LM_TOOLKIT: ${LM_TOOLKIT}")
@@ -403,17 +399,10 @@ binlm: ${LM_NAME}.binlm.gz
 #.SECONDARY: %.binlm.gz
 #	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
 #
-ifeq (${LM_TOOLKIT}, MIT)
-%.binlm.gz: tmp.%.lm.gz
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${TIME_MEM} \
-	arpalm2binlm $< $@ >& log.$(basename $@)
-else
 %.binlm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
 	arpalm2binlm $< $@ >& log.$(basename $@)
-endif
 
 clean.content: clean.binlm
 
