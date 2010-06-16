@@ -274,10 +274,14 @@ else ifeq (${LM_TOOLKIT}, IRST)
 #	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
 #
 else ifeq (${LM_TOOLKIT}, MIT)
+# Note that MITLM is finicky about spaces thus we need to collapse several
+# spaces into one space and remove any leading or traling spaces.
+# The perl regex was proposed by the creators of MITLM.
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	zcat $< \
+	perl -ple 's/^\s*(.*?)\s*$$/$$1/; s/\s+/ /g;' \
 	| ${TIME_MEM} \
 	estimate-ngram \
 		-order ${ORDER} \
