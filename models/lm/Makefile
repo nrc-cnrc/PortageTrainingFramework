@@ -281,7 +281,7 @@ else ifeq (${LM_TOOLKIT}, MIT)
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	zcat $< \
-	perl -ple 's/^\s*(.*?)\s*$$/$$1/; s/\s+/ /g;' \
+	| perl -ple 's/^\s*(.*?)\s*$$/$$1/; s/\s+/ /g;' \
 	| ${TIME_MEM} \
 	estimate-ngram \
 		-order ${ORDER} \
