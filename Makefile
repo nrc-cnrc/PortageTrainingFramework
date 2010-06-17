@@ -127,8 +127,10 @@ check_setup:
 
 ########################################
 # Prepare portageLive models.
+# NOTE: In order to able to execute portageLive we should at the very least
+# have tuned the system.  To do so, we will rely on the all target.
 .PHONY: portageLive
-portageLive:
+portageLive: all
 	${MAKE} -C models portageLive
 ifdef DO_RESCORING
 	@echo ""
