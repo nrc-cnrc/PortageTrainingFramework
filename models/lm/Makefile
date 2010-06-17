@@ -79,9 +79,6 @@ PPX_TEST_SET ?= test.txt
 # After this Makefile, the following targets/files are precious.
 FILES_TO_BE_LOCKED = ${LM_NAME}*
 
-# Enable monitoring of memory usage.
-MONITOR_MEMORY_USAGE ?=
-
 # If you need to provide ngram-count some extra parameters.
 EXTRA_NGRAM_COUNT_OPTIONS ?=
 
@@ -241,8 +238,6 @@ arpa: ${LM_NAME}.lm.gz
 # Here we've added LM_DESC to strip it out from the corpus file name.
 #.SECONDARY: ${LM_NAME}.lm.gz
 ifeq (${LM_TOOLKIT}, SRI)
-#	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
-#
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -271,8 +266,6 @@ else ifeq (${LM_TOOLKIT}, IRST)
 	| lm_sort.pl \
 	| gzip > $@
 
-#	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
-#
 else ifeq (${LM_TOOLKIT}, MIT)
 # Note that MITLM is finicky about spaces thus we need to collapse several
 # spaces into one space and remove any leading or traling spaces.
@@ -401,8 +394,6 @@ clean.sort_arpa:
 binlm: ${LM_NAME}.binlm.gz
 
 #.SECONDARY: %.binlm.gz
-#	test -n "${MONITOR_MEMORY_USAGE}" && process-memory-usage.pl -s 3 30 $$PPID >& monitor.$(basename $@) & \
-#
 %.binlm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
@@ -436,7 +427,9 @@ prune: ${LM_NAME}.plm.gz
 .PHONY: tplm
 tplm: ${LM_NAME}.tplm
 
+%.tplm: SHELL=${FRAMEWORK_SHELL}
 %.tplm: %.lm.gz
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
 	arpalm2tplm.sh $< $* 2> log.$@
 
