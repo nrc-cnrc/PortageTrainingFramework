@@ -146,10 +146,14 @@ LANGXZ ?= ${LANGX}${GZ}
 # Language pair for this system.
 LANGS ?= ${SRC_LANG} ${TGT_LANG}
 
+# By default will assume that the user wants to use the first corpora to build
+# the truecasing models.
+TRAIN_TC ?= $(firstword ${TRAIN_LM})
+
 # Define the corpora.
-TRAIN_SET    ?= ${TRAIN_LM} ${TRAIN_TM}
-HELDOUT_SET  ?= ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET}
-CORPORA_SET  ?= ${TRAIN_SET} ${HELDOUT_SET}
+TRAIN_SET    ?= $(sort ${TRAIN_LM} ${TRAIN_TM} ${TRAIN_TC})
+HELDOUT_SET  ?= $(sort ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET})
+CORPORA_SET  ?= $(sort ${TRAIN_SET} ${HELDOUT_SET})
 
 # Define what type of phrase table we want to generate.
 # Can be: {ibm2_cpt | hmm1_cpt | hmm2_cpt | hmm3_cpt}
@@ -167,8 +171,8 @@ PREFIX_DEV_COW  ?= ${TUNE_DECODE}
 PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
 
 # Defines the truecasing model filename.
-TRUECASING_MAP ?= ${TRAIN_LM}_${TGT_LANG}.map
-TRUECASING_LM  ?= ${TRAIN_LM}_${TGT_LANG}-kn-3g.binlm${GZ}
+TRUECASING_MAP ?= ${TRAIN_TC}_${TGT_LANG}.map
+TRUECASING_LM  ?= ${TRAIN_TC}_${TGT_LANG}-kn-3g.binlm${GZ}
 
 
 
@@ -205,6 +209,10 @@ endif
 
 ifeq (${TRAIN_TM},)
 $(error "You must always define a training corpus for translation model.")
+endif
+
+ifeq (${TRAIN_TC},)
+$(error "You must always define a training corpus for truecasing  models.")
 endif
 
 ifeq (${TUNE_DECODE},)

@@ -53,15 +53,13 @@ LM_TYPES ?= binlm
 
 # What is the corpus' name, extension and what file defines this corpus.
 # This is the corpus' name and looks like train_fr
-CORPUS_NAME ?= ${TRAIN_LM}_${LM_LANG}
+CORPUS_NAME ?= $(addsuffix _${LM_LANG}, ${TRAIN_LM})
 
 # This indicates the corpus extension and looks like .tok.al.gz
 CORPUS_EXT  ?= ${LANGXZ}
 
-CORPUS_FILE ?= ${CORPUS_NAME}${CORPUS_EXT}
-
 LM_DESC ?= -kn-${ORDER}g
-LM_NAME ?= ${CORPUS_NAME}${LM_DESC}
+LM_NAME ?= $(addsuffix ${LM_DESC}, ${CORPUS_NAME})
 
 # Where to find the corpus' file.
 CORPORA_DIR ?= ../../corpora
@@ -131,7 +129,7 @@ all: ${LM_TYPES}
 list_final_output: SHELL=${GUARD_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
-	@echo "${LM_NAME}.binlm.gz"
+	@echo "$(addsuffix .binlm.gz, ${LM_NAME})"
 
 
 
@@ -168,7 +166,7 @@ time-mem: resource_summary_sub
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/lm
 .PHONY: portageLive
 portageLive: SHELL=${GUARD_SHELL}
-portageLive: ${LM_NAME}.tplm
+portageLive: $(addsuffix .tplm, ${LM_NAME})
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../lm/, $+) .
@@ -202,10 +200,10 @@ clean.mark:
 # iARPA
 # Compressed irstlm format
 .PHONY: irstlm
-irstlm: ${LM_NAME}.ilm.gz
+irstlm: $(addsuffix .ilm.gz, ${LM_NAME})
 
 # Here we've added LM_DESC to strip it out from the marked corpus file name.
-#.SECONDARY: ${LM_NAME}.ilm.gz
+#.SECONDARY: $(addsuffix .ilm.gz, ${LM_NAME})
 %${LM_DESC}.ilm.gz: %.marked.gz
 	@_LOCAL=1 echo "  Creating IRSTLM $@"
 	_LOCAL=1 ${RM} $@
@@ -233,10 +231,10 @@ clean.irstlm:
 ########################################
 # arpa text compressed format
 .PHONY: arpa
-arpa: ${LM_NAME}.lm.gz
+arpa: $(addsuffix .lm.gz, ${LM_NAME})
 
 # Here we've added LM_DESC to strip it out from the corpus file name.
-#.SECONDARY: ${LM_NAME}.lm.gz
+#.SECONDARY: $(addsuffix .lm.gz, ${LM_NAME})
 ifeq (${LM_TOOLKIT}, SRI)
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
@@ -300,9 +298,9 @@ clean.arpa:
 # BINARY FORMAT
 # arpa bin compressed format
 .PHONY: blmt
-blmt: ${LM_NAME}.blmt
+blmt: $(addsuffix .blmt, ${LM_NAME})
 
-#.SECONDARY: ${LM_NAME}.blmt
+#.SECONDARY: $(addsuffix .blmt, ${LM_NAME})
 %.blmt: %.ilm.gz
 	@_LOCAL=1 echo "  Creating bin.ARPA format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -324,9 +322,9 @@ clean.blmt:
 ########################################
 # qARPA format
 .PHONY: quantize
-quantize: $(LM_NAME).qlm.gz
+quantize: $(addsuffix .qlm.gz, ${LM_NAME})
 
-#.SECONDARY: ${LM_NAME}.qlm.gz
+#.SECONDARY: $(addsuffix .qlm.gz, ${LM_NAME})
 %.qlm: %.lm.gz
 	@_LOCAL=1 echo "  qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -348,9 +346,9 @@ clean.quantize:
 ########################################
 # Quantize binary
 .PHONY: Qblmt
-Qblmt: ${LM_NAME}.Qblmt
+Qblmt: $(addsuffix .Qblmt, ${LM_NAME})
 
-#.SECONDARY: ${LM_NAME}.Qblmt
+#.SECONDARY: $(addsuffix .Qblmt, ${LM_NAME})
 %.Qblmt: %.qlm.gz
 	@_LOCAL=1 echo "  bin.qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -372,9 +370,9 @@ clean.Qblmt:
 ########################################
 # Sort the arpa format
 .PHONY: sort_arpa
-sort_arpa: ${LM_NAME}.lm.sorted.gz
+sort_arpa: $(addsuffix .lm.sorted.gz, ${LM_NAME})
 
-#.SECONDARY: ${LM_NAME}.lm.sorted.gz
+#.SECONDARY: $(addsuffix .lm.sorted.gz, ${LM_NAME})
 %.lm.sorted.gz: %.lm.gz
 	${TIME_MEM} \
 	lm_sort_filter.sh -lm $< $@ >& log.$(basename $@)
@@ -391,9 +389,9 @@ clean.sort_arpa:
 ########################################
 # Portage's bin lm format
 .PHONY: binlm
-binlm: ${LM_NAME}.binlm.gz
+binlm: $(addsuffix .binlm.gz, ${LM_NAME})
 
-#.SECONDARY: %.binlm.gz
+#.SECONDARY: $(addsuffix .binlm.gz, ${LM_NAME})
 %.binlm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
@@ -411,9 +409,9 @@ clean.binlm:
 ########################################
 # Pruning ARPA format => ARPA format
 .PHONY: prune
-prune: ${LM_NAME}.plm.gz
+prune: $(addsuffix .plm.gz, ${LM_NAME})
 
-#.SECONDARY: %.plm.gz
+#.SECONDARY: $(addsuffix .plm.gz, ${LM_NAME})
 %.plm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	prune-lm --threshold=1e-6 $< /dev/stdout \
@@ -425,7 +423,7 @@ prune: ${LM_NAME}.plm.gz
 ########################################
 # Create Tightly Packed Language Model.
 .PHONY: tplm
-tplm: ${LM_NAME}.tplm
+tplm: $(addsuffix .tplm, ${LM_NAME})
 
 %.tplm: SHELL=${FRAMEWORK_SHELL}
 %.tplm: %.lm.gz
@@ -487,8 +485,8 @@ endif
 ########################################
 # PERPLEXITY
 .PHONY: ppx
-ppx: ppx.${LM_NAME}
-ppx.${LM_NAME}: ${LM_NAME}.binlm.gz ${PPX_TEST_SET}
+ppx: $(addprefix ppx., ${LM_NAME})
+ppx.%: %.binlm.gz ${PPX_TEST_SET}
 	lm_eval -v -limit $+
 
 .PHONY: ppx.irstlm
