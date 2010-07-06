@@ -56,7 +56,7 @@ IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 # where SRI  => SRILM's toolkit
 #       IRST => IRSTLM's toolkit
 #       MIT  => MITLM's toolkit
-LM_TOOLKIT = SRI
+LM_TOOLKIT = MIT
 
 # Train and apply rescoring if this variable is defined.
 # Comment out to disable rescoring.
