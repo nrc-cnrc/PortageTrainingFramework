@@ -186,6 +186,8 @@ endif
 ifdef DO_TRUECASING
 models: tc
 
+portageLive: portageLive_models_tc
+
 tc:
 	${MAKE} -C tc all
 else
@@ -206,7 +208,6 @@ endif
 .PHONY: portageLive
 portageLive: portageLive_models_lm
 portageLive: portageLive_models_tm
-portageLive: portageLive_models_tc
 portageLive: portageLive_models_decode
 portageLive:
 	pwd > $@/README
