@@ -73,6 +73,7 @@ doc: tutorial.pdf
 clean: SHELL=${GUARD_SHELL}
 clean: clean.content clean.logs clean.doc
 	${RM} tutorial.pdf framework-toy.pdf
+	${RM} log.INSTALL_SUMMARY
 
 # hide.logs hides logs from user's view into .logs
 clean.content clean.logs hide.logs: SHELL=${GUARD_SHELL}
@@ -122,6 +123,16 @@ eval: translate
 .PHONY: check_setup
 check_setup:
 	${MAKE} -C models/lm check_setup
+
+
+########################################
+# Copy the bin/INSTALL_SUMMARY file, if it exists.
+ifneq ($(wildcard $(dir $(shell which train_ibm))/INSTALL_SUMMARY),)
+check_setup: log.INSTALL_SUMMARY
+endif
+
+log.INSTALL_SUMMARY:
+	cat `dirname $$(which train_ibm)`/INSTALL_SUMMARY >log.INSTALL_SUMMARY
 
 
 
