@@ -5,7 +5,7 @@
 # @file Makefile
 # @brief What are the dependencies to train a zn-adapted conditional phrase table.
 #
-# @author Samuel Larkin
+# @author Samuel Larkin, Darlene Stewart
 #
 # Technologies langagieres interactives / Interactive Language Technologiesm
 # Inst. de technologie de l'information / Institute for Information Technology
@@ -29,7 +29,7 @@ MAKEFILE_PARAMS ?= Makefile.params
 # What is this module's name.
 MODULE_NAME ?= tm
 
-SHELL = run-parallel.sh
+SHELL = ${FRAMEWORK_SHELL}
 
 CORPORA_DIR ?= ../../corpora
 
@@ -41,6 +41,7 @@ TRAIN_TM_OTHER  ?= $(TRAIN_TM_BASE:=-other)
 
 domain_files ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_DOMAIN}*${LANGXZ}))
 other_files  ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}))
+all_files  ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_ALL}*${LANGXZ}))
 
 
 ifeq ("","$(or $(findstring clean,${MAKECMDGOALS}),$(findstring help,${MAKECMDGOALS}))")
@@ -63,13 +64,18 @@ vpath %${LANGXZ} ${CORPORA_DIR}
 .SUFFIXES:
 .SECONDARY:
 
+
+# The CPTs that need to be built/
+CPT_LIST = ${CPT_MODEL_PFX}.zn-adapt.${L1_2_L2X}
+# If you need to generate a conditional phrase table in the other direction aka TGT to SRC.
+#CPT_LIST += ${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}
+
+
 .PHONY: all
 all: zn-adapt
 
 .PHONY: zn-adapt
-zn-adapt: ${CPT_MODEL_PFX}.zn-adapt.${L1_2_L2X}
-# If you need to generate a conditional phrase table in the other direction aka TGT to SRC.
-#zn-adapt: ${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}
+zn-adapt: ${CPT_LIST}
 
 
 # Train word alignment models on in domain data.
@@ -119,8 +125,17 @@ ${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}: ${JPT_MODEL_PFX}.merged.${RJOINTX}
 # To be able to use faster joint2cond, we must merge into one single jpt files.
 .INTERMEDIATE: ${JPT_MODEL_PFX}.merged.${JOINTX}
 ${JPT_MODEL_PFX}.merged.${JOINTX}: ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX} ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX} ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX} ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}
-	merge_counts $@ $+
+	${TIME_MEM} \
+	merge_counts $@ $+ 2> log.$@
 
+
+################################################################################
+# Tightly Packed Phrase Table.
+# We need the full file names to be able to trigger all tppts.
+tppt_list = ${CPT_LIST:gz=tppt}
+
+.PHONY: tppt
+tppt portageLive: ${tppt_list}
 
 
 ########################################
@@ -186,6 +201,7 @@ clean.cpts:
 .PHONY: time-mem
 time-mem: SHELL=${GUARD_SHELL}
 time-mem: resource_summary_sub
+
 
 ########################################
 # HELPERS

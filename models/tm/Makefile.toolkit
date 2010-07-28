@@ -124,6 +124,10 @@ CPT_CPUS ?= 4
 CPT_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother
 
 ########################################
+# TPPT MODELS.
+TPPT_CPUS ?= 4
+
+########################################
 # FUNCTIONS.
 # Joins two parallel lists of words.
 interleave = $(strip $(subst \, , $(join ${1}, $(addprefix \, ${2}))))
@@ -320,11 +324,24 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 
 ########################################
 # Create tightly packed conditional phrase table.
+%.tppt: SHELL=${FRAMEWORK_SHELL}
 %.tppt: %.gz
+	RP_PSUB_OPTS="-${TPPT_CPUS} -N $@" \
 	${TIME_MEM} \
-	textpt2tppt.sh $< \
+	textpt2tppt.sh -v $< \
 	2> log.$@
 
+
+########################################
+# Transform models for PortageLive
+# Note: portageLive dependencies are defined in Makefile (or Makefile.zn-adapt)
+PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/tm
+.PHONY: portageLive
+portageLive: SHELL=${GUARD_SHELL}
+portageLive:
+	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
+	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../tm/, $+) .
 
 
 ################################################################################
