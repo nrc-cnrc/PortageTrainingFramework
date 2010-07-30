@@ -26,7 +26,7 @@
 \newcommand{\phs}{\tild{s}}   % source phrase
 \newcommand{\pht}{\tild{t}}   % target phrase
 % Official typesetting of PORTAGEshared, now called Portage 1.x
-\newcommand{\PS}{Portage 1.4.1\xspace}
+\newcommand{\PS}{Portage 1.4\xspace}
 \newcommand{\tip}{\textbf{Useful Tip \large{\ding{43}} }}
 \newcommand{\margintip}{\marginpar[{\textbf{Tip \large{\ding{43}}}}]{\textbf{\reflectbox{\large{\ding{43}}} Tip}}}
 \newcommand{\tipsummary}{\noindent\textbf{Tip summary \large{\ding{43}} }}
@@ -197,9 +197,9 @@ sections (section numbers are in brackets):
 \end{enumerate}
 These steps are fairly standard, but of course there are many variants on the
 sample process illustrated here. For more information, see the \PS
-user manual (found in \url{PORTAGEshared/doc/user-manual.html} on the CD).
+user manual (found in \url{$PORTAGE/doc/user-manual.html} on the CD).
 For detailed information about a particular program, run the program with the
-\code{-h} flag (or see \url{PORTAGEshared/doc/usage.html} on the CD).
+\code{-h} flag (or see \url{$PORTAGE/doc/usage.html} on the CD).
 
 \section{Corpus Preparation} \label{CorpusPreparation}
 
@@ -233,7 +233,7 @@ closely.
 Since proper splitting of a corpus must take into account its structure
 and nature, these steps are not handled by the experimental framework. For the
 toy experiment, we provide small data sets that can be found here:
-\url{PORTAGEshared/test-suite/tutorial-data}. These sets
+\url{$PORTAGE/test-suite/tutorial-data}. These sets
 are very small, to minimize running time, so the resulting translations are of
 poor quality. In this toy experiment, the tuning and testing corpora contain
 just 100 segments each.
@@ -502,7 +502,7 @@ language model format for fast loading.
 
 If you have not installed any LM toolkit, we provide a pre-trained
 language model, \code{train_en-\linebreak[0]kn-5g.lm.gz} in
-\url{PORTAGEshared/test-suite/tutorial-data/lm}. You can
+\url{$PORTAGE/test-suite/tutorial-data/lm}. You can
 copy that file into \code{models/lm} and then type \code{make lm} to
 proceed with the rest of this example, although you won't be able to train on
 new text without a language modeling toolkit.
@@ -537,7 +537,7 @@ language model as in section~\ref{LM} above, but using the truecase corpus,
 
 If you have not installed any LM toolkit, we provide the file
 \code{train_en-kn-3g.lm.gz} in
-\url{PORTAGEshared/test-suite/tutorial-data/tc}.  You can
+\url{$PORTAGE/test-suite/tutorial-data/tc}.  You can
 copy that file into \code{models/tc} and and type \code{make tc} to proceed
 with the rest of this example.
 
