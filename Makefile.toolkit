@@ -63,5 +63,7 @@ resource_summary_sub: SHELL=${GUARD_SHELL}
 resource_summary_sub:
 	find -type f -name log.\* \
 	| sort \
-	| xargs time-mem -T -m ${MODULE_NAME}
+	| xargs time-mem-tally.pl -no-dir -m ${MODULE_NAME} \
+	| second-to-hms.pl \
+	| expand-auto.pl
 

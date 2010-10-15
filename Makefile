@@ -183,8 +183,8 @@ time-mem: SHELL=/bin/bash
 time-mem: export PORTAGE_INTERNAL_CALL=1
 time-mem:
 	@echo "Resource summary for `pwd`:"
-	@time-mem -T <(${MAKE} resource_summary) \
-	| perl -pe 's/[0-9]+:TIME-MEM/TIME-MEM/' \
+	@time-mem-tally.pl `find models translate -type f -name log.\* | sort` \
+	| second-to-hms.pl \
 	| expand-auto.pl
 
 .PHONY: summary

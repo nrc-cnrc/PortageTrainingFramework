@@ -87,13 +87,9 @@ clean.content clean.logs hide.logs: %:
 .PHONY: time-mem
 time-mem: SHELL=${GUARD_SHELL}
 time-mem:
-	@${MAKE} --no-print-directory -s -C ldm time-mem
-	@${MAKE} --no-print-directory -s -C lm time-mem
-	@${MAKE} --no-print-directory -s -C tm time-mem
-	@${MAKE} --no-print-directory -s -C tc time-mem
-	@${MAKE} --no-print-directory -s -C decode time-mem
-	@${MAKE} --no-print-directory -s -C rescore time-mem
-	@${MAKE} --no-print-directory -s -C confidence time-mem
+	@time-mem-tally.pl `find ldm lm tm tc decode rescore confidence -type f -name log.\*` \
+	| second-to-hms.pl \
+	| expand-auto.pl
 
 
 
