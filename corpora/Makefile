@@ -40,8 +40,8 @@ else
 LOWERCASE ?= lc-utf8.pl
 endif
 
-
-export LC_ALL ?= fr_CA.utf8
+UTF8 = $(if $(findstring Darwin, ${OSTYPE}),UTF-8,utf8)
+export LC_ALL = en_CA.${UTF8}
 
 
 # Where are the aligned corpora to process.
@@ -258,8 +258,9 @@ reference: $(foreach t,${TRANSLATE_SET},  $t_${TGT_LANG}${LANGX})
 
 
 # Check if the first dependency is a utf8 file.
+FILE_OPTS = $(if $(findstring Darwin, ${OSTYPE}),-LIbz,-Libz)
 define check_utf8
-_LOCAL=1 file -Libz $< | egrep -qi 'charset=utf-8|ASCII' || echo "WARNING: Please convert $< to utf-8" >&2
+_LOCAL=1 file ${FILE_OPTS} $< | egrep -qi 'charset=utf-8|ASCII' || echo "WARNING: Please convert $< to utf-8" >&2
 endef
 
 

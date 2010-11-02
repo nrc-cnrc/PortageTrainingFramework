@@ -17,8 +17,9 @@
 
 SHELL = ${FRAMEWORK_SHELL}
 
-export LANG   = en_CA.utf8
-export LC_ALL = en_CA.utf8
+UTF8 = $(if $(findstring Darwin, ${OSTYPE}),UTF-8,utf8)
+export LANG   = en_CA.${UTF8}
+export LC_ALL = en_CA.${UTF8}
 
 
 # Default language corpora extension.

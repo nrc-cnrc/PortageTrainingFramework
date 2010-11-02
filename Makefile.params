@@ -95,6 +95,7 @@ ifdef NOCLUSTER
    USING_CLUSTER =
 endif
 
+OSTYPE = $(shell uname -s)
 
 ifdef USING_CLUSTER
 PARALLELISM_LEVEL_CORPORA ?= 10
@@ -105,13 +106,17 @@ PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
 PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= 10
 PARALLELISM_LEVEL_TRANSLATE    ?= 10
 ifeq (${MAKELEVEL},0)
-   $(shell echo -e "Running in cluster mode.\n" >&2)
+   $(shell env echo -e "Running in cluster mode.\n" >&2)
 endif
 else
 # Make sure we run in serial mode.
 .NOTPARALLEL:
 # Autodetect the number of available cpus on this machine.
+ifneq (${OSTYPE},Darwin)
 NCPUS := $(shell grep processor /proc/cpuinfo | wc -l)
+else
+NCPUS := $(shell sysctl -n hw.ncpu)
+endif
 PARALLELISM_LEVEL_CORPORA ?= ${NCPUS}
 PARALLELISM_LEVEL_LM ?= ${NCPUS}
 PARALLELISM_LEVEL_TM ?= ${NCPUS}
@@ -120,7 +125,7 @@ PARALLELISM_LEVEL_TUNE_RESCORE ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= ${NCPUS}
 PARALLELISM_LEVEL_TRANSLATE    ?= ${NCPUS}
 ifeq (${MAKELEVEL},0)
-   $(shell echo -e "Running in local mode.\n" >&2)
+   $(shell env echo -e "Running in local mode.\n" >&2)
 endif
 endif
 
