@@ -12,3 +12,10 @@
 # Copyright 2010, Sa Majeste la Reine du Chef du Canada /
 # Copyright 2010, Her Majesty in Right of Canada
 
+# User defines for models/ldm/.
+
+# When the corpus is too large and dmestm can't run in available memory, we can
+# filter out singleton phrase pairs from the LDM model.  Set this variable to
+# enable this filter.
+#LDM_FILTER_SINGLETONS=1
+

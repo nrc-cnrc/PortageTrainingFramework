@@ -85,6 +85,14 @@ ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}: $(addsuffix .gz,$(addprefix ${LDM_CO
 
 
 ########################################
+# FILTERING OF LDMs
+ifdef LDM_FILTER_SINGLETONS
+LDM_FILTER_CMD=egrep -v '\|( 0)* 1( 0)* 1( 0)*$$'
+else
+LDM_FILTER_CMD=cat
+endif
+
+########################################
 # TIGHTLY PACKED LEXICAZILED DISTORTION MODEL.
 .PHONY: tpldm
 tpldm: ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm
