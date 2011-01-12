@@ -131,6 +131,7 @@ LDM_MODEL_PFX ?= ldm
 ${LDM_MODEL_PFX}%${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
 ${LDM_MODEL_PFX}%${SRC_2_TGTX}:
 	RP_PSUB_OPTS="-${ESTIM_CPU}" \
+	set -o pipefail; \
 	merge_multi_column_counts - $+ \
         | ${LDM_FILTER_CMD} \
 	| ${TIME_MEM} dmestm -s -g $(basename $@).bkoff -wtu ${WTU} -wtg ${WTG} -wt1 ${WT1} -wt2 ${WT2} \
