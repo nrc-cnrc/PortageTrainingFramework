@@ -282,7 +282,7 @@ else ifeq (${LM_TOOLKIT}, MIT)
 	2> log.$(basename $@)
 
 else
-	$(error "Invalid value for LM_TOOLKIT: ${LM_TOOLKIT}")
+$(error "Invalid value for LM_TOOLKIT: ${LM_TOOLKIT}")
 endif
 
 clean.content: clean.arpa
