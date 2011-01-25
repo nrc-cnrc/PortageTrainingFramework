@@ -10,6 +10,10 @@
 \usepackage{upquote}
 \usepackage{textcomp}
 \newcommand\upquote[1]{\textquotesingle#1\textquotesingle}
+\usepackage{alltt}
+% This is needed in order to get bold in tt.
+\renewcommand{\ttdefault}{txtt}
+\newcommand{\bs}{\textbackslash{}}
 
 % \code formats an inline code snippet without line breaking; it treats the
 % underscore as a normal character. Use \url to format a code snippet with
@@ -129,12 +133,13 @@ customizations depending on what each experiment is intended to test.
 
 For example:
 \begin{small}
-\begin{verbatim}
-   > cd $PORTAGE
-   > cp -pr framework toy.experiment
-   > cd toy.experiment
-\end{verbatim}
+\begin{alltt}
+   > \textbf{cd $PORTAGE}
+   > \textbf{cp -pr framework toy.experiment}
+   > \textbf{cd toy.experiment}
+\end{alltt}
 \end{small}
+
 All commands provided in the rest of this document assume they are being run in
 the \code{toy.experiment} directory or in a subdirectory thereof, which will
 be specified relative to \code{toy.experiment}. Similary, whenever we quote a 
@@ -142,13 +147,14 @@ be specified relative to \code{toy.experiment}. Similary, whenever we quote a
 \code{toy.experiment} directory, not from the location of the previous
 commands.
 
-As you work through the example, the commands that you should
-type\footnote{You can copy and paste commands from this PDF document onto
-the command line in your interactive shell if you wish.} are preceded by a
-prompt, \code{>}, and the system's response is not, though system output is not usually fully
-reproduced here, for brevity's sake. When it is, results (especially numbers)
-may vary a little from the ones shown, due to platform differences. Note that
-many results presented here are truncated in precision for presentation purposes.
+As you work through the example, the commands that you should type\footnote{You
+can copy and paste commands from this PDF document onto the command line in
+your interactive shell if you wish.} are shown in bold and preceded by a
+prompt, \code{>}, and the system's response is not, though system output is not
+usually fully reproduced here, for brevity's sake. When it is, results
+(especially numbers) may vary a little from the ones shown, due to platform
+differences. Note that many results presented here are truncated in precision
+for presentation purposes.
 
 Many of the commands are expressed as \code{make} targets. This has the
 advantage of requiring less typing, while still allowing you to see the actual
@@ -241,9 +247,9 @@ just 100 segments each.
 To drop these sets into the framework, simply copy them (or make symbolic
 links) into your copy's corpora directory:
 \begin{small}
-\begin{verbatim}
-   > cp $PORTAGE/test-suite/tutorial-data/*.al corpora/
-   > wc corpora/*.al
+\begin{alltt}
+   > \textbf{cp $PORTAGE/test-suite/tutorial-data/*.al corpora/}
+   > \textbf{wc corpora/*.al}
        100    2115   11589 corpora/dev1_en.al
        100    2330   13680 corpora/dev1_fr.al
        100    2095   11462 corpora/dev2_en.al
@@ -255,7 +261,7 @@ links) into your copy's corpora directory:
       8892  182186  981455 corpora/train_en.al
       8892  208400 1178176 corpora/train_fr.al
      18584  409787 2268451 total
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 In your own experiments, the files you need to copy into \code{corpora}
@@ -305,14 +311,14 @@ To use IRSTLM, in addition to the edits described above, you need to type
 \code{make help} and cut and paste the two export commands, unless you've
 already done the equivalent steps while installing IRSTLM:
 \begin{small}
-\begin{verbatim}
-   > make help | grep -B1 irstlm
+\begin{alltt}
+   > \textbf{make help | grep -B1 irstlm}
    Please run the following in order for this framework to run properly:
       export PATH=$PORTAGE/pkgs/irstlm/bin:$PATH
       export IRSTLM=$PORTAGE/pkgs/irstlm
-   > export PATH=$PORTAGE/pkgs/irstlm/bin:$PATH
-   > export IRSTLM=$PORTAGE/pkgs/irstlm
-\end{verbatim}
+   > \textbf{export PATH=$PORTAGE/pkgs/irstlm/bin:$PATH}
+   > \textbf{export IRSTLM=$PORTAGE/pkgs/irstlm}
+\end{alltt}
 \end{small}
 
 Another set of parameters you might want to adjust are the various
@@ -362,12 +368,12 @@ To reduce data sparseness, we convert all files to lowercase.  We keep the
 lowercase and truecase versions separately, because we'll use the truecase
 version to train a truecasing model.
 \begin{small}
-\begin{verbatim}
-   > cd corpora
-   > make lc
+\begin{alltt}
+   > \textbf{cd corpora}
+   > \textbf{make lc}
    cat dev1_fr.al | lc-utf8.pl > dev1_fr.lc
    [...]
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 The decoder, \code{canoe}, treats \code{<}, \code{>} and \verb*X\X as
@@ -377,13 +383,13 @@ occurrences of the three special characters (in the source language only, since
 this is only required for the input to \code{canoe}).
 
 \begin{small}
-\begin{verbatim}
-   > make rule
+\begin{alltt}
+   > \textbf{make rule}
    canoe-escapes.pl -add dev1_fr.lc > dev1_fr.rule
    canoe-escapes.pl -add dev2_fr.lc > dev2_fr.rule
    canoe-escapes.pl -add devCE_fr.lc > devCE_fr.rule
    canoe-escapes.pl -add test_fr.lc > test_fr.rule
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 
@@ -416,18 +422,18 @@ directory if you have not already done so).
 If you are using the SRILM toolkit, here is the command used to produce this
 model:
 \begin{small}
-\begin{verbatim}
-   > make lm
+\begin{alltt}
+   > \textbf{make lm}
    [...]
    make -C models lm
    make -C lm all LM_LANG=en
    Creating ARPA text format train_en-kn-5g.lm.gz
-   ngram-count -interpolate -kndiscount -order 5 \
-      -text ../../corpora/train_en.lc.gz -lm train_en-kn-5g.lm.gz \
+   ngram-count -interpolate -kndiscount -order 5 \bs
+      -text ../../corpora/train_en.lc.gz -lm train_en-kn-5g.lm.gz \bs
       >& log.train_en-kn-5g.lm
-   arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \
+   arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \bs
       >& log.train_en-kn-5g.binlm
-\end{verbatim}
+\end{alltt}
 \end{small}
 The first command executed, \code{ngram-count}, produces the language model
 itself in ``ARPA'' format.  The second command, \code{arpalm2binlm},
@@ -439,18 +445,18 @@ converts it into the Portage binary language model format for fast loading.
 If you are using the MITLM toolkit, here is the command used to produce the
 model needed for this example, \code{train_en-kn-5g.binlm.gz}:
 \begin{small}
-\begin{verbatim}
-   > make lm
+\begin{alltt}
+   > \textbf{make lm}
    [...]
    make -C models lm
    make -C lm all LM_LANG=en
    Creating ARPA text format train_en-kn-5g.lm.gz
-   zcat ../../corpora/train_en.lc.gz \
-      | estimate-ngram -order 5 -smoothing ModKN -text /dev/stdin \
+   zcat ../../corpora/train_en.lc.gz \bs
+      | estimate-ngram -order 5 -smoothing ModKN -text /dev/stdin \bs
         -write-lm train_en-kn-5g.lm.gz 2> log.train_en-kn-5g.lm
-   arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \
+   arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \bs
       >& log.train_en-kn-5g.binlm
-\end{verbatim}
+\end{alltt}
 \end{small}
 The first command executed, \code{estimate-ngram}, produces the language
 model itself in ``ARPA'' format.  The second command, \code{arpalm2binlm},
@@ -462,28 +468,28 @@ converts it into the Portage binary language model format for fast loading.
 If you are using the IRSTLM toolkit, here is the command used to produce the
 model needed for this example, \code{train_en-kn-5g.binlm.gz}:
 \begin{small}
-\begin{verbatim}
-   > make lm
+\begin{alltt}
+   > \textbf{make lm}
    [...]
    make -C models lm
    make -C lm all LM_LANG=en
    Marking up ../../corpora/train_en.lc.gz
-   zcat -f ../../corpora/train_en.lc.gz \
-      | add-start-end.sh \
+   zcat -f ../../corpora/train_en.lc.gz \bs
+      | add-start-end.sh \bs
       | gzip -c > train_en.marked.gz
    Creating IRSTLM train_en-kn-5g.ilm.gz
-   build-lm.sh -p -t stat.$$ -n 5 -k 4 -s kneser-ney \
-      -i "gunzip -c train_en.marked.gz" -o train_en-kn-5g.ilm.gz \
+   build-lm.sh -p -t stat.$$ -n 5 -k 4 -s kneser-ney \bs
+      -i "gunzip -c train_en.marked.gz" -o train_en-kn-5g.ilm.gz \bs
       >& log.train_en-kn-5g.ilm
    Creating ARPA text format train_en-kn-5g.lm.gz
-   compile-lm --text yes train_en-kn-5g.ilm.gz /dev/stdout \
-        2> log.train_en-kn-5g.lm \
-        | egrep -v '^Saving in txt format to' \
-        | lm_sort.pl \
+   compile-lm --text yes train_en-kn-5g.ilm.gz /dev/stdout \bs
+        2> log.train_en-kn-5g.lm \bs
+        | egrep -v '^Saving in txt format to' \bs
+        | lm_sort.pl \bs
         | gzip > train_en-kn-5g.lm.gz
-   arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \
+   arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \bs
       >& log.train_en-kn-5g.binlm
-\end{verbatim}
+\end{alltt}
 \end{small}
 The first three commands executed, \code{add-start-end.sh},
 \code{build-lm.sh} and \code{compile-lm}, construct the language model
@@ -520,14 +526,14 @@ maps each lower case words to its possible truecase variants, and a standard
 language model trained on the truecase corpus.
 
 \begin{small}
-\begin{verbatim}
-   > make tc
+\begin{alltt}
+   > \textbf{make tc}
    make -C models tc
    make -C tc all
-   compile_truecase_map ../../corpora/train_en.tc.gz ../../corpora/train_en.lc.gz \
+   compile_truecase_map ../../corpora/train_en.tc.gz ../../corpora/train_en.lc.gz \bs
       > train_en.map 2> log.train_en.map
    [commands to train the truecase LM]
-\end{verbatim}
+\end{alltt}
 \end{small}
 The first command, \code{compile_truecase_map}, compiles the casemap
 by reading the truecase and lowercased versions of the corpus simultaneously.
@@ -558,24 +564,24 @@ it down into several steps here.
 First we train IBM2 word alignment models, which requires training IBM1 models
 as a prerequisite.  We do this for both directions.
 \begin{small}
-\begin{verbatim}
-   > cd models/tm
-   > make ibm2_model
+\begin{alltt}
+   > \textbf{cd models/tm}
+   > \textbf{make ibm2_model}
    cat.sh -n 4 -pn 4 -v -n1 5 -n2 0 -bin ibm1.train.en_given_fr.gz 
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
+      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
       >& log.ibm1.train.en_given_fr
-   cat.sh -n 4 -pn 4 -v -r -n1 5 -n2 0 -bin ibm1.train.fr_given_en.gz \
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
+   cat.sh -n 4 -pn 4 -v -r -n1 5 -n2 0 -bin ibm1.train.fr_given_en.gz \bs
+      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
       >& log.ibm1.train.fr_given_en
-   cat.sh -n 4 -pn 4 -v -n1 0 -n2 5 -slen 20 -tlen 20 -bksize 20 \
-      -bin -i ibm1.train.en_given_fr.gz ibm2.train.en_given_fr.gz \
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
+   cat.sh -n 4 -pn 4 -v -n1 0 -n2 5 -slen 20 -tlen 20 -bksize 20 \bs
+      -bin -i ibm1.train.en_given_fr.gz ibm2.train.en_given_fr.gz \bs
+      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
       >& log.ibm2.train.en_given_fr
-   cat.sh -n 4 -pn 4 -v -r -n1 0 -n2 5 -slen 20 -tlen 20 -bksize 20 \
-      -bin -i ibm1.train.fr_given_en.gz ibm2.train.fr_given_en.gz \
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
+   cat.sh -n 4 -pn 4 -v -r -n1 0 -n2 5 -slen 20 -tlen 20 -bksize 20 \bs
+      -bin -i ibm1.train.fr_given_en.gz ibm2.train.fr_given_en.gz \bs
+      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
       >& log.ibm2.train.fr_given_en
-\end{verbatim}
+\end{alltt}
 \end{small}
 The \code{train_ibm} program could have been used directly, but we use
 \code{cat.sh} instead, which runs \code{train_ibm} in parallel. Here
@@ -588,8 +594,8 @@ The commands above write log files containing information about training.  For
 example, the IBM log files show convergence and pruning statistics for each
 iteration:
 \begin{small}
-\begin{verbatim}
-   > grep -h ppx log.ibm[12]*en_given_fr
+\begin{alltt}
+   > \textbf{grep -h ppx log.ibm[12]*en_given_fr}
    parallel iter (IBM1): prev ppx = 356.599, size = 1461411 word pairs.
    parallel iter (IBM1): prev ppx = 109.263, size = 1350718 word pairs.
    parallel iter (IBM1): prev ppx = 66.443, size = 1182917 word pairs.
@@ -600,21 +606,21 @@ iteration:
    parallel iter (IBM2): prev ppx = 23.4925, size = 849903 word pairs.
    parallel iter (IBM2): prev ppx = 20.8623, size = 741721 word pairs.
    parallel iter (IBM2): prev ppx = 19.5686, size = 617726 word pairs.
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 The log files also contain time and memory resource information, which you can
 summarize at any level just as you can globally:
 \begin{footnotesize}
-\begin{verbatim}
-   > make time-mem
+\begin{alltt}
+   > \textbf{make time-mem}
    find -type f -name log.\* | sort | xargs time-mem -T -m tm
       log.ibm1.train.en_given_fr:TIME-MEM  WALL TIME: 1m3s   CPU TIME: 28s   VSZ: 0.071G  RSS: 0.010G
       log.ibm1.train.fr_given_en:TIME-MEM  WALL TIME: 1m0s   CPU TIME: 28s   VSZ: 0.072G  RSS: 0.009G
       log.ibm2.train.en_given_fr:TIME-MEM  WALL TIME: 57s    CPU TIME: 24s   VSZ: 0.071G  RSS: 0.011G
       log.ibm2.train.fr_given_en:TIME-MEM  WALL TIME: 58s    CPU TIME: 24s   VSZ: 0.084G  RSS: 0.012G
    tm:TIME-MEM                             WALL TIME: 3m58s  CPU TIME: 1m44s VSZ: 0.084G  RSS: 0.012G
-\end{verbatim}
+\end{alltt}
 \end{footnotesize}
 
 The IBM models are written to files \code{ibm[12].*} and contain word
@@ -625,14 +631,14 @@ translation/alignment probabilities.
 Now we extract the joint-count phrase table from the same parallel corpus,
 using IBM2 word alignment models in both directions together.
 \begin{small}
-\begin{verbatim}
-   > make ibm2_jpt
-   gen-jpt-parallel.sh -n 4 -nw 4 -w 1 -o jpt.ibm2.train.fr-en.gz \
-      GPT -v -m 8 -ibm 2 -1 fr -2 en \
-      ibm2.train.en_given_fr.gz ibm2.train.fr_given_en.gz \
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
+\begin{alltt}
+   > \textbf{make ibm2_jpt}
+   gen-jpt-parallel.sh -n 4 -nw 4 -w 1 -o jpt.ibm2.train.fr-en.gz \bs
+      GPT -v -m 8 -ibm 2 -1 fr -2 en \bs
+      ibm2.train.en_given_fr.gz ibm2.train.fr_given_en.gz \bs
+      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
       >& log.jpt.ibm2.train.fr-en
-\end{verbatim}
+\end{alltt}
 \end{small}
 The joint-count phrase table contains the co-occurrence frequency for
 each phrase pair observed in the parallel corpus.
@@ -650,15 +656,15 @@ Although saved together in the same phrase table, they are separate probability
 models, whose relative weights will be tuned during decoder weight optimization
 (see section~\ref{COW}).
 \begin{small}
-\begin{verbatim}
-   > make ibm2_cpt
-   joint2cond_phrase_tables -prune1 100 -v -i -z -ibm 2 -1 fr -2 en \
-      -s RFSmoother -s ZNSmoother -multipr fwd -o cpt.ibm2-rf-zn.train \
-      -ibm_l2_given_l1 ibm2.train.en_given_fr.gz \
-      -ibm_l1_given_l2 ibm2.train.fr_given_en.gz \
-      -reduce-mem -no-sort jpt.ibm2.train.fr-en.gz \
+\begin{alltt}
+   > \textbf{make ibm2_cpt}
+   joint2cond_phrase_tables -prune1 100 -v -i -z -ibm 2 -1 fr -2 en \bs
+      -s RFSmoother -s ZNSmoother -multipr fwd -o cpt.ibm2-rf-zn.train \bs
+      -ibm_l2_given_l1 ibm2.train.en_given_fr.gz \bs
+      -ibm_l1_given_l2 ibm2.train.fr_given_en.gz \bs
+      -reduce-mem -no-sort jpt.ibm2.train.fr-en.gz \bs
       >& log.cpt.ibm2-rf-zn-kn3.train.fr2en
-\end{verbatim}
+\end{alltt}
 \end{small}
 The phrase table \code{cpt.ibm2-rf-zn.train.fr2en.gz}, together with its HMM
 counterpart (see below), is the main source of information for French to
@@ -678,11 +684,11 @@ reflecting the number of smoothers you use.
 %
 Here are two sample lines from this file:
 \begin{small}
-\begin{verbatim}
-   > zgrep '| proposed regulations |' cpt.ibm2-rf-zn.train.fr2en.gz 
+\begin{alltt}
+   > \textbf{zgrep '| proposed regulations |' cpt.ibm2-rf-zn.train.fr2en.gz}
    projets de règlement ||| proposed regulations ||| 0.67 1.2e-6 1 0.013
    règlements proposés ||| proposed regulations ||| 0.33 0.013 1 0.39
-\end{verbatim}
+\end{alltt}
 \end{small}
 Note that this example is carefully chosen; because of the small size of the
 training corpus, many other entries in the phrase table are not such good
@@ -694,30 +700,30 @@ Now we repeat the same steps using HMM word alignment models, using the
 ``hmm3'' variant, which is the default.  This variant corresponds to the HMM
 parameter settings we recommend using as a starting point.
 \begin{small}
-\begin{verbatim}
-   > make hmm3_cpt
-   cat.sh -n 4 -pn 4 -v -n1 0 -n2 5 -hmm -end-dist -anchor \
-      -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 -bin \
-      -i ibm1.train.en_given_fr.gz hmm3.train.en_given_fr.gz \
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
+\begin{alltt}
+   > \textbf{make hmm3_cpt}
+   cat.sh -n 4 -pn 4 -v -n1 0 -n2 5 -hmm -end-dist -anchor \bs
+      -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 -bin \bs
+      -i ibm1.train.en_given_fr.gz hmm3.train.en_given_fr.gz \bs
+      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
       >& log.hmm3.train.en_given_fr
-   cat.sh -n 4 -pn 4 -v -r -n1 0 -n2 5 -hmm -end-dist -anchor \
-      -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 -bin \
-      -i ibm1.train.fr_given_en.gz hmm3.train.fr_given_en.gz \
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
+   cat.sh -n 4 -pn 4 -v -r -n1 0 -n2 5 -hmm -end-dist -anchor \bs
+      -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 -bin \bs
+      -i ibm1.train.fr_given_en.gz hmm3.train.fr_given_en.gz \bs
+      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
       >& log.hmm3.train.fr_given_en
-   gen-jpt-parallel.sh -n 4 -nw 4 -w 1 -o jpt.hmm3.train.fr-en.gz \
-      GPT -v -m 8 -hmm -1 fr -2 en \
-      hmm3.train.en_given_fr.gz hmm3.train.fr_given_en.gz \
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
+   gen-jpt-parallel.sh -n 4 -nw 4 -w 1 -o jpt.hmm3.train.fr-en.gz \bs
+      GPT -v -m 8 -hmm -1 fr -2 en \bs
+      hmm3.train.en_given_fr.gz hmm3.train.fr_given_en.gz \bs
+      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
       >& log.jpt.hmm3.train.fr-en
-   joint2cond_phrase_tables -prune1 100 -v -i -z -hmm -1 fr -2 en \
-      -s RFSmoother -s ZNSmoother -multipr fwd -o cpt.hmm3-rf-zn.train  \
-      -ibm_l2_given_l1 hmm3.train.en_given_fr.gz \
-      -ibm_l1_given_l2 hmm3.train.fr_given_en.gz \
-      -reduce-mem -no-sort jpt.hmm3.train.fr-en.gz \
+   joint2cond_phrase_tables -prune1 100 -v -i -z -hmm -1 fr -2 en \bs
+      -s RFSmoother -s ZNSmoother -multipr fwd -o cpt.hmm3-rf-zn.train  \bs
+      -ibm_l2_given_l1 hmm3.train.en_given_fr.gz \bs
+      -ibm_l1_given_l2 hmm3.train.fr_given_en.gz \bs
+      -reduce-mem -no-sort jpt.hmm3.train.fr-en.gz \bs
       >& log.cpt.hmm3-rf-zn.train.fr2en
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 There are many variants of the HMM models.  In this framework, we've included
@@ -753,28 +759,28 @@ of distortion instances over the training corpus, using the program
 \code{dmestm}.  If you trained more than one phrase table, as we did above,
 the first step is repeated for each phrase table.
 \begin{small}
-\begin{verbatim}
-   > cd models/ldm
-   > make all
-   parallelize.pl -nolocal -psub -1 -n 30 -np 30 -w 100000 \
-      -s '../../corpora/train_fr.lc.gz' -s '../../corpora/train_en.lc.gz' \
-      'dmcount -v -m 8 \
-       ../tm/ibm2.train.en_given_fr.gz ../tm/ibm2.train.fr_given_en.gz \
-       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
-       > ldm.counts.ibm2.gz' \
+\begin{alltt}
+   > \textbf{cd models/ldm}
+   > \textbf{make all}
+   parallelize.pl -nolocal -psub -1 -n 30 -np 30 -w 100000 \bs
+      -s '../../corpora/train_fr.lc.gz' -s '../../corpora/train_en.lc.gz' \bs
+      'dmcount -v -m 8 \bs
+       ../tm/ibm2.train.en_given_fr.gz ../tm/ibm2.train.fr_given_en.gz \bs
+       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
+       > ldm.counts.ibm2.gz' \bs
       >& log.ldm.counts.ibm2
-   parallelize.pl -nolocal -psub -1 -n 30 -np 30 -w 100000 \
-      -s '../../corpora/train_fr.lc.gz' -s '../../corpora/train_en.lc.gz' \
-      'dmcount -v -m 8 \
-       ../tm/hmm3.train.en_given_fr.gz ../tm/hmm3.train.fr_given_en.gz \
-       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \
-       > ldm.counts.hmm3.gz' \
+   parallelize.pl -nolocal -psub -1 -n 30 -np 30 -w 100000 \bs
+      -s '../../corpora/train_fr.lc.gz' -s '../../corpora/train_en.lc.gz' \bs
+      'dmcount -v -m 8 \bs
+       ../tm/hmm3.train.en_given_fr.gz ../tm/hmm3.train.fr_given_en.gz \bs
+       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
+       > ldm.counts.hmm3.gz' \bs
       >& log.ldm.counts.hmm3
-   zcat -f ldm.counts.ibm2.gz ldm.counts.hmm3.gz \
-      | time-mem dmestm -s -g ldm.hmm3+ibm2.fr2en.bkoff \
-        -wtu 5 -wtg 5 -wt1 5 -wt2 5 2> log.ldm.hmm3+ibm2.fr2en \
+   zcat -f ldm.counts.ibm2.gz ldm.counts.hmm3.gz \bs
+      | time-mem dmestm -s -g ldm.hmm3+ibm2.fr2en.bkoff \bs
+        -wtu 5 -wtg 5 -wt1 5 -wt2 5 2> log.ldm.hmm3+ibm2.fr2en \bs
       | gzip > ldm.hmm3+ibm2.fr2en.gz
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 Estimating lexicalized distortion parameters (step 2, \code{dmestm}) might
@@ -816,16 +822,16 @@ several steps here.
 In this framework, we start with a template configuration file,
 \url{models/decode/canoe.ini.template}:
 \begin{small}
-\begin{verbatim}
-   > cd models/decode
-   > cat canoe.ini.template
+\begin{alltt}
+   > \textbf{cd models/decode}
+   > \textbf{cat canoe.ini.template}
    [ttable-multi-prob]
      <CPTS>
    [lmodel-file]
      <LMS>
    [weight-f] <ENABLE_FTM>
    ...
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 The framework will automatically insert the phrase tables and language models
@@ -852,25 +858,25 @@ processing is also done to insert the necessary LDM parameters into the
 
 So we make the \code{canoe.ini} file:
 \begin{small}
-\begin{verbatim}
-   > make canoe.ini
-   cat canoe.ini.template \
-      | sed -e 's/<SL>/fr/g' \
-            -e 's/<TL>/en/g' \
-            -e 's#<CPTS>#models/tm/cpt.hmm3-rf-zn.train.fr2en.gz models/tm/[...]' \
-            -e 's#<LMS>#models/lm/train_en-kn-5g.binlm.gz#g' \
-            -e 's/^\(\[\(weight-f\|ftm\)\]\)/##mid##\1/' \
+\begin{alltt}
+   > \textbf{make canoe.ini}
+   cat canoe.ini.template \bs
+      | sed -e 's/<SL>/fr/g' \bs
+            -e 's/<TL>/en/g' \bs
+            -e 's#<CPTS>#models/tm/cpt.hmm3-rf-zn.train.fr2en.gz models/tm/[...]' \bs
+            -e 's#<LMS>#models/lm/train_en-kn-5g.binlm.gz#g' \bs
+            -e 's/^\bs(\bs[\bs(weight-f\bs|ftm\bs)\bs]\bs)/##mid##\bs1/' \bs
            > tmp.canoe.ini
-   WT=$(perl -e 'print 1; print ":1" foreach (2..`configtool nt tmp.canoe.ini`)'); \
-   cat tmp.canoe.ini \
-      | sed -e "s/^##mid##//" -e "s/<ENABLE_FTM>/$WT/" \
-      | configtool -p "args:-dist-phrase-swap -dist-limit-ext \
-           -lex-dist-model-file models/ldm/ldm.hmm3+ibm2.fr2en.gz -distorti[...]" \
+   WT=$(perl -e 'print 1; print ":1" foreach (2..`configtool nt tmp.canoe.ini`)'); \bs
+   cat tmp.canoe.ini \bs
+      | sed -e "s/^##mid##//" -e "s/<ENABLE_FTM>/$WT/" \bs
+      | configtool -p "args:-dist-phrase-swap -dist-limit-ext \bs
+           -lex-dist-model-file models/ldm/ldm.hmm3+ibm2.fr2en.gz -distorti[...]" \bs
            > canoe.ini
    rm tmp.canoe.ini
    configtool check canoe.ini
    ok
-\end{verbatim}
+\end{alltt}
 \end{small}
 This command silently creates a soft link to the \code{models} directory---this
 way, all models appear to be relative to the current directly, which makes it easier
@@ -884,8 +890,8 @@ can be found.
 
 Here is the result:
 \begin{small}
-\begin{verbatim}
-   > cat canoe.ini
+\begin{alltt}
+   > \textbf{cat canoe.ini}
    [ttable-multi-prob] 
       models/tm/cpt.hmm3-rf-zn.train.fr2en.gz
       models/tm/cpt.ibm2-rf-zn.train.fr2en.gz
@@ -912,7 +918,7 @@ Here is the result:
    [segmentation-model] none
    [bypass-marked]
    [cube-pruning]
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 When using this framework, do not modify \code{canoe.ini} directly.  To
@@ -949,15 +955,15 @@ alternative translations are available, it is advantageous to use them.}
 Here we call the temporary directory \code{foos}, and we use the \code{dev1}
 files for weight tuning:
 \begin{small}
-\begin{verbatim}
-   > make all
+\begin{alltt}
+   > \textbf{make all}
    mkdir -p foos
-   cow.sh -v -parallel:"-n 4" -maxiter 15 -nbest-list-size 100 \
+   cow.sh -v -parallel:"-n 4" -maxiter 15 -nbest-list-size 100 \bs
       -filt -nofloor -workdir foos -f canoe.ini
-      ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc \
+      ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc \bs
       >& log.canoe.ini.cow
    rm -f -r foos *.FILT.gz *.FILT.bkoff canoe.ini.FILT canoe.ini.FILT.cow
-\end{verbatim}
+\end{alltt}
 \end{small}
 Because \code{cow.sh} takes a while to run (between 30 minutes and three
 hours in this example, depending on your system)\footnote{Running time for
@@ -981,8 +987,8 @@ monotonically, as can be seen in several places in the \code{rescore-results}
 file obtained with this example:
 % cat rescore-results | perl -pe 's/(\.\d\d)\d+(:| \S|$)/\1\2/g; s/   -d/  -d/' | cut -c1-92
 \begin{footnotesize}
-\begin{verbatim}
-> cat rescore-results
+\begin{alltt}
+> \textbf{cat rescore-results}
 BLEU score: 0.165623  -d 1:1:1:1:1:1:1 -w 0 -lm 1 -tm 1:1:1:1 -ftm 1:1:1:1
 BLEU score: 0.012741  -d 0.03:0.05:-1:-0.01:-0.00:-0.00:-0.01 -w -0.11 -lm 0.38 -tm 0.01:0.0
 BLEU score: 0.105025  -d 0.75:0.31:-0.23:-1:-0.04:-0.24:-0.07 -w -0.35 -lm 0.76 -tm 0.02:-0.
@@ -998,7 +1004,7 @@ BLEU score: 0.177097  -d 0.55:1:0.01:-0.36:-0.04:0.20:-0.24 -w -0.53 -lm 0.53 -t
 BLEU score: 0.201575  -d 0.89:1:-0.20:-0.11:0.30:0.32:-0.17 -w -0.42 -lm 0.55 -tm 0.13:0.02:
 BLEU score: 0.202520  -d 0.77:0.54:-0.11:-0.11:-0.02:-0.00:-0.01 -w -0.22 -lm 1 -tm 0.11:0.0
 BLEU score: 0.198976  -d 1:0.41:-0.30:0.00:0.05:0.79:-0.62 -w -0.19 -lm 0.69 -tm 0.08:0.00:-
-\end{verbatim}
+\end{alltt}
 \end{footnotesize}
 When the last iteration still shows an improvement (which is almost the case
 here), it is sometimes a sign that we should have allowed \code{cow.sh} to
@@ -1032,8 +1038,8 @@ The final output from \code{cow.sh} is written to the file
 adds the weights tuned on the development corpus:
 % cat canoe.ini.cow | perl -pe 's/(\.\d\d\d\d\d\d)\d+/\1/g; s/(\.\d\d\d\d\d\d)\d+/\1/g if /weight-d/; s/^/   /'
 \begin{small}
-\begin{verbatim}
-   > cat canoe.ini.cow
+\begin{alltt}
+   > \textbf{cat canoe.ini.cow}
    [ttable-multi-prob] 
       models/tm/cpt.hmm3-rf-zn.train.fr2en.gz
       models/tm/cpt.ibm2-rf-zn.train.fr2en.gz
@@ -1064,7 +1070,7 @@ adds the weights tuned on the development corpus:
    [segmentation-model] none
    [bypass-marked]
    [cube-pruning]
-\end{verbatim}
+\end{alltt}
 \end{small}
 The \code{weight-} parameters above pertain to, the distortion
 model, the word-length penalty, the language model, the backward scores of the
@@ -1115,18 +1121,18 @@ weights for these features.
 The default model created by this framework contains a small set of useful
 features:
 \begin{small}
-\begin{verbatim}
-   > cd models/rescore
-   > make rescore-model.ini
-   configtool rescore-model:ffvals models/decode/canoe.ini.cow \
+\begin{alltt}
+   > \textbf{cd models/rescore}
+   > \textbf{make rescore-model.ini}
+   configtool rescore-model:ffvals models/decode/canoe.ini.cow \bs
       | cut -f 1 -d ' ' > rescore-model.ini
-   cat rescore-model.template \
-      | sed -e "s#IBM\\(.\\)FWD#models/tm/ibm\\1.train.en_given_fr.gz#" \
-            -e "s#IBM\\(.\\)BKW#models/tm/ibm\\1.train.fr_given_en.gz#" \
-            -e "s#HMM\\(.\\)FWD#models/tm/hmm\\1.train.en_given_fr.gz#" \
-            -e "s#HMM\\(.\\)BKW#models/tm/hmm\\1.train.fr_given_en.gz#" \
+   cat rescore-model.template \bs
+      | sed -e "s#IBM\bs\bs(.\bs\bs)FWD#models/tm/ibm\bs\bs1.train.en_given_fr.gz#" \bs
+            -e "s#IBM\bs\bs(.\bs\bs)BKW#models/tm/ibm\bs\bs1.train.fr_given_en.gz#" \bs
+            -e "s#HMM\bs\bs(.\bs\bs)FWD#models/tm/hmm\bs\bs1.train.en_given_fr.gz#" \bs
+            -e "s#HMM\bs\bs(.\bs\bs)BKW#models/tm/hmm\bs\bs1.train.fr_given_en.gz#" \bs
       >> rescore-model.ini
-   > cat rescore-model.ini
+   > \textbf{cat rescore-model.ini}
    FileFF:ffvals,1
    FileFF:ffvals,2
    FileFF:ffvals,3
@@ -1169,7 +1175,7 @@ features:
    QuotMismatch:ef
    #CacheLM:<src>.id
    RatioFF
-\end{verbatim}
+\end{alltt}
 \end{small}
 There are two kinds of features included in our rescoring model:
 \begin{itemize}
@@ -1204,23 +1210,23 @@ for details). In this framework, parallelism is controlled via the
 \code{PARALLELISM\us{}LEVEL\us{}TUNE\us{}RESCORE} variable in
 \code{Makefile.params}.}
 \begin{small}
-\begin{verbatim}
-   > make all
+\begin{alltt}
+   > \textbf{make all}
    cat models/decode/canoe.ini.cow > canoe.ini.cow.dev2
    configtool check canoe.ini.cow.dev2
    ok
    Tuning the rescoring model.
-   rat.sh -lb -n 4 train -v -K 1000 -o rescore-model \
-      -msrc ../../corpora/dev2_fr.rule -f canoe.ini.cow.dev2 rescore-model.ini \
+   rat.sh -lb -n 4 train -v -K 1000 -o rescore-model \bs
+      -msrc ../../corpora/dev2_fr.rule -f canoe.ini.cow.dev2 rescore-model.ini \bs
       ../../corpora/dev2_fr.lc ../../corpora/dev2_en.lc >& log.rescore-model
    rm -f -r workdir-dev2_fr.rule-1000best
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 The output from \code{rat.sh} is written to the file \code{rescore-model}:
 \begin{small}
-\begin{verbatim}
-   > cat rescore-model
+\begin{alltt}
+   > \textbf{cat rescore-model}
    FileFF:ffvals,1 0.146268636
    FileFF:ffvals,2 0.0670145303
    FileFF:ffvals,3 -0.02778978646
@@ -1263,7 +1269,7 @@ The output from \code{rat.sh} is written to the file \code{rescore-model}:
    QuotMismatch:ef -5.882521691e-06
    #CacheLM:<src>.id 0
    RatioFF -0.8815089464
-\end{verbatim}
+\end{alltt}
 \end{small}
 This is a copy of \code{rescore-model.ini} with a weight assigned to each
 feature. Other by-products created by \code{rat.sh} are found in the directory
@@ -1292,12 +1298,12 @@ the models we need for CE: we need an LM for the source language. Edit
 \code{make confidence} in the main directory, all necessary steps will be done 
 automatically.  As usual, we'll break it down a bit.
 \begin{small}
-\begin{verbatim}
-   > cd models
-   > make lm.fr
+\begin{alltt}
+   > \textbf{cd models}
+   > \textbf{make lm.fr}
    make -C lm all LM_LANG=fr
    [...]
-\end{verbatim}
+\end{alltt}
 \end{small}
 This command will build the source-side LM, using the toolkit you selected
 earlier.
@@ -1316,21 +1322,21 @@ details.
 
 Now we build the input CE model file:
 \begin{small}
-\begin{verbatim}
-   > cd models/confidence
-   > make ce-notm.ini
+\begin{alltt}
+   > \textbf{cd models/confidence}
+   > \textbf{make ce-notm.ini}
    ln -fs models/decode/canoe.ini.cow canoe.ini.cow
    configtool check canoe.ini.cow
    ok
-   cat ce-notm.template \
-      | sed -e "s#IBM\\(.\\)FWD#models/tm/ibm\\1.train.en_given_fr.gz#" \
-            -e "s#IBM\\(.\\)BKW#models/tm/ibm\\1.train.fr_given_en.gz#" \
-            -e "s#HMM\\(.\\)FWD#models/tm/hmm\\1.train.en_given_fr.gz#" \
-            -e "s#HMM\\(.\\)BKW#models/tm/hmm\\1.train.fr_given_en.gz#" \
-            -e "s#LM_SRC#models\/lm\/train_fr-kn-5g.binlm.gz#" \
-            -e "s#LM_TGT#models\/lm\/train_en-kn-5g.binlm.gz#" \
+   cat ce-notm.template \bs
+      | sed -e "s#IBM\bs\bs(.\bs\bs)FWD#models/tm/ibm\bs\bs1.train.en_given_fr.gz#" \bs
+            -e "s#IBM\bs\bs(.\bs\bs)BKW#models/tm/ibm\bs\bs1.train.fr_given_en.gz#" \bs
+            -e "s#HMM\bs\bs(.\bs\bs)FWD#models/tm/hmm\bs\bs1.train.en_given_fr.gz#" \bs
+            -e "s#HMM\bs\bs(.\bs\bs)BKW#models/tm/hmm\bs\bs1.train.fr_given_en.gz#" \bs
+            -e "s#LM_SRC#models\/lm\/train_fr-kn-5g.binlm.gz#" \bs
+            -e "s#LM_TGT#models\/lm\/train_en-kn-5g.binlm.gz#" \bs
       > ce-notm.ini
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 The result is a \code{ce-notm.ini} file with the LMs and IBM models filled in,
@@ -1338,13 +1344,13 @@ which we now feed to \code{ce_translate.pl -train}.  The output will be a
 trained CE model.
 
 \begin{small}
-\begin{verbatim}
-   > make all
-   ce_translate.pl -n=4 -train -src=fr -tgt=en -notok -nolc -nl=s \
-      -k=5 -desc=ce-notm.ini canoe.ini.cow ce_model \
-      ../../corpora/devCE_fr.lc ../../corpora/devCE_en.lc \
+\begin{alltt}
+   > \textbf{make all}
+   ce_translate.pl -n=4 -train -src=fr -tgt=en -notok -nolc -nl=s \bs
+      -k=5 -desc=ce-notm.ini canoe.ini.cow ce_model \bs
+      ../../corpora/devCE_fr.lc ../../corpora/devCE_en.lc \bs
       >& log.ce_model.cem
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 The trained model is saved to the file \code{ce_model.cem}.  This file is
@@ -1380,17 +1386,17 @@ command line, i.e., type \code{make translate DO\us{}RESCORING=} instead of
 just \code{make translate}. This syntax can always be used to override a variable
 definition on a given call to \code{make}.}
 \begin{small}
-\begin{verbatim}
-   > cd translate
+\begin{alltt}
+   > \textbf{cd translate}
    > # edit ../Makefile.params and comment out DO_RESCORING = 1
-   > make translate
+   > \textbf{make translate}
    cat models/decode/canoe.ini.cow > canoe.ini.cow.test
    configtool check canoe.ini.cow.test
    ok
    Generating test.out
-   canoe-parallel.sh -lb -n 4 canoe -f canoe.ini.cow.test \
+   canoe-parallel.sh -lb -n 4 canoe -f canoe.ini.cow.test \bs
       < ../corpora/test_fr.rule > test.out 2> log.test.out
-\end{verbatim}
+\end{alltt}
 \end{small}
 This produces the output file \code{test.out}, containing one line for each
 source line in \url{test.rule}.
@@ -1401,11 +1407,11 @@ If you executed the commands in the \emph{Decoding Only} section above, please
 run \code{make clean} before proceeding.  Also, edit \code{Makefile.params}
 again and set (or uncomment the line) \code{DO_RESCORING = 1}.
 \begin{small}
-\begin{verbatim}
-   > cd translate
+\begin{alltt}
+   > \textbf{cd translate}
    > # edit ../Makefile.params and set DO_RESCORING = 1
-   > make clean
-\end{verbatim}
+   > \textbf{make clean}
+\end{alltt}
 \end{small}
 
 The second option for translating is to generate $n$-best lists and rescore
@@ -1414,18 +1420,18 @@ the decoder model tuned in section~\ref{COW}, and then the rescoring model
 tuned in section~\ref{RAT}.  The \code{rat.sh} script, used in translation
 mode, performs both steps for us:
 \begin{small}
-\begin{verbatim}
-   > make translate
+\begin{alltt}
+   > \textbf{make translate}
    cat models/decode/canoe.ini.cow > canoe.ini.cow.test
    configtool check canoe.ini.cow.test
    ok
    Generating test.rat
-   rat.sh -lb -n 4 trans -v -K 1000 -msrc ../corpora/test_fr.rule \
-      -f canoe.ini.cow.test models/rescore/rescore-model \
-      ../corpora/test_fr.lc >& log.test.rat \
+   rat.sh -lb -n 4 trans -v -K 1000 -msrc ../corpora/test_fr.rule \bs
+      -f canoe.ini.cow.test models/rescore/rescore-model \bs
+      ../corpora/test_fr.lc >& log.test.rat \bs
       && mv test_fr.rule.rat test.rat
    cp workdir-test_fr.rule-1000best/1best test.out
-\end{verbatim}
+\end{alltt}
 \end{small}
 This produces both \code{test.out}, the output of the decoder, and
 \code{test.rat}, the best translation according to the rescoring model.  The
@@ -1442,15 +1448,15 @@ one-best output of the decoder.  We use the decoder model tuned in
 section~\ref{COW}, and then the CE model trained in section~\ref{CE}.  The
 program \code{ce_translate.pl} handles both of these steps:
 \begin{small}
-\begin{verbatim}
-   > cd translate
-   > make confidence
+\begin{alltt}
+   > \textbf{cd translate}
+   > \textbf{make confidence}
    ln -fs models/confidence/ce_model.cem
    Generating test.ce
-   ce_translate.pl -n=4 -notok -nolc -nl=s -src=fr -tgt=en \
-      -test=../corpora/test_en.lc -out=test.ce canoe.ini.cow.test \
+   ce_translate.pl -n=4 -notok -nolc -nl=s -src=fr -tgt=en \bs
+      -test=../corpora/test_en.lc -out=test.ce canoe.ini.cow.test \bs
       ce_model.cem ../corpora/test_fr.lc 2> log.test.ce
-\end{verbatim}
+\end{alltt}
 \end{small}
 The main output file, \code{test.ce}, is different from the \code{test.out}
 file we saw in the two previous steps in that 1) a confidence estimate is added
@@ -1468,17 +1474,17 @@ detokenizing.
 Truecasing is done by the \code{truecase.pl} script using the model trained
 previously:
 \begin{small}
-\begin{verbatim}
-   > make tc
+\begin{alltt}
+   > \textbf{make tc}
    TrueCasing test.out.tc
-   truecase.pl --ucBOSEncoding=UTF-8 -text=test.out \
-      -lm=models/tc/train_en-kn-3g.binlm.gz -map=models/tc/train_en.map \
+   truecase.pl --ucBOSEncoding=UTF-8 -text=test.out \bs
+      -lm=models/tc/train_en-kn-3g.binlm.gz -map=models/tc/train_en.map \bs
       > test.out.tc 2> log.test.out.tc
    TrueCasing test.rat.tc
-   truecase.pl --ucBOSEncoding=UTF-8 -text=test.rat \
-      -lm=models/tc/train_en-kn-3g.binlm.gz -map=models/tc/train_en.map \
+   truecase.pl --ucBOSEncoding=UTF-8 -text=test.rat \bs
+      -lm=models/tc/train_en-kn-3g.binlm.gz -map=models/tc/train_en.map \bs
       > test.rat.tc 2> log.test.rat.tc
-\end{verbatim}
+\end{alltt}
 \end{small}
 Note the \code{--ucBOSEncoding=UTF-8} option: it tells the truecaser to
 upper-case the beginning of each sentence (BOS), assuming the output is encoded
@@ -1493,8 +1499,8 @@ correctly by this script. As for other encodings, latin1 and cp-1252 are
 supported by \code{detokenize.pl}.
 
 \begin{small}
-\begin{verbatim}
-   > make detok
+\begin{alltt}
+   > \textbf{make detok}
    Detokenizing test.out
    udetokenize.pl -lang=en test.out test.out.detok
    Detokenizing test.out.tc
@@ -1503,7 +1509,7 @@ supported by \code{detokenize.pl}.
    udetokenize.pl -lang=en test.rat.tc test.rat.tc.detok
    Detokenizing test.rat
    udetokenize.pl -lang=en test.rat test.rat.detok
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 Detokenizing is not performed here on the \code{test.ce} file because it was
@@ -1522,8 +1528,8 @@ based on the number of short word sequences that the translation has in common
 with the references, and varies between 0 for no matches to 1 for a perfect
 match. BLEU is calculated by the program \code{bleumain}:
 \begin{small}
-\begin{verbatim}
-   > make bleu
+\begin{alltt}
+   > \textbf{make bleu}
    Calculating BLEU for test.out.bleu
    bleumain -c test.out ../corpora/test_en.lc > test.out.bleu
    Calculating BLEU for test.rat.bleu
@@ -1531,7 +1537,7 @@ match. BLEU is calculated by the program \code{bleumain}:
    grep Human *.bleu
    test.out.bleu:Human readable value: 18.11 +/- 3.17
    test.rat.bleu:Human readable value: 18.33 +/- 3.29
-\end{verbatim}
+\end{alltt}
 \end{small}
 The human readable value is the BLEU score multiplied by 100 rounded to 2
 decimals. The full output from \code{bleumain}, saved in \code{*.bleu},
@@ -1551,12 +1557,12 @@ test set, it seems unlikely that the difference is statistically
 significant. To test this hypothesis, we can use \code{bleucompare}, which does
 a comparison using pairwise bootstrap resampling:
 \begin{small}
-\begin{verbatim}
-   > bleucompare test.rat test.out REFS ../corpora/test_en.lc 
+\begin{alltt}
+   > \textbf{bleucompare test.rat test.out REFS ../corpora/test_en.lc }
    Comparing using BLEU
    test.rat got max BLEU score in 64.3% of samples
    test.out got max BLEU score in 35.7% of samples
-\end{verbatim}
+\end{alltt}
 \end{small}
 This indicates that the difference is not significant.  (Note that you may get
 completely different results here, since the training corpus used is much too
@@ -1596,8 +1602,8 @@ You can then copy this structure to your run-time server by using a recursive
 copy command that dereferences symbolic links.
 
 \begin{small}
-\begin{verbatim}
-   > make portageLive
+\begin{alltt}
+   > \textbf{make portageLive}
    make -C models portageLive
    mkdir -p portageLive
    [...]
@@ -1609,7 +1615,7 @@ copy command that dereferences symbolic links.
    rsync -Larz models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>
    scp -r models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>
    cp -Lr models/portageLive/* /<DEST_DIR>
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 The three sample commands printed at the end of the execution show you how to
@@ -1618,8 +1624,8 @@ perform a dereferencing copy of the structure created.
 You can use \code{du -hL} to find out the size that structure will have once
 fully expanded:
 \begin{small}
-\begin{verbatim}
-   > du -hL models/portageLive/
+\begin{alltt}
+   > \textbf{du -hL models/portageLive/}
    13M     models/portageLive/models/ldm/ldm.hmm3+ibm2.fr2en.tpldm
    13M     models/portageLive/models/ldm
    12M     models/portageLive/models/tm/cpt.fr2en.tppt
@@ -1633,7 +1639,7 @@ fully expanded:
    41M     models/portageLive/models
    41M     models/portageLive/
    
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 
@@ -1646,8 +1652,8 @@ usage from all the parts of the framework, as shown in Figure~\ref{FigTimeMem}.
 \caption{Time and memory resource summary}
 \label{FigTimeMem}
 \begin{footnotesize}
-\begin{verbatim}
-> make time-mem
+\begin{alltt}
+> \textbf{make time-mem}
 Resource summary for $PORTAGE/toy.experiment:
       log.ldm.counts.hmm3:TIME-MEM              WALL TIME: 23s      CPU TIME: 18s        VSZ: 0.062G   RSS: 0.007G
       log.ldm.counts.ibm2:TIME-MEM              WALL TIME: 11s      CPU TIME: 5s         VSZ: 0.062G   RSS: 0.007G
@@ -1692,7 +1698,7 @@ Resource summary for $PORTAGE/toy.experiment:
       log.test.rat.tc:TIME-MEM                  WALL TIME: 1s       CPU TIME: 0s         VSZ: 0.050G   RSS: 0.009G
    translate:TIME-MEM                           WALL TIME: 4m27s    CPU TIME: 12m11s     VSZ: 0.099G   RSS: 0.020G
 TIME-MEM                                        WALL TIME: 48m53s   CPU TIME: 1h33m52s   VSZ: 0.528G   RSS: 0.459G
-\end{verbatim}
+\end{alltt}
 \end{footnotesize}
 \end{sidewaysfigure}
 
@@ -1721,8 +1727,8 @@ The second type of resource summary you can produce is the disk space occupied
 by the models.  When you run \code{make summary}, you will first get the
 \code{time-mem} report, then the following disk space report:
 \begin{small}
-\begin{verbatim}
-   > make summary
+\begin{alltt}
+   > \textbf{make summary}
    [output from time-mem plus:]
    
    Disk usage for all models:
@@ -1768,7 +1774,7 @@ by the models.  When you run \code{make summary}, you will first get the
    3.2M    models/portageLive/models/lm
    41M     models/portageLive/models
    41M     models/portageLive
-\end{verbatim}
+\end{alltt}
 \end{small}
 
 This report differs from a simple \code{du -h} in that it looks specifically
