@@ -18,7 +18,7 @@ endif
 # User definable variables
 
 # This is the from/source language
-SRC_LANG ?= en
+SRC_LANG ?= en 
 # This is the to/target language
 TGT_LANG ?= fr
 
@@ -128,6 +128,18 @@ ifeq (${MAKELEVEL},0)
    $(shell env echo -e "Running in local mode.\n" >&2)
 endif
 endif
+
+
+########################################
+# Sanitizing user inputs.
+# Removing accidental user spaces which would otherwise confuse make.
+SRC_LANG := $(strip ${SRC_LANG})
+TGT_LANG := $(strip ${TGT_LANG})
+TRAIN_LM := $(strip ${TRAIN_LM})
+TRAIN_TM := $(strip ${TRAIN_TM})
+TUNE_DECODE := $(strip ${TUNE_DECODE})
+TUNE_RESCORE := $(strip ${TUNE_RESCORE})
+TUNE_CE := $(strip ${TUNE_CE})
 
 
 ################################################################################
