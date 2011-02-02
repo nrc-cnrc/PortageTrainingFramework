@@ -74,10 +74,6 @@ DO_RESCORING = 1
 # Comment out to disable truecasing.
 DO_TRUECASING = 1
 
-# If you have ICU installed and have compiled PORTAGE shared with icu,
-# uncomment the following line.
-#ICU = 1
-
 # If you are on a cluster that is run-parallel.sh friendly, define the
 # following to force cluster mode.  You normally don't need to do so, though,
 # since clusters are detected automatically below.
@@ -205,6 +201,17 @@ endif
 # Some commands shouldn't be run with the cluster shell, will use this one
 # instead.
 GUARD_SHELL = /bin/bash
+
+
+# Auto-detecting if Portage was compiled with ICU.
+ifeq ($(strip $(shell portage_info -with-icu > /dev/null && echo "true")),true)
+$(info Portage was compiled with ICU)
+ICU = 1
+else
+$(info Portage was compiled without ICU)
+endif
+
+
 
 ########################################
 # VALIDATION
