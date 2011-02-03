@@ -2,8 +2,8 @@
 # vim:noet:ts=3:nowrap:filetype=make
 # $Id$
 
-# @file
-# @brief
+# @file Makefile
+# @brief Create mixlm files.
 #
 # @author Samuel Larkin
 #
@@ -26,7 +26,7 @@ include ../../Makefile.toolkit
 
 
 # What is this module's name.
-MODULE_NAME ?= tc
+MODULE_NAME ?= mixlm
 
 # Define LM_TOOLKIT=SRI if you want to use SRILM
 # Define LM_TOOLKIT=MIT if you want to use MITLM
@@ -40,7 +40,18 @@ export ORDER ?= 5
 
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
-.SECONDARY:
+# We actually want to get ride off %.distances %.weights
+.INTERMEDIATE: components
+
+
+
+# Watch out for already trained lms.
+#vpath %-kn-5g.binlm${GZ} ../lm
+vpath %_${SRC_LANG}${LANGX} ../../corpora
+vpath %_${TGT_LANG}${LANGX} ../../corpora
+
+
+SHELL = ${GUARD_SHELL}
 
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
@@ -58,46 +69,41 @@ all:
 endif
 
 
+
 .PHONY: clean
 clean: SHELL=${GUARD_SHELL}
+clean:
+	${RM} components
+	${RM} *.distances *.weights *.mixlm 
 
 
-$(shell mkdir -p cmpts.src cmpts.tgt)
+$(shell ln -fs ../../models)
 
-vpath %-kn-5g.binlm${GZ} ../lm
-vpath %-kn-5g.binlm${GZ} cmpts.src
-vpath %_${SRC_LANG}${LANGX} ../../corpora
-vpath %_${TGT_LANG}${LANGX} ../../corpora
-
-#TODO: watch out for duplicate lm in lm/ & mixlm/
-#lm-train_en-kn-5g.binlm.gz
-#cmpts.src/%_${SRC_LANG}-kn-5g.binlm${GZ}: %_${SRC_LANG}-kn-5g.binlm${GZ}
-#	ln -s $< $@
-
+# Create Language Models.
 %_${SRC_LANG}-kn-5g.binlm${GZ}:
-	${MAKE} -f ../lm/Makefile LM_LANG=${SRC_LANG} TRAIN_LM=$* $@
+	[[ -s "../lm/$@" ]] \
+	&& ln -s ../lm/$@ \
+	|| ${MAKE} -f ../lm/Makefile LM_LANG=${SRC_LANG} TRAIN_LM=$* $@
 	
 %_${TGT_LANG}-kn-5g.binlm${GZ}:
-	${MAKE} -f ../lm/Makefile LM_LANG=${TGT_LANG} TRAIN_LM=$* $@
-	
+	[[ -s "../lm/$@" ]] \
+	&& ln -s ../lm/$@ \
+	|| ${MAKE} -f ../lm/Makefile LM_LANG=${TGT_LANG} TRAIN_LM=$* $@
+
+
+
 .PHONY: mixlm
-mixlm: test1.distances
-mixlm: test1.weights
-mixlm: test1.mixlm
-#mixlm: $(addsuffix .mixlm, ${HELDOUT_SET})
+mixlm: $(addsuffix .mixlm, ${HELDOUT_SET})
 
 components:
 	for f in ${MIXLM}; do echo $$f; done > $@
 
-#test1_en.lc
-#mx-calc-distances.sh -v -d cmpts.src/ -e -kn-5g_${SRC_LANG}.binlm.gz em components srcfile > $@
 %.distances: $(addsuffix _${SRC_LANG}-kn-5g.binlm${GZ}, ${MIXLM}) components %_${SRC_LANG}${LANGX}
-	mx-calc-distances.sh -v -e _${SRC_LANG}-kn-5g.binlm.gz em $(filter-out %_${SRC_LANG}-kn-5g.binlm${GZ}, $+) > $@
+	mx-calc-distances.sh -v -d models/mixlm/ -e _${SRC_LANG}-kn-5g.binlm.gz em $(filter-out %_${SRC_LANG}-kn-5g.binlm${GZ}, $+) > $@
 
 %.weights: %.distances
 	mx-dist2weights -v normalize $< > $@
 
-#mx-mix-models.sh -d cmpts.tgt/ -e .binlm.gz mixlm $*.weights components srcfile > $@
 %.mixlm: $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM}) %.weights components %_${TGT_LANG}${LANGX}
-	mx-mix-models.sh -e _${TGT_LANG}-kn-5g.binlm.gz mixlm $(filter-out %_${TGT_LANG}-kn-5g.binlm${GZ}, $+) > $@
+	mx-mix-models.sh -d models/mixlm/ -e _${TGT_LANG}-kn-5g.binlm.gz mixlm $(filter-out %_${TGT_LANG}-kn-5g.binlm${GZ}, $+) > $@
 
