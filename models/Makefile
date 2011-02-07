@@ -159,6 +159,8 @@ endif
 ifdef DO_CE
 tune: confidence
 
+models: lm.${SRC_LANG}
+
 portageLive: portageLive_models_lm_src
 portageLive: portageLive_models_confidence
 
