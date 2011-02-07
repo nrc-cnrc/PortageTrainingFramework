@@ -52,7 +52,8 @@ RJOINT  ?= ${lang2}-${lang1}
 RJOINTX ?= ${RJOINT}.gz
 
 # Lets define a parallelism level if the user forgets about it.
-PARALLELISM_LEVEL_TM ?= $(shell grep processor /proc/cpuinfo | \wc -l)
+NUM_LOCAL_CPUS := $(shell grep processor /proc/cpuinfo | \wc -l)
+PARALLELISM_LEVEL_TM ?= ${NUM_LOCAL_CPUS}
 
 # Maximum phrase length.
 M ?= 8
