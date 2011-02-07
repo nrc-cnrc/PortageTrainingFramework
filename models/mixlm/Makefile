@@ -38,6 +38,9 @@ export ORDER ?= 5
 
 
 
+$(shell ln -fs ../../models)
+
+
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
 # We actually want to get ride off %.distances %.weights
@@ -56,7 +59,8 @@ SHELL = ${GUARD_SHELL}
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	@echo "Some help message not yet defined."
+	@echo "To train your language models, type: make all"
+	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
 
@@ -70,14 +74,45 @@ endif
 
 
 
-.PHONY: clean
+########################################
+# Clean up
+.PHONY: clean clean.content clean.logs hide.logs
 clean: SHELL=${GUARD_SHELL}
-clean:
-	${RM} components
+clean: clean.content clean.logs
+
+clean.content: SHELL=${GUARD_SHELL}
+clean.content:
+	${RM} components models
 	${RM} *.distances *.weights *.mixlm 
+	${RM} *.lm.gz *.binlm.gz
+
+clean.logs: SHELL=${GUARD_SHELL}
+clean.logs:
+	${RM} log.*
+	${RM} run-parallel-logs-*
+	${RM} -r .logs
+
+# Hide logs from user's view into .logs
+hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: hide_logs_sub
 
 
-$(shell ln -fs ../../models)
+
+########################################
+# Resources Summary
+.PHONY: time-mem
+time-mem: SHELL=${GUARD_SHELL}
+time-mem: resource_summary_sub
+
+
+
+.PHONY: sublm
+sublm: sublm.${SRC_LANG}
+sublm: sublm.${TGT_LANG}
+sublm.${SRC_LANG}: $(addsuffix _${SRC_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
+sublm.${TGT_LANG}: $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
+
+models/mixlm/%-kn-5g.binlm${GZ}: %-kn-5g.binlm${GZ}
 
 # Create Language Models.
 %_${SRC_LANG}-kn-5g.binlm${GZ}:
@@ -96,14 +131,15 @@ $(shell ln -fs ../../models)
 mixlm: $(addsuffix .mixlm, ${HELDOUT_SET})
 
 components:
-	for f in ${MIXLM}; do echo $$f; done > $@
+	echo "$(strip ${MIXLM})" | tr " " "\n" > $@
 
-%.distances: $(addsuffix _${SRC_LANG}-kn-5g.binlm${GZ}, ${MIXLM}) components %_${SRC_LANG}${LANGX}
+#%.distances: sublm.${SRC_LANG} components %_${SRC_LANG}${LANGX}
+%.distances: $(addprefix models/mixlm/, $(addsuffix _${SRC_LANG}-kn-5g.binlm${GZ}, ${MIXLM})) components %_${SRC_LANG}${LANGX}
 	mx-calc-distances.sh -v -d models/mixlm/ -e _${SRC_LANG}-kn-5g.binlm.gz em $(filter-out %_${SRC_LANG}-kn-5g.binlm${GZ}, $+) > $@
 
 %.weights: %.distances
 	mx-dist2weights -v normalize $< > $@
 
-%.mixlm: $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM}) %.weights components %_${TGT_LANG}${LANGX}
+#%.mixlm: sublm.${TGT_LANG} %.weights components %_${TGT_LANG}${LANGX}
+%.mixlm: $(addprefix models/mixlm/, $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM})) %.weights components %_${TGT_LANG}${LANGX}
 	mx-mix-models.sh -d models/mixlm/ -e _${TGT_LANG}-kn-5g.binlm.gz mixlm $(filter-out %_${TGT_LANG}-kn-5g.binlm${GZ}, $+) > $@
-
