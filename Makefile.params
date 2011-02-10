@@ -102,7 +102,7 @@ PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
 PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= 10
 PARALLELISM_LEVEL_TRANSLATE    ?= 10
 ifeq (${MAKELEVEL},0)
-   $(shell env echo -e "Running in cluster mode.\n" >&2)
+   $(info Running in cluster mode.)
 endif
 else
 # Make sure we run in serial mode.
@@ -121,7 +121,7 @@ PARALLELISM_LEVEL_TUNE_RESCORE ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= ${NCPUS}
 PARALLELISM_LEVEL_TRANSLATE    ?= ${NCPUS}
 ifeq (${MAKELEVEL},0)
-   $(shell env echo -e "Running in local mode.\n" >&2)
+   $(info Running in local mode.)
 endif
 endif
 
@@ -205,10 +205,14 @@ GUARD_SHELL = /bin/bash
 
 # Auto-detecting if Portage was compiled with ICU.
 ifeq ($(strip $(shell portage_info -with-icu > /dev/null && echo "true")),true)
-$(info Portage was compiled with ICU)
-ICU = 1
+   ICU = 1
+   ifeq (${MAKELEVEL},0)
+      $(info Portage was compiled with ICU)
+   endif
 else
-$(info Portage was compiled without ICU)
+   ifeq (${MAKELEVEL},0)
+      $(info Portage was compiled without ICU)
+   endif
 endif
 
 
