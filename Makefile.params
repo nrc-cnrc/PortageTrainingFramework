@@ -74,6 +74,18 @@ DO_RESCORING = 1
 # Comment out to disable truecasing.
 DO_TRUECASING = 1
 
+# Let say you have your own (de)tokenizer and you want to use it.  Define the
+# following variables to your pgm and its arguments.  Note that the variable
+# names contain your source or target language two letters identifyer.  Thus,
+# if you do spanish you could define TOKENIZER_es.  More generally,
+# {DE|}TOKENIZER_{${SRC_LANG}|$TGT_LANG}}.
+# Defining what tokenizers we want to use.
+#TOKENIZER_en = opennlp TokenizerME /modeldir/en-model.bin
+#TOKENIZER_fr = utokenize.pl -noss -lang=fr
+# Defining what detokenizers we want to use.
+#DETOKENIZER_en = opennlp DetokenizerME /modeldir/en-model.bin
+#DETOKENIZER_fr = udetokenizer.pl -lang=fr
+
 # If you are on a cluster that is run-parallel.sh friendly, define the
 # following to force cluster mode.  You normally don't need to do so, though,
 # since clusters are detected automatically below.

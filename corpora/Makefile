@@ -50,8 +50,21 @@ ALIGN_CORPORA_DIR ?= .
 # If we have untokenized corpora, this is where we would find them.
 RAW_CORPORA_DIR ?= .
 
-# What tokenizer should we use.
-TOKENIZER ?= utokenize.pl -noss
+# Let's allow for different tokenizer for source or target.
+# What tokenizer should we use for the source side.
+ifdef TOKENIZER_${SRC_LANG}
+SRC_TOKENIZER = ${TOKENIZER_${SRC_LANG}}
+else
+SRC_TOKENIZER = utokenize.pl -noss -lang=${SRC_LANG}
+endif
+
+# What tokenizer should we use for the target side.
+ifdef TOKENIZER_${TGT_LANG}
+TGT_TOKENIZER = ${TOKENIZER_${TGT_LANG}}
+else
+TGT_TOKENIZER = utokenize.pl -noss -lang=${TGT_LANG}
+endif
+
 
 # We want a minimum of 100,000 lines per jobs that parallelize.pl creates.
 MINIMUM_PARALLEL_CHUNK_SIZE ?= 100000
@@ -131,7 +144,7 @@ TOK += ${SRC_TOK_LIST}
 ${SRC_TOK_LIST}: %${ALIGNX}: %${RAWX}
 	@${check_utf8}
 	RP_PSUB_OPTS="-1" \
-	${TOKENIZER} -lang=${SRC_LANG} < $< > $@
+	${SRC_TOKENIZER} < $< > $@
 
 
 ## Tokenizes target corpora without sentence splitting.
@@ -142,7 +155,7 @@ TOK += ${TGT_TOK_LIST}
 ${TGT_TOK_LIST}: %${ALIGNX}: %${RAWX}
 	@${check_utf8}
 	RP_PSUB_OPTS="-1" \
-	utokenize.pl -noss -lang=${TGT_LANG} < $< > $@
+	${TGT_TOKENIZER} < $< > $@
 
 
 ## HOW to handle big source language corpora.
@@ -158,7 +171,7 @@ ${SRC_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
 		-psub -1 \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
 		-n ${PARALLELISM_LEVEL_CORPORA} \
-		"utokenize.pl -noss -lang=${SRC_LANG} < $< > $@"
+		"${SRC_TOKENIZER} < $< > $@"
 
 
 ## HOW to handle big target language corpora.
@@ -174,7 +187,7 @@ ${TGT_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
 		-psub -1 \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
 		-n ${PARALLELISM_LEVEL_CORPORA} \
-		"utokenize.pl -noss -lang=${TGT_LANG} < $< > $@"
+		"${TGT_TOKENIZER} < $< > $@"
 
 
 

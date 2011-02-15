@@ -40,7 +40,11 @@ RULEX ?= _${SRC_LANG}.rule
 #DO_RESCORING = 1
 
 # What program to use to detokenize.
-DETOKENIZER ?= udetokenize.pl
+ifdef DETOKENIZER_${TGT_LANG}
+DETOKENIZER = ${DETOKENIZER_${TGT_LANG}}
+else
+DETOKENIZER = udetokenize.pl -lang=${TGT_LANG}
+endif
 
 # This is used to create a symbolic link.
 MODEL_DIR ?= ../models
@@ -493,7 +497,7 @@ clean.truecasing.%.guard:
 %.detok: SHELL=${GUARD_SHELL}
 %.detok: %
 	@echo "Detokenizing $<"
-	${DETOKENIZER} -lang=${TGT_LANG} $< $@
+	${DETOKENIZER} < $< > $@
 
 
 
