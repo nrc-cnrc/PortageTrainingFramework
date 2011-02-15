@@ -1,0 +1,41 @@
+# vim:noet:ts=3:nowrap:filetype=make
+# $Id$
+
+# @file
+# @brief
+#
+# @author Samuel Larkin
+#
+# Technologies langagieres interactives / Interactive Language Technologiesm
+# Inst. de technologie de l'information / Institute for Information Technology
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2010, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2010, Her Majesty in Right of Canada
+
+
+
+components:
+	echo "$(strip ${MIXLM})" | tr " " "\n" > $@
+
+
+%.distances: components %_${SRC_LANG}${LANGX}
+	mx-calc-distances.sh \
+		-v \
+		-d models/mixlm/ \
+		-e _${SRC_LANG}-kn-5g.binlm.gz \
+		em \
+		$(filter-out %_${SRC_LANG}-kn-5g.binlm${GZ} _sublm.%, $+) \
+		> $@
+
+
+%.weights: %.distances
+	mx-dist2weights -v normalize $< > $@
+
+
+%.mixlm: %.weights components %_${TGT_LANG}${LANGX}
+	mx-mix-models.sh \
+		-d models/mixlm/ \
+		-e _${TGT_LANG}-kn-5g.binlm.gz \
+		mixlm \
+		$(filter-out %_${TGT_LANG}-kn-5g.binlm${GZ} _sublm.%, $+) \
+		> $@

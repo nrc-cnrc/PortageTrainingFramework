@@ -21,6 +21,8 @@ include ../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+include Makefile.toolkit
+
 # Lastly include the master toolkit
 include ../../Makefile.toolkit
 
@@ -36,6 +38,7 @@ export LM_TOOLKIT
 # Typical lms for truecasing are 3g.
 export ORDER ?= 5
 
+LM_DIR ?= models/lm
 
 
 $(shell ln -fs ../../models)
@@ -44,12 +47,11 @@ $(shell ln -fs ../../models)
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
 # We actually want to get ride off %.distances %.weights
-.INTERMEDIATE: components
+.INTERMEDIATE: components $(addsuffix .distances, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE})
 
 
 
 # Watch out for already trained lms.
-#vpath %-kn-5g.binlm${GZ} ../lm
 vpath %_${SRC_LANG}${LANGX} ../../corpora
 vpath %_${TGT_LANG}${LANGX} ../../corpora
 
@@ -66,6 +68,7 @@ help:
 
 .PHONY: all
 ifdef MIXLM
+all: sublm
 all: mixlm
 else
 all:
@@ -107,39 +110,31 @@ time-mem: resource_summary_sub
 
 
 .PHONY: sublm
-sublm: sublm.${SRC_LANG}
-sublm: sublm.${TGT_LANG}
-sublm.${SRC_LANG}: $(addsuffix _${SRC_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
-sublm.${TGT_LANG}: $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
-
-models/mixlm/%-kn-5g.binlm${GZ}: %-kn-5g.binlm${GZ}
+sublm: _sublm.${SRC_LANG}
+sublm: _sublm.${TGT_LANG}
+_sublm.${SRC_LANG}: $(addsuffix _${SRC_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
+_sublm.${TGT_LANG}: $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
 
 # Create Language Models.
 %_${SRC_LANG}-kn-5g.binlm${GZ}:
-	[[ -s "../lm/$@" ]] \
-	&& ln -s ../lm/$@ \
-	|| ${MAKE} -f ../lm/Makefile LM_LANG=${SRC_LANG} TRAIN_LM=$* $@
+	[[ -s "${LM_DIR}/$@" ]] \
+	&& ln -s ${LM_DIR}/$@ \
+	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${SRC_LANG} TRAIN_LM=$* $@
 	
 %_${TGT_LANG}-kn-5g.binlm${GZ}:
-	[[ -s "../lm/$@" ]] \
-	&& ln -s ../lm/$@ \
-	|| ${MAKE} -f ../lm/Makefile LM_LANG=${TGT_LANG} TRAIN_LM=$* $@
+	[[ -s "${LM_DIR}/$(notdir $@)" ]] \
+	&& ln -s ${LM_DIR}/$(notdir $@) \
+	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${TGT_LANG} TRAIN_LM=$* $(notdir $@)
 
 
 
 .PHONY: mixlm
-mixlm: $(addsuffix .mixlm, ${HELDOUT_SET})
+mixlm: $(addsuffix .mixlm, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE})
 
-components:
-	echo "$(strip ${MIXLM})" | tr " " "\n" > $@
 
-#%.distances: sublm.${SRC_LANG} components %_${SRC_LANG}${LANGX}
-%.distances: $(addprefix models/mixlm/, $(addsuffix _${SRC_LANG}-kn-5g.binlm${GZ}, ${MIXLM})) components %_${SRC_LANG}${LANGX}
-	mx-calc-distances.sh -v -d models/mixlm/ -e _${SRC_LANG}-kn-5g.binlm.gz em $(filter-out %_${SRC_LANG}-kn-5g.binlm${GZ}, $+) > $@
+#$(addsuffix .distances, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE}): %.distances: $(addsuffix _${SRC_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
+$(addsuffix .distances, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE}): %.distances: _sublm.${SRC_LANG}
 
-%.weights: %.distances
-	mx-dist2weights -v normalize $< > $@
 
-#%.mixlm: sublm.${TGT_LANG} %.weights components %_${TGT_LANG}${LANGX}
-%.mixlm: $(addprefix models/mixlm/, $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM})) %.weights components %_${TGT_LANG}${LANGX}
-	mx-mix-models.sh -d models/mixlm/ -e _${TGT_LANG}-kn-5g.binlm.gz mixlm $(filter-out %_${TGT_LANG}-kn-5g.binlm${GZ}, $+) > $@
+#$(addsuffix .mixlm, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE}): %.mixlm: $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
+$(addsuffix .mixlm, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE}): %.mixlm: _sublm.${TGT_LANG}
