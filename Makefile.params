@@ -29,6 +29,16 @@ TGT_LANG ?= fr
 
 # TRAIN_LM is used to create a language model.
 TRAIN_LM      ?= lm-train
+
+# TRAIN_TC is used to create a truecasing model.
+# By default, we reuse TRAIN_LM thus if you do not uncomment and define it
+# => TRAIN_TC = TRAIN_LM
+TRAIN_TC := tc-train
+
+# MIXLM is used to create a mixture language model which itself is composed of
+# several other language models.
+MIXLM         ?= sublm1 sublm2 sublm3
+
 # TRAIN_TM is used to create the translation table.
 TRAIN_TM      ?= tm-train
 # TUNE_DECODE is used to train cow.
@@ -174,6 +184,7 @@ LANGS ?= ${SRC_LANG} ${TGT_LANG}
 # By default will assume that the user wants to use the first corpora to build
 # the truecasing models.
 TRAIN_TC ?= $(firstword ${TRAIN_LM})
+TRAIN_TC := $(strip ${TRAIN_TC})
 
 # Define the corpora.
 TRAIN_SET    ?= $(sort ${TRAIN_LM} ${TRAIN_TM} ${TRAIN_TC})
@@ -243,7 +254,7 @@ $(error "When asking for rescoring, you must also define a TUNE_RESCORE!")
 endif
 endif
 
-ifeq (${TRAIN_LM},)
+ifeq ($(strip ${TRAIN_LM} ${MIXLM}),)
 $(error "You must always define a training corpus for language model.")
 endif
 
@@ -270,3 +281,4 @@ endif
 ifeq (${SRC_LANG},${TGT_LANG})
 $(error "SRC_LANG=${SRC_LANG} cannot be the same as TGT_LANG=${TGT_LANG}!")
 endif
+

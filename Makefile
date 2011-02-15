@@ -101,7 +101,7 @@ corpora: check_setup
 # Create models for truecasing (TC).
 # Create the Translation Model (TM).
 .PHONY: models lm ldm tc tm decode cow rescore rat confidence
-tune models lm ldm tc tm decode cow rescore rat confidence: %: corpora
+tune models lm mixlm ldm tc tm decode cow rescore rat confidence: %: corpora
 	${MAKE} -C models $@
 
 
@@ -195,11 +195,11 @@ summary: time-mem
 	@echo "Disk usage for all models:"
 	@if [[ ! -e models/portageLive ]]; then \
 	   GLOBIGNORE=*/log.*; \
-	      du -sch models/confidence/*.cem models/ldm models/lm/*lm* \
+	      du -sch models/confidence/*.cem models/ldm models/*lm/*lm* \
 	      models/tm/{ibm,hmm,jpt,cpt}* models/tc translate;\
 	else \
 	   GLOBIGNORE=*/log.*; \
-	      du -sch models/confidence/*.cem models/ldm models/lm/*lm* \
+	      du -sch models/confidence/*.cem models/ldm models/*lm/*lm* \
 	      models/tm/{ibm,hmm,jpt,cpt}* models/tc models/decode/*.{tppt,gz} \
 	      translate; \
 	   echo; \

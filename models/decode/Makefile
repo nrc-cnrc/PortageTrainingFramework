@@ -185,21 +185,24 @@ else
 DISTORTION ?= -distortion-model WordDisplacement
 endif
 
-CPTS ?= $(wildcard models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz)
+# NOTE: We need to keep the checks here AND in the target UNTUNED_DECODING_MODEL.
+CPT_SEARCH := models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz
+CPTS ?= $(wildcard ${CPT_SEARCH})
 ifeq ("","$(or $(strip ${CPTS}),$(findstring clean,${MAKECMDGOALS}))")
-$(warning "No CPTs available. Have you trained at least one translation model?")
+$(warning No CPTs available. Have you trained at least one translation model?)
 endif
 
-LMS  ?= $(wildcard models/lm/*${TGT_LANG}*.binlm.gz)
+LM_SEARCH := models/lm/*${TGT_LANG}*.binlm.gz models/mixlm/${TUNE_DECODE}.mixlm
+LMS  ?= $(wildcard ${LM_SEARCH})
 ifeq ("","$(or $(strip ${LMS}),$(findstring clean,${MAKECMDGOALS}))")
-$(warning "No LMs available. Have you trained at least one language model?")
+$(warning No LMs available. Have you trained at least one language model?)
 endif
 
 ${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
-	@ls models/tm/cpt.* &> /dev/null \
+	@ls ${CPT_SEARCH} &> /dev/null \
 	|| ! echo "ERROR: No CPTs available. Please train the translation model(s) first!" >&2
-	@ls models/lm/*.binlm.gz &> /dev/null \
+	@[[ `ls ${LM_SEARCH} 2> /dev/null | \wc -l` > 0 ]] \
 	|| ! echo "ERROR: No LMs available. Please train the language model(s) first!" >&2
 	cat $< \
 	| sed -e 's/<SL>/${SRC_LANG}/g' \
@@ -222,7 +225,7 @@ clean.content: clean.canoe.ini
 .PHONY: clean.canoe.ini
 clean.canoe.ini: SHELL=${GUARD_SHELL}
 clean.canoe.ini:
-	${RM} ${DECODING_MODEL}
+	${RM} ${DECODING_MODEL} tmp.${UNTUNED_DECODING_MODEL}
 
 
 

@@ -221,7 +221,7 @@ clean.rescore_train:
 # for a particular testset.
 ${DECODING_MODEL}.%: SHELL=${GUARD_SHELL}
 ${DECODING_MODEL}.%: check_decoding_model
-	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
+	sed -e 's#${TUNE_DECODE}.mixlm#$*.mixlm#g' ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
 #	cat $< \
 #	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \

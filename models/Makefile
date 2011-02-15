@@ -79,6 +79,7 @@ clean.content clean.logs hide.logs: %:
 	${MAKE} -C decode $@
 	${MAKE} -C rescore $@
 	${MAKE} -C confidence $@
+	${MAKE} -C mixlm $@
 
 
 
@@ -87,7 +88,7 @@ clean.content clean.logs hide.logs: %:
 .PHONY: time-mem
 time-mem: SHELL=${GUARD_SHELL}
 time-mem:
-	@time-mem-tally.pl `find ldm lm tm tc decode rescore confidence -type f -name log.\*` \
+	@time-mem-tally.pl `find ldm lm mixlm tm tc decode rescore confidence -type f -name log.\*` \
 	| second-to-hms.pl \
 	| expand-auto.pl
 
@@ -96,7 +97,7 @@ time-mem:
 ################################################################################
 # MINIMUM MANDATORY TARGETS.
 .PHONY: models
-models: lm tm
+models: lm mixlm tm
 
 
 
@@ -108,10 +109,19 @@ lm.%:
 
 
 
+.PHONY: mixlm
+# Create mixture language model.
+# NOTE: we make mixlm dependent on lm in case the lms inside the mixlm repeat
+# some lm in lm/.
+mixlm: lm
+	${MAKE} -C $@ all
+
+
+
 .PHONY: tm
 # Create the Translation Model (TM).
 tm:
-	${MAKE} -C tm all
+	${MAKE} -C $@ all
 
 
 
@@ -125,7 +135,7 @@ tune: decode
 # Run COW to tune the decoding model.
 cow: decode
 decode: models
-	${MAKE} -C decode all
+	${MAKE} -C $@ all
 
 
 
@@ -133,7 +143,7 @@ decode: models
 # Run RAT to tune the rescoring model.
 rat: rescore
 rescore: decode
-	${MAKE} -C rescore all
+	${MAKE} -C $@ all
 
 
 
@@ -147,7 +157,7 @@ portageLive: portageLive_models_ldm
 portageLive_models_decode: portageLive_models_ldm
 
 ldm: tm
-	${MAKE} -C ldm all
+	${MAKE} -C $@ all
 else
 ldm:
 	@echo "Not training a lexicalized distortion model." >&2
@@ -171,7 +181,7 @@ portageLive_models_lm_src:
 	${MAKE} -C lm portageLive LM_LANG=${SRC_LANG}
 
 confidence: lm.${SRC_LANG} decode
-	${MAKE} -C confidence all
+	${MAKE} -C $@ all
 else
 confidence:
 	@echo "Not training a confidence estimation model." >&2
@@ -187,7 +197,7 @@ models: tc
 portageLive: portageLive_models_tc
 
 tc:
-	${MAKE} -C tc all
+	${MAKE} -C $@ all
 else
 tc:
 	@echo "Not training the truecasing models." >&2
@@ -205,6 +215,7 @@ endif
 # Prepare portageLive models.
 .PHONY: portageLive
 portageLive: portageLive_models_lm
+portageLive: portageLive_models_mixlm
 portageLive: portageLive_models_tm
 portageLive: portageLive_models_decode
 portageLive:

@@ -238,14 +238,30 @@ check_decoding_model:
 # Create a specific canoe.ini per test set.
 # You could add some specific target if you need to customize a canoe.ini.cow
 # for a particular file.
-${DECODING_MODEL}.%: SHELL=${GUARD_SHELL}
-${DECODING_MODEL}.%: check_decoding_model
-	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
+$(addprefix ${DECODING_MODEL}., ${TEST_SET}): SHELL=${GUARD_SHELL}
+ifdef MIXLM
+include models/mixlm/Makefile.toolkit
+
+.INTERMEDIATE: components
+.INTERMEDIATE: $(addsuffix .distances, ${TEST_SET})
+.INTERMEDIATE: $(addsuffix .weights, ${TEST_SET})
+
+clean.content: clean.mixlm
+
+.PHONY: clean.mixlm
+clean.mixlm: SHELL=${GUARD_SHELL}
+clean.mixlm:
+	${RM} *.distances components *.weights *.mixlm
+
+$(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: %.mixlm
+endif
+$(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: check_decoding_model
+	sed -e 's#models/lm/${TUNE_DECODE}.mixlm#$*.mixlm#g' ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
 # example: increase the beam threshold and stack size.
 #	cat $< \
 #	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
-#	| sed "s/dev-text1/$*/" \
+#	| sed "s/${TUNE_DECODE}/$*/" \
 #	> $@
 
 clean.content: clean.decoding.models

@@ -102,7 +102,7 @@ ${CANOE_MODEL}: SHELL=${GUARD_SHELL}
 ${CANOE_MODEL}:
 	@[[ -f "${DECODING_MODEL_DIR}/${CANOE_MODEL}" ]] \
 	|| ! echo "ERROR: No decoding model (${CANOE_MODEL}) available. Please train ${DECODING_MODEL_DIR} first!" >&2
-	ln -fs models/decode/${CANOE_MODEL} $@
+	sed -e 's#${TUNE_DECODE}.mixlm#${TUNE_CE}.mixlm#g' models/decode/${CANOE_MODEL} > $@
 	configtool check $@
 
 

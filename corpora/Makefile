@@ -200,7 +200,7 @@ tok: ${TOK}
 # TRUECASE.
 # Defines what corpora we need truecased/tokenized for the truecase model.
 .PHONY: tc
-TC = $(addsuffix _${TGT_LANG}.tc${GZ}, ${TRAIN_LM})
+TC = $(addsuffix _${TGT_LANG}.tc${GZ}, ${TRAIN_TC})
 tc: ${TC}
 
 # Prepare truecased file.
@@ -225,6 +225,9 @@ LC += $(addsuffix _${TGT_LANG}${LANGX}, ${HELDOUT_SET})
 # Note that will want to compress the TRAIN_SET for space efficiency.
 LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_TM})
 LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TM})
+LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXLM})
+LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXLM})
+LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TC})
 LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
 ifdef DO_CE
 LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_LM})
