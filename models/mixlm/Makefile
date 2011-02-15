@@ -47,7 +47,9 @@ $(shell ln -fs ../../models)
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
 # We actually want to get ride off %.distances %.weights
-.INTERMEDIATE: components $(addsuffix .distances, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE})
+.INTERMEDIATE: components
+.INTERMEDIATE: $(addsuffix .distances, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE})
+.INTERMEDIATE: $(addsuffix .weights, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE})
 
 
 
@@ -110,18 +112,20 @@ time-mem: resource_summary_sub
 
 
 .PHONY: sublm
-sublm: _sublm.${SRC_LANG}
-sublm: _sublm.${TGT_LANG}
-_sublm.${SRC_LANG}: $(addsuffix _${SRC_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
-_sublm.${TGT_LANG}: $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
+sublm: sublm.${SRC_LANG}
+sublm: sublm.${TGT_LANG}
+sublm.${SRC_LANG}: $(addsuffix _${SRC_LANG}-kn-${ORDER}g.binlm${GZ}, ${MIXLM})
+sublm.${TGT_LANG}: $(addsuffix _${TGT_LANG}-kn-${ORDER}g.binlm${GZ}, ${MIXLM})
 
 # Create Language Models.
-%_${SRC_LANG}-kn-5g.binlm${GZ}:
-	[[ -s "${LM_DIR}/$@" ]] \
-	&& ln -s ${LM_DIR}/$@ \
-	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${SRC_LANG} TRAIN_LM=$* $@
+# If for some reason one of the sublm is already create in models/lm, don't
+# recreate it, just link to it.
+%_${SRC_LANG}-kn-${ORDER}g.binlm${GZ}:
+	[[ -s "${LM_DIR}/$(notdir $@)" ]] \
+	&& ln -s ${LM_DIR}/$(notdir $@) \
+	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${SRC_LANG} TRAIN_LM=$* $(notdir $@)
 	
-%_${TGT_LANG}-kn-5g.binlm${GZ}:
+%_${TGT_LANG}-kn-${ORDER}g.binlm${GZ}:
 	[[ -s "${LM_DIR}/$(notdir $@)" ]] \
 	&& ln -s ${LM_DIR}/$(notdir $@) \
 	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${TGT_LANG} TRAIN_LM=$* $(notdir $@)
@@ -132,9 +136,11 @@ _sublm.${TGT_LANG}: $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
 mixlm: $(addsuffix .mixlm, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE})
 
 
-#$(addsuffix .distances, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE}): %.distances: $(addsuffix _${SRC_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
-$(addsuffix .distances, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE}): %.distances: _sublm.${SRC_LANG}
+# Just in case, we will specify that we need the source side sub language
+# models to be present before calculating the distance.
+$(addsuffix .distances, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE}): %.distances: $(addsuffix _${SRC_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
 
 
-#$(addsuffix .mixlm, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE}): %.mixlm: $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
-$(addsuffix .mixlm, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE}): %.mixlm: _sublm.${TGT_LANG}
+# Just in case, we will specify that we need the target side sub language
+# models to be present before calculating the final mixlm.
+$(addsuffix .mixlm, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE}): %.mixlm: $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM})

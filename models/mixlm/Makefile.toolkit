@@ -1,8 +1,8 @@
 # vim:noet:ts=3:nowrap:filetype=make
 # $Id$
 
-# @file
-# @brief
+# @file Makefile.toolkit
+# @brief Targets required to build a .mixlm
 #
 # @author Samuel Larkin
 #
@@ -13,6 +13,13 @@
 # Copyright 2010, Her Majesty in Right of Canada
 
 
+# Make sure you have defined the following before using this toolkit:
+# SRC_LANG = {fr,en,es,...}
+# TGT_LANG = {fr,en,es,...}
+# LANGX = .lc
+# GZ = .gz
+# ORDER = 5
+
 
 components:
 	echo "$(strip ${MIXLM})" | tr " " "\n" > $@
@@ -22,9 +29,10 @@ components:
 	mx-calc-distances.sh \
 		-v \
 		-d models/mixlm/ \
-		-e _${SRC_LANG}-kn-5g.binlm.gz \
+		-e _${SRC_LANG}-kn-${ORDER}g.binlm.gz \
 		em \
-		$(filter-out %_${SRC_LANG}-kn-5g.binlm${GZ} _sublm.%, $+) \
+		$(filter components, $+) \
+		$(filter %_${SRC_LANG}${LANGX}, $+) \
 		> $@
 
 
@@ -35,7 +43,9 @@ components:
 %.mixlm: %.weights components %_${TGT_LANG}${LANGX}
 	mx-mix-models.sh \
 		-d models/mixlm/ \
-		-e _${TGT_LANG}-kn-5g.binlm.gz \
+		-e _${TGT_LANG}-kn-${ORDER}g.binlm.gz \
 		mixlm \
-		$(filter-out %_${TGT_LANG}-kn-5g.binlm${GZ} _sublm.%, $+) \
+		$(filter %.weights, $+) \
+		$(filter components, $+) \
+		$(filter %_${TGT_LANG}${LANGX}, $+) \
 		> $@
