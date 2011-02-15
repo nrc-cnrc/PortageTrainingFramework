@@ -63,7 +63,7 @@ SHELL = ${GUARD_SHELL}
 .PHONY: help
 help: SHELL=${GUARD_SHELL}
 help:
-	@echo "To train your language models, type: make all"
+	@echo "To train your mix language models, type: make all"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
@@ -144,3 +144,15 @@ $(addsuffix .distances, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE}): %.distances:
 # Just in case, we will specify that we need the target side sub language
 # models to be present before calculating the final mixlm.
 $(addsuffix .mixlm, ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE}): %.mixlm: $(addsuffix _${TGT_LANG}-kn-5g.binlm${GZ}, ${MIXLM})
+
+
+
+.PHONY: portageLive
+portageLive: SHELL=${GUARD_SHELL}
+portageLive:
+ifdef MIXLM
+	@! echo "ERROR: Not supported yet!" >&2
+else
+	@echo "No MIXLM define, nothing to do." >&2
+endif
+
