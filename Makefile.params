@@ -33,11 +33,11 @@ TRAIN_LM      ?= lm-train
 # TRAIN_TC is used to create a truecasing model.
 # By default, we reuse TRAIN_LM thus if you do not uncomment and define it
 # => TRAIN_TC = TRAIN_LM
-TRAIN_TC := tc-train
+#TRAIN_TC := tc-train
 
 # MIXLM is used to create a mixture language model which itself is composed of
 # several other language models.
-MIXLM         ?= sublm1 sublm2 sublm3
+#MIXLM         ?= sublm1 sublm2 sublm3
 
 # TRAIN_TM is used to create the translation table.
 TRAIN_TM      ?= tm-train
