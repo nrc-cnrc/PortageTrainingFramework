@@ -20,6 +20,9 @@ ifndef TGT_LANG
 $(error "You must define TGT_LANG")
 endif
 
+# Maximum phrase length.
+M ?= 8
+
 # Define default weights.
 WTU ?= 5
 WTG ?= 5
@@ -118,7 +121,7 @@ ${LDM_COUNTS_PFX}%:
 		-s '$(call pfilter, %${SRCXZ}, %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)' \
 		-s '$(call pfilter, %${TGTXZ}, %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)' \
                 -merge 'merge_multi_column_counts -' \
-		'dmcount -v -m 8 $(filter %${TGT_GIVEN_SRCX}, $+) $(filter %${SRC_GIVEN_TGTX}, $+) \
+		'dmcount -v -m ${M} $(filter %${TGT_GIVEN_SRCX}, $+) $(filter %${SRC_GIVEN_TGTX}, $+) \
 			$(call filter_interleave, %${SRCXZ}, %${TGTXZ}, %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+) | li-sort.sh > $@' \
 	>& log.$(basename $@)
 
@@ -187,7 +190,7 @@ ldm.counts.tune.hmm1+ibm2.gz: ldm.counts.tune.hmm1.gz ldm.counts.tune.ibm2.gz
 	zcat $+ | gzip > $@
 
 ldm.counts.tune.%.gz: $(addprefix ${TUNE_SET},${SRCX} ${TGTX})
-	dmcount -v -m 8 $*.${TRAIN_TM}.${TGT_GIVEN_SRCX} $*.${TRAIN_TM}.${SRC_GIVEN_TGTX} $+ \
+	dmcount -v -m ${M} $*.${TRAIN_TM}.${TGT_GIVEN_SRCX} $*.${TRAIN_TM}.${SRC_GIVEN_TGTX} $+ \
 	| gzip > $@
 
 tune-dms.cmds: ldm.counts.ibm2.gz ldm.counts.hmm1.gz ldm.counts.tune.hmm1+ibm2.gz

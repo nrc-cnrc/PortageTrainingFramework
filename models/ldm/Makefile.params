@@ -19,3 +19,6 @@
 # enable this filter.
 #LDM_FILTER_SINGLETONS=1
 
+# Maximum phrase length.
+#M = 8
+
