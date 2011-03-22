@@ -131,9 +131,9 @@ else
 .NOTPARALLEL:
 # Autodetect the number of available cpus on this machine.
 ifneq (${OSTYPE},Darwin)
-NCPUS := $(shell grep processor /proc/cpuinfo | wc -l)
+NCPUS := $(shell test -n "$$OMP_NUM_THREADS" && echo $$OMP_NUM_THREADS || grep processor /proc/cpuinfo | wc -l)
 else
-NCPUS := $(shell sysctl -n hw.ncpu)
+NCPUS := $(shell test -n "$$OMP_NUM_THREADS" && echo $$OMP_NUM_THREADS || sysctl -n hw.ncpu)
 endif
 PARALLELISM_LEVEL_CORPORA ?= ${NCPUS}
 PARALLELISM_LEVEL_LM ?= ${NCPUS}
