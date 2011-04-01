@@ -17,9 +17,9 @@ endif
 ################################################################################
 # User definable variables
 
-# This is the from/source language
+# This is the from/source language (must be two lowercased letters)
 SRC_LANG ?= en 
-# This is the to/target language
+# This is the to/target language (must be two lowercased letters)
 TGT_LANG ?= fr
 
 # Here we specify the stem of the corpora files.
