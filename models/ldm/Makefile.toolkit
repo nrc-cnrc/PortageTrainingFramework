@@ -36,9 +36,9 @@ SRCXZ ?= ${SRCX}${GZ}
 TGTXZ ?= ${TGTX}${GZ}
 
 # How many jobs to create when creating the counts.
-COUNT_PARALLEL_LEVEL ?= 30
+PARALLELISM_LEVEL_LDM ?= 30
 # How many workers to use to process those jobs.
-COUNT_PARALLEL_WORKERS ?= ${COUNT_PARALLEL_LEVEL}
+PARALLELISM_LEVEL_LDM_WORKERS ?= ${PARALLELISM_LEVEL_LDM}
 # How many cpus each workers should use.
 COUNT_CPUS ?= 1
 
@@ -115,8 +115,8 @@ ${LDM_COUNTS_PFX}%:
 	parallelize.pl \
 		-nolocal \
 		-psub -${COUNT_CPUS} \
-		-n ${COUNT_PARALLEL_LEVEL} \
-		-np ${COUNT_PARALLEL_WORKERS} \
+		-n ${PARALLELISM_LEVEL_LDM} \
+		-np ${PARALLELISM_LEVEL_LDM_WORKERS} \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
 		-s '$(call pfilter, %${SRCXZ}, %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)' \
 		-s '$(call pfilter, %${TGTXZ}, %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)' \
