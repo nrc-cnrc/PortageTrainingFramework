@@ -829,7 +829,7 @@ In this framework, we start with a template configuration file,
      <CPTS>
    [lmodel-file]
      <LMS>
-   [weight-f] <ENABLE_FTM>
+   [use-ftm]
    ...
 \end{alltt}
 \end{small}
@@ -844,13 +844,6 @@ make it.  These are the template parameters it will replace:
                        in the \code{models/tm} directory; and
 \item \code{<LMS>}:  all language models trained trained above and found in
                        the \code{models/lm} directory);
-\item \code{<ENABLE\_FTM>}: the right number of forward translation
-model weights.  This special token is required to enable the use of forward
-translation model weights by \code{canoe} and their tuning by
-\code{cow.sh}.  Unlike other weights, which are used by default as soon as
-the corresponding model is present, forward weights are disabled by default.
-In this framework, if you don't want to use forward weights, comment out or
-delete the \code{[weight-f]} line in \code{canoe.ini.template}.
 \item If \code{USE_LDM} is set in \code{Makefile.params}, special
 processing is also done to insert the necessary LDM parameters into the
 \code{canoe.ini}.
@@ -866,14 +859,9 @@ So we make the \code{canoe.ini} file:
             -e 's#<CPTS>#models/tm/cpt.hmm3-rf-zn.train.fr2en.gz models/tm/[...]' \bs
             -e 's#<LMS>#models/lm/train_en-kn-5g.binlm.gz#g' \bs
             -e 's/^\bs(\bs[\bs(weight-f\bs|ftm\bs)\bs]\bs)/##mid##\bs1/' \bs
-           > tmp.canoe.ini
-   WT=$(perl -e 'print 1; print ":1" foreach (2..`configtool nt tmp.canoe.ini`)'); \bs
-   cat tmp.canoe.ini \bs
-      | sed -e "s/^##mid##//" -e "s/<ENABLE_FTM>/$WT/" \bs
       | configtool -p "args:-dist-phrase-swap -dist-limit-ext \bs
            -lex-dist-model-file models/ldm/ldm.hmm3+ibm2.fr2en.gz -distorti[...]" \bs
-           > canoe.ini
-   rm tmp.canoe.ini
+      > canoe.ini
    configtool check canoe.ini
    ok
 \end{alltt}
