@@ -210,14 +210,8 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      -e 's#<CPTS>#${CPTS}#g' \
 	      -e 's#<LMS>#${LMS}#g' \
 	      -e 's/^\(\[\(weight-f\|ftm\)\]\)/##mid##\1/' \
-	> tmp.$@
-	WT=$$(perl -e 'print 1; print ":1" foreach (2..`configtool nt tmp.$@`)'); \
-	cat tmp.$@ \
-	| sed -e "s/^##mid##//" \
-	      -e "s/<ENABLE_FTM>/$$WT/" \
 	| configtool -p "args:${DISTORTION} ${CANOE_INI_EXTRAS}" - \
 	> $@
-	rm tmp.$@
 	configtool check $@
 
 clean.content: clean.canoe.ini

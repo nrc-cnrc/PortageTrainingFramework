@@ -2,7 +2,7 @@
   <CPTS>
 [lmodel-file]
   <LMS>
-[weight-f] <ENABLE_FTM>
+[use-ftm]
 [ttable-limit] 30
 [ttable-threshold] 0
 [stack] 20000
