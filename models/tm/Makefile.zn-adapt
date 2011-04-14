@@ -41,7 +41,7 @@ TRAIN_TM_OTHER  ?= $(TRAIN_TM_BASE:=-other)
 
 domain_files ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_DOMAIN}*${LANGXZ}))
 other_files  ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}))
-all_files  ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_ALL}*${LANGXZ}))
+all_files    ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_ALL}*${LANGXZ}))
 
 
 ifeq ("","$(or $(findstring clean,${MAKECMDGOALS}),$(findstring help,${MAKECMDGOALS}))")
