@@ -74,26 +74,23 @@ other_files  ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}))
 
 
 ########################################
-# Visualization of zn-adapt
+# Visualization of zn-adapt (in UTF-8)
 # 
 #                  IBM1(in-domain+other)
-#                            |
-#             +--------------+--------------+
-#             v                             v
+#             ╭──────────────┴────────────╮
+#             ▼                           ▼
 #    HMM(in-domain+other)         IBM2(in-domain+other)
-#             |                             |
-#       +-----+--------+             +------+-------+
-#       v              v             v              v
+#       ╭─────┴────────╮             ╭──────┴───────╮
+#       ▼              ▼             ▼              ▼
 # JPT(in-domain)  JPT(other)   JPT(in-domain)  JPT(other)
-#       \             \              /             /
-#        +----------+  +---+  +-----+  +----------+
-#                   v      v  v        v
+#        ╰──────────╮  ╰───╮  ╭─────╯  ╭──────────╯
+#                   ▼      ▼  ▼        ▼
 #                CPT(HMM(in-domain+other))
-#                           ^
-#                           |
+#                           ▲
+#                           ┃
 #                    HMM(in-domain)
-#                           ^
-#                           |
+#                           ▲
+#                           ┃
 #                    IBM1(in-domain)
 #
 # in-domain := domain_files
