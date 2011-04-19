@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# vim:noet:ts=3:nowrap
+# vim:noet:ts=3:nowrap:encoding=utf-8
 # $Id$
 
 # @file Makefile
@@ -31,17 +31,74 @@ MODULE_NAME ?= tm
 
 SHELL = ${FRAMEWORK_SHELL}
 
+# Where are located the corpora files.
 CORPORA_DIR ?= ../../corpora
 
+
+
+########################################
+# Prefix for corpora
+
+# This is a system of prefixes to automatically populate a list of in-domain
+# file pairs and a list of other file pairs.
 TRAIN_TM        ?= train
 TRAIN_TM_BASE   ?= $(TRAIN_TM:-all=)
+
+# This variable will be used in the filename of intermediate files that use
+# both in-domain + other material.  This doesn't describe corpora file prefix.
 TRAIN_TM_ALL    ?= $(TRAIN_TM_BASE:=-all)
+
+# File prefix for in-domain file pairs.
+# If simply setting a prefix to define all your in-domain file pairs isn't
+# enough to automatically pick up all the appropriate file pairs, define
+# domain_files instead with all your corpora file pairs.
 TRAIN_TM_DOMAIN ?= $(TRAIN_TM_BASE:=-domain)
+
+# File prefix for file pairs that are not part of the in-domain aka other.
+# If simply setting a prefix to define all your other file pairs isn't enough
+# to automatically pick up all the appropriate file pairs, define other_files
+# instead with all your corpora file pairs.
 TRAIN_TM_OTHER  ?= $(TRAIN_TM_BASE:=-other)
 
+
+
+########################################
+# List of file pairs.
+
+# List of all the file pairs that are in-domain. 
 domain_files ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_DOMAIN}*${LANGXZ}))
+
+# List of all the file pairs that are not in-domain aka other.
 other_files  ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}))
-all_files    ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_ALL}*${LANGXZ}))
+
+
+
+########################################
+# Visualization of zn-adapt
+# 
+#                  IBM1(in-domain+other)
+#                            |
+#             +--------------+--------------+
+#             v                             v
+#    HMM(in-domain+other)         IBM2(in-domain+other)
+#             |                             |
+#       +-----+--------+             +------+-------+
+#       v              v             v              v
+# JPT(in-domain)  JPT(other)   JPT(in-domain)  JPT(other)
+#       \             \              /             /
+#        +----------+  +---+  +-----+  +----------+
+#                   v      v  v        v
+#                CPT(HMM(in-domain+other))
+#                           ^
+#                           |
+#                    HMM(in-domain)
+#                           ^
+#                           |
+#                    IBM1(in-domain)
+#
+# in-domain := domain_files
+# other     := other_files
+
 
 
 ifeq ("","$(or $(findstring clean,${MAKECMDGOALS}),$(findstring help,${MAKECMDGOALS}))")
@@ -57,6 +114,7 @@ endif
 endif
 
 
+# Let make know where to find the corpora files.
 vpath %${LANGXZ} ${CORPORA_DIR}
 
 .DEFAULT_GOAL := help
