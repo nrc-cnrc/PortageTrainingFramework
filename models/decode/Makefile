@@ -78,6 +78,9 @@ MERT_CPUS ?= 1
 # What is the maximum number of iterations mert should do?
 MERT_MAX_ITER ?= 15
 
+# If you need to add any other options to MERT.
+MERT_EXTRAS ?=
+
 # Track memory usage.
 TIME_MEM ?= time-mem
 
@@ -239,6 +242,7 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 		-filt \
 		-nofloor \
 		-workdir foos \
+		${MERT_EXTRAS} \
 		-f $^ \
 		>& log.$@
 	_LOCAL=1 ${RM} -r foos *.FILT.gz *.FILT.bkoff ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
