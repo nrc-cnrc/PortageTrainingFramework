@@ -54,11 +54,25 @@ TRAIN_TM_ALL    ?= $(TRAIN_TM_BASE:=-all)
 # domain_files instead with all your corpora file pairs.
 TRAIN_TM_DOMAIN ?= $(TRAIN_TM_BASE:=-domain)
 
+ifneq ($(words ${TRAIN_TM_DOMAIN}), 1)
+$(error TRAIN_TM_DOMAIN can only be one prefix <${TRAIN_TM_DOMAIN}>)
+endif
+
 # File prefix for file pairs that are not part of the in-domain aka other.
 # If simply setting a prefix to define all your other file pairs isn't enough
 # to automatically pick up all the appropriate file pairs, define other_files
 # instead with all your corpora file pairs.
 TRAIN_TM_OTHER  ?= $(TRAIN_TM_BASE:=-other)
+
+ifneq ($(words ${TRAIN_TM_OTHER}), 1)
+$(error TRAIN_TM_OTHER can only be one prefix <${TRAIN_TM_OTHER}>)
+endif
+
+# NOTE:
+# If you want your corpora in TRAIN_TM_DOMAIN & TRAIN_TM_OTHER to be
+# preprocessed automatically, you should define in the master Makefile.params 
+# TRAIN_LM := ${TRAIN_TM_DOMAIN} ${TRAIN_TM_OTHER}
+# TRAIN_LM == <all prefixes that were set in TRAIN_TM_DOMAIN & TRAIN_TM_OTHER>
 
 
 
