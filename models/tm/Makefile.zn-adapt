@@ -181,7 +181,7 @@ ${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}: ${JPT_MODEL_PFX}.merged.${RJOINTX}
 .INTERMEDIATE: ${JPT_MODEL_PFX}.merged.${JOINTX}
 ${JPT_MODEL_PFX}.merged.${JOINTX}: ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX} ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX} ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX} ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}
 	${TIME_MEM} \
-	merge_counts $@ $+ 2> log.$@
+	merge_counts $@ $+ 2> log.$(basename $@)
 
 
 ################################################################################
