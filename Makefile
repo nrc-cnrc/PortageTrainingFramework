@@ -187,6 +187,19 @@ time-mem:
 	| second-to-hms.pl \
 	| expand-auto.pl
 
+
+
+DU_DIRS = models/tm/{ibm,hmm,jpt,cpt}* models/*lm/*lm* translate
+ifdef DO_CE
+DU_DIRS += models/confidence/*.cem
+endif
+ifdef DO_TRUECASING
+DU_DIRS += models/tc
+endif
+ifdef USE_LDM
+DU_DIRS += models/ldm
+endif
+
 .PHONY: summary
 summary: SHELL=/bin/bash
 summary: export PORTAGE_INTERNAL_CALL=1
@@ -195,13 +208,10 @@ summary: time-mem
 	@echo "Disk usage for all models:"
 	@if [[ ! -e models/portageLive ]]; then \
 	   GLOBIGNORE=*/log.*; \
-	      du -sch models/confidence/*.cem models/ldm models/*lm/*lm* \
-	      models/tm/{ibm,hmm,jpt,cpt}* models/tc translate;\
+	      du -sch ${DU_DIRS}; \
 	else \
 	   GLOBIGNORE=*/log.*; \
-	      du -sch models/confidence/*.cem models/ldm models/*lm/*lm* \
-	      models/tm/{ibm,hmm,jpt,cpt}* models/tc models/decode/*.{tppt,gz} \
-	      translate; \
+	      du -sch ${DU_DIRS} models/decode/*.{tppt,gz}; \
 	   echo; \
 	   echo "Disk usage for portageLive models:"; \
 	   du -hL models/portageLive; \
