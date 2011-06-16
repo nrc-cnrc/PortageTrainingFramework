@@ -257,6 +257,8 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 
 ########################################
 # JPT MODELS
+ifdef USE_SIGPRUNING
+else
 ${JPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: JPT_MODEL_TYPE=-ibm 1
 ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: JPT_MODEL_TYPE=-ibm 2
 ${JPT_MODEL_PFX}.hmm%: JPT_MODEL_TYPE=-hmm
@@ -274,6 +276,7 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 		$(filter %${L2_GIVEN_L1X}, $+) $(filter %${L1_GIVEN_L2X}, $+) \
 		$(call filter_interleave, %${L1X}, %${L2X}, %${L1_GIVEN_L2X} %${L2_GIVEN_L1X}, $+) \
 		>& log.$(basename $@)
+endif
 
 
 
@@ -287,7 +290,8 @@ ${CPT_MODEL_PFX}.%: CPT_PRUNE1=-prune1w 100
 ${CPT_MODEL_PFX}%${L1_2_L2X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
-	joint2cond_phrase_tables \
+	merge_counts - $(filter %${JOINTX}, $+) \
+	| joint2cond_phrase_tables \
 		${CPT_PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
@@ -298,7 +302,7 @@ ${CPT_MODEL_PFX}%${L1_2_L2X}:
 		-ibm_l2_given_l1  $(filter %${L2_GIVEN_L1X}, $+) \
 		-ibm_l1_given_l2  $(filter %${L1_GIVEN_L2X}, $+) \
 		${JOINT2COND_PHRASE_TABLE_OPTION} \
-		$(filter %${JOINTX}, $+) \
+		- \
 		>& log.$(basename $@)
 
 # Special case to make valid prune1w reversed conditional phrase tables.
@@ -308,7 +312,8 @@ ${CPT_MODEL_PFX}%${L1_2_L2X}:
 ${CPT_MODEL_PFX}%${L2_2_L1X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
-	joint2cond_phrase_tables \
+	merge_counts - $(filter %.${RJOINTX}, $+) \
+	| joint2cond_phrase_tables \
 		${CPT_PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
@@ -319,7 +324,7 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 		-ibm_l2_given_l1  $(filter %${L1_GIVEN_L2X}, $+) \
 		-ibm_l1_given_l2  $(filter %${L2_GIVEN_L1X}, $+) \
 		${JOINT2COND_PHRASE_TABLE_OPTION} \
-		$(filter %.${RJOINTX}, $+) \
+		- \
 		>& log.$(basename $@)
 
 

@@ -226,10 +226,23 @@ clean.jpts:
 	${RM} -r JPTPAR*
 
 .PHONY: jpts
+jpts: ibm1_jpt
 jpts: ibm2_jpt
 jpts: hmm1_jpt
 jpts: hmm2_jpt
 jpts: hmm3_jpt
+
+
+########################################
+# IBM1 JOINT PHRASE TABLES
+# requires: ibm1 models, source and target corpora.
+.PHONY:  ibm1_jpt
+ibm1_jpt: ibm1_model
+#ibm1_jpt: $(foreach t, ${TRAIN_TM}, ${IBM1_JPT_PREFIX}.$t.${JOINTX})
+ibm1_jpt: ${JPT_MODEL_PFX}.${IBM1_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
+
+JPT_IBM1_MODEL_PFX ?= ${JPT_MODEL_PFX}.${IBM1_MODEL_PFX}
+${JPT_IBM1_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
 
 ########################################
@@ -297,6 +310,7 @@ cpts: ibm2_cpt
 cpts: hmm1_cpt
 cpts: hmm2_cpt
 cpts: hmm3_cpt
+cpts: merged_cpt
 
 
 ########################################
@@ -320,7 +334,7 @@ ${IBM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_
 
 ########################################
 # HMM1 CONDITIONAL PHRASE TABLES => He-lex
-# requires: hmm1 models and ibm2 JOINT frequency phrase table.
+# requires: hmm1 models and hmm1 JOINT frequency phrase table.
 HMM1_SMOOTHERS_DESCRIPTION ?= -rf-zn
 HMM1_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${HMM1_MODEL_PFX}${HMM1_SMOOTHERS_DESCRIPTION}
 
@@ -339,7 +353,7 @@ ${HMM1_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L2_
 
 ########################################
 # HMM2 CONDITIONAL PHRASE TABLES => liang
-# requires: hmm2 models and ibm2 JOINT frequency phrase table.
+# requires: hmm2 models and hmm2 JOINT frequency phrase table.
 HMM2_SMOOTHERS_DESCRIPTION ?= -rf-zn
 HMM2_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${HMM2_MODEL_PFX}${HMM2_SMOOTHERS_DESCRIPTION}
 
@@ -358,7 +372,7 @@ ${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L2_
 
 ########################################
 # HMM3 CONDITIONAL PHRASE TABLES => liang
-# requires: hmm3 models and ibm2 JOINT frequency phrase table.
+# requires: hmm3 models and hmm3 JOINT frequency phrase table.
 HMM3_SMOOTHERS_DESCRIPTION ?= -rf-zn
 HMM3_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${HMM3_MODEL_PFX}${HMM3_SMOOTHERS_DESCRIPTION}
 
@@ -375,6 +389,57 @@ ${HMM3_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_
 ${HMM3_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X} ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
 
 
+
+########################################
+# MERGED CONDITIONAL PHRASE TABLES
+# requires: MERGED_CPT_ZN_MODEL & MERGED_CPT_JPT_TYPES to be properly defined.
+MERGED_CPT_SMOOTHERS_DESCRIPTION ?= -rf-zn
+MERGED_CPT_PREFIX ?= ${CPT_MODEL_PFX}.merged.${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}${MERGED_CPT_SMOOTHERS_DESCRIPTION}
+MERGED_CPT_ZN_MODEL ?= HMM3
+MERGED_CPT_JPT_TYPES ?= IBM2 HMM3
+
+# We need to specify what's the type of the models for Zen-Ney's smoother.
+${CPT_MODEL_PFX}.merged.${IBM1_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
+${CPT_MODEL_PFX}.merged.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
+${CPT_MODEL_PFX}.merged.hmm%: WORD_MODEL_TYPE=-hmm
+
+merged_cpt_list = ${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}
+merged_cpt_list: SHELL=${GUARD_SHELL}
+merged_cpt_list:
+	@echo ${merged_cpt_list}
+
+.PHONY: merged_cpt
+merged_cpt: ${merged_cpt_list}
+
+# Defining ZN models dependencies
+${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
+${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
+
+# Defining jpt dependencies.
+${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.${TRAIN_TM}.${RJOINTX})
+${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.${TRAIN_TM}.${JOINTX})
+
+
+# Let's do some validation when the user wants a merged_cpt.
+ifeq ($(filter merged_cpt, ${PT_TYPES}),merged_cpt)
+# Make sure there is only one MERGED_CPT_ZN_MODEL.
+ifneq ($(words ${MERGED_CPT_ZN_MODEL}), 1)
+$(error You must specify one and only one MERGED_CPT_ZN_MODEL!)
+endif
+
+# Make sure MERGED_CPT_ZN_MODEL is valid.
+ifneq ($(filter-out HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_ZN_MODEL}),)
+$(error MERGED_CPT_ZN_MODEL must be one of HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_ZN_MODEL})
+endif
+
+# Make sure MERGED_CPT_JPT_TYPES are valid.
+ifneq ($(filter-out HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_JPT_TYPES}),)
+$(error MERGED_CPT_JPT_TYPES must be one of HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_JPT_TYPES})
+endif
+endif
+
+
+
 ################################################################################
 # Tightly Packed Phrase Tables.
 # We need the full file names to be able to trigger all tppt.
@@ -382,7 +447,19 @@ ${HMM3_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_
 # ibm2_cpt_list and evaluate its content which will be the text phrase table
 # file name.  Then we only need to change the text file name to tightly packed
 # file name.
-tppt_list = $(addsuffix .tppt, $(basename $(foreach a, $(PT_TYPES:=_list), ${$a})))
+tppt_list := $(addsuffix .tppt, $(basename $(foreach a, $(PT_TYPES:=_list), ${$a})))
 
 .PHONY: tppt
 tppt portageLive: ${tppt_list}
+
+
+
+
+################################################################################
+# The test target is designed to be a unittest.  Its purpose is not to run
+# commands but rather validate that all variables are properly expanded and
+# that the resulting dependencies are all correct.
+.PHONY: unittest
+unittest:
+	make -Bnj1 tppt PT_TYPES='ibm2_cpt hmm3_cpt merged_cpt' MERGED_CPT_JPT_TYPES='IBM2 HMM1 HMM3 HMM2 IBM1' MERGED_CPT_ZN_MODEL=IBM1
+
