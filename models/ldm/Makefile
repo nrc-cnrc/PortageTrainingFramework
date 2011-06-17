@@ -27,13 +27,23 @@ include ../../Makefile.toolkit
 # Always include the toolkit last.
 include Makefile.toolkit
 
+# GNU Make Standard Library
+include ../../gmsl/gmsl
+
 
 # What is this module's name.
 MODULE_NAME ?= ldm
 
 # Find out about what are the word alignment models the user asked for by
-# stripping out the _cpt suffix.
-AVAILABLE_WORD_ALIGNMENT_MODELS := $(PT_TYPES:_cpt=)
+# based on the type of conditional phrase tables that was specified.
+TMP_AVAILABLE_WORD_ALIGNMENT_MODELS := $(filter-out merged, $(PT_TYPES:_cpt=))
+ifneq ($(filter merged, $(PT_TYPES:_cpt=)),)
+TMP_AVAILABLE_WORD_ALIGNMENT_MODELS += $(call lc, ${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES})
+endif
+AVAILABLE_WORD_ALIGNMENT_MODELS := $(sort ${TMP_AVAILABLE_WORD_ALIGNMENT_MODELS})
+
+# List of all possible word alignment models in the framework.
+POSSIBLE_WORD_ALIGNMENT_MODELS := ibm2 hmm1 hmm2 hmm3
 
 # Hack to be able to substitute spaces.
 EMPTY :=
@@ -58,30 +68,35 @@ all: ldm
 
 ########################################
 # LEXICALIZED COUNTS.
+# list of all lexicalized distortion count files required.
+LDM_COUNT_FILES := $(foreach m, ${AVAILABLE_WORD_ALIGNMENT_MODELS}, ${LDM_COUNTS_PFX}.$m.gz)
+
 .PHONY: ldm.counts
-ldm.counts: ${LDM_COUNTS_PFX}.ibm2.gz ${LDM_COUNTS_PFX}.hmm3.gz
+ldm.counts: ${LDM_COUNT_FILES}
 
-${LDM_COUNTS_PFX}.ibm2.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
-${LDM_COUNTS_PFX}.ibm2.gz: ibm2.${TRAIN_TM}.${TGT_GIVEN_SRCX} ibm2.${TRAIN_TM}.${SRC_GIVEN_TGTX}
-
-${LDM_COUNTS_PFX}.hmm1.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
-${LDM_COUNTS_PFX}.hmm1.gz: hmm1.${TRAIN_TM}.${TGT_GIVEN_SRCX} hmm1.${TRAIN_TM}.${SRC_GIVEN_TGTX}
-
-${LDM_COUNTS_PFX}.hmm2.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
-${LDM_COUNTS_PFX}.hmm2.gz: hmm2.${TRAIN_TM}.${TGT_GIVEN_SRCX} hmm2.${TRAIN_TM}.${SRC_GIVEN_TGTX}
-
-${LDM_COUNTS_PFX}.hmm3.gz: ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}
-${LDM_COUNTS_PFX}.hmm3.gz: hmm3.${TRAIN_TM}.${TGT_GIVEN_SRCX} hmm3.${TRAIN_TM}.${SRC_GIVEN_TGTX}
+# Auto-generate all dependencies for all possible word alignment models
+# To generate ldm count files we need the source corpus and the target corpus
+# To generate ldm coutn files we need word alignment models in both directions.
+$(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
+   $(eval \
+	   ${LDM_COUNTS_PFX}.$m.gz:  ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}) \
+   $(eval \
+	   ${LDM_COUNTS_PFX}.$m.gz:  $m.${TRAIN_TM}.${TGT_GIVEN_SRCX} $m.${TRAIN_TM}.${SRC_GIVEN_TGTX}) \
+)
 
 
 
 ########################################
 # LEXICALIZED DISTORTION MODEL.
+# Lexicalized distortion model file name.
+LDM_FILE := ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}
+
 .PHONY: ldm
-ldm: ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}
+ldm: ${LDM_FILE}
 
 # We will build a Lexicalized Distortion Model based on all available word alignment models.
-${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}: $(addsuffix .gz,$(addprefix ${LDM_COUNTS_PFX}., ${AVAILABLE_WORD_ALIGNMENT_MODELS}))
+${LDM_FILE}:  ${LDM_COUNT_FILES}
+
 
 
 ########################################
@@ -91,6 +106,8 @@ LDM_FILTER_CMD=egrep -v '\|( 0)* 1( 0)* 1( 0)*$$'
 else
 LDM_FILTER_CMD=cat
 endif
+
+
 
 ########################################
 # TIGHTLY PACKED LEXICAZILED DISTORTION MODEL.
