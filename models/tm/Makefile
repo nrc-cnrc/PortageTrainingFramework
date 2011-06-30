@@ -30,6 +30,9 @@ include Makefile.toolkit
 # Lastly include the master toolkit
 include ../../Makefile.toolkit
 
+# GNU Make Standard Library
+include ../../gmsl/gmsl   # functions: uc
+
 # Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
@@ -133,84 +136,35 @@ clean.content: clean.word_alignment_models
 .PHONY: clean.word_alignment_models
 clean.word_alignment_models: SHELL=${GUARD_SHELL}
 clean.word_alignment_models:
-	${RM} $(addsuffix .*,${WA_MODEL_PREFIXES})
+	${RM} $(addsuffix .*, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
-.PHONY: word_alignment_models
-word_alignment_models: ibm1_model
-word_alignment_models: ibm2_model
-word_alignment_models: hmm1_model
-word_alignment_models: hmm2_model
-word_alignment_models: hmm3_model
+.PHONY: word_alignment_models  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
+word_alignment_models: $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 
-########################################
-# TRAINING THE IBM1 MODELS
-WA_MODEL_PREFIXES += ${IBM1_MODEL_PFX}
+# All word alignment models depend on ibm1 word alignment models except, of course, for ibm1 word alignment models.
+$(foreach m, $(filter-out ${IBM1_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+   $(eval ${m}_model: ibm1_model) \
+)
 
-.PHONY:  ibm1_model
-ibm1_model: ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
-ibm1_model: ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-
-${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-${IBM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-
-
-########################################
-# TRAINING THE IBM2 MODELS
-# requires: source and target corpora and ibm1 models.
-WA_MODEL_PREFIXES += ${IBM2_MODEL_PFX}
-
-.PHONY:  ibm2_model
-ibm2_model: ibm1_model
-ibm2_model: ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
-ibm2_model: ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-
-${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-${IBM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-
+# the meta target for word alignment model depends on word alignment model files.
+# both forward and backward word alignment models require source and target corpora.
+$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+   $(eval \
+		$(call lc, ${m})_model:  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}) \
+   $(eval \
+		${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
+   $(eval \
+		${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
+)
 
 ########################################
-# TRAINING THE HMM1 MODELS => He-lex
-# requires: source and target corpora and ibm1 models.
-WA_MODEL_PREFIXES += ${HMM1_MODEL_PFX}
-
-.PHONY:  hmm1_model
-hmm1_model: ibm1_model
-hmm1_model: ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
-hmm1_model: ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-
-${HMM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-${HMM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-
-
-########################################
-# TRAINING THE HMM2 MODELS => liang variant
-# requires: source and target corpora and ibm1 models.
-WA_MODEL_PREFIXES += ${HMM2_MODEL_PFX}
-
-.PHONY:  hmm2_model
-hmm2_model: ibm1_model
-hmm2_model: ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
-hmm2_model: ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-
-${HMM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-${HMM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-
-
-########################################
-# TRAINING THE HMM3 MODELS => liang variant
-# requires: source and target corpora and ibm1 models.
-WA_MODEL_PREFIXES += ${HMM3_MODEL_PFX}
-
-.PHONY:  hmm3_model
-hmm3_model: ibm1_model
-hmm3_model: ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
-hmm3_model: ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-
-#Note: We use "-end-dist" instead of "-start-dist -final-dist -anchor" because
-#      PORTAGEshared lacks "-start-dist"
-${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-${HMM3_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+# EXAMPLE of the resulting code generated previously:
+#ibm1_model: ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
+#ibm1_model: ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
+#
+#${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+#${IBM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
 
 
@@ -222,89 +176,97 @@ clean.content: clean.jpts
 .PHONY: clean.jpts
 clean.jpts: SHELL=${GUARD_SHELL}
 clean.jpts:
-	$(RM) jpt.*
+	$(RM) ${JPT_MODEL_PFX}.*
 	${RM} -r JPTPAR*
 
-.PHONY: jpts
-jpts: ibm1_jpt
-jpts: ibm2_jpt
-jpts: hmm1_jpt
-jpts: hmm2_jpt
-jpts: hmm3_jpt
+.PHONY: jpts  $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
+jpts: $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
+
+# Definition of the generated makefile rules/targets:
+# the meta target jpt have meta-dependency on a word alignment model,
+# the meta target jpt have a dependency on jpt file.
+# Defining a variable to hold the jpt file's prefix.
+# jpts requires the word alignment models in both directions.
+# jpts requires the source and target corpora.
+$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+   $(eval \
+	   JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
+   $(eval \
+	   $(call lc, ${m})_jpt: $(call lc, ${m})_model) \
+   $(eval \
+	   $(call lc, ${m})_jpt: ${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}) \
+   $(eval \
+		${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}) \
+   $(eval \
+		${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
+)
+
+# EXAMPLE of the resulting code generated previously:
+#JPT_HMM3_MODEL_PFX ?= ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}
+#
+#hmm3_jpt: hmm3_model
+#hmm3_jpt: ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
+#
+#${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
+#${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
 
-########################################
-# IBM1 JOINT PHRASE TABLES
-# requires: ibm1 models, source and target corpora.
-.PHONY:  ibm1_jpt
-ibm1_jpt: ibm1_model
-#ibm1_jpt: $(foreach t, ${TRAIN_TM}, ${IBM1_JPT_PREFIX}.$t.${JOINTX})
-ibm1_jpt: ${JPT_MODEL_PFX}.${IBM1_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
 
-JPT_IBM1_MODEL_PFX ?= ${JPT_MODEL_PFX}.${IBM1_MODEL_PFX}
-${JPT_IBM1_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+################################################################################
+# SIGNIFICANCE PRUNING JOINT PHRASE TABLES
 
+clean.content: clean.sig
 
-########################################
-# IBM2 JOINT PHRASE TABLES
-# requires: ibm2 models, source and target corpora.
-.PHONY:  ibm2_jpt
-ibm2_jpt: ibm2_model
-#ibm2_jpt: $(foreach t, ${TRAIN_TM}, ${IBM2_JPT_PREFIX}.$t.${JOINTX})
-ibm2_jpt: ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
+.PHONY: clean.sig
+clean.sig: SHELL=${GUARD_SHELL}
+clean.sig:
+	$(RM) ${SIG_MODEL_PFX}.*  cnts.${JPT_MODEL_PFX}.*
+	${RM} -r JPTPAR*
+	${RM} -r work_directory
 
-JPT_IBM2_MODEL_PFX ?= ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}
-${JPT_IBM2_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+.PHONY: sigs  $(addsuffix _sig, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
+sigs: $(addsuffix _sig, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
-
-########################################
-# HMM1 JOINT PHRASE TABLES => He's lexical variant
-# requires: hmm models, source and target corpora.
-.PHONY:  hmm1_jpt
-hmm1_jpt: hmm1_model
-#hmm1_jpt: $(foreach t, ${TRAIN_TM}, ${HMM1_JPT_PREFIX}.$t.${JOINTX})
-hmm1_jpt: ${JPT_MODEL_PFX}.${HMM1_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
-
-JPT_HMM1_MODEL_PFX ?= ${JPT_MODEL_PFX}.${HMM1_MODEL_PFX}
-${JPT_HMM1_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+# To create a sigpruned jpt we need an original jpt.
+# To create a sigpruned jpt we need the source and target corpora.
+# source language to target language
+# m stands for model type
+$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+   $(eval \
+	   $(call lc, ${m})_sig: $(call lc, ${m})_jpt) \
+   $(eval \
+	   $(call lc, ${m})_sig: ${SIG_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}) \
+   $(eval \
+		${SIG_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}) \
+   $(eval \
+		${SIG_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
+)
 
 
-########################################
-# HMM2 JOINT PHRASE TABLES => Liang's variant
-# requires: hmm2 models, source and target corpora.
-.PHONY:  hmm2_jpt
-hmm2_jpt: hmm2_model
-#hmm2_jpt: $(foreach t, ${TRAIN_TM}, ${HMM2_JPT_PREFIX}.$t.${JOINTX})
-hmm2_jpt: ${JPT_MODEL_PFX}.${HMM2_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
-
-JPT_HMM2_MODEL_PFX ?= ${JPT_MODEL_PFX}.${HMM2_MODEL_PFX}
-${JPT_HMM2_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-
-
-########################################
-# HMM3 JOINT PHRASE TABLES => Liang's variant
-# requires: hmm3 models, source and target corpora.
-.PHONY:  hmm3_jpt
-hmm3_jpt: hmm3_model
-#hmm3_jpt: $(foreach t, ${TRAIN_TM}, ${HMM3_JPT_PREFIX}.$t.${JOINTX})
-hmm3_jpt: ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
-
-JPT_HMM3_MODEL_PFX ?= ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}
-${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+# target language to source language
+$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+   $(eval \
+		${SIG_${m}_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}:  ${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}) \
+   $(eval \
+		${SIG_${m}_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
+)
 
 
 
 ################################################################################
 # CONDITIONAL PHRASE TABLES
+# HMM1 => He-lex
+# HMM2 => liang
+# HMM3 => liang
 
 clean.content: clean.cpts
 
 .PHONY: clean.cpts
 clean.cpts: SHELL=${GUARD_SHELL}
 clean.cpts:
-	$(RM) cpt.*
+	$(RM) ${CPT_MODEL_PFX}.*
 
-.PHONY: cpts
+.PHONY: cpts  $(addsuffix _cpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) merged_cpt
 cpts: jpts
 cpts: ibm2_cpt
 cpts: hmm1_cpt
@@ -313,81 +275,70 @@ cpts: hmm3_cpt
 cpts: merged_cpt
 
 
-########################################
-# IBM CONDITIONAL PHRASE TABLES
-# requires: ibm2 models and ibm2 JOINT frequency phrase table.
+# Let's define a couple of variables.
 IBM2_SMOOTHERS_DESCRIPTION ?= -rf-zn
 IBM2_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${IBM2_MODEL_PFX}${IBM2_SMOOTHERS_DESCRIPTION}
 
-ibm2_cpt_list = ${IBM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}
-ibm2_cpt_list: SHELL=${GUARD_SHELL}
-ibm2_cpt_list:
-	@echo ${ibm2_cpt_list}
-
-.PHONY:  ibm2_cpt
-ibm2_cpt: ibm2_jpt
-ibm2_cpt: ${ibm2_cpt_list}
-
-${IBM2_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X} ${JPT_IBM2_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}
-${IBM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X} ${JPT_IBM2_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
-
-
-########################################
-# HMM1 CONDITIONAL PHRASE TABLES => He-lex
-# requires: hmm1 models and hmm1 JOINT frequency phrase table.
 HMM1_SMOOTHERS_DESCRIPTION ?= -rf-zn
 HMM1_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${HMM1_MODEL_PFX}${HMM1_SMOOTHERS_DESCRIPTION}
 
-hmm1_cpt_list = ${HMM1_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}
-hmm1_cpt_list: SHELL=${GUARD_SHELL}
-hmm1_cpt_list:
-	@echo ${hmm1_cpt_list}
-
-.PHONY:  hmm1_cpt
-hmm1_cpt: hmm1_jpt
-hmm1_cpt: ${hmm1_cpt_list}
-
-${HMM1_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X} ${JPT_HMM1_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}
-${HMM1_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X} ${JPT_HMM1_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
-
-
-########################################
-# HMM2 CONDITIONAL PHRASE TABLES => liang
-# requires: hmm2 models and hmm2 JOINT frequency phrase table.
 HMM2_SMOOTHERS_DESCRIPTION ?= -rf-zn
 HMM2_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${HMM2_MODEL_PFX}${HMM2_SMOOTHERS_DESCRIPTION}
 
-hmm2_cpt_list = ${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}
-hmm2_cpt_list: SHELL=${GUARD_SHELL}
-hmm2_cpt_list:
-	@echo ${hmm2_cpt_list}
-
-.PHONY:  hmm2_cpt
-hmm2_cpt: hmm2_jpt
-hmm2_cpt: ${hmm2_cpt_list}
-
-${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X} ${JPT_HMM2_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}
-${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X} ${JPT_HMM2_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
-
-
-########################################
-# HMM3 CONDITIONAL PHRASE TABLES => liang
-# requires: hmm3 models and hmm3 JOINT frequency phrase table.
 HMM3_SMOOTHERS_DESCRIPTION ?= -rf-zn
 HMM3_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${HMM3_MODEL_PFX}${HMM3_SMOOTHERS_DESCRIPTION}
 
-hmm3_cpt_list = ${HMM3_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}
-hmm3_cpt_list: SHELL=${GUARD_SHELL}
-hmm3_cpt_list:
-	@echo ${hmm3_cpt_list}
+# Create a variable to hold the conditional phrase table file's name e.i. hmm1_cpt_list.
+# Create meta-level dependencies between cpts and their jpts or sigs.
+# Create a meta-level target to generate cpts.
+$(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
+   $(eval \
+		${m}_cpt_list = ${$(call uc, ${m})_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}) \
+   $(eval \
+		${m}_cpt: ${m}_$(call lc, ${CPT_DEP_TAG})) \
+   $(eval \
+		${m}_cpt: ${${m}_cpt_list}) \
+)
 
-.PHONY:  hmm3_cpt
-hmm3_cpt: hmm3_jpt
-hmm3_cpt: ${hmm3_cpt_list}
+# Let's have a target to print out the variables that contain the conditional phrase table file's name.
+%_cpt_list: SHELL=${GUARD_SHELL}
+%_cpt_list: ; @echo ${$@}
 
-${HMM3_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X} ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}
-${HMM3_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X} ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
+# Creates dependencies for reversed Conditional Phrase Tables.
+# Conditional Phrase Tables depend on a word alignment model for Zens-Ney's smoother.
+# Conditional Phrase Tables depend on a joint frequency phrase table which can be raw or significance pruned (CPT_DEP_TAG).
+$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+   $(eval \
+		${${m}_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}) \
+   $(eval \
+		${${m}_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${${CPT_DEP_TAG}_${m}_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}) \
+)
 
+# Creates dependencies for Conditional Phrase Tables.
+# Conditional Phrase Tables depend on a word alignment model for Zens-Ney's smoother.
+# Conditional Phrase Tables depend on a jpt which can be raw or significance pruned (CPT_DEP_TAG).
+# NOTE: CPT_DEP_TAG is either JPT or SIG
+$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+   $(eval \
+		${${m}_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}) \
+   $(eval \
+		${${m}_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${${CPT_DEP_TAG}_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}) \
+)
+
+# EXAMPLE of the resulting code generated previously:
+#hmm2_cpt_list = ${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}
+#hmm2_cpt_list: SHELL=${GUARD_SHELL}
+#hmm2_cpt_list: ; @echo ${hmm2_cpt_list}
+#
+#.PHONY:  hmm2_cpt
+#hmm2_cpt: hmm2_jpt
+#hmm2_cpt: ${hmm2_cpt_list}
+#
+#${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
+#${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
+#
+#${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${${CPT_DEP_TAG}_HMM2_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}
+#${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${${CPT_DEP_TAG}_HMM2_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
 
 
 ########################################
@@ -403,23 +354,41 @@ ${CPT_MODEL_PFX}.merged.${IBM1_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
 ${CPT_MODEL_PFX}.merged.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
 ${CPT_MODEL_PFX}.merged.hmm%: WORD_MODEL_TYPE=-hmm
 
+# Let's define what are the merged cpt file names.
 merged_cpt_list = ${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}
-merged_cpt_list: SHELL=${GUARD_SHELL}
-merged_cpt_list:
-	@echo ${merged_cpt_list}
 
-.PHONY: merged_cpt
+# Meta target that will create the merged conditional phrase tables.
 merged_cpt: ${merged_cpt_list}
 
-# Defining ZN models dependencies
+SIG_MERGED_PFX := ${SIG_MODEL_PFX}.merged
+JPT_MERGED_PFX := ${JPT_MODEL_PFX}.merged
+
+
+# Merged conditional phrase tables depends on a word model alignment for Zens-Ney's smoother.
+# Merged conditional phrase tables depends on either a merged jpt (normal scenario) or a merged sig (when using significance pruning).
 ${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
+${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${${CPT_DEP_TAG}_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}
+
 ${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-
-# Defining jpt dependencies.
-${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.${TRAIN_TM}.${RJOINTX})
-${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.${TRAIN_TM}.${JOINTX})
+${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${${CPT_DEP_TAG}_MERGED_PFX}.${TRAIN_TM}.${JOINTX}
 
 
+# A merged jpt depends on user define type of joint frequency count file.
+.INTERMEDIATE: ${JPT_MERGED_PFX}.${TRAIN_TM}.${RJOINTX} ${JPT_MERGED_PFX}.${TRAIN_TM}.${JOINTX}
+${JPT_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}:  $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.${TRAIN_TM}.${RJOINTX})
+${JPT_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:   $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.${TRAIN_TM}.${JOINTX})
+
+
+# Significance pruning model depends on a "raw" joint frequency count file.
+# Significance pruning model depends on the source and target corpora.
+${SIG_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}:  ${JPT_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}
+${SIG_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+
+${SIG_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:  ${JPT_MERGED_PFX}.${TRAIN_TM}.${JOINTX}
+${SIG_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+
+
+########################################
 # Let's do some validation when the user wants a merged_cpt.
 ifeq ($(filter merged_cpt, ${PT_TYPES}),merged_cpt)
 # Make sure there is only one MERGED_CPT_ZN_MODEL.
@@ -435,6 +404,10 @@ endif
 # Make sure MERGED_CPT_JPT_TYPES are valid.
 ifneq ($(filter-out HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_JPT_TYPES}),)
 $(error MERGED_CPT_JPT_TYPES must be one of HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_JPT_TYPES})
+endif
+else
+ifdef USE_SIGPRUNING
+$(error Significance pruning and merged_cpt is not yet implemented!!!)
 endif
 endif
 
@@ -459,7 +432,22 @@ tppt portageLive: ${tppt_list}
 # The test target is designed to be a unittest.  Its purpose is not to run
 # commands but rather validate that all variables are properly expanded and
 # that the resulting dependencies are all correct.
-.PHONY: unittest
-unittest:
+
+# Verify that make is capable of generating all required targets for merged_cpt and some other cpt.
+.PHONY: unittest1
+unittest1:
 	make -Bnj1 tppt PT_TYPES='ibm2_cpt hmm3_cpt merged_cpt' MERGED_CPT_JPT_TYPES='IBM2 HMM1 HMM3 HMM2 IBM1' MERGED_CPT_ZN_MODEL=IBM1
+
+# Verify that make is capable of generating all required target for one cpt that has been significance pruned.
+.PHONY: unittest2
+unittest2:
+	make -Bnj1 USE_SIGPRUNING=1 SIG_OPTS="-keep -sigopts '-par-driver fork'" ibm2_cpt
+
+# Verify that make is capable of generating all required target for a merged cpt that has been significance pruned.
+.PHONY: unittest3
+unittest3:
+	make -Bnj1 USE_SIGPRUNING=1 SIG_OPTS="-keep -sigopts '-par-driver fork'" merged_cpt
+
+
+$(foreach a, a b, $(eval %.$a: ;echo $$@ $$*))
 

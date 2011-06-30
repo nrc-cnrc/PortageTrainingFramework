@@ -171,31 +171,38 @@ ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}: ${domain_files} ${other_files
 
 # Create joint frequency counts.
 # Extract phrase alignment using HMM3 models.
-${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
-${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${domain_files}
-${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
-${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${other_files}
+JPT_HMM3_MODEL_PFX := ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}
+${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${domain_files}
+
+${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${other_files}
+
 
 # Extract phrase alignment using IBM2 models.
-${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
-${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${domain_files}
-${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
-${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${other_files}
+JPT_IBM2_MODEL_PFX := ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}
+${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${domain_files}
+
+${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${other_files}
+
+
+# Create a merged jpt.
+${JPT_MODEL_PFX}.merged.${JOINTX}:  ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX} ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}
+${JPT_MODEL_PFX}.merged.${JOINTX}:  ${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX} ${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}
+
+${JPT_MODEL_PFX}.merged.${RJOINTX}:  ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${RJOINTX} ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${RJOINTX}
+${JPT_MODEL_PFX}.merged.${RJOINTX}:  ${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${RJOINTX} ${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${RJOINTX}
 
 
 # Create zn-adapted phrase table.
-${CPT_MODEL_PFX}.zn-adapt.${L1_2_L2X}: ${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L1_GIVEN_L2X}
-${CPT_MODEL_PFX}.zn-adapt.${L1_2_L2X}: ${JPT_MODEL_PFX}.merged.${JOINTX}
+${CPT_MODEL_PFX}.zn-adapt.${L1_2_L2X}:  ${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L1_GIVEN_L2X}
+${CPT_MODEL_PFX}.zn-adapt.${L1_2_L2X}:  ${JPT_MODEL_PFX}.merged.${JOINTX}
 
-${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}: ${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L1_GIVEN_L2X}
-${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}: ${JPT_MODEL_PFX}.merged.${RJOINTX}
+${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}:  ${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${L1_GIVEN_L2X}
+${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}:  ${JPT_MODEL_PFX}.merged.${RJOINTX}
 
-
-# To be able to use faster joint2cond, we must merge into one single jpt files.
-.INTERMEDIATE: ${JPT_MODEL_PFX}.merged.${JOINTX}
-${JPT_MODEL_PFX}.merged.${JOINTX}: ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX} ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX} ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX} ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}
-	${TIME_MEM} \
-	merge_counts $@ $+ 2> log.$(basename $@)
 
 
 ################################################################################
@@ -239,6 +246,7 @@ hide.logs: SHELL=${GUARD_SHELL}
 hide.logs: hide_logs_sub
 
 
+# Word alignment models are:
 WA_MODEL_PREFIXES = ${IBM1_MODEL_PFX} ${IBM2_MODEL_PFX} ${HMM3_MODEL_PFX}
 
 clean.content: clean.word_alignment_models
@@ -246,7 +254,7 @@ clean.content: clean.word_alignment_models
 .PHONY: clean.word_alignment_models
 clean.word_alignment_models: SHELL=${GUARD_SHELL}
 clean.word_alignment_models:
-	$(RM) $(addsuffix .*,${WA_MODEL_PREFIXES})
+	$(RM) $(addsuffix .*, ${WA_MODEL_PREFIXES})
 
 clean.content: clean.jpts
 
@@ -272,7 +280,16 @@ time-mem: SHELL=${GUARD_SHELL}
 time-mem: resource_summary_sub
 
 
+
 ########################################
+# UNITTESTS
+.PHONY: unittest1
+unittest1:
+	make -Bnj1 all
+
+
+
+################################################################################
 # HELPERS
 debug: SHELL=${GUARD_SHELL}
 debug:
