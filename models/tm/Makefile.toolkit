@@ -128,7 +128,7 @@ JPT_WORKERS ?= ${JPT_PARALLELISM_LEVEL}
 # SIG MODELS.
 SIG_CPUS := 4
 SIG_OPTS :=
-SIG_THRESHOLD := -10
+SIG_THRESHOLD := 10
 SIG_MODEL_PFX := sig
 # Create variables to hold significance model prefix.
 $(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
