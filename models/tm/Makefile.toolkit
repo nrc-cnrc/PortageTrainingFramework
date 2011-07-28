@@ -126,10 +126,12 @@ JPT_WORKERS ?= ${JPT_PARALLELISM_LEVEL}
 
 ########################################
 # SIG MODELS.
-SIG_CPUS := 4
+SIG_CPUS := 1
 SIG_OPTS :=
-SIG_THRESHOLD := 10
+SIG_THRESHOLD := a+e
 SIG_MODEL_PFX := sig
+SIG_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+SIG_MODEL_WORKERS ?= ${SIG_MODEL_PARALLELISM_LEVEL}
 # Create variables to hold significance model prefix.
 $(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
    $(eval \
@@ -320,8 +322,11 @@ ${SIG_MODEL_PFX}.%.${TRAIN_TM}.${JOINTX}:
 	RP_PSUB_OPTS="-${SIG_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
 	sigprune.sh \
-		${SIG_OPTS} \
+		-n $(call SIG_MODEL_PARALLELISM_LEVEL, $+) \
+		-np $(call SIG_MODEL_WORKERS, $+) \
+		-w 50000 \
 		-threshold ${SIG_THRESHOLD} \
+		${SIG_OPTS} \
 		$(filter %${JOINTX}, $+) \
 		$(filter %${L1X}, $+) \
 		$(filter %${L2X}, $+) \
@@ -335,8 +340,11 @@ ${SIG_MODEL_PFX}.%.${TRAIN_TM}.${RJOINTX}:
 	RP_PSUB_OPTS="-${SIG_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
 	sigprune.sh \
-		${SIG_OPTS} \
+		-n $(call SIG_MODEL_PARALLELISM_LEVEL, $+) \
+		-np $(call SIG_MODEL_WORKERS, $+) \
+		-w 50000 \
 		-threshold ${SIG_THRESHOLD} \
+		${SIG_OPTS} \
 		$(filter %${RJOINTX}, $+) \
 		$(filter %${L2X}, $+) \
 		$(filter %${L1X}, $+) \
