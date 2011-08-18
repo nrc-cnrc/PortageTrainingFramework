@@ -162,10 +162,10 @@ commands executed by the system because they are always echoed by \code{make}.
 (You could also type them directly.) \code{make} also lets you skip
 sections in this document (except for the first one, since it is done
 manually). For example, if you are not interested in any steps before decoder
-weight optimization, you can go to section~\ref{COW} and type \code{make
-tune} to begin at that point. \code{make} will automatically run all the commands
-required from previous sections before doing the step you specifically
-requested. Here are some other useful make commands:
+weight optimization, you can go directly to section~\ref{COW} and type
+\code{make tune} to begin at that point. \code{make} will automatically run all
+the commands required from previous sections before doing the step you
+specifically requested. Here are some other useful make commands:
 \begin{itemize}
 \item \code{make all}: run all remaining steps at any point.
 \item \code{make clean}: clean up and return the directory to its initial state
@@ -188,18 +188,18 @@ requested. Here are some other useful make commands:
 Here is an overview of the \PS process, as described in the following
 sections (section numbers are in brackets):
 \begin{enumerate}
-\item Corpus preparation (\ref{CorpusPreparation}): includes tokenization,
-      alignment, lowercasing (\ref{Lowercasing}), and splitting
-      (\ref{Splitting}).
-\item Model training (\ref{Training}): includes language model (\ref{LM}),
-      translation model (\ref{TM}), lexicalized distortion mode (\ref{LDM}),
-      truecasing model (\ref{TC}), decoder weight optimization (\ref{COW}),
-      rescoring model training (\ref{RAT}), and confidence estimation model
-      training (\ref{CE}).
-\item Translating and testing (\ref{TranslatingTesting}): includes
-      decoding (\ref{Decoding}), rescoring (\ref{RATTrans}), confidence
-      estimation(\ref{CETrans}), truecasing (\ref{Truecasing}) and testing
-      (\ref{Testing}).
+\item Corpus preparation (\S\ref{CorpusPreparation}): includes tokenization,
+      alignment, lowercasing (\S\ref{Lowercasing}), and splitting
+      (\S\ref{Splitting}).
+\item Model training (\S\ref{Training}): includes language model (\S\ref{LM}),
+      translation model (\S\ref{TM}), lexicalized distortion mode (\S\ref{LDM}),
+      truecasing model (\S\ref{TC}), decoder weight optimization (\S\ref{COW}),
+      rescoring model training (\S\ref{RAT}), and confidence estimation model
+      training (\S\ref{CE}).
+\item Translating and testing (\S\ref{TranslatingTesting}): includes
+      decoding (\S\ref{Decoding}), rescoring (\S\ref{RATTrans}), confidence
+      estimation(\S\ref{CETrans}), truecasing (\S\ref{Truecasing}) and testing
+      (\S\ref{Testing}).
 \end{enumerate}
 These steps are fairly standard, but of course there are many variants on the
 sample process illustrated here. For more information, see the \PS
@@ -223,12 +223,13 @@ results with \PS.
 
 \subsection{Splitting the Corpus} \label{Splitting}
 
-The tokenized, sentence-aligned corpus must be split into separate portions in
-order to run experiments. Distinct, non-overlapping sub-corpora are required
-for model training (see section~\ref{Training}), for tuning decoder weights
-(section~\ref{COW}) and rescoring weights (section~\ref{RAT}), for confidence
-estimation (if you use it; section~\ref{CE}), and for testing
-(section~\ref{Testing}).\footnote{In this example, we use separate corpora for
+The corpus, which we assume you have tokenized and sentence-aligned, as
+discussed above, must be split into separate portions in order to run
+experiments. Distinct, non-overlapping sub-corpora are required for model
+training (see \S\ref{Training}), for tuning decoder weights
+(\S\ref{COW}) and rescoring weights (\S\ref{RAT}), for confidence
+estimation (if you use it; \S\ref{CE}), and for testing
+(\S\ref{Testing}).\footnote{In this example, we use separate corpora for
 tuning decoder and rescoring weights, but this is not necessary.  However,
 confidence estimation must absolutely have its own separate tuning set.}
 Typically, the tuning and testing corpora are around 1000 segments each.  If
@@ -248,25 +249,32 @@ To drop these sets into the framework, simply copy them (or make symbolic
 links) into your copy's corpora directory:
 \begin{small}
 \begin{alltt}
-   > \textbf{cp $PORTAGE/test-suite/tutorial-data/*.al corpora/}
+   > \textbf{cp $PORTAGE/test-suite/tutorial-data/*.al* corpora/}
    > \textbf{wc corpora/*.al}
-       100    2115   11589 corpora/dev1_en.al
-       100    2330   13680 corpora/dev1_fr.al
-       100    2095   11462 corpora/dev2_en.al
-       100    2443   13905 corpora/dev2_fr.al
-       100    2383   13061 corpora/devCE_en.al
-       100    2840   16209 corpora/devCE_fr.al
-       100    2379   13292 corpora/test_en.al
-       100    2616   15622 corpora/test_fr.al
-      8892  182186  981455 corpora/train_en.al
-      8892  208400 1178176 corpora/train_fr.al
-     18584  409787 2268451 total
+      100   2114  11589 corpora/dev1_en.al
+      100   2330  13680 corpora/dev1_fr.al
+      100   2095  11462 corpora/dev2_en.al
+      100   2443  13905 corpora/dev2_fr.al
+      100   2383  13061 corpora/devCE_en.al
+      100   2840  16209 corpora/devCE_fr.al
+      100   2379  13292 corpora/test_en.al
+      100   2616  15622 corpora/test_fr.al
+      800  19201 108820 total
+   > \textbf{zcat train_en.al.gz | wc}
+      8892  182186  981455
+   > \textbf{zcat train_fr.al.gz | wc}
+      8892  208400 1178176
 \end{alltt}
 \end{small}
 
 In your own experiments, the files you need to copy into \code{corpora}
 should be plain text in original truecase (if you're using truecasing),
 tokenized, sentence-split and aligned, just like the ones we provide here.
+
+Although the framework does not support compressed dev and test files, the
+training files can and should be compressed, as shown here.  Most programs and
+modules in Portage transparently handle compressed files, compressing and
+decompressing them on the fly as needed.
 
 \subsection{Setting Framework Parameters} \label{FrameworkParams}
 
@@ -364,15 +372,18 @@ variables mentioned above.
 
 \subsection{Lowercasing and Adding Escapes} \label{Lowercasing}
 
-To reduce data sparseness, we convert all files to lowercase.  We keep the
-lowercase and truecase versions separately, because we'll use the truecase
-version to train a truecasing model.
+To reduce data sparseness, we convert all files to lowercase.\footnote{We show
+\code{utf8\_casemap} being used.  If you installed Portage without ICU, you
+will see \code{lc-utf8.pl} instead.} We keep the lowercase and truecase
+versions separately, because we'll use the truecase version to train a
+truecasing model.
 \begin{small}
 \begin{alltt}
    > \textbf{cd corpora}
    > \textbf{make lc}
-   cat dev1_fr.al | lc-utf8.pl > dev1_fr.lc
+   cat dev1_fr.al | utf8_casemap -c l > dev1_fr.lc
    [...]
+   zcat train_en.al.gz | utf8_casemap -c l | gzip > train_en.lc.gz
 \end{alltt}
 \end{small}
 
@@ -396,10 +407,12 @@ this is only required for the input to \code{canoe}).
 \section{Training} \label{Training}
 
 This step creates various models and parameter files that are required for
-translation. There are five steps in training: creating a language model,
-creating a truecasing model, creating translation models, optimizing decoder
-weights, and creating a rescoring model.  When using confidence estimation, the
-CE model also has to be trained.
+translation. There are six steps in training.  Three are mandatory: creating a
+language model (\S\ref{LM}), creating a translation model (\S\ref{TM}), and
+optimizing decoder weights (\S\ref{COW}).  Four are optional: creating a
+truecasing model (\S\ref{TC}), creating a lexicalized distortion model
+(\S\ref{LDM}), training a rescoring model (\S\ref{RAT}), and training a
+confidence estimation (CE) model (\S\ref{CE}).
 
 \subsection{Creating a Language Model} \label{LM}
 
@@ -413,7 +426,7 @@ If you have access to larger corpora of monolingual text in your target
 language, you can use them to train additional language models.  The framework
 does not support training multiple language models, but you can train them
 externally and add them to the \code{canoe.ini.template} file (see
-section~\ref{COW}).} Commands are assumed to be issued from the
+\S\ref{COW}).} Commands are assumed to be issued from the
 \code{toy.experiment} directory (so run \code{cd ..} from the corpora
 directory if you have not already done so).
 
@@ -552,10 +565,10 @@ with the rest of this example.
 Creating a translation model involves two main steps: 1) training IBM and HMM word
 alignment models in both directions, then 2) using them to extract phrase pairs
 from the corpus.  We illustrate the use of two separate phrase tables: one
-from IBM2 word alignments, and one from HMM word alignments (we recommended
-doing the same for your experiments as well).  You can do all this by typing
-\code{make tm} in your \code{toy.experiment} directory, but we will break
-it down into several steps here.
+from IBM2 word alignments, and one from HMM word alignments, whose counts we
+merge afterwards (we recommended doing the same for your experiments as well).
+You can do all this by typing \code{make tm} in your \code{toy.experiment}
+directory, but we will break it down into several steps here.
 
 \subsubsection{Creating a Translation Model Using IBM2 Alignments} \label{IBM2}
 
@@ -614,7 +627,8 @@ summarize at any level just as you can globally:
 \begin{footnotesize}
 \begin{alltt}
    > \textbf{make time-mem}
-   find -type f -name log.\* | sort | xargs time-mem -T -m tm
+   find -type f -name log.\* | sort | xargs time-mem-tally-pl -no-dir -m tm \bs
+      | second-to-hms.pl | expand-auto.pl
       log.ibm1.train.en_given_fr:TIME-MEM  WALL TIME: 1m3s   CPU TIME: 28s   VSZ: 0.071G  RSS: 0.010G
       log.ibm1.train.fr_given_en:TIME-MEM  WALL TIME: 1m0s   CPU TIME: 28s   VSZ: 0.072G  RSS: 0.009G
       log.ibm2.train.en_given_fr:TIME-MEM  WALL TIME: 57s    CPU TIME: 24s   VSZ: 0.071G  RSS: 0.011G
@@ -645,54 +659,9 @@ each phrase pair observed in the parallel corpus.
 
 \subsubsection*{Training Conditional Phrase Tables}
 
-Finally we compute the conditional phrase table, using two different
-smoo\-thers to calculate the probabilities.\footnote{In general, we often obtain
-better translation quality when using phrase probabilities estimated from
-relative frequencies (``RFSmoother'') along with probability estimates
-calculated using Zens-Ney lexical smoothing (``ZNSmoother''). Other smoothing
-options are also available. We also used to include Kneser-Ney smoothing by
-default, but in recent work it has not helped much, so we don't anymore.}
-Although saved together in the same phrase table, they are separate probability
-models, whose relative weights will be tuned during decoder weight optimization
-(see section~\ref{COW}).
-\begin{small}
-\begin{alltt}
-   > \textbf{make ibm2_cpt}
-   joint2cond_phrase_tables -prune1 100 -v -i -z -ibm 2 -1 fr -2 en \bs
-      -s RFSmoother -s ZNSmoother -multipr fwd -o cpt.ibm2-rf-zn.train \bs
-      -ibm_l2_given_l1 ibm2.train.en_given_fr.gz \bs
-      -ibm_l1_given_l2 ibm2.train.fr_given_en.gz \bs
-      -reduce-mem -no-sort jpt.ibm2.train.fr-en.gz \bs
-      >& log.cpt.ibm2-rf-zn-kn3.train.fr2en
-\end{alltt}
-\end{small}
-The phrase table \code{cpt.ibm2-rf-zn.train.fr2en.gz}, together with its HMM
-counterpart (see below), is the main source of information for French to
-English translation. Each of its lines is of the form:
-\begin{verbatim}
-   fr ||| en ||| p1(fr|en) p2(fr|en) p1(en|fr) p2(en|fr)
-\end{verbatim}
-where \code{fr} is a French source phrase, \code{en} is an English target
-phrase, \code{p(fr|en)} is the probability that \code{fr} is the
-translation of \code{en} (the ``backward'' probability), and
-\code{p(en|fr)} is the probability that \code{en} is the translation of
-\code{fr} (the ``forward'' probability). In our example here, \code{p1} is
-the relative-frequency estimate of this probability, while \code{p2} is the
-Zens-Ney lexical smoothing based estimate, because those are the smoothers we
-chose. There can be any number of backward and forward probability estimates,
-reflecting the number of smoothers you use.
-%
-Here are two sample lines from this file:
-\begin{small}
-\begin{alltt}
-   > \textbf{zgrep '| proposed regulations |' cpt.ibm2-rf-zn.train.fr2en.gz}
-   projets de règlement ||| proposed regulations ||| 0.67 1.2e-6 1 0.013
-   règlements proposés ||| proposed regulations ||| 0.33 0.013 1 0.39
-\end{alltt}
-\end{small}
-Note that this example is carefully chosen; because of the small size of the
-training corpus, many other entries in the phrase table are not such good
-translations.
+We used to train conditional phrase tables separately from the IBM2 and the HMM
+joint-count phrase tables, but now we merge them first, so we'll come back to
+this step after doing the HMM models.
 
 \subsubsection{Creating a Translation Model Using HMM Alignments} \label{HMM}
 
@@ -701,7 +670,7 @@ Now we repeat the same steps using HMM word alignment models, using the
 parameter settings we recommend using as a starting point.
 \begin{small}
 \begin{alltt}
-   > \textbf{make hmm3_cpt}
+   > \textbf{make hmm3_jpt}
    cat.sh -n 4 -pn 4 -v -n1 0 -n2 5 -hmm -end-dist -anchor \bs
       -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 -bin \bs
       -i ibm1.train.en_given_fr.gz hmm3.train.en_given_fr.gz \bs
@@ -717,12 +686,6 @@ parameter settings we recommend using as a starting point.
       hmm3.train.en_given_fr.gz hmm3.train.fr_given_en.gz \bs
       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
       >& log.jpt.hmm3.train.fr-en
-   joint2cond_phrase_tables -prune1 100 -v -i -z -hmm -1 fr -2 en \bs
-      -s RFSmoother -s ZNSmoother -multipr fwd -o cpt.hmm3-rf-zn.train  \bs
-      -ibm_l2_given_l1 hmm3.train.en_given_fr.gz \bs
-      -ibm_l1_given_l2 hmm3.train.fr_given_en.gz \bs
-      -reduce-mem -no-sort jpt.hmm3.train.fr-en.gz \bs
-      >& log.cpt.hmm3-rf-zn.train.fr2en
 \end{alltt}
 \end{small}
 
@@ -730,13 +693,13 @@ There are many variants of the HMM models.  In this framework, we've included
 recipes to produce three of them: one with lexically conditioned jump
 parameters, following He (WMT-2006), invoked via the \code{hmm1_*} targets;
 one similar to the baseline described in Liang et al (ACL 2006), invoked via
-the \code{hmm2_*} targets; and one tuned in-house on French-English
-material, invoked via the \code{hmm3_*} targets.  Many other variants are
-available, as documented by \code{train_ibm -h}. To select one or more of
-them, you'll need to modify \url{models/tm/Makefile} and
-\url{models/tm/Makefile.toolkit}. It's probably easier to modify the
-commands associated with the \code{hmm1_model}, \code{hmm2_model} or 
-\code{hmm3_model} targets than to create new targets.
+the \code{hmm2_*} targets; and one tuned in-house to maximize BLEU scores on
+French-English material, invoked via the \code{hmm3_*} targets.  Many other
+variants are available, as documented by \code{train_ibm -h}. To select one or
+more of them, you'll need to modify \url{models/tm/Makefile} and
+\url{models/tm/Makefile.toolkit}. It's probably easier to modify the commands
+associated with the \code{hmm1_model}, \code{hmm2_model} or \code{hmm3_model}
+targets than to create new targets.
 
 To modify the default models generated, change the \code{PT_TYPES} variable
 in \url{toy.experiment/Makefile.params} to, for instance, \code{ibm2_cpt
@@ -745,6 +708,68 @@ type \code{make all}. All models you generate will be used in subsequent
 steps, so generate only the ones you intend to use. (You should work in
 different copies of the framework if you want to experiment with different
 variants.)
+
+\subsubsection{Creating a Conditional Phrase Table}
+
+Now that we have joint-count phrase tables from our IBM2 and HMM3
+word-alignment models, we merge their counts together in a single joint-count
+phrase table.
+\begin{small}
+\begin{alltt}
+   > \textbf{make jpt.merged.train.fr-en.gz}
+   merge_counts jpt.merged.train.fr-en.gz \bs
+      jpt.ibm2.train.fr-en.gz jpt.hmm3.train.fr-en.gz
+\end{alltt}
+\end{small}
+
+Finally we compute the conditional phrase table, using two different
+smoo\-thers to calculate the probabilities.\footnote{In general, we often obtain
+better translation quality when using phrase probabilities estimated from
+relative frequencies (``RFSmoother'') along with probability estimates
+calculated using Zens-Ney lexical smoothing (``ZNSmoother''). Other smoothing
+options are also available. We also used to include Kneser-Ney smoothing by
+default, but in recent work it has not helped much, so we don't anymore.}
+Although stored together in the same phrase table, they are separate probability
+models, whose relative weights will be tuned during decoder weight optimization
+(see \S\ref{COW}).
+\begin{small}
+\begin{alltt}
+   > \textbf{make merged_cpt}
+   joint2cond_phrase_tables -prune1 100 -v -i -z -hmm -1 fr -2 en \bs
+      -s RFSmoother -s ZNSmoother -multipr fwd -o cpt.merged.hmm3-rf-zn.train \bs
+      -ibm_l2_given_l1 hmm3.train.en_given_fr.gz \bs
+      -ibm_l1_given_l2 hmm3.train.fr_given_en.gz \bs
+      -reduce-mem -no-sort jpt.merged.train.fr-en.gz \bs
+      >& log.cpt.merged.hmm3-rf-zn-kn3.train.fr2en
+\end{alltt}
+\end{small}
+The phrase table \code{cpt.merged.hmm3-rf-zn.train.fr2en.gz} is the main source
+of information for French to English translation. Each of its lines is of the
+form:
+\begin{verbatim}
+   fr ||| en ||| p1(fr|en) p2(fr|en) p1(en|fr) p2(en|fr)
+\end{verbatim}
+where \code{fr} is a French source phrase, \code{en} is an English target
+phrase, \code{p(fr|en)} is the probability that \code{fr} is the
+translation of \code{en} (the ``backward'' probability), and
+\code{p(en|fr)} is the probability that \code{en} is the translation of
+\code{fr} (the ``forward'' probability). In our example here, \code{p1} is
+the relative-frequency estimate of this probability, while \code{p2} is the
+Zens-Ney lexical smoothing based estimate: those are the smoothers we
+recommend using. There can be any number of backward and forward probability
+estimates, reflecting the number of smoothers you use.
+%
+Here are two sample lines from this file:
+\begin{small}
+\begin{alltt}
+   > \textbf{zgrep '| proposed regulations |' cpt.merged.hmm3-rf-zn.train.fr2en.gz}
+   projets de règlement ||| proposed regulations ||| 0.67 0.0016 1 0.026
+   règlements proposés ||| proposed regulations ||| 0.33 0.018 1 0.42
+\end{alltt}
+\end{small}
+Note that this example is carefully chosen; because of the small size of the
+training corpus, many other entries in the phrase table are not such good
+translations.
 
 \subsection{Creating a Lexicalized Distortion Model} \label{LDM}
 
@@ -776,7 +801,7 @@ the first step is repeated for each phrase table.
        ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
        > ldm.counts.hmm3.gz' \bs
       >& log.ldm.counts.hmm3
-   zcat -f ldm.counts.ibm2.gz ldm.counts.hmm3.gz \bs
+   merge_multi_column_counts - ldm.counts.hmm3.gz ldm.counts.ibm2.gz \bs
       | time-mem dmestm -s -g ldm.hmm3+ibm2.fr2en.bkoff \bs
         -wtu 5 -wtg 5 -wt1 5 -wt2 5 2> log.ldm.hmm3+ibm2.fr2en \bs
       | gzip > ldm.hmm3+ibm2.fr2en.gz
@@ -881,13 +906,11 @@ Here is the result:
 \begin{alltt}
    > \textbf{cat canoe.ini}
    [ttable-multi-prob] 
-      models/tm/cpt.hmm3-rf-zn.train.fr2en.gz
-      models/tm/cpt.ibm2-rf-zn.train.fr2en.gz
+      models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.gz
    [lex-dist-model-file] 
       models/ldm/ldm.hmm3+ibm2.fr2en.gz
    [lmodel-file] 
       models/lm/train_en-kn-5g.binlm.gz
-   [weight-f] 1:1:1:1
    [ttable-limit] 30
    [ttable-threshold] 0
    [stack] 20000
@@ -906,6 +929,7 @@ Here is the result:
    [segmentation-model] none
    [bypass-marked]
    [cube-pruning]
+   [use-ftm]
 \end{alltt}
 \end{small}
 
@@ -964,7 +988,7 @@ file, as is done here; and also to run it in the background (not done here).
 Progress is most easily monitored by looking at the file
 \code{rescore-results},
 which shows the translation quality (measured by BLEU score---see
-section~\ref{Testing} for a description), as well as the current weights, for
+\S\ref{Testing} for a description), as well as the current weights, for
 each iteration.
 
 \tip \margintip The scripts \code{best-rr-val} and \code{all-best-rr-vals} can
@@ -977,40 +1001,37 @@ file obtained with this example:
 \begin{footnotesize}
 \begin{alltt}
 > \textbf{cat rescore-results}
-BLEU score: 0.165623  -d 1:1:1:1:1:1:1 -w 0 -lm 1 -tm 1:1:1:1 -ftm 1:1:1:1
-BLEU score: 0.012741  -d 0.03:0.05:-1:-0.01:-0.00:-0.00:-0.01 -w -0.11 -lm 0.38 -tm 0.01:0.0
-BLEU score: 0.105025  -d 0.75:0.31:-0.23:-1:-0.04:-0.24:-0.07 -w -0.35 -lm 0.76 -tm 0.02:-0.
-BLEU score: 0.042423  -d 0.56:0.24:-0.00:0.56:0.85:0.21:-0.11 -w 0.03 -lm 1 -tm -0.16:0.23:-
-BLEU score: 0.183071  -d 1:0.36:-0.55:-0.00:0.22:0.35:-0.69 -w -0.17 -lm 0.81 -tm 0.11:0.04:
-BLEU score: 0.201546  -d 0.82:0.84:-0.03:0.17:1:0.06:-0.25 -w -0.42 -lm 0.75 -tm 0.09:0.06:-
-BLEU score: 0.186689  -d 0.52:1:-0.07:-0.05:0.01:0.05:-0.00 -w -0.34 -lm 0.61 -tm 0.01:0.06:
-BLEU score: 0.162512  -d 0.28:-0.84:-0.09:0.28:0.06:-0.19:-0.08 -w -0.39 -lm 1 -tm -0.00:0.0
-BLEU score: 0.185599  -d 0.70:0.43:-0.04:-0.16:1:-0.06:-0.02 -w -0.07 -lm 0.40 -tm -0.00:-0.
-BLEU score: 0.190144  -d 0.93:-1:-0.01:0.64:0.73:0.04:-0.52 -w 0.02 -lm 0.99 -tm 0.49:0.13:0
-BLEU score: 0.184154  -d 0.25:0.56:0.04:-0.03:0.08:0.02:-0.02 -w -0.35 -lm 1 -tm 0.13:0.00:0
-BLEU score: 0.177097  -d 0.55:1:0.01:-0.36:-0.04:0.20:-0.24 -w -0.53 -lm 0.53 -tm 0.12:0.03:
-BLEU score: 0.201575  -d 0.89:1:-0.20:-0.11:0.30:0.32:-0.17 -w -0.42 -lm 0.55 -tm 0.13:0.02:
-BLEU score: 0.202520  -d 0.77:0.54:-0.11:-0.11:-0.02:-0.00:-0.01 -w -0.22 -lm 1 -tm 0.11:0.0
-BLEU score: 0.198976  -d 1:0.41:-0.30:0.00:0.05:0.79:-0.62 -w -0.19 -lm 0.69 -tm 0.08:0.00:-
+BLEU score: 0.176354  -d 1:1:1:1:1:1:1 -w 0 -lm 1 -tm 1:1 -ftm 1:1
+BLEU score: 0.031585  -d -0.03:0.01:0.02:-0.01:0.00:0.04:-1 -w 0.00 -lm 0.25 -tm 0.04:0.14 -
+BLEU score: 0.014561  -d 0.00:-0.33:-1:0.14:-0.20:-0.04:0.05 -w -0.09 -lm 0.47 -tm -0.00:0.0
+BLEU score: 0.100003  -d 1:0.80:-0.83:-0.66:-0.32:0.51:-0.39 -w -0.20 -lm 0.83 -tm -0.00:0.1
+BLEU score: 0.044412  -d 0.00:1:-0.00:-0.03:-0.79:0.06:-0.00 -w -0.02 -lm 0.84 -tm -0.15:0.4
+BLEU score: 0.174832  -d 0.07:1:0.05:0.23:-0.41:0.11:0.03 -w -0.07 -lm 0.66 -tm -0.04:0.22 -
+BLEU score: 0.147715  -d 0.30:-0.05:-0.28:0.03:-0.06:-0.14:-0.02 -w -0.21 -lm 1 -tm 0.11:0.4
+BLEU score: 0.191488  -d 0.95:-0.09:-0.19:-0.79:-0.06:-0.15:-0.00 -w -0.21 -lm 1 -tm 0.11:0.
+BLEU score: 0.195232  -d 0.39:-0.55:0.27:-0.50:0.29:0.60:0.28 -w -0.21 -lm 1 -tm 0.19:0.29 -
+BLEU score: 0.184187  -d 0.31:-0.16:-0.81:-0.04:-0.91:0.87:-0.00 -w 0.01 -lm 1 -tm 0.24:0.08
+BLEU score: 0.191695  -d 1:-0.08:-0.81:-0.31:0.32:0.53:0.04 -w -0.16 -lm 0.76 -tm 0.15:0.22 
+BLEU score: 0.194884  -d 1:0.44:-0.68:-0.07:-0.05:0.53:0.46 -w -0.48 -lm 0.65 -tm 0.16:0.05 
+BLEU score: 0.107006  -d 0.28:1:-0.06:0.13:-0.00:-0.00:0.02 -w -0.11 -lm 0.32 -tm 0.03:-0.08
+BLEU score: 0.175858  -d 0.26:1:-0.02:-0.03:-0.03:0.02:-0.01 -w 0.04 -lm 0.12 -tm -0.00:0.06
+BLEU score: 0.189801  -d 1:0.27:-0.24:-0.44:-0.10:0.08:-0.03 -w 0.03 -lm 0.29 -tm 0.03:0.11 
 \end{alltt}
 \end{footnotesize}
-When the last iteration still shows an improvement (which is almost the case
-here), it is sometimes a sign that we should have allowed \code{cow.sh} to
-run more iterations, by setting the \code{-maxiter} option to a higher value.
-Here, it looks like we achieved convergence at the 14th iterations; it might
-have been worth doing a few more.  You will notice that there are four weights
-after \code{-tm} (truncated in the output shown above): two for the backward
-probability estimates in the phrase table created using IBM2 models, and two
-for the phrase table created using HMM models.  For the same reason, there are
-four weights after \code{-ftm}.  There are seven weights after \code{-d}
-because we used the standard WordDisplacement model (``distortion penalty''),
-as well as the six-feature lexicalized distortion model.
+When the last iteration still shows an improvement (which is not the case
+here), it is sometimes a sign that we should have allowed \code{cow.sh} to run
+more iterations, by setting the \code{-maxiter} option to a higher value.  You
+will notice that there are two weights after \code{-tm} (truncated in the
+output shown above): one for each of the backward probability estimates in the
+merged phrase table.  For the same reason, there are two weights after
+\code{-ftm}.  There are seven weights after \code{-d} because we used the
+standard WordDisplacement model (``distortion penalty''), as well as the
+six-feature lexicalized distortion model.
 
 While \code{cow.sh} is working, it saves $n$-best lists and other intermediate
-files to a temporary work directory called \code{foos}. If you wish to
-prevent these (large) files from being automatically cleaned up on completion,
-remove the \code{rm} command executed after \code{cow.sh} in
-\code{Makefile}.
+files to a temporary work directory called \code{foos}. If you wish to prevent
+these (large) files from being automatically cleaned up on completion, remove
+the \code{rm} command executed after \code{cow.sh} in \code{Makefile}.
 
 \tip \margintip A lot of information is logged to \code{log.canoe.ini.cow};
 this can be summarized using the command \code{cowpie.py log.canoe.ini.cow}
@@ -1019,6 +1040,11 @@ this can be summarized using the command \code{cowpie.py log.canoe.ini.cow}
 \tip \margintip The scripts \code{cow-timing.pl} and
 \code{canoe-timing-stats.pl} provide detailed running time information for the
 various components of \code{cow.sh}. \tipend
+
+\tip \margintip If you have experiments in various directories with names
+following, say, \code{framework.<experiment name>}, go in their common parent
+directory and run \code{summarize-canoe-results.py framework.*} to see where
+they're all at in terms of BLEU scores and cow iterations completed.  \tipend
 
 The final output from \code{cow.sh} is written to the file
 \code{canoe.ini.cow} (assuming the original configuration file was called
@@ -1029,17 +1055,16 @@ adds the weights tuned on the development corpus:
 \begin{alltt}
    > \textbf{cat canoe.ini.cow}
    [ttable-multi-prob] 
-      models/tm/cpt.hmm3-rf-zn.train.fr2en.gz
-      models/tm/cpt.ibm2-rf-zn.train.fr2en.gz
+      models/tm/cpt.merge.hmm3-rf-zn.train.fr2en.gz
    [lex-dist-model-file] 
       models/ldm/ldm.hmm3+ibm2.fr2en.gz
    [lmodel-file] 
       models/lm/train_en-kn-5g.binlm.gz
-   [weight-d] 0.779813:0.544810:-0.116676:-0.110313:-0.025498:-0.006713:-0.016213
-   [weight-w] -0.227432
+   [weight-d] 0.3922:-0.5552:0.2718:-0.5061:0.2949:0.6087:0.2886
+   [weight-w] -0.214144
    [weight-l] 1
-   [weight-t] 0.115227:0.004537:0.093380:0.004068
-   [weight-f] 0.020464:0.003510:0.032827:0.066267
+   [weight-t] 0.199763:0.298726
+   [weight-f] -0.013952:0.232236
    [ttable-limit] 30
    [ttable-threshold] 0
    [stack] 20000
@@ -1058,12 +1083,15 @@ adds the weights tuned on the development corpus:
    [segmentation-model] none
    [bypass-marked]
    [cube-pruning]
+   [use-ftm]
 \end{alltt}
 \end{small}
-The \code{weight-} parameters above pertain to, the distortion
-model, the word-length penalty, the language model, the backward scores of the
-translation models, and the forward scores of the translation models,
-respectively. The language model often obtains the highest weight, as is the
+The \code{weight-} parameters above pertain to the distortion model
+(\code{weight-d}), the word-length penalty (\code{weight-w}), the language
+model (\code{weight-l}), the backward scores of the translation models
+(\code{weight-t}), and the forward scores of the translation models
+(\code{weight-f}).
+The language model often obtains the highest weight, as is the
 case here.\footnote{A note of warning about the LM weight: following Doug Paul's
 ``ARPA'' LM format, all LM formats we know use base-10 log probs (including our
 own binary LM and TPLM formats), but canoe interprets them as natural logs:
@@ -1134,11 +1162,7 @@ features:
    FileFF:ffvals,11
    FileFF:ffvals,12
    FileFF:ffvals,13
-   FileFF:ffvals,14
-   FileFF:ffvals,15
-   FileFF:ffvals,16
-   FileFF:ffvals,17
-   # NB: this omits some features that are slow to compute.
+   # NB: we omit some features that are slow to compute.
    # Use rescore_train -H for a complete list.
    LengthFF
    IBM1TgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz
@@ -1228,11 +1252,7 @@ The output from \code{rat.sh} is written to the file \code{rescore-model}:
    FileFF:ffvals,11 0.001069668098
    FileFF:ffvals,12 0.00296442234
    FileFF:ffvals,13 0.001270559616
-   FileFF:ffvals,14 0.2126453966
-   FileFF:ffvals,15 0.05735969171
-   FileFF:ffvals,16 0.02654521167
-   FileFF:ffvals,17 0.0006618340849
-   # NB: this omits some features that are slow to compute. 0
+   # NB: we omit some features that are slow to compute. 0
    # Use rescore_train -H for a complete list. 0
    LengthFF 8.133889787e-05
    IBM1TgtGivenSrc:models/tm/ibm1.train.en_given_fr.gz -0.000415542132
