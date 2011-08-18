@@ -1,4 +1,4 @@
-# NB: this omits some features that are slow to compute. Use rescore_train -H
+# NB: we omit some features that are slow to compute. Use rescore_train -H
 # for a complete list.
 LengthFF
 IBM1TgtGivenSrc:IBM1FWD
