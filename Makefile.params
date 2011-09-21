@@ -69,19 +69,21 @@ IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 LM_TOOLKIT = MIT
 
 # Train and apply rescoring if this variable is defined.
-# Comment out to disable rescoring.
-DO_RESCORING = 1
+# Comment out to disable rescoring; uncomment to enable.
+# Expensive!  Use only if the last small BLEU increment is important to you.
+#DO_RESCORING = 1
 
 # Tune and apply confidence estimation if this variable is defined.
-# Comment out to enable confidence estimation.
+# Comment out to disable confidence estimation; uncomment to enable.
 #DO_CE = 1
 
-# Train and use a Lexicalized Distortion Model.
-# Comment out to disable using a Lexicalized Distortion Model.
+# Train and use a Lexicalized Distortion Model (LDM).
+# Comment out to disable using an LDM; uncomment to enable.
+# Expensive!  Use only if you know it's worthwhile.
 #USE_LDM = 1
 
 # Train and apply truecassing if this variable is defined.
-# Comment out to disable truecasing.
+# Comment out to disable truecasing; uncomment to enable.
 DO_TRUECASING = 1
 
 # Let say you have your own (de)tokenizer and you want to use it.  Define the

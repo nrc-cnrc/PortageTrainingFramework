@@ -301,6 +301,7 @@ set the \code{IRSTLM} variable to the location where IRSTLM is installed;
 \item to use none of the above (for this toy example only), any valid value
 for \code{LM_TOOLKIT} will do.
 \end{itemize}
+\item set \code{DO_RESCORING} to \code{1} by uncommenting the relevant line.
 \end{itemize}
 In this toy experiment, we will use the default value for all other parameters.
 
@@ -1108,10 +1109,10 @@ lists. Rescoring means having \code{canoe} generate a list of $n$ (typically
 1000) translation hypotheses for each source sentence, then choosing the best
 translations from among these. The advantage of this procedure is that the
 choice can be made on the basis of information that is too expensive for
-\code{canoe} to use during search. This step usually gives a modest
-improvement over the results obtained using \code{canoe} alone. Sometimes,
+\code{canoe} to use during search. This step sometimes gives a modest
+improvement over the results obtained using \code{canoe} alone. Often,
 however, it gives no significant improvement while being fairly slow, so if
-translation speed is an issue, you might want to skip rescoring; experiment
+translation speed is an issue, you probably want to skip rescoring; experiment
 with your own data to determine the best choice.  In this framework, rescoring
 is automatically bypassed unless \code{DO_RESCORING} is set to 1 in
 \code{Makefile.params}.
