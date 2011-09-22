@@ -33,17 +33,25 @@ MODULE_NAME ?= translate
 SRCX  ?= _${SRC_LANG}${LANGX}
 TGTX  ?= _${TGT_LANG}${LANGX}
 RULEX ?= _${SRC_LANG}.rule
+SRCTCX ?= _${SRC_LANG}${ALIGNX}
 
 # Define any value to the following variable if you are doing rescoring.
 # If you are rescoring, there are some step that can be skipped to save cpu
 # power :D.
 #DO_RESCORING = 1
 
+# File encoding
+ENCODING ?= UTF-8
+
 # What program to use to detokenize.
 ifdef DETOKENIZER_${TGT_LANG}
 DETOKENIZER = ${DETOKENIZER_${TGT_LANG}}
 else
+ifneq ($(findstring ${ENCODING}, UTF-8 UTF8 utf-8 utf8),)
 DETOKENIZER = udetokenize.pl -lang=${TGT_LANG}
+else
+DETOKENIZER = detokenize.pl -lang=${TGT_LANG}
+endif
 endif
 
 # This is used to create a symbolic link.
@@ -115,6 +123,7 @@ endif
 vpath %${SRCX}  ${CORPORA_DIR}
 vpath %${TGTX}  ${CORPORA_DIR}
 vpath %${RULEX} ${CORPORA_DIR}
+vpath %${SRCTCX} ${CORPORA_DIR}
 
 vpath ${DECODING_MODEL}  ${DECODING_MODEL_DIR}  models/decode
 vpath ${RESCORING_MODEL} ${RESCORING_MODEL_DIR} models/rescore
@@ -294,9 +303,13 @@ else
 		-n ${PARALLELISM_LEVEL_TRANSLATE} \
 		canoe \
 		-f $< \
+		-palign \
 		< $(word 2, $^) \
-		> $@ \
-		2> log.$@
+		2> log.$@ \
+	| nbest2rescore.pl -canoe -tagoov -palout=$@.pal  2> log.$@.pal \
+	| tee  $@.oov \
+	| perl -pe 's/<OOV>(.+?)<\/OOV>/\1/g;' \
+	> $@
 endif
 
 OUT_BLEU_DEP = $(addsuffix .out.bleu, ${TEST_SET})
@@ -330,9 +343,10 @@ clean.content: clean.translate
 clean.translate: SHELL=${GUARD_SHELL}
 clean.translate: $(foreach f, ${TEST_SET}, clean.translate.$f)
 	${RM} -r canoe-parallel.* run-p.*
+	${RM} tc_tmp_*
 
 clean.translate.%:
-	${RM} $*.out $*.out.bleu
+	${RM} $*.out $*.out.oov $*.out.pal $*.out.bleu
 	${RM} $*.out.detok $*.out.detok.bleu
 
 
@@ -471,17 +485,26 @@ tc: $(addsuffix .out.tc, ${TEST_SET})
 ifdef DO_RESCORING
 tc: $(addsuffix .rat.tc, ${TEST_SET})
 endif
+ifdef TC_USE_SRC_MODELS
+TC_SRC_OPTS = -src ${CORPORA_DIR}/$(*:.out=${SRCTCX}) \
+              -pal $*.pal \
+              -srclang ${SRC_LANG} \
+              -srclm ${TRUECASING_DIR}/${TRUECASING_NC1_SRC_LM}
+endif
 %.tc: SHELL=${FRAMEWORK_SHELL}
 %.tc: %
 	@_LOCAL=1; [[ -f ${TRUECASING_DIR}/${TRUECASING_LM} ]] || ! echo "ERROR: Can't access truecasing lm ${TRUECASING_DIR}/${TRUECASING_LM}" >&2
 	@_LOCAL=1; [[ -f ${TRUECASING_DIR}/${TRUECASING_MAP} ]] || ! echo "ERROR: Can't access truecasing map ${TRUECASING_DIR}/${TRUECASING_MAP}" >&2
-	@_LOCAL=1 echo "TrueCasing $@"
-	${TIME_MEM} \
+ifdef TC_USE_SRC_MODELS
+	@_LOCAL=1; [[ -f ${TRUECASING_DIR}/${TRUECASING_NC1_SRC_LM} ]] || ! echo "ERROR: Can't access truecasing nc1 source lm ${TRUECASING_DIR}/${TRUECASING_NC1_SRC_LM}" >&2
+endif
+	@_LOCAL=1 echo "Truecasing $@"
 	truecase.pl \
-		--ucBOSEncoding=UTF-8 \
-		-text=$< \
-		-lm=${TRUECASING_DIR}/${TRUECASING_LM} \
-		-map=${TRUECASING_DIR}/${TRUECASING_MAP} \
+		-text $<$(if ${TC_SRC_OPTS},.oov,) \
+		-bos -encoding ${ENCODING} \
+		-lm ${TRUECASING_DIR}/${TRUECASING_LM} \
+		-map ${TRUECASING_DIR}/${TRUECASING_MAP} \
+		${TC_SRC_OPTS} \
 		> $@ 2> log.$@
 
 .PHONY: tc.detok

@@ -82,7 +82,7 @@ LM_TOOLKIT = MIT
 # Expensive!  Use only if you know it's worthwhile.
 #USE_LDM = 1
 
-# Train and apply truecassing if this variable is defined.
+# Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
 DO_TRUECASING = 1
 
@@ -90,7 +90,7 @@ DO_TRUECASING = 1
 # following variables to your pgm and its arguments.  Note that the variable
 # names contain your source or target language two letters identifyer.  Thus,
 # if you do spanish you could define TOKENIZER_es.  More generally,
-# {DE|}TOKENIZER_{${SRC_LANG}|$TGT_LANG}}.
+# {DE|}TOKENIZER_{${SRC_LANG}|${TGT_LANG}}.
 # Defining what tokenizers we want to use.
 #TOKENIZER_en = opennlp TokenizerME /modeldir/en-model.bin
 #TOKENIZER_fr = utokenize.pl -noss -lang=fr
@@ -226,7 +226,12 @@ PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
 # Defines the truecasing model filename.
 TRUECASING_MAP ?= ${TRAIN_TC}_${TGT_LANG}.map
 TRUECASING_LM  ?= ${TRAIN_TC}_${TGT_LANG}-kn-3g.binlm${GZ}
-
+# Should we also use source language information in truecasing?
+# Comment out to disable use of source language info; uncomment to enable.
+TC_USE_SRC_MODELS = 1
+ifdef TC_USE_SRC_MODELS
+TRUECASING_NC1_SRC_LM  ?= ${TRAIN_TC}_${SRC_LANG}.nc1.binlm${GZ}
+endif
 
 
 
