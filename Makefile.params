@@ -227,6 +227,7 @@ PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
 TRUECASING_MAP ?= ${TRAIN_TC}_${TGT_LANG}.map
 TRUECASING_LM  ?= ${TRAIN_TC}_${TGT_LANG}-kn-3g.binlm${GZ}
 # Should we also use source language information in truecasing?
+# NOTE: use of source language models in truecasing is not compatible with rescoring.
 # Comment out to disable use of source language info; uncomment to enable.
 TC_USE_SRC_MODELS = 1
 ifdef TC_USE_SRC_MODELS
@@ -266,41 +267,44 @@ endif
 # VALIDATION
 ifdef DO_CE
 ifeq (${TUNE_CE},)
-$(error "When asking for confidence estimation, you must also define a TUNE_CE!")
+$(error When asking for confidence estimation, you must also define a TUNE_CE!)
 endif
 endif
 
 ifdef DO_RESCORING
 ifeq (${TUNE_RESCORE},)
-$(error "When asking for rescoring, you must also define a TUNE_RESCORE!")
+$(error When asking for rescoring, you must also define a TUNE_RESCORE!)
+endif
+ifdef TC_USE_SRC_MODELS
+$(error When asking for rescoring, you must not define TC_USE_SRC_MODELS!)
 endif
 endif
 
 ifeq ($(strip ${TRAIN_LM} ${MIXLM}),)
-$(error "You must always define a training corpus for language model.")
+$(error You must always define a training corpus for language model)
 endif
 
 ifeq (${TRAIN_TM},)
-$(error "You must always define a training corpus for translation model.")
+$(error You must always define a training corpus for translation model)
 endif
 
 ifeq (${TRAIN_TC},)
-$(error "You must always define a training corpus for truecasing  models.")
+$(error You must always define a training corpus for truecasing  models)
 endif
 
 ifeq (${TUNE_DECODE},)
-$(error "You must always define a tuning corpus train the decoder.")
+$(error You must always define a tuning corpus train the decoder)
 endif
 
 ifeq (${SRC_LANG},)
-$(error "You must provide a SRC_LANG!")
+$(error You must provide a SRC_LANG!)
 endif
 
 ifeq (${TGT_LANG},)
-$(error "You must provide a TGT_LANG!")
+$(error You must provide a TGT_LANG!)
 endif
 
 ifeq (${SRC_LANG},${TGT_LANG})
-$(error "SRC_LANG=${SRC_LANG} cannot be the same as TGT_LANG=${TGT_LANG}!")
+$(error SRC_LANG=${SRC_LANG} cannot be the same as TGT_LANG=${TGT_LANG}!)
 endif
 
