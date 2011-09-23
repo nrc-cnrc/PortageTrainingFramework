@@ -269,7 +269,7 @@ SRC_TOKENIZE = ${TOKENIZE} -pretok -paraline -ss -lang=${SRC_LANG}
 %_${SRC_LANG}.tokss${GZ}: SHELL=${CORPUS_SHELL}
 %_${SRC_LANG}.tokss${GZ}: %_${SRC_LANG}${SCX}
 ifndef BIG_CORPUS
-	cat $< \
+	zcat -f $< \
 	| ${TIME_MEM} \
 	${SRC_TOKENIZE} 2> log.$(basename $@) \
 	| ${SRC_UC_FILTER} \
