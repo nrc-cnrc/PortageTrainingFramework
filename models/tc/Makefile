@@ -54,14 +54,18 @@ endif
 # For truecasing, we are going to use the same train_lm corpus but in its
 # truecased form.  This can be done by simply tell lm/Makefile that our corpus
 # extension is now .tc.gz.
-TCX = .tc.gz
+TCX = .tc${GZ}
 #export CORPUS_EXT = ${TCX}
 
 # Source corpora extension
+ifneq ($(wildcard ${CORPORA_DIR}/$(TRUECASING_NC1_SRC_LM:.nc1.binlm${GZ}=${ALIGNX}${GZ})),)
+SCX = ${ALIGNX}${GZ}
+else
 SCX = ${ALIGNX}
+endif
 
 # After this Makefile, the following targets/files are precious.
-FILES_TO_BE_LOCKED = ${TRUECASING_MAP} ${TRUECASING_LM} ${TRAIN_LM}*
+FILES_TO_BE_LOCKED = ${TRUECASING_MAP} ${TRUECASING_LM} ${TRUECASING_NC1_SRC_LM} ${TRAIN_LM}*
 
 # Resource monitoring.
 TIME_MEM ?= time-mem
@@ -263,7 +267,7 @@ SRC_UC_FILTER ?= perl -pe 'use encoding "${ENCODING}"; s/^[^[:lower:]]+($$|( : )
 SRC_TOKENIZE = ${TOKENIZE} -pretok -paraline -ss -lang=${SRC_LANG}
 
 %_${SRC_LANG}.tokss${GZ}: SHELL=${CORPUS_SHELL}
-%_${SRC_LANG}.tokss${GZ}: %_${SRC_LANG}${SCX}	
+%_${SRC_LANG}.tokss${GZ}: %_${SRC_LANG}${SCX}
 ifndef BIG_CORPUS
 	cat $< \
 	| ${TIME_MEM} \
