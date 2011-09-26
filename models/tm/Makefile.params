@@ -43,6 +43,10 @@
 #CPT_SMOOTHERS = -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
 #IBM2_SMOOTHERS_DESCRIPTION = -rf-zn-kn3
 
+# Example that changes the smoothers for the merged model to Kneser-Ney and Zens-Ney
+#CPT_SMOOTHERS = -s "KNSmoother 3"  -s ZNSmoother
+#MERGED_CPT_SMOOTHERS_DESCRIPTION = -kn3-zn
+
 # If you know that creating hmm3 conditional phrase tables require a lot of
 # memory, you can boost the number of cpus only for cpt.hmm3.
 #${CPT_MODEL_PFX}.${HMM3_MODEL_PFX}%: CPT_CPUS=16
