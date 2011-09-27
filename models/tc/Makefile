@@ -205,7 +205,7 @@ else
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} -n ${PARALLELISM_LEVEL_CORPORA} \
 		"(${TGT_UC_FILTER} | ${TGT_TOKENIZE}) < $< > $@  2> log.$(basename $@)"
 endif
-	
+
 # Step 2: Reverse the sentences and filter the initial words in the uppercase-filtered target language corpus.
 %.revtokss${GZ}: SHELL=${CORPUS_SHELL}
 %.revtokss${GZ}: %.tokss${GZ}
@@ -240,7 +240,7 @@ UN_SS_P := perl -pe 's/(.)$$/$$1 /; s/(.)\n/$$1/'
 	> $@
 
 # Step 5: Build the truecase target language model from the BOS-normalized,
-# uppercase-filtered target language corpus (or original target language 
+# uppercase-filtered target language corpus (or original target language
 # corpus if not using source language info too).
 %_${TGT_LANG}-kn-3g.binlm.gz: SHELL=${GUARD_SHELL}
 ifdef TC_USE_SRC_MODELS
@@ -251,14 +251,14 @@ else
 	${MAKE} -f ../lm/Makefile CORPUS_EXT=${TCX} $@
 endif
 
-%.tplm: 
+%.tplm:
 	${MAKE} -f ../lm/Makefile CORPUS_EXT=${TCX} $@
 
 
 ########################################
 # Build an NC1 source language model for use with the new truecasing workflow.
 # An NC1 LM is used for normalizing the beginning-of-sentence (BOS) case.
- 
+
 .PHONY: nc1_lm
 nc1_lm: SHELL=${GUARD_SHELL}
 nc1_lm: ${TRUECASING_NC1_SRC_LM}
@@ -297,7 +297,7 @@ ifdef TC_USE_SRC_MODELS
 %.map:  %.nc1${GZ}
 	zcat -f $< \
 	| ${LOWERCASE} \
-	| compile_truecase_map $< - 2> log.$@ \
+	| ${TIME_MEM} compile_truecase_map $< - 2> log.$@ \
 	> $@
 else
 %.map:  %${TCX}  %${LANGXZ}
