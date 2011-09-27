@@ -499,7 +499,8 @@ ifdef TC_USE_SRC_MODELS
 	@_LOCAL=1; [[ -f ${TRUECASING_DIR}/${TRUECASING_NC1_SRC_LM} ]] || ! echo "ERROR: Can't access truecasing nc1 source lm ${TRUECASING_DIR}/${TRUECASING_NC1_SRC_LM}" >&2
 endif
 	@_LOCAL=1 echo "Truecasing $@"
-	truecase.pl \
+	time-mem \
+	    truecase.pl \
 		-text $<$(if ${TC_SRC_OPTS},.oov,) \
 		-bos -encoding ${ENCODING} \
 		-lm ${TRUECASING_DIR}/${TRUECASING_LM} \
