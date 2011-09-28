@@ -34,6 +34,7 @@ SRCX  ?= _${SRC_LANG}${LANGX}
 TGTX  ?= _${TGT_LANG}${LANGX}
 RULEX ?= _${SRC_LANG}.rule
 SRCTCX ?= _${SRC_LANG}${ALIGNX}
+TGTTCX ?= _${TGT_LANG}${ALIGNX}
 
 # Define any value to the following variable if you are doing rescoring.
 # If you are rescoring, there are some step that can be skipped to save cpu
@@ -124,6 +125,7 @@ vpath %${SRCX}  ${CORPORA_DIR}
 vpath %${TGTX}  ${CORPORA_DIR}
 vpath %${RULEX} ${CORPORA_DIR}
 vpath %${SRCTCX} ${CORPORA_DIR}
+vpath %${TGTTCX} ${CORPORA_DIR}
 
 vpath ${DECODING_MODEL}  ${DECODING_MODEL_DIR}  models/decode
 vpath ${RESCORING_MODEL} ${RESCORING_MODEL_DIR} models/rescore
@@ -316,11 +318,21 @@ OUT_BLEU_DEP = $(addsuffix .out.bleu, ${TEST_SET})
 .PHONY: out.bleu
 out.bleu: SHELL=${GUARD_SHELL}
 out.bleu: ${OUT_BLEU_DEP}
-	egrep Human $+
+	@echo "Lowercase BLEU scores:"
+	@egrep Human $+
 
 # Specifing dependencies for calculating BLEU scores for translation coming out
 # of the deconder.
 ${OUT_BLEU_DEP}: %.out.bleu: %.out %${TGTX}
+
+TC_BLEU_DEP = $(addsuffix .tc.bleu, ${TEST_SET})
+.PHONY: tc.bleu
+tc.bleu: SHELL=${GUARD_SHELL}
+tc.bleu: ${TC_BLEU_DEP}
+	@echo "Truecase BLEU scores:"
+	@egrep Human $+
+
+${TC_BLEU_DEP}: %.tc.bleu: %.out.tc %${TGTTCX}
 
 .PHONY: out.detok
 out.detok: $(addsuffix .out.detok, ${TEST_SET})
@@ -346,7 +358,7 @@ clean.translate: $(foreach f, ${TEST_SET}, clean.translate.$f)
 	${RM} tc_tmp_*
 
 clean.translate.%:
-	${RM} $*.out $*.out.oov $*.out.pal $*.out.bleu
+	${RM} $*.out $*.out.oov $*.out.pal $*.out.bleu $*.tc.bleu
 	${RM} $*.out.detok $*.out.detok.bleu
 
 
@@ -383,7 +395,8 @@ RAT_BLEU_DEP = $(addsuffix .rat.bleu, ${TEST_SET})
 .PHONY: rat.bleu
 rat.bleu: SHELL=${GUARD_SHELL}
 rat.bleu: ${RAT_BLEU_DEP}
-	egrep Human $+
+	@echo "Rescoring BLEU scores:"
+	@egrep Human $+
 
 # Specifing dependencies for calculating BLEU scores for rescored translations.
 ${RAT_BLEU_DEP}: %.rat.bleu: %.rat %${TGTX}
@@ -432,36 +445,18 @@ endif
 # All confidence estimation calculation should be queued on the cluster.
 %.ce: SHELL=${FRAMEWORK_SHELL}
 
-# If the source has no reference.
-# Here we assume that, if the user didn't include the test set as part of the
-# TEST_SET variable, then it doesn't have a reference counter part.
-%.ce: ${CONFIDENCE_MODEL} %${SRCX} ${DECODING_MODEL}.%
+%.ce: ${CONFIDENCE_MODEL} %${SRCTCX} ${DECODING_MODEL}.%
 	@_LOCAL=1 echo "Generating $@"
 	${TIME_MEM} \
-	ce_translate.pl \
-		-n=${PARALLELISM_LEVEL_TRANSLATE} \
-		-notok -nolc -nl=s \
-		-src=${SRC_LANG} -tgt=${TGT_LANG} \
-		-out=$@ \
-		$(filter ${DECODING_MODEL}%, $+) \
-		$(filter ${CONFIDENCE_MODEL}, $+) \
-		$(filter %${SRCX}, $+) \
-	2> log.$@
-
-# If the source has a reference.
-$(addsuffix .ce, ${TEST_SET}): %.ce: ${CONFIDENCE_MODEL} %${SRCX} %${TGTX} ${DECODING_MODEL}.%
-	@_LOCAL=1 echo "Generating $@"
-	${TIME_MEM} \
-	ce_translate.pl \
-		-n=${PARALLELISM_LEVEL_TRANSLATE} \
-		-notok -nolc -nl=s \
-		-src=${SRC_LANG} -tgt=${TGT_LANG} \
-		-test=$(filter %${TGTX}, $+) \
-		-out=$@ \
-		$(filter ${DECODING_MODEL}%, $+) \
-		$(filter ${CONFIDENCE_MODEL}, $+) \
-		$(filter %${SRCX}, $+) \
-	2> log.$@
+	translate.pl -with-ce \
+		-n ${PARALLELISM_LEVEL_TRANSLATE} \
+		-notok -nl s $(if ${DO_TRUECASING},-tc,) \
+		-encoding ${ENCODING} \
+		-src ${SRC_LANG} -tgt ${TGT_LANG} \
+		-f $(filter ${DECODING_MODEL}%, $+) \
+		-model $(filter ${CONFIDENCE_MODEL}, $+) \
+		$(filter %${SRCTCX}, $+) \
+	> $@ 2> log.$@
 
 ${CONFIDENCE_MODEL}: SHELL=${GUARD_SHELL}
 ${CONFIDENCE_MODEL}:
