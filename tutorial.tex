@@ -75,8 +75,8 @@ updated to reflect recommended usage of Portage 1.4.3.
       Institute for Information Technology \\
    Conseil national de recherches Canada /
       National Research Council Canada \\
-   Copyright \copyright\ 2008--2010, Sa Majest{\'e} la Reine du Chef du Canada
-   \\ Copyright \copyright\ 2008--2010, Her Majesty in Right of Canada
+   Copyright \copyright\ 2008--2011, Sa Majest{\'e} la Reine du Chef du Canada
+   \\ Copyright \copyright\ 2008--2011, Her Majesty in Right of Canada
 \end{center}
 
 \vfill
@@ -449,6 +449,7 @@ model needed for this example, \code{train_en-kn-5g.binlm.gz}:
    make -C lm all LM_LANG=en
    Creating ARPA text format train_en-kn-5g.lm.gz
    zcat ../../corpora/train_en.lc.gz \bs
+      | perl -ple 's/^{\bs}s*(.*?){\bs}s*$/$1/; s/{\bs}s+/ /g;' \bs
       | estimate-ngram -order 5 -smoothing ModKN -text /dev/stdin \bs
         -write-lm train_en-kn-5g.lm.gz 2> log.train_en-kn-5g.lm
    arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \bs
@@ -475,21 +476,22 @@ standard language model trained on the truecase corpus.
 With version 1.4.3, we have introduced a new variant of truecasing which
 carries casing information from the source sentence into the target sentence,
 including the casing for the first word in the sentence, and unusual casing for
-sequences of several words (such as allcaps).
+sequences of several words (such as all caps).
 
 Truecasing with source information is now the default.\footnote{If you want to
 use basic truecasing, as in previous versions of Portage, comment out the line
 \texttt{TC\_USE\_SRC\_MODELS=1} in the advanced configuration section of
 \texttt{Makefile.params}.}  It requires three language models: source-side and
-target-side normalized-case\footnote{``Normalized case'' means that
-the first character of the sentence is in lowercase unless the word inherently
-requires the upper case.  E.g., ``a flat in London.'' and ``London is on the
-Thames.'' are in normalized case.} language models, as well as the main
-truecasing LM.  The main truecasing LM and the ``casemap'' are trained on the
-normalized-case target-side training corpus.  Together, they are used to
-determine the case for the output of the decoder.  Then case information from
-the source sentence, including the first word, is transfered to the output of
-the decoder.
+target-side normalized-case\footnote{``Normalized case'' means that the first
+character of the sentence is in lowercase unless the word inherently requires
+the upper case.  E.g., ``a flat in London.'' and ``London is on the Thames.''
+are in normalized case.} language models, as well as the main truecasing LM. 
+The target-side normalized-case LM is used only for generating a case-normalized
+target-side training corpus; it is not used in translation. The main truecasing
+LM and the ``casemap'' are trained on the normalized-case target-side training
+corpus.  Together, they are used to determine the case for the output of the
+decoder.  Then additional case information from the source sentence, including
+the first word, is transfered to that truecased output of the decoder.
 
 Running \code{make tc} at the root of the framework will build all necessary
 files and models.
@@ -532,11 +534,27 @@ files and models.
 \end{alltt}
 \end{small}
 
-%The first command, \code{compile_truecase_map}, compiles the casemap
-%by reading the truecase and lowercased versions of the corpus simultaneously.
-%The remaining commands will depend on your choice of LM toolkit, training a
-%language model as in section~\ref{LM} above, but using the truecase corpus,
-%\code{train_en.tc.gz}, instead of the lowercased version.
+The first truecasing command above generates \code{train_en.tokss.gz}, a variant
+of the target-side training corpus with all caps sentences (which are misleading
+for training truecase models) removed and sentence splitting
+re-done.\footnote{Sentence splitting is re-applied because corpus text from some
+sources such as TMX files may contain lines with multiple sentences, and
+beginning-of-sentence detection is important for case normalization.}  The
+second command generates \code{train_en.revtokss.gz}, a further permutation of
+the target-side training corpus needed for training the target-side
+normalized-case LM. The third command invokes \code{make} to train a language
+model as in section~\ref{LM}, this time producing \code{train_en.binlm.gz}, the
+target-side normalized-case language model. The next command, \code{normc1},
+uses a normalized-case LM to case normalize text producing, in this case,
+\code{train_en.nc1.gz}, the case-normalized target-side training corpus. Next,
+the casemap for the main target-side truecasing model, \code{train_en.map}, is
+generated using \code{compile_truecase_map}, which compiles the casemap by
+reading the normalized-case and lowercased versions of the corpus
+simultaneously. Then, \code{make} is invoked again, this time to produce
+\code{train_en-kn-3g.binlm.gz}, the main target-size truecasing model. The final
+three commands listed above do the same thing as the first three, but for the
+source side instead to produce \code{train_fr.nc1.binlm.gz}, the source-side
+normalized-case language model needed by the new truecasing workflow.
 
 \subsection{Creating a Translation Model} \label{TM}
 
@@ -768,15 +786,17 @@ the first step is repeated for each phrase table.
 \begin{alltt}
    > \textbf{cd models/ldm}
    > \textbf{make all}
-   parallelize.pl -nolocal -psub -1 -n 30 -np 30 -w 100000 \bs
+   parallelize.pl -nolocal -psub -1 -n 4 -np 4 -w 100000 \bs
       -s '../../corpora/train_fr.lc.gz' -s '../../corpora/train_en.lc.gz' \bs
+      -merge 'merge_multi_column_counts -' \bs
       'dmcount -v -m 8 \bs
        ../tm/ibm2.train.en_given_fr.gz ../tm/ibm2.train.fr_given_en.gz \bs
        ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
        > ldm.counts.ibm2.gz' \bs
       >& log.ldm.counts.ibm2
-   parallelize.pl -nolocal -psub -1 -n 30 -np 30 -w 100000 \bs
+   parallelize.pl -nolocal -psub -1 -n 4 -np 4 -w 100000 \bs
       -s '../../corpora/train_fr.lc.gz' -s '../../corpora/train_en.lc.gz' \bs
+      -merge 'merge_multi_column_counts -' \bs
       'dmcount -v -m 8 \bs
        ../tm/hmm3.train.en_given_fr.gz ../tm/hmm3.train.fr_given_en.gz \bs
        ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
@@ -866,7 +886,7 @@ So we make the \code{canoe.ini} file:
    cat canoe.ini.template \bs
       | sed -e 's/<SL>/fr/g' \bs
             -e 's/<TL>/en/g' \bs
-            -e 's#<CPTS>#models/tm/cpt.hmm3-rf-zn.train.fr2en.gz models/tm/[...]' \bs
+            -e 's#<CPTS>#models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.gz#g' \bs
             -e 's#<LMS>#models/lm/train_en-kn-5g.binlm.gz#g' \bs
             -e 's/^\bs(\bs[\bs(weight-f\bs|ftm\bs)\bs]\bs)/##mid##\bs1/' \bs
       | configtool -p "args:-distortion-model WordDisplacement " - \bs
@@ -885,7 +905,12 @@ check canoe.ini}, confirms that the \code{canoe.ini} file produced is
 error-free---it checks that all parameters are compatible and that all models
 can be found.
 
-Here is the result:
+Here is the result:\footnote{If you set \code{USE\_LDM=1}, you would also see a
+line pointing to the LDM file, \code{[lex-dist-model-file]
+models/ldm/ldm.hmm3+ibm2.fr2en.gz}; the \code{[distortion-model]} block would
+include the six LDM features, \code{back-lex\#m back-lex\#s back-lex\#d
+fwd-lex\#m fwd-lex\#s fwd-lex\#d}; and the options \code{[dist-phrase-swap]} and
+\code{[dist-limit-ext]} would be enabled.}
 \begin{small}
 \begin{alltt}
    > \textbf{cat canoe.ini}
@@ -905,13 +930,7 @@ Here is the result:
    [cube-pruning]
    [use-ftm]
 \end{alltt}
-\end{small}\footnote{If you set \code{USE\_LDM=1}, you would also see a line
-pointing to the LDM file,
-\code{[lex-dist-model-file] models/ldm/ldm.hmm3+ibm2.fr2en.gz};
-the \code{[distortion-model]} block would include the six LDM features,
-\code{back-lex\#m back-lex\#s back-lex\#d fwd-lex\#m fwd-lex\#s fwd-lex\#d};
-and the options \code{[dist-phrase-swap]} and \code{[dist-limit-ext]} would be
-enabled.}
+\end{small}
 
 When using this framework, do not modify \code{canoe.ini} directly.  To
 change the training parameters for language models or phrase tables, modify the
@@ -1388,23 +1407,23 @@ confidence of the system on the output of the decoder.  This option is not
 compatible with rescoring: the confidence estimate is for the one-best output
 of the decoder only.  We use the decoder model tuned in section~\ref{COW}, and
 then the CE model trained in section~\ref{CE}.  The program
-\code{ce_translate.pl} handles both of these steps:
+\code{translate.pl} handles both of these steps:
 \begin{small}
 \begin{alltt}
    > \textbf{cd translate}
    > \textbf{make confidence}
    ln -fs models/confidence/ce_model.cem
    Generating test.ce
-   ce_translate.pl -n=4 -notok -nolc -nl=s -src=fr -tgt=en \bs
-      -test=../corpora/test_en.lc -out=test.ce canoe.ini.cow.test \bs
-      ce_model.cem ../corpora/test_fr.lc 2> log.test.ce
+   translate.pl -with-ce -n 4 -notok -nl s -tc -encoding UTF-8 -src fr -tgt en \bs
+      -f canoe.ini.cow.test -model ce_model.cem ../corpora/test_fr.al \bs
+      > test.ce 2> log.test.ce
 \end{alltt}
 \end{small}
 The main output file, \code{test.ce}, is different from the \code{test.out}
 file we saw in the two previous steps in that 1) a confidence estimate is added
-at the beginning of each line, and 2) the output has already been detokenized.
-However, the translations are actually the same as in \code{test.out}, with
-some postprocessing performed on them.
+at the beginning of each line, and 2) the output has already been
+truecased and detokenized. However, the translations are actually the same as in
+\code{test.out}, with some postprocessing performed on them.
 
 \subsubsection{Decoding plus Rescoring} \label{RATTrans}
 
@@ -1453,13 +1472,14 @@ the values assumed below.
 
 \subsubsection{Truecasing and Detokenizing} \label{Truecasing}
 
-If you inspect the \code{test.out}, \code{test.ce} and/or code{test.rat} output
-files, you will notice that they contain lowercase, tokenized text. Two
-postprocessing steps are required to restore normal case and normally spaced
-text: truecasing and detokenizing.
+If you inspect the \code{test.out}, and/or code{test.rat} output files, you will
+notice that they contain lowercase, tokenized text.  Two postprocessing steps
+are required to restore normal case and normally spaced text: truecasing and
+detokenizing.  The \code{test.ce} output file, on the other hand, already
+contains truecased, detokenized text.
 
-Truecasing is done by the \code{truecase.pl} script using the model trained
-previously:
+Truecasing is done by the \code{truecase.pl} script using the truecasing models
+trained previously:
 \begin{small}
 \begin{alltt}
    > \textbf{make tc}
@@ -1471,9 +1491,10 @@ previously:
 \end{alltt}
 \end{small}
 
-If you are using the old truecasing module, the same files will be generated by
-\code{truecase.pl}, but the options will be different, and you will not get all
-the benefits of the new module.
+If you are using the old truecasing workflow, the same files will be generated
+by \code{truecase.pl}, but the options will be different (\code{-src},
+\code{-pal}, \code{-srclang}, \code{-srclm} options will be omitted), and you
+will not get all the benefits of the new workflow.
 
 If you are using rescoring, \code{make tc} will also truecase the rescoring
 output, generating \code{test.rat.tc}.
@@ -1494,11 +1515,8 @@ supported by \code{detokenize.pl}.
 \end{alltt}
 \end{small}
 
-Detokenizing is not performed here on the \code{test.ce} file because it was
-already done by \code{ce_translate.pl}.  Truecasing can optionally be performed by
-\code{ce_translate.pl}, using the \code{-tc*} options, but this is
-not integrated in the framework yet (type \code{ce_translate.pl -h} for
-details.
+Detokenizing is not performed here on the \code{test.ce} file because
+it was already done by \code{translate.pl} along with truecasing.
 
 If you are using rescoring, \code{make detok} will also detokenize the
 rescoring output, generating \code{test.rat.tc.detok} and
@@ -1522,7 +1540,7 @@ match. BLEU is calculated by the program \code{bleumain}:
    Calculating BLEU for test.rat.bleu
    bleumain -c test.rat ../corpora/test_en.lc > test.rat.bleu
    grep Human *.bleu
-   test.out.bleu:Human readable value: 19.02 +/- 3.29
+   test.out.bleu:Human readable value: 19.15 +/- 3.25
    test.rat.bleu:Human readable value: 17.93 +/- 3.28
 \end{alltt}
 \end{small}
@@ -1625,17 +1643,17 @@ fully expanded:
 \begin{small}
 \begin{alltt}
    > \textbf{du -hL models/portageLive/}
-   13M     models/portageLive/models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.tppt
-   24M     models/portageLive/models/tm
-   1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
-   516K    models/portageLive/models/tc/tc-map.en.tppt
-   1.8M    models/portageLive/models/tc/tc-lm.en.tplm
-   4.2M    models/portageLive/models/tc
-   5.3M    models/portageLive/models/lm/train_fr-kn-5g.tplm
-   4.9M    models/portageLive/models/lm/train_en-kn-5g.tplm
-   11M     models/portageLive/models/lm
-   39M     models/portageLive/models
-   39M     models/portageLive
+   14M     models/portageLive/models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.tppt
+   26M     models/portageLive/models/tm
+   2.4M    models/portageLive/models/tc/nc1-lm.fr.tplm
+   700K    models/portageLive/models/tc/tc-map.en.tppt
+   2.0M    models/portageLive/models/tc/tc-lm.en.tplm
+   5.0M    models/portageLive/models/tc
+   5.7M    models/portageLive/models/lm/train_fr-kn-5g.tplm
+   5.4M    models/portageLive/models/lm/train_en-kn-5g.tplm
+   12M     models/portageLive/models/lm
+   42M     models/portageLive/models
+   42M     models/portageLive
 \end{alltt}
 \end{small}
 
@@ -1746,30 +1764,30 @@ by the models.  When you run \code{make summary}, you will first get the
    1.3M    models/tm/jpt.ibm2.train.fr-en.gz
    3.8M    models/tm/jpt.merged.train.fr-en.gz
    12M     models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.gz
-   13M     models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.tppt
+   14M     models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.tppt
    3.4M    models/lm/train_en-kn-5g.binlm.gz
    5.4M    models/lm/train_en-kn-5g.lm.gz
-   4.9M    models/lm/train_en-kn-5g.tplm
+   5.4M    models/lm/train_en-kn-5g.tplm
    3.7M    models/lm/train_fr-kn-5g.binlm.gz
    5.9M    models/lm/train_fr-kn-5g.lm.gz
-   5.3M    models/lm/train_fr-kn-5g.tplm
-   448K    translate
-   8.0K    models/confidence/ce_model.cem
-   16M     models/tc
+   5.7M    models/lm/train_fr-kn-5g.tplm
+   340K    translate
+   12K     models/confidence/ce_model.cem
+   17M     models/tc
    98M     total
 
    Disk usage for portageLive models:
-   13M     models/portageLive/models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.tppt
-   24M     models/portageLive/models/tm
-   1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
-   516K    models/portageLive/models/tc/tc-map.en.tppt
-   1.8M    models/portageLive/models/tc/tc-lm.en.tplm
-   4.2M    models/portageLive/models/tc
-   5.3M    models/portageLive/models/lm/train_fr-kn-5g.tplm
-   4.9M    models/portageLive/models/lm/train_en-kn-5g.tplm
-   11M     models/portageLive/models/lm
-   39M     models/portageLive/models
-   39M     models/portageLive
+   14M     models/portageLive/models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.tppt
+   26M     models/portageLive/models/tm
+   2.4M    models/portageLive/models/tc/nc1-lm.fr.tplm
+   700K    models/portageLive/models/tc/tc-map.en.tppt
+   2.0M    models/portageLive/models/tc/tc-lm.en.tplm
+   5.0M    models/portageLive/models/tc
+   5.7M    models/portageLive/models/lm/train_fr-kn-5g.tplm
+   5.4M    models/portageLive/models/lm/train_en-kn-5g.tplm
+   12M     models/portageLive/models/lm
+   42M     models/portageLive/models
+   42M     models/portageLive
 \end{alltt}
 \end{small}
 
