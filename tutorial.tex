@@ -456,9 +456,11 @@ model needed for this example, \code{train_en-kn-5g.binlm.gz}:
       >& log.train_en-kn-5g.binlm
 \end{alltt}
 \end{small}
-The first command executed, \code{estimate-ngram}, produces the language
-model itself in ``ARPA'' format.  The second command, \code{arpalm2binlm},
-converts it into the Portage binary language model format for fast loading.
+The first command executed, \code{estimate-ngram}, produces the language model
+itself in ``ARPA'' format.  The \code{perl} command that precedes it removes
+extraneous whitespace, because \code{estimate-ngram} is picky about its input.
+The second command, \code{arpalm2binlm}, converts it into the Portage binary
+language model format for fast loading.
 
 
 \subsection{Creating a Truecasing Model} \label{TC}
@@ -470,21 +472,23 @@ need both a lowercased version and the original ``truecase'' version of the
 training corpus in the target language.
 
 The basic truecasing model consists of two different models: a ``casemap'',
-which maps each lower case words to its possible truecase variants, and a
-standard language model trained on the truecase corpus.
+which maps each lower case words to its possible truecase variants, as observed
+in the training corpus, and a standard language model trained on the truecase
+corpus.
 
 With version 1.4.3, we have introduced a new variant of truecasing which
-carries casing information from the source sentence into the target sentence,
-including the casing for the first word in the sentence, and unusual casing for
-sequences of several words (such as all caps).
+carries casing information from the source sentence to the target sentence,
+including the casing for the first word in the sentence, the casing of OOVs
+(out-of-vocabulary words), and unusual casing for sequences of several words
+(such as all caps).
 
 Truecasing with source information is now the default.\footnote{If you want to
 use basic truecasing, as in previous versions of Portage, comment out the line
-\texttt{TC\_USE\_SRC\_MODELS=1} in the advanced configuration section of
-\texttt{Makefile.params}.}  It requires three language models: source-side and
+\code{TC\_USE\_SRC\_MODELS=1} in the advanced configuration section of
+\code{Makefile.params}.}  It requires three language models: source-side and
 target-side normalized-case\footnote{``Normalized case'' means that the first
 character of the sentence is in lowercase unless the word inherently requires
-the upper case.  E.g., ``a flat in London.'' and ``London is on the Thames.''
+the upper case.  E.g., ``his flat in is London.'' and ``London is on the Thames.''
 are in normalized case.} language models, as well as the main truecasing LM. 
 The target-side normalized-case LM is used only for generating a case-normalized
 target-side training corpus; it is not used in translation. The main truecasing
@@ -534,14 +538,14 @@ files and models.
 \end{alltt}
 \end{small}
 
-The first truecasing command above generates \code{train_en.tokss.gz}, a variant
-of the target-side training corpus with all caps sentences (which are misleading
-for training truecase models) removed and sentence splitting
+The first command above generates \code{train_en.tokss.gz}, a variant
+of the target-side training corpus with all-caps sentences (which are misleading
+for training truecasing models) removed and sentence splitting
 re-done.\footnote{Sentence splitting is re-applied because corpus text from some
 sources such as TMX files may contain lines with multiple sentences, and
 beginning-of-sentence detection is important for case normalization.}  The
-second command generates \code{train_en.revtokss.gz}, a further permutation of
-the target-side training corpus needed for training the target-side
+second command generates \code{train_en.revtokss.gz}, a permutation of
+the target-side training corpus needed to train the target-side
 normalized-case LM. The third command invokes \code{make} to train a language
 model as in section~\ref{LM}, this time producing \code{train_en.binlm.gz}, the
 target-side normalized-case language model. The next command, \code{normc1},
@@ -551,7 +555,7 @@ the casemap for the main target-side truecasing model, \code{train_en.map}, is
 generated using \code{compile_truecase_map}, which compiles the casemap by
 reading the normalized-case and lowercased versions of the corpus
 simultaneously. Then, \code{make} is invoked again, this time to produce
-\code{train_en-kn-3g.binlm.gz}, the main target-size truecasing model. The final
+\code{train_en-kn-3g.binlm.gz}, the main target-size truecasing LM. The final
 three commands listed above do the same thing as the first three, but for the
 source side instead to produce \code{train_fr.nc1.binlm.gz}, the source-side
 normalized-case language model needed by the new truecasing workflow.
@@ -1431,7 +1435,7 @@ If you executed the commands in the \emph{Decoding Only} section above, please
 run \code{make clean} before proceeding.  To run this variant, edit
 \code{Makefile.params} and set (or uncomment the line) \code{DO_RESCORING = 1},
 and comment out \code{TC_USE_SRC_MODELS = 1}.  We recommend using the new
-truecasing module, but we have to disable it temporarily since it is not yet
+truecasing workflow, but we have to disable it temporarily since it is not yet
 compatible with rescoring, as we mentioned before.
 \begin{small}
 \begin{alltt}
@@ -1492,8 +1496,8 @@ trained previously:
 \end{small}
 
 If you are using the old truecasing workflow, the same files will be generated
-by \code{truecase.pl}, but the options will be different (\code{-src},
-\code{-pal}, \code{-srclang}, \code{-srclm} options will be omitted), and you
+by \code{truecase.pl}, but the options will be different (the \code{-src},
+\code{-pal}, \code{-srclang} and \code{-srclm} options will be omitted), and you
 will not get all the benefits of the new workflow.
 
 If you are using rescoring, \code{make tc} will also truecase the rescoring
