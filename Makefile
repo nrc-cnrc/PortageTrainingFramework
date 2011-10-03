@@ -62,7 +62,11 @@ endif
 doc: tutorial.pdf
 
 %.pdf: %.tex
-# latex is run twice so a correct table of contents is generated.
+# latex actually needs to be run three times for the table of contents to be
+# generated correctly (a trivial change on one line has a significant ripple
+# effect to paging between the 1st and 2nd pass, so that several entries in the
+# TOC are changed between the 2nd and 3rd pass).
+	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 
