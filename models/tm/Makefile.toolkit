@@ -144,7 +144,10 @@ $(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
 # CPT MODELS.
 CPT_MODEL_PFX ?= cpt
 CPT_CPUS ?= 4
-CPT_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother
+#CPT_SMOOTHERS ?= -s RFSmoother  -s ZNSmoother
+#SMOOTHERS_DESCRIPTION ?= -rf-zn
+CPT_SMOOTHERS ?= -s "KNSmoother 3"  -s ZNSmoother
+SMOOTHERS_DESCRIPTION ?= -kn3-zn
 
 ########################################
 # TPPT MODELS.

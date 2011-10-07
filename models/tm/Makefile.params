@@ -39,13 +39,17 @@
 # Or if you want to provide extra parameters for the forward ibm2 model.
 #${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  IBM1_MODEL_EXTRAS=Your params
 
-# Example that changes the smoothers for the ibm2 conditional phrase table.
+# Example that changes the smoothers for the conditional phrase tables.
 #CPT_SMOOTHERS = -s RFSmoother  -s ZNSmoother  -s "KNSmoother 3"
-#IBM2_SMOOTHERS_DESCRIPTION = -rf-zn-kn3
+#SMOOTHERS_DESCRIPTION = -rf-zn-kn3
 
-# Example that changes the smoothers for the merged model to Kneser-Ney and Zens-Ney
+# Example that changes the smoothers for the CPTs to Kneser-Ney and Zens-Ney
 #CPT_SMOOTHERS = -s "KNSmoother 3"  -s ZNSmoother
-#MERGED_CPT_SMOOTHERS_DESCRIPTION = -kn3-zn
+#SMOOTHERS_DESCRIPTION = -kn3-zn
+
+# Example that resets the CPT smoothers to the old default
+#CPT_SMOOTHERS = -s RFSmoother  -s ZNSmoother
+#SMOOTHERS_DESCRIPTION = -rf-zn
 
 # If you know that creating hmm3 conditional phrase tables require a lot of
 # memory, you can boost the number of cpus only for cpt.hmm3.
