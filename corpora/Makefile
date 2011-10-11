@@ -200,19 +200,23 @@ tok: ${TOK}
 # TRUECASE.
 # Defines what corpora we need truecased/tokenized for the truecase model.
 .PHONY: tc
-TC = $(addsuffix _${TGT_LANG}.tc${GZ}, ${TRAIN_TC})
+# Create the truecase corpora based on align corpora.  If the align corpora is
+# zipped we link to the zipped version, if not we will link to the unzipped
+# version the align corpora.
+#TC := $(foreach m, ${TRAIN_TC}, ${m}_${TGT_LANG}${TCX}$(and $(wildcard ${m}_${TGT_LANG}${ALIGNX}${GZ}), ${GZ}))
+TC := $(addsuffix _${TGT_LANG}${TCX}${GZ}, ${TRAIN_TC})
 tc: ${TC}
 
 # Prepare truecased file.
 %${TCX}: %${ALIGNX}
 	@${check_utf8}
 	RP_PSUB_OPTS="-1" \
-	cp $< $@
+	ln -fs $< $@
 
 %${TCX}${GZ}: %${ALIGNX}${GZ}
 	@${check_utf8}
 	RP_PSUB_OPTS="-1" \
-	cp $< $@
+	ln -fs $< $@
 
 
 
@@ -311,6 +315,8 @@ debug: SHELL=${GUARD_SHELL}
 debug:
 	@echo "LIST_FINAL_OUTPUT: ${LIST_FINAL_OUTPUT}"
 	@echo "LC: ${LC}"
+	@echo "TRAIN_TC: ${TRAIN_TC}"
+	@echo "TC: ${TC}"
 	@echo "SRC_RAW_LIST: ${SRC_RAW_LIST}"
 	@echo "SRC_TOK_LIST: ${SRC_TOK_LIST}"
 	@echo "SRC_RAW_LIST: ${TGT_RAW_LIST}"
