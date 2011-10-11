@@ -13,11 +13,11 @@
 # Copyright 2010, Her Majesty in Right of Canada
 
 ifndef SRC_LANG
-$(error "You must define SRC_LANG")
+$(error You must define SRC_LANG)
 endif
 
 ifndef TGT_LANG
-$(error "You must define TGT_LANG")
+$(error You must define TGT_LANG)
 endif
 
 # Maximum phrase length.

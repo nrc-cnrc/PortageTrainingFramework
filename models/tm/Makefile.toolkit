@@ -174,15 +174,15 @@ filter_interleave = $(call interleave, $(filter ${1}, $(filter-out ${3}, ${4})),
 ################################################################################
 # ARGUMENTS VALIDATION.
 ifndef lang1
-$(error "You must define lang1")
+$(error You must define lang1)
 endif
 
 ifndef lang2
-$(error "You must define lang2")
+$(error You must define lang2)
 endif
 
 ifndef PARALLELISM_LEVEL_TM
-$(error "You must define PARALLELISM_LEVEL_TM")
+$(error You must define PARALLELISM_LEVEL_TM)
 endif
 
 

@@ -151,6 +151,6 @@ portageLive: ${CE_MODEL_NAME}${CEMX}
 	fi
 else
 portageLive:
-	$(error "Exception this target shouldn't be called.")
+	$(error Exception this target shouldn't be called.)
 endif
 

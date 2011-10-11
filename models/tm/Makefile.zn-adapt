@@ -115,11 +115,11 @@ other_files  ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}))
 ifeq ("","$(or $(findstring clean,${MAKECMDGOALS}),$(findstring help,${MAKECMDGOALS}))")
 
 ifeq ("${domain_files}", "")
-$(error "Make couldn't find the domain corpora files: ${CORPORA_DIR}/${TRAIN_TM_DOMAIN}*${LANGXZ}")
+$(error Make couldn't find the domain corpora files: ${CORPORA_DIR}/${TRAIN_TM_DOMAIN}*${LANGXZ})
 endif
 
 ifeq ("${other_files}", "")
-$(error "Make couldn't find the non-domain corpora files: ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}")
+$(error Make couldn't find the non-domain corpora files: ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ})
 endif
 
 endif
