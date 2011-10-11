@@ -200,10 +200,6 @@ tok: ${TOK}
 # TRUECASE.
 # Defines what corpora we need truecased/tokenized for the truecase model.
 .PHONY: tc
-# Create the truecase corpora based on align corpora.  If the align corpora is
-# zipped we link to the zipped version, if not we will link to the unzipped
-# version the align corpora.
-#TC := $(foreach m, ${TRAIN_TC}, ${m}_${TGT_LANG}${TCX}$(and $(wildcard ${m}_${TGT_LANG}${ALIGNX}${GZ}), ${GZ}))
 TC := $(addsuffix _${TGT_LANG}${TCX}${GZ}, ${TRAIN_TC})
 tc: ${TC}
 
