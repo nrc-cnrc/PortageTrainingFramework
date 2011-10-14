@@ -311,35 +311,6 @@ hide.logs: hide_logs_sub
 # args $1 file stem
 FILE_EXISTS = $(strip $(wildcard ${1}${ALIGNX}) $(wildcard ${1}${ALIGNX}${GZ}) $(wildcard ${1}${RAWX}) $(wildcard ${1}${RAWX}${GZ}))
 
-.PHONY: unittest unittest_no_file unittest.other unittest.raw unittest.raw.gz unittest.al unittest.al.gz
-unittest: SHELL=bash
-unittest:
-	${MAKE} unittest_no_file
-	touch unittest.other
-	sleep 2; ${MAKE} unittest.other
-	rm unittest.other
-	touch unittest.raw
-	sleep 2; ${MAKE} unittest.raw
-	rm unittest.raw
-
-unittest_no_file:
-	[[ -z "$(call FILE_EXISTS, $@)" ]] || ! echo "ERROR: Function FILE_EXISTS have detected a file when none exists." >&2
-
-unittest.other:
-	[[ -z "$(call FILE_EXISTS, $@)" ]] || ! echo "ERROR: Function FILE_EXISTS have detected a file but was confused by the wrong extension." >&2
-
-unittest.raw:
-	test -f "$(call FILE_EXISTS, $@)" || ! echo "ERROR: Function FILE_EXISTS failed to detect .raw file." >&2
-
-unittest.raw.gz:
-	test -f $(call FILE_EXISTS, $@) || ! echo "ERROR: Function FILE_EXISTS failed to detect .raw.gz file." >&2
-
-unittest.al:
-	test -f $(call FILE_EXISTS, $@) || ! echo "ERROR: Function FILE_EXISTS failed to detect .al file." >&2
-
-unittest.al.gz:
-	test -f $(call FILE_EXISTS, $@) || ! echo "ERROR: Function FILE_EXISTS failed to detect .al.gz file." >&2
-
 
 # Verify the presence of the target language model's corpus file.
 $(foreach l, $(addsuffix _${TGT_LANG}, ${TRAIN_LM}), \
