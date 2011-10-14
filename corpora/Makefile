@@ -305,6 +305,104 @@ hide.logs: hide_logs_sub
 
 
 ################################################################################
+# Checking if all required files are present
+
+# Define a function that checks the presence of a required file based on a stem given by the user.
+# args $1 file stem
+FILE_EXISTS = $(strip $(wildcard ${1}${ALIGNX}) $(wildcard ${1}${ALIGNX}${GZ}) $(wildcard ${1}${RAWX}) $(wildcard ${1}${RAWX}${GZ}))
+
+.PHONY: unittest unittest_no_file unittest.other unittest.raw unittest.raw.gz unittest.al unittest.al.gz
+unittest: SHELL=bash
+unittest:
+	${MAKE} unittest_no_file
+	touch unittest.other
+	sleep 2; ${MAKE} unittest.other
+	rm unittest.other
+	touch unittest.raw
+	sleep 2; ${MAKE} unittest.raw
+	rm unittest.raw
+
+unittest_no_file:
+	[[ -z "$(call FILE_EXISTS, $@)" ]] || ! echo "ERROR: Function FILE_EXISTS have detected a file when none exists." >&2
+
+unittest.other:
+	[[ -z "$(call FILE_EXISTS, $@)" ]] || ! echo "ERROR: Function FILE_EXISTS have detected a file but was confused by the wrong extension." >&2
+
+unittest.raw:
+	test -f "$(call FILE_EXISTS, $@)" || ! echo "ERROR: Function FILE_EXISTS failed to detect .raw file." >&2
+
+unittest.raw.gz:
+	test -f $(call FILE_EXISTS, $@) || ! echo "ERROR: Function FILE_EXISTS failed to detect .raw.gz file." >&2
+
+unittest.al:
+	test -f $(call FILE_EXISTS, $@) || ! echo "ERROR: Function FILE_EXISTS failed to detect .al file." >&2
+
+unittest.al.gz:
+	test -f $(call FILE_EXISTS, $@) || ! echo "ERROR: Function FILE_EXISTS failed to detect .al.gz file." >&2
+
+
+# Verify the presence of the target language model's corpus file.
+$(foreach l, $(addsuffix _${TGT_LANG}, ${TRAIN_LM}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error For your language model, you must provide $l)))
+
+# Verify the presence of the truecasing language model's corpus file.
+$(foreach l, $(addsuffix _${TGT_LANG}, ${TRAIN_TC}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error For your truecasing language model, you must provide $l)))
+
+# Verify the presence of the mixlm's corpora files.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${MIXLM}) $(addsuffix _${TGT_LANG}, ${MIXLM}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error With mixlm, you must provide $l)))
+
+# Verify the presence of the translation model's corpora files.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_TM}) $(addsuffix _${TGT_LANG}, ${TRAIN_TM}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error For your translation model, you must provide $l)))
+
+# Verify the presence of decoder's tuning corpora files.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TUNE_DECODE}) $(addsuffix _${TGT_LANG}, ${TUNE_DECODE}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error In order to tune the decoder, you must provide $l)))
+
+# Verify the presence of rescoring's tuning corpora files.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TUNE_RESCORE}) $(addsuffix _${TGT_LANG}, ${TUNE_RESCORE}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error In order to tune the rescoring module, you must provide $l)))
+
+# Verify the presence of confidence estimation's tuning corpora files.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TUNE_CE}) $(addsuffix _${TGT_LANG}, ${TUNE_CE}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error In order to tune the confidence estimation module, you must provide $l)))
+
+# Verify the presence of test set's corpora files.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TEST_SET}) $(addsuffix _${TGT_LANG}, ${TEST_SET}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error In order to test the quality of your system, you must provide $l)))
+
+# Verify the presence of translation set's corpora files.
+$(foreach l, $(addsuffix _${TGT_LANG}, ${TRANSLATE_SET}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error You must provide $l)))
+
+ifdef DO_CE
+# Verify the presence of the source language model's corpus file.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_LM}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error For your language model, you must provide $l)))
+
+endif
+
+ifdef TC_USE_SRC_MODELS
+# Verify the presence of the source language model's corpus file.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_TC}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error For your truecasing language model, you must provide $l)))
+endif
+
+
+################################################################################
 # HELPERS
 .PHONY: debug
 debug: SHELL=${GUARD_SHELL}
