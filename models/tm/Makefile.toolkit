@@ -311,6 +311,7 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 		-nw ${JPT_WORKERS} \
 		-w 1 \
 		-o $@ \
+		${GEN_JPT_PARALLEL_OPTIONS} \
 		GPT \
 		-v -m ${M} ${JPT_MODEL_TYPE} \
 		-1 ${lang1} -2 ${lang2} \
