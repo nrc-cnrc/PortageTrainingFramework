@@ -2,15 +2,15 @@
 # vim:noet:ts=3:nowrap
 #
 # $Id$
-# @author Samuel Larkin
+# @author Samuel Larkin with modifications by Darlene Stewart
 # @file Makefile
 # @brief Trains a truecasing model.
 #
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, Her Majesty in Right of Canada
+# Copyright 2008, 2011, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2011, Her Majesty in Right of Canada
 
 
 # Mandatory include: master config file.
@@ -164,13 +164,17 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/tc
 portageLive: SHELL=${GUARD_SHELL}
 portageLive: ${TRUECASING_MAP}.tppt
 portageLive: ${TRAIN_TC}_${TGT_LANG}-kn-3g.tplm
+ifdef TC_USE_SRC_MODELS
 portageLive: ${TRAIN_TC}_${SRC_LANG}.nc1.tplm
+endif
 portageLive:
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../tc/$(filter %.tppt, $+) tc-map.${TGT_LANG}.tppt
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../tc/$(filter %3g.tplm, $+) tc-lm.${TGT_LANG}.tplm
+ifdef TC_USE_SRC_MODELS
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../tc/$(filter %nc1.tplm, $+) nc1-lm.${SRC_LANG}.tplm
+endif
 
 
 ########################################
