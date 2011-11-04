@@ -219,6 +219,7 @@ portageLive: portageLive_models_mixlm
 portageLive: portageLive_models_tm
 portageLive: portageLive_models_decode
 portageLive:
+	ln -s ../prime.sh $@
 	pwd > $@/README
 	portage_info >> $@/README
 
