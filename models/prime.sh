@@ -35,9 +35,20 @@ if [[ "$PrimeMode" == "full" ]]; then
    done
 elif [[ "$PrimeMode" == "partial" ]]; then
    # Prime all phrase table models and language models for decoding.
-   for f in `find $CONTEXT/models/tm -name \*.tppt; find $CONTEXT/models/lm -name \*.tplm`; do
-      SIZE=$((`cat $f/* | \wc -c` / 4))
-      cat $f/* | head --byte=$SIZE &> /dev/null
+   # TMs
+   for d in `find $CONTEXT/models/tm -name \*.tppt`; do
+      for f in $d/*; do
+         SIZE=$((`du -b $d | cut -f 1` / 4))
+         head --byte=$SIZE $f &> /dev/null
+      done
+   done
+   # LMs
+   for d in `find $CONTEXT/models/lm -name \*.tplm`; do
+      for f in $d/*; do
+         #SIZE=$((`du -b $d | cut -f 1` / 4))
+         #head --byte=$SIZE $f &> /dev/null
+         cat $f &> /dev/null
+      done
    done
 else
    exit 3
