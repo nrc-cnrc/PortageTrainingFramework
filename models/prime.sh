@@ -38,14 +38,14 @@ elif [[ "$PrimeMode" == "partial" ]]; then
    # TMs
    for d in `find $CONTEXT/models/tm -name \*.tppt`; do
       for f in $d/*; do
-         SIZE=$((`du -b $d | cut -f 1` / 4))
+         SIZE=$((`du -b $f | cut -f 1` / 4))
          head --byte=$SIZE $f &> /dev/null
       done
    done
    # LMs
    for d in `find $CONTEXT/models/lm -name \*.tplm`; do
       for f in $d/*; do
-         #SIZE=$((`du -b $d | cut -f 1` / 4))
+         #SIZE=$((`du -b $f | cut -f 1` / 4))
          #head --byte=$SIZE $f &> /dev/null
          cat $f &> /dev/null
       done
