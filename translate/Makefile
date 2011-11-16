@@ -584,6 +584,18 @@ endif
 
 
 ########################################
+# Compare BLEU with another system.
+.PHONY: bleucompare
+bleucompare: $(addsuffix .bleucompare, ${TEST_SET})
+
+COMPARE_TO ?= UNDEFINED/
+%.bleucompare:  SHELL = ${GUARD_SHELL}
+%.bleucompare:  %.out %${TGTX}
+	bleucompare $(filter %.out, $+) ${COMPARE_TO}/translate/$(filter %.out, $+) REFS $(filter %${TGTX}, $+)
+
+
+
+########################################
 # Tries to run all targets in this Makefile mainly to check the syntax of all
 # targets.
 .PHONY: full
