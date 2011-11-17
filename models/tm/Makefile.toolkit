@@ -151,7 +151,7 @@ SMOOTHERS_DESCRIPTION ?= -kn3-zn
 
 ########################################
 # TPPT MODELS.
-TPPT_CPUS ?= 4
+TPPT_CPUS ?= ${CPT_CPUS}
 
 ########################################
 # Switch cpts dependencies from jpt to sig.
@@ -294,10 +294,10 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 # WARNING: The following two targets must precede the target to generate jpts.
 # WARNING: % is purposefully not surrounded by dots for zn-adapt.
 ${JPT_MODEL_PFX}.merged%${JOINTX}:
-	merge_counts $@ $(filter %.${JOINTX}, $+)
+	merge_counts $@ $(filter %.${JOINTX}, $+) &> log.$(basename $@)
 
 ${JPT_MODEL_PFX}.merged%${RJOINTX}:
-	merge_counts $@ $(filter %.${RJOINTX}, $+)
+	merge_counts $@ $(filter %.${RJOINTX}, $+) &> log.$(basename $@)
 
 
 
