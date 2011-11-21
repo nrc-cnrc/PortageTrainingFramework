@@ -191,6 +191,12 @@ ${TGT_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
 
 
 
+TM_TOK    ?= $(foreach t, ${TRAIN_TM}, $(filter $t%, ${TOK}))
+LM_TOK    ?= $(foreach t, ${TRAIN_LM}, $(filter $t%, ${TOK}))
+TC_TOK    ?= $(foreach t, ${TRAIN_TC}, $(filter $t%, ${TOK}))
+MIXLM_TOK ?= $(foreach t, ${MIXLM}, $(filter $t%, ${TOK}))
+
+
 .PHONY: tok
 tok: ${TOK}
 
@@ -220,18 +226,23 @@ tc: ${TC}
 # LOWERCASING.
 # Defines what corpora we need in the entire pipeline.
 .PHONY: lc
-LC += $(addsuffix _${SRC_LANG}${LANGX}, ${HELDOUT_SET})
-LC += $(addsuffix _${TGT_LANG}${LANGX}, ${HELDOUT_SET})
+HELDOUT_LC += $(addsuffix _${SRC_LANG}${LANGX}, ${HELDOUT_SET})
+HELDOUT_LC += $(addsuffix _${TGT_LANG}${LANGX}, ${HELDOUT_SET})
+LC += ${HELDOUT_LC}
 # Note that will want to compress the TRAIN_SET for space efficiency.
-LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_TM})
-LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TM})
-LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXLM})
-LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXLM})
-LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TC})
-LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
+TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_TM})
+TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TM})
+LC += ${TM_LC}
+MIXLM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXLM})
+MIXLM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXLM})
+LC += ${MIXLM_LC}
+TC_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TC})
+LC += ${TC_LC}
+LM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
 ifdef DO_CE
-LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_LM})
+LM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_LM})
 endif
+LC += ${LM_LC}
 lc: ${LC}
 
 
@@ -245,6 +256,13 @@ lc: ${LC}
 	@$(check_utf8)
 	RP_PSUB_OPTS="-1" \
 	zcat $< | ${LOWERCASE} | gzip > $@
+
+
+
+########################################
+# Shortcut to only create final translation models' corpora.
+.PHONY: tm
+tm:  ${TM_LC}
 
 
 
@@ -391,3 +409,8 @@ debug:
 	@echo "SRC_RAWZ_LIST: ${TGT_RAWZ_LIST}"
 	@echo "SRC_TOKZ_LIST: ${TGT_TOKZ_LIST}"
 	@echo "TOK: ${TOK}"
+	@echo "TM_TOK: ${TM_TOK}"
+	@echo "LM_TOK: ${TM_TOK}"
+	@echo "TC_TOK: ${TC_TOK}"
+	@echo "MIXLM_TOK: ${MIXLM_TOK}"
+
