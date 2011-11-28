@@ -44,7 +44,7 @@ TRAIN_TM      ?= tm-train
 # TUNE_DECODE is used to train cow.
 TUNE_DECODE   ?= dev1
 # TUNE_RESCORE is used to train rat.
-TUNE_RESCORE  ?= dev2
+#TUNE_RESCORE  ?= dev2
 # TUNE_CE is used to train confidence estimation.
 # Note: it's OK for TUNE_DECODE and TUNE_RESCORE to be the same file, but
 # TUNE_CE must be completely distinct, not only from all training data, but
