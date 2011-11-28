@@ -327,18 +327,22 @@ hide.logs: hide_logs_sub
 
 # Define a function that checks the presence of a required file based on a stem given by the user.
 # args $1 file stem
-FILE_EXISTS = $(strip $(wildcard ${1}${ALIGNX}) $(wildcard ${1}${ALIGNX}${GZ}) $(wildcard ${1}${RAWX}) $(wildcard ${1}${RAWX}${GZ}))
+# Look for raw or aligned files.
+BASE_FILE_EXISTS = $(strip $(wildcard ${1}${ALIGNX}) $(wildcard ${1}${ALIGNX}${GZ}) $(wildcard ${1}${RAWX}) $(wildcard ${1}${RAWX}${GZ}))
+# Look for raw or aligned or lowercase files.
+FILE_EXISTS = $(strip $(call BASE_FILE_EXISTS, ${1}) $(wildcard ${1}${LANGX}) $(wildcard ${1}${LANGXZ}))
+
+
+# Verify the presence of the truecasing language model's corpus file.
+$(foreach l, $(addsuffix _${TGT_LANG}, ${TRAIN_TC}), \
+	$(if $(strip $(call  BASE_FILE_EXISTS, $l) $(wildcard $l${TCX}) $(wildcard $l${TCX}${GZ})),, \
+		$(error For your truecasing language model, you must provide $l)))
 
 
 # Verify the presence of the target language model's corpus file.
 $(foreach l, $(addsuffix _${TGT_LANG}, ${TRAIN_LM}), \
 	$(if $(call  FILE_EXISTS, $l),, \
 		$(error For your language model, you must provide $l)))
-
-# Verify the presence of the truecasing language model's corpus file.
-$(foreach l, $(addsuffix _${TGT_LANG}, ${TRAIN_TC}), \
-	$(if $(call  FILE_EXISTS, $l),, \
-		$(error For your truecasing language model, you must provide $l)))
 
 # Verify the presence of the mixlm's corpora files.
 $(foreach l, $(addsuffix _${SRC_LANG}, ${MIXLM}) $(addsuffix _${TGT_LANG}, ${MIXLM}), \
@@ -389,6 +393,7 @@ $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_TC}), \
 	$(if $(call  FILE_EXISTS, $l),, \
 		$(error For your truecasing language model, you must provide $l)))
 endif
+
 
 
 ################################################################################
