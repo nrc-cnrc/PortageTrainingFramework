@@ -392,6 +392,11 @@ ifdef TC_USE_SRC_MODELS
 $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_TC}), \
 	$(if $(call  FILE_EXISTS, $l),, \
 		$(error For your truecasing language model, you must provide $l)))
+
+# The new truecaser requires the aligned source corpora.
+$(foreach t, $(addsuffix _${SRC_LANG}, ${TEST_SET} ${TRANSLATE_SET}), \
+	$(if $(strip $(wildcard ${t}${ALIGNX}) $(wildcard ${t}${ALIGNX}${GZ})),, \
+		$(error In order to truecase your test set, you must provide the aligned corpus for $t)))
 endif
 
 
