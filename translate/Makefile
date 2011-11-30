@@ -310,6 +310,7 @@ else
 		2> log.$@ \
 	| nbest2rescore.pl -canoe -tagoov -palout=$@.pal  2> log.$@.pal \
 	| tee  $@.oov \
+	| tee >(perl -nle 'print $$1 while(/<OOV>(.+?)<\/OOV>/g)' > $*.oov) \
 	| perl -pe 's/<OOV>(.+?)<\/OOV>/\1/g;' \
 	> $@
 endif
@@ -604,3 +605,42 @@ full: out.detok.bleu
 full: rat.bleu
 full: rat.detok.bleu
 full: configtool
+
+
+
+
+########################################
+# Create out-of-vocabulary for all test sets.
+#.INTERMEDIATE: dummy.lm.gz
+#dummy.lm.gz:
+#	echo "a b c" | ngram-count -lm - | gzip > $@
+#
+#
+## .out.oov are a side effect of creating the .out files.
+#%.out.oov: SHELL = ${GUARD_SHELL}
+#%.out.oov: %.out
+#
+#.PHONY: oov
+#oov: $(addsuffix .oov, ${TEST_SET})
+#%.oov: %.out.oov
+#	egrep -o '<OOV>(.+?)<\/OOV>' < $< | perl -pe 's/<OOV>(.+?)<\/OOV>/\1/g;' > $@
+#
+#%.oov: SHELL=${FRAMEWORK_SHELL}
+#%.oov: ${DECODING_MODEL} %_${SRC_LANG}${RULEX}  dummy.lm.gz
+#	@_LOCAL=1 echo "Generating $@"
+#	RP_PSUB_OPTS="-${TRANS_CPUS}" \
+#	canoe-parallel.sh \
+#		-lb \
+#		-n ${PARALLELISM_LEVEL_TRANSLATE} \
+#		canoe \
+#		-f "echo|" \
+#		-ttable-multi-prob `configtool list-tm $< | tr " " ":"` \
+#		-lmodel-file dummy.lm.gz \
+#		-palign \
+#		< $(filter %${RULEX}, $+) \
+#		2> log.$@ \
+#	| nbest2rescore.pl -tagoov 2> log.$@.pal \
+#	| egrep -o '<OOV>(.+?)<\/OOV>' \
+#	| perl -pe 's/<OOV>(.+?)<\/OOV>/\1/g;' \
+#	> $@
+
