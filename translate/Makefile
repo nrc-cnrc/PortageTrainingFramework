@@ -310,7 +310,6 @@ else
 		2> log.$@ \
 	| nbest2rescore.pl -canoe -tagoov -palout=$@.pal  2> log.$@.pal \
 	| tee  $@.oov \
-	| tee >(perl -nle 'print $$1 while(/<OOV>(.+?)<\/OOV>/g)' > $*.oov) \
 	| perl -pe 's/<OOV>(.+?)<\/OOV>/\1/g;' \
 	> $@
 endif
@@ -605,6 +604,23 @@ full: out.detok.bleu
 full: rat.bleu
 full: rat.detok.bleu
 full: configtool
+
+
+
+.PHONY: oov
+oov: $(addsuffix .woov, ${TEST_SET})
+# NOTE: we do not explicitely declare the dependency on %.out.oov since it is a
+# side effect of %.out.bleu which requires %.out which also silently generate
+# %.out.oov.
+# word out-of-vocabulary
+%.woov: SHELL=${FRAMEWORK_SHELL}
+%.woov:  %.out.bleu
+	@{ \
+		echo $*; \
+		egrep Human $(filter %.bleu, $+); \
+		perl -nle '$$t += scalar(split(/ /)); ++$$c while(/<OOV>(.+?)<\/OOV>/g); END{printf "OOV: %2.2f%%", 100*$$c/$$t}' < $*.out.oov; \
+	} \
+	| tr "\n" "\t"; echo
 
 
 
