@@ -395,7 +395,7 @@ $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_TC}), \
 
 # The new truecaser requires the aligned source corpora.
 $(foreach t, $(addsuffix _${SRC_LANG}, ${TEST_SET} ${TRANSLATE_SET}), \
-	$(if $(strip $(wildcard ${t}${ALIGNX}) $(wildcard ${t}${ALIGNX}${GZ})),, \
+	$(if $(call  BASE_FILE_EXISTS, $t),, \
 		$(error In order to truecase your test set, you must provide the aligned corpus for $t)))
 endif
 
