@@ -591,7 +591,7 @@ bleucompare: $(addsuffix .bleucompare, ${TEST_SET})
 COMPARE_TO ?= UNDEFINED/
 %.bleucompare:  SHELL = ${GUARD_SHELL}
 %.bleucompare:  %.out %${TGTX}
-	bleucompare $(filter %.out, $+) ${COMPARE_TO}/translate/$(filter %.out, $+) REFS $(filter %${TGTX}, $+)
+	@bleucompare $(filter %.out, $+) ${COMPARE_TO}/translate/$(filter %.out, $+) REFS $(filter %${TGTX}, $+)
 
 
 
@@ -613,7 +613,7 @@ oov: $(addsuffix .woov, ${TEST_SET})
 # side effect of %.out.bleu which requires %.out which also silently generate
 # %.out.oov.
 # word out-of-vocabulary
-%.woov: SHELL=${FRAMEWORK_SHELL}
+%.woov: SHELL=${GUARD_SHELL}
 %.woov:  %.out.bleu
 	@{ \
 		echo $*; \
