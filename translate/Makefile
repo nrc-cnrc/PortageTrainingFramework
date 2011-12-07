@@ -614,49 +614,13 @@ oov: $(addsuffix .woov, ${TEST_SET})
 # %.out.oov.
 # word out-of-vocabulary
 %.woov: SHELL=${GUARD_SHELL}
-%.woov:  %.out.bleu
+%.woov:  %${RULEX} %.out.bleu
 	@{ \
 		echo $*; \
 		egrep Human $(filter %.bleu, $+); \
-		perl -nle '$$t += scalar(split(/ /)); ++$$c while(/<OOV>(.+?)<\/OOV>/g); END{printf "OOV: %2.2f%%", 100*$$c/$$t}' < $*.out.oov; \
+		OOV=`egrep -co '<OOV>(.+?)<\/OOV>' < $*.out.oov`; \
+		TOTAL=`\wc -w < $<`; \
+		perl -e "printf \"OOV: %6.6f%%\", 100*$$OOV/$$TOTAL"; \
 	} \
 	| tr "\n" "\t"; echo
-
-
-
-
-########################################
-# Create out-of-vocabulary for all test sets.
-#.INTERMEDIATE: dummy.lm.gz
-#dummy.lm.gz:
-#	echo "a b c" | ngram-count -lm - | gzip > $@
-#
-#
-## .out.oov are a side effect of creating the .out files.
-#%.out.oov: SHELL = ${GUARD_SHELL}
-#%.out.oov: %.out
-#
-#.PHONY: oov
-#oov: $(addsuffix .oov, ${TEST_SET})
-#%.oov: %.out.oov
-#	egrep -o '<OOV>(.+?)<\/OOV>' < $< | perl -pe 's/<OOV>(.+?)<\/OOV>/\1/g;' > $@
-#
-#%.oov: SHELL=${FRAMEWORK_SHELL}
-#%.oov: ${DECODING_MODEL} %_${SRC_LANG}${RULEX}  dummy.lm.gz
-#	@_LOCAL=1 echo "Generating $@"
-#	RP_PSUB_OPTS="-${TRANS_CPUS}" \
-#	canoe-parallel.sh \
-#		-lb \
-#		-n ${PARALLELISM_LEVEL_TRANSLATE} \
-#		canoe \
-#		-f "echo|" \
-#		-ttable-multi-prob `configtool list-tm $< | tr " " ":"` \
-#		-lmodel-file dummy.lm.gz \
-#		-palign \
-#		< $(filter %${RULEX}, $+) \
-#		2> log.$@ \
-#	| nbest2rescore.pl -tagoov 2> log.$@.pal \
-#	| egrep -o '<OOV>(.+?)<\/OOV>' \
-#	| perl -pe 's/<OOV>(.+?)<\/OOV>/\1/g;' \
-#	> $@
 
