@@ -615,12 +615,6 @@ oov: $(addsuffix .woov, ${TEST_SET})
 # word out-of-vocabulary
 %.woov: SHELL=${GUARD_SHELL}
 %.woov:  %${RULEX} %.out.bleu
-	@{ \
-		echo $*; \
-		egrep Human $(filter %.bleu, $+); \
-		OOV=`egrep -co '<OOV>(.+?)<\/OOV>' < $*.out.oov`; \
-		TOTAL=`\wc -w < $<`; \
-		perl -e "printf \"OOV: %6.6f%%\", 100*$$OOV/$$TOTAL"; \
-	} \
-	| tr "\n" "\t"; echo
+	@echo -e -n "$*\t`egrep Human $(filter %.bleu, $+)`"
+	@perl -ne '++$$c while(/<OOV>(.+?)<\/OOV>/g); END{printf "\tOOV: %6.6f%%\n", 100 * $$c / `wc -w < $<`}' < $*.out.oov
 
