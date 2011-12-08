@@ -616,5 +616,5 @@ oov: $(addsuffix .woov, ${TEST_SET})
 %.woov: SHELL=${GUARD_SHELL}
 %.woov:  %${RULEX} %.out.bleu
 	@echo -e -n "$*\t`egrep Human $(filter %.bleu, $+)`"
-	@perl -e 'printf "\tOOV: %6.6f%%\n", 100 * `grep -P -o "<OOV>(.*?)</OOV>" < $*.out.oov | \wc -l` / `\wc -w < $<`'
+	@perl -e 'printf "\tOOV: %6.6f%%\n", 100 * `egrep -o  "<OOV>[^<]+</OOV>" < $*.out.oov | \wc -l` / `\wc -w < $<`'
 
