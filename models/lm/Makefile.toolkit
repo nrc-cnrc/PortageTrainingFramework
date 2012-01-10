@@ -1,0 +1,37 @@
+# vim:noet:ts=3:nowrap:filetype=make
+
+########################################
+# Portage's bin lm format
+#.SECONDARY: $(addsuffix .binlm.gz, ${LM_NAME})
+%.tplm: SHELL=${FRAMEWORK_SHELL}
+%.binlm.gz: %.lm.gz
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	${TIME_MEM} \
+	arpalm2binlm $< $@ >& log.$(basename $@)
+
+clean.content: clean.binlm
+
+.PHONY: clean.binlm
+clean.binlm: SHELL=${GUARD_SHELL}
+clean.binlm:
+	${RM} *.binlm.gz
+
+
+
+########################################
+# Create Tightly Packed Language Model.
+%.tplm: SHELL=${FRAMEWORK_SHELL}
+%.tplm: %.lm.gz
+	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	${TIME_MEM} \
+	arpalm2tplm.sh $< $* 2> log.$@
+
+clean.content: clean.tplm
+
+.PHONY: clean.tplm
+clean.tplm: SHELL=${GUARD_SHELL}
+clean.tplm:
+	${RM} -r *.tplm
+
+
+

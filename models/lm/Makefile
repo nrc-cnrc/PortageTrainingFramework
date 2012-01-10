@@ -23,7 +23,6 @@ MAKEFILE_PARAMS ?= Makefile.params
 # Lastly include the master toolkit
 include ../../Makefile.toolkit
 
-
 # What is this module's name.
 MODULE_NAME ?= lm
 
@@ -58,18 +57,11 @@ CORPUS_NAME ?= $(addsuffix _${LM_LANG}, ${TRAIN_LM})
 # This indicates the corpus extension and looks like .tok.al.gz
 CORPUS_EXT  ?= ${LANGXZ}
 
-LM_DESC ?= -kn-${ORDER}g
+LM_DESC ?= -${ORDER}g-kn
 LM_NAME ?= $(addsuffix ${LM_DESC}, ${CORPUS_NAME})
 
 # Where to find the corpus' file.
 CORPORA_DIR ?= ../../corpora
-
-# Allows to switch between a cluster distributed way of building the irstlm format.
-ifdef USING_CLUSTER
-BUILD_LM_PGM ?= build-lm-qsub.sh
-else
-BUILD_LM_PGM ?= build-lm.sh
-endif
 
 # This is to test the perplexity of the language models.
 PPX_TEST_SET ?= test.txt
@@ -92,6 +84,28 @@ vpath %.marked.gz    ${CORPORA_DIR}
 
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
+
+
+
+# include the proper toolkit
+# Create Language Model's dependencies based on the toolkit.
+ifeq (${LM_TOOLKIT}, SRI)
+include Makefile.toolkit.SRI
+
+else ifeq (${LM_TOOLKIT}, MIT)
+include Makefile.toolkit.MIT
+
+else ifeq (${LM_TOOLKIT}, IRST)
+ifndef IRSTLM
+	$(error You must define IRSTLM.)
+endif
+include Makefile.toolkit.IRST
+
+else
+	$(error Invalid type for LM_TOOLKIT: ${LM_TOOLKIT})
+endif
+
+include Makefile.toolkit
 
 
 
@@ -174,116 +188,9 @@ portageLive: $(addsuffix .tplm, ${LM_NAME})
 
 
 ########################################
-# Adds sentence start and end markers
-.PHONY: mark
-mark: ${CORPUS_NAME}.marked.gz
-
-#.SECONDARY: ${CORPUS_NAME}.marked.gz
-%.marked.gz: %${CORPUS_EXT}
-	@_LOCAL=1 echo "Marking up $<"
-	RP_PSUB_OPTS="-N $@" \
-	set -o pipefail; zcat -f $< \
-	| add-start-end.sh \
-	| gzip -c \
-	> $@
-
-clean.content: clean.mark
-
-.PHONY: clean.mark
-clean.mark: SHELL=${GUARD_SHELL}
-clean.mark:
-	${RM} *.marked.gz
-
-
-
-########################################
-# iARPA
-# Compressed irstlm format
-.PHONY: irstlm
-irstlm: $(addsuffix .ilm.gz, ${LM_NAME})
-
-# Here we've added LM_DESC to strip it out from the marked corpus file name.
-#.SECONDARY: $(addsuffix .ilm.gz, ${LM_NAME})
-%${LM_DESC}.ilm.gz: %.marked.gz
-	@_LOCAL=1 echo "  Creating IRSTLM $@"
-	_LOCAL=1 ${RM} $@
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	IRSTLM=${IRSTLM} ${BUILD_LM_PGM} \
-		-p \
-		-t stat.$$$$ \
-		-n ${ORDER} \
-		-k ${PARALLELISM_LEVEL_LM} \
-		-s kneser-ney \
-		-i "gunzip -c $<" \
-		-o $@ \
-	&> log.$(basename $@)
-
-clean.content: clean.irstlm
-
-.PHONY: clean.irstlm
-clean.irstlm: SHELL=${GUARD_SHELL}
-clean.irstlm:
-	${RM} *.ilm.gz
-	${RM} -r stat*
-
-
-
-########################################
 # arpa text compressed format
 .PHONY: arpa
 arpa: $(addsuffix .lm.gz, ${LM_NAME})
-
-# Here we've added LM_DESC to strip it out from the corpus file name.
-#.SECONDARY: $(addsuffix .lm.gz, ${LM_NAME})
-ifeq (${LM_TOOLKIT}, SRI)
-%${LM_DESC}.lm.gz: %${CORPUS_EXT}
-	@_LOCAL=1 echo "  Creating ARPA text format $@"
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${TIME_MEM} \
-	ngram-count \
-		-interpolate \
-		-kndiscount \
-		-order ${ORDER} \
-		-text $< \
-		-lm $@ \
-		${EXTRA_NGRAM_COUNT_OPTIONS} \
-	>& log.$(basename $@)
-
-else ifeq (${LM_TOOLKIT}, IRST)
-%.lm.gz: %.ilm.gz
-	@_LOCAL=1 echo "  Creating ARPA text format $@"
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	set -o pipefail; \
-	${TIME_MEM} \
-	compile-lm \
-		--text yes \
-		$< \
-		/dev/stdout \
-	2> log.$(basename $@) \
-	| egrep -v '^Saving in txt format to' \
-	| lm_sort.pl \
-	| gzip > $@
-
-else ifeq (${LM_TOOLKIT}, MIT)
-# Note that MITLM is finicky about spaces thus we need to collapse several
-# spaces into one space and remove any leading or traling spaces.
-# The perl regex was proposed by the creators of MITLM.
-%${LM_DESC}.lm.gz: %${CORPUS_EXT}
-	@_LOCAL=1 echo "  Creating ARPA text format $@"
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	zcat $< \
-	| perl -ple 's/^\s*(.*?)\s*$$/$$1/; s/\s+/ /g;' \
-	| ${TIME_MEM} \
-	estimate-ngram \
-		-order ${ORDER} \
-		-smoothing ModKN \
-		-text /dev/stdin \
-		-write-lm $@ \
-	2> log.$(basename $@)
-
-else
-$(error Invalid value for LM_TOOLKIT: ${LM_TOOLKIT})
-endif
 
 clean.content: clean.arpa
 
@@ -295,128 +202,9 @@ clean.arpa:
 
 
 ########################################
-# BINARY FORMAT
-# arpa bin compressed format
-.PHONY: blmt
-blmt: $(addsuffix .blmt, ${LM_NAME})
-
-#.SECONDARY: $(addsuffix .blmt, ${LM_NAME})
-%.blmt: %.ilm.gz
-	@_LOCAL=1 echo "  Creating bin.ARPA format $@"
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${TIME_MEM} \
-	compile-lm \
-		$< \
-		$@ \
-	&> log.$@
-
-clean.content: clean.blmt
-
-.PHONY: clean.blmt
-clean.blmt: SHELL=${GUARD_SHELL}
-clean.blmt:
-	${RM} *.blmt
-
-
-
-########################################
-# qARPA format
-.PHONY: quantize
-quantize: $(addsuffix .qlm.gz, ${LM_NAME})
-
-#.SECONDARY: $(addsuffix .qlm.gz, ${LM_NAME})
-%.qlm: %.lm.gz
-	@_LOCAL=1 echo "  qARPA $< to $@"
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${TIME_MEM} \
-	quantize-lm \
-		$< \
-		$@ \
-	&> log.$@
-
-clean.content: clean.quantize
-
-.PHONY: clean.quantize
-clean.quantize: SHELL=${GUARD_SHELL}
-clean.quantize:
-	${RM} *.qlm.gz
-
-
-
-########################################
-# Quantize binary
-.PHONY: Qblmt
-Qblmt: $(addsuffix .Qblmt, ${LM_NAME})
-
-#.SECONDARY: $(addsuffix .Qblmt, ${LM_NAME})
-%.Qblmt: %.qlm.gz
-	@_LOCAL=1 echo "  bin.qARPA $< to $@"
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${TIME_MEM} \
-	compile-lm \
-		$< \
-		$@ \
-	&> log.$@
-
-clean.content: clean.Qblmt
-
-.PHONY: clean.Qblmt
-clean.Qblmt: SHELL=${GUARD_SHELL}
-clean.Qblmt:
-	${RM} *.Qblmt
-
-
-
-########################################
-# Sort the arpa format
-.PHONY: sort_arpa
-sort_arpa: $(addsuffix .lm.sorted.gz, ${LM_NAME})
-
-#.SECONDARY: $(addsuffix .lm.sorted.gz, ${LM_NAME})
-%.lm.sorted.gz: %.lm.gz
-	${TIME_MEM} \
-	lm_sort_filter.sh -lm $< $@ >& log.$(basename $@)
-
-clean.content: clean.sort_arpa
-
-.PHONY: clean.sort_arpa
-clean.sort_arpa: SHELL=${GUARD_SHELL}
-clean.sort_arpa:
-	${RM} *.lm.sorted.gz
-
-
-
-########################################
 # Portage's bin lm format
 .PHONY: binlm
 binlm: $(addsuffix .binlm.gz, ${LM_NAME})
-
-#.SECONDARY: $(addsuffix .binlm.gz, ${LM_NAME})
-%.binlm.gz: %.lm.gz
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${TIME_MEM} \
-	arpalm2binlm $< $@ >& log.$(basename $@)
-
-clean.content: clean.binlm
-
-.PHONY: clean.binlm
-clean.binlm: SHELL=${GUARD_SHELL}
-clean.binlm:
-	${RM} *.binlm.gz
-
-
-
-########################################
-# Pruning ARPA format => ARPA format
-.PHONY: prune
-prune: $(addsuffix .plm.gz, ${LM_NAME})
-
-#.SECONDARY: $(addsuffix .plm.gz, ${LM_NAME})
-%.plm.gz: %.lm.gz
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	prune-lm --threshold=1e-6 $< /dev/stdout \
-	| gzip \
-	> $@
 
 
 
@@ -425,58 +213,7 @@ prune: $(addsuffix .plm.gz, ${LM_NAME})
 .PHONY: tplm
 tplm: $(addsuffix .tplm, ${LM_NAME})
 
-%.tplm: SHELL=${FRAMEWORK_SHELL}
-%.tplm: %.lm.gz
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
-	${TIME_MEM} \
-	arpalm2tplm.sh $< $* 2> log.$@
 
-clean.content: clean.tplm
-
-.PHONY: clean.tplm
-clean.tplm: SHELL=${GUARD_SHELL}
-clean.tplm:
-	${RM} -r *.tplm
-
-
-
-################################################################################
-# HELPERS
-########################################
-# All valid/possible LMs
-.PHONY: all_lm
-all_lm: arpa
-all_lm: blmt
-all_lm: quantize
-all_lm: Qblmt
-all_lm: binlm
-
-
-
-########################################
-# Check if the environment is set
-.PHONY: test
-test: SHELL=${GUARD_SHELL}
-test:
-	env | grep IRSTLM
-
-
-
-########################################
-# For debugging purpose
-.PHONY: check_setup
-check_setup: SHELL=${GUARD_SHELL}
-check_setup:
-ifeq (${LM_TOOLKIT}, SRI)
-	which ngram-count
-else ifeq (${LM_TOOLKIT}, MIT)
-	which estimate-ngram
-else ifeq (${LM_TOOLKIT}, IRST)
-	test -n $$IRSTLM
-	which build-lm.sh
-else
-	$(error Invalid type for LM_TOOLKIT: ${LM_TOOLKIT})
-endif
 
 
 ################################################################################
@@ -493,3 +230,4 @@ ppx.%: %.binlm.gz ${PPX_TEST_SET}
 ppx.irstlm: $(addprefix ppx.irstlm.${LM_NAME}, .lm.gz .blmt .qlm.gz .Qblmt)
 ppx.irstlm.%: ${PPX_TEST_SET} %
 	compile-lm $* --eval=$< >& $(basename $@)
+
