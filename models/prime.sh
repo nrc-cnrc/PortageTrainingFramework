@@ -33,7 +33,7 @@ PrimeMode=$1
 
 if [[ "$PrimeMode" == "full" ]]; then
    # Prime all models in their entirety.
-   for f in `find $CONTEXT -name \*.tppt; find $CONTEXT -name \*.tpldm; find $CONTEXT -name \*.tplm`; do
+   for f in `find $CONTEXT/ -name \*.tppt; find $CONTEXT/ -name \*.tpldm; find $CONTEXT/ -name \*.tplm`; do
       cat $f/* &> /dev/null
    done
 elif [[ "$PrimeMode" == "partial" ]]; then
