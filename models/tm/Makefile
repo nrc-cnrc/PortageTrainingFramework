@@ -22,6 +22,10 @@
 # Mandatory include: master config file.
 include ../../Makefile.params
 
+# Include and override parameters with user specific config file.
+MAKEFILE_PARAMS ?= Makefile.params
+-include ${MAKEFILE_PARAMS}
+
 # This is the Makefile that contains all targets required to build Translation
 # Models and some variable's defintion that might be used by the user in its
 # Makefile.params.
@@ -32,10 +36,6 @@ include ../../Makefile.toolkit
 
 # GNU Make Standard Library
 include ../../gmsl/gmsl   # functions: uc
-
-# Include and override parameters with user specific config file.
-MAKEFILE_PARAMS ?= Makefile.params
--include ${MAKEFILE_PARAMS}
 
 
 

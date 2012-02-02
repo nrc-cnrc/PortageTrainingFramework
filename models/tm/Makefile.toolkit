@@ -128,16 +128,16 @@ JPT_WORKERS ?= ${JPT_PARALLELISM_LEVEL}
 
 ########################################
 # SIG MODELS.
-SIG_CPUS := 1
-SIG_OPTS :=
-SIG_THRESHOLD := a+e
-SIG_MODEL_PFX := sig
+SIG_CPUS ?= 1
+SIG_OPTS ?=
+SIG_THRESHOLD ?= a+e
+SIG_MODEL_PFX ?= sig
 SIG_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 SIG_MODEL_WORKERS ?= ${SIG_MODEL_PARALLELISM_LEVEL}
 # Create variables to hold significance model prefix.
 $(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
    $(eval \
-	   SIG_${m}_MODEL_PFX := ${SIG_MODEL_PFX}.${${m}_MODEL_PFX}) \
+	   SIG_${m}_MODEL_PFX ?= ${SIG_MODEL_PFX}.${${m}_MODEL_PFX}) \
 )
 
 ########################################
