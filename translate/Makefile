@@ -135,6 +135,7 @@ vpath ${TRUECASING_MAP}  ${TRUECASING_DIR} models/tc
 
 
 .PHONY: all
+all:  SHELL=${GUARD_SHELL}
 all: final_result
 	@echo "Your translations are available in translation/" >&2
 
@@ -170,6 +171,7 @@ endif
 final_result: ${FINAL_RESULT}
 
 # The final outputs will be named *.translation.
+%.translation:  SHELL=${GUARD_SHELL}
 %.translation: %${FINALX}
 	${POST_PROCESSING} < $< > $@
 
@@ -280,6 +282,8 @@ clean.content: clean.decoding.models
 .PHONY: clean.decoding.models
 clean.decoding.models: SHELL=${GUARD_SHELL}
 clean.decoding.models: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.decoding.models.$f)
+
+clean.decoding.models.%: SHELL=${GUARD_SHELL}
 clean.decoding.models.%:
 	${RM} ${DECODING_MODEL}.$*
 
@@ -357,6 +361,7 @@ clean.translate: $(foreach f, ${TEST_SET}, clean.translate.$f)
 	${RM} -r canoe-parallel.* run-p.*
 	${RM} tc_tmp_*
 
+clean.translate.%:  SHELL=${GUARD_SHELL}
 clean.translate.%:
 	${RM} $*.out $*.out.oov $*.out.pal $*.out.bleu $*.tc.bleu
 	${RM} $*.out.detok $*.out.detok.bleu
@@ -423,6 +428,7 @@ clean.rescore: SHELL=${GUARD_SHELL}
 clean.rescore: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.rescore.$f)
 	${RM} -r canoe-parallel.* run-p.*
 
+clean.rescore.%:  SHELL=${GUARD_SHELL}
 clean.rescore.%:
 	${RM} $*.rat $*.rat.bleu
 	${RM} $*.rat.detok $*.rat.detok.bleu
@@ -516,6 +522,8 @@ clean.content: clean.truecasing
 clean.truecasing: SHELL=${GUARD_SHELL}
 clean.truecasing: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.truecasing.$f.out.guard)
 clean.truecasing: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.truecasing.$f.rat.guard)
+
+clean.truecasing.%.guard:  SHELL=${GUARD_SHELL}
 clean.truecasing.%.guard:
 	${RM} $*.tc
 	${RM} $*.tc.detok
