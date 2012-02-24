@@ -239,6 +239,9 @@ LC += ${MIXLM_LC}
 TC_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TC})
 LC += ${TC_LC}
 LM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
+ifdef TC_USE_SRC_MODELS
+LM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_LM})
+endif
 ifdef DO_CE
 LM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_LM})
 endif
