@@ -108,7 +108,8 @@ TIME_MEM ?= time-mem
 ifneq (${MAKECMDGOALS},clean)
 ifneq (${MAKECMDGOALS},clean.content)
 ifneq (${MAKECMDGOALS},clean.logs)
-$(shell ln -fs ${MODEL_DIR})
+$(info if [ ! -e $(notdir ${MODEL_DIR}) ]; then ln -s ${MODEL_DIR}; fi)
+$(shell if [ ! -e $(notdir ${MODEL_DIR}) ]; then ln -s ${MODEL_DIR}; fi)
 endif
 endif
 endif
@@ -137,7 +138,7 @@ vpath ${TRUECASING_MAP}  ${TRUECASING_DIR} models/tc
 .PHONY: all
 all:  SHELL=${GUARD_SHELL}
 all: final_result
-	@echo "Your translations are available in translation/" >&2
+	@echo "Your translations are available in $(notdir ${CURDIR})/" >&2
 
 
 

@@ -35,6 +35,7 @@ CE_MODEL_NAME ?= ce_model
 ifneq (${MAKECMDGOALS},clean)
 ifneq (${MAKECMDGOALS},clean.content)
 ifneq (${MAKECMDGOALS},clean.logs)
+$(info ln -fs ${MODEL_DIR})
 $(shell ln -fs ${MODEL_DIR})
 endif
 endif
@@ -102,7 +103,7 @@ ${CANOE_MODEL}: SHELL=${GUARD_SHELL}
 ${CANOE_MODEL}:
 	@[[ -f "${DECODING_MODEL_DIR}/${CANOE_MODEL}" ]] \
 	|| ! echo "ERROR: No decoding model (${CANOE_MODEL}) available. Please train ${DECODING_MODEL_DIR} first!" >&2
-	sed -e 's#${TUNE_DECODE}.mixlm#${TUNE_CE}.mixlm#g' models/decode/${CANOE_MODEL} > $@
+	sed -e 's#${TUNE_DECODE}.mixlm#${TUNE_CE}.mixlm#g' ${DECODING_MODEL_DIR}/${CANOE_MODEL} > $@
 	configtool check $@
 
 

@@ -29,6 +29,8 @@ ifeq ("portageLive","$(findstring portageLive,${MAKECMDGOALS})")
    endif
 endif
 
+_PLIVE_DECODE_VARIANT := $(strip $(if ${PLIVE_DECODE_VARIANT}, .${PLIVE_DECODE_VARIANT}))
+
 .DEFAULT_GOAL := help
 .SUFFIXES:
 
@@ -127,7 +129,7 @@ tm:
 
 .PHONY: tune
 # Tune the required models.
-tune: decode
+tune: decode $(addprefix decode., ${TUNE_DECODE_VARIANTS})
 
 
 
@@ -137,6 +139,16 @@ cow: decode
 decode: models
 	${MAKE} -C $@ all
 
+# Tune multiple decoding variants, if necessary.
+ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
+.PHONY: $(addprefix decode., ${TUNE_DECODE_VARIANTS})
+$(addprefix decode., ${TUNE_DECODE_VARIANTS}): decode.%: models
+	if [ ! -e $@ ]; then \
+	   mkdir $@; \
+	   cp -p decode/Makefile* decode/canoe.ini.template $@; \
+	fi
+	${MAKE} -C $@ all TUNE_DECODE=${TUNE_DECODE}$*
+endif
 
 
 .PHONY: rat rescore
@@ -154,7 +166,7 @@ ifdef USE_LDM
 models: ldm
 
 portageLive: portageLive_models_ldm
-portageLive_models_decode: portageLive_models_ldm
+portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_ldm
 
 ldm: tm
 	${MAKE} -C $@ all
@@ -167,21 +179,32 @@ endif
 
 .PHONY: confidence
 ifdef DO_CE
-tune: confidence
+tune: confidence $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
 
 models: lm.${SRC_LANG}
 
 portageLive: portageLive_models_lm_src
-portageLive: portageLive_models_confidence
+portageLive: portageLive_models_confidence${_PLIVE_DECODE_VARIANT}
 
-portageLive_models_confidence: portageLive_models_lm_src
-portageLive_models_confidence: portageLive_models_decode
+portageLive_models_confidence${_PLIVE_DECODE_VARIANT}: portageLive_models_lm_src
+portageLive_models_confidence${_PLIVE_DECODE_VARIANT}: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 
 portageLive_models_lm_src:
 	${MAKE} -C lm portageLive LM_LANG=${SRC_LANG}
 
 confidence: lm.${SRC_LANG} decode
 	${MAKE} -C $@ all
+
+# Tune multiple confidence variants, if necessary.
+ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
+.PHONY: $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
+$(addprefix confidence., ${TUNE_DECODE_VARIANTS}): confidence.%: lm.${SRC_LANG} decode.%
+	if [ ! -e $@ ]; then \
+	   mkdir $@; \
+	   cp -p confidence/Makefile* confidence/ce-notm.template $@; \
+	fi
+	${MAKE} -C $@ all DECODING_MODEL_DIR=models/decode.$*
+endif
 else
 confidence:
 	@echo "Not training a confidence estimation model." >&2
@@ -217,21 +240,22 @@ endif
 portageLive: portageLive_models_lm
 portageLive: portageLive_models_mixlm
 portageLive: portageLive_models_tm
-portageLive: portageLive_models_decode
+portageLive: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 portageLive:
 	ln -sf ../prime.sh $@
 	pwd > $@/README
 	portage_info >> $@/README
 
 portageLive: portageLive/soap-translate.sh
-portageLive/soap-translate.sh: portageLive_models_decode
+portageLive/soap-translate.sh: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 	mkdir -p $(dir $@)
 	echo "#!/bin/bash" > $@
 	cd $(dir $@) && echo "`../../translate.sh -n $(and ${DO_RESCORING}, -with-rescoring)` -f=\`dirname \$$0\`/canoe.ini.cow" >> $(notdir $@)
 	chmod 755 $@
 
 # We need this dependency since decode will copy the tplms for portageLive.
-portageLive_models_decode: portageLive_models_lm portageLive_models_tm
+portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_lm portageLive_models_tm
+
 portageLive_models_%:
 	${MAKE} -C $* portageLive
 

@@ -130,6 +130,34 @@ check_setup:
 
 
 ########################################
+# Tune and test using multiple decoding variants, if necessary.
+
+ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
+ifneq ($(strip ${TEST_SET}),)
+all: $(addprefix eval., ${TUNE_DECODE_VARIANTS})
+endif
+
+.PHONY: $(addprefix translate., ${TUNE_DECODE_VARIANTS})
+# Tune weights and apply them to the test set(s)
+$(addprefix translate., ${TUNE_DECODE_VARIANTS}): translate.%: tune
+	if [ ! -e $@ ]; then \
+	   mkdir $@; \
+	   cp -p translate/Makefile* $@; \
+	   mkdir $@/models; \
+	   cd $@/models; ln -s ../../models/* .; rm decode*; rm -rf CVS; cd -; \
+	   ln -s ../../models/decode.$* $@/models/decode; \
+	fi
+	${MAKE} -C translate.$* all
+
+.PHONY: $(addprefix eval., ${TUNE_DECODE_VARIANTS})
+# Get BLEU scores for the test set(s)
+$(addprefix eval., ${TUNE_DECODE_VARIANTS}): eval.%: translate.%
+	${MAKE} -C translate.$* bleu
+	if [ ! -e translate/translate.$* ]; then ln -s ../translate.$* translate/; fi
+endif
+
+
+########################################
 # Copy the bin/INSTALL_SUMMARY file, if it exists.
 ifneq ($(wildcard $(dir $(shell which train_ibm))/INSTALL_SUMMARY),)
 check_setup: log.INSTALL_SUMMARY
@@ -187,15 +215,15 @@ time-mem: SHELL=/bin/bash
 time-mem: export PORTAGE_INTERNAL_CALL=1
 time-mem:
 	@echo "Resource summary for `pwd`:"
-	@time-mem-tally.pl `find models translate -type f -name log.\* | sort` \
+	@time-mem-tally.pl `find models translate* -type f -name log.\* | sort` \
 	| second-to-hms.pl \
 	| expand-auto.pl
 
 
 
-DU_DIRS = models/tm/{ibm,hmm,jpt,cpt}* models/*lm/*lm* translate
+DU_DIRS = models/tm/{ibm,hmm,jpt,cpt}* models/*lm/*lm* models/decode* translate*
 ifdef DO_CE
-DU_DIRS += models/confidence/*.cem
+DU_DIRS += models/confidence*/*.cem
 endif
 ifdef DO_TRUECASING
 DU_DIRS += models/tc
@@ -210,12 +238,8 @@ summary: export PORTAGE_INTERNAL_CALL=1
 summary: time-mem
 	@echo
 	@echo "Disk usage for all models:"
-	@if [[ ! -e models/portageLive ]]; then \
-	   GLOBIGNORE=*/log.*; \
-	      du -sch ${DU_DIRS}; \
-	else \
-	   GLOBIGNORE=*/log.*; \
-	      du -sch ${DU_DIRS} models/decode/*.{tppt,gz}; \
+	@ ( GLOBIGNORE="*/log.*:translate.sh"; du -sch ${DU_DIRS} )
+	@if [[ -e models/portageLive ]]; then \
 	   echo; \
 	   echo "Disk usage for portageLive models:"; \
 	   du -hL models/portageLive; \

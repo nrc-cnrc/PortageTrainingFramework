@@ -18,7 +18,7 @@ endif
 # User definable variables
 
 # This is the from/source language (must be two lowercase letters)
-SRC_LANG ?= en 
+SRC_LANG ?= en
 # This is the to/target language (must be two lowercase letters)
 TGT_LANG ?= fr
 
@@ -43,6 +43,11 @@ TRAIN_LM      ?= lm-train
 TRAIN_TM      ?= tm-train
 # TUNE_DECODE is used to train cow.
 TUNE_DECODE   ?= dev1
+# TUNE_DECODE_VARIANTS is used to tune and test using multiple tuning sets.
+# Typically, each variant is a 90% sample subset of the of the TUNE_DECODE set.
+# Ex. If TUNE_DECODE is dev1, include "a b" in TUNE_DECODE_VARIANTS to train 
+#     cow with dev1a and dev1b in addition to dev1.
+#TUNE_DECODE_VARIANTS  ?=
 # TUNE_RESCORE is used to train rat.
 #TUNE_RESCORE  ?= dev2
 # TUNE_CE is used to train confidence estimation.
@@ -162,6 +167,7 @@ TGT_LANG := $(strip ${TGT_LANG})
 TRAIN_LM := $(strip ${TRAIN_LM})
 TRAIN_TM := $(strip ${TRAIN_TM})
 TUNE_DECODE := $(strip ${TUNE_DECODE})
+TUNE_DECODE_VARIANTS := $(strip ${TUNE_DECODE_VARIANTS})
 TUNE_RESCORE := $(strip ${TUNE_RESCORE})
 TUNE_CE := $(strip ${TUNE_CE})
 
@@ -194,7 +200,8 @@ TRAIN_TC := $(strip ${TRAIN_TC})
 
 # Define the corpora.
 TRAIN_SET    ?= $(sort ${TRAIN_LM} ${TRAIN_TM} ${TRAIN_TC})
-HELDOUT_SET  ?= $(sort ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET})
+HELDOUT_SET  ?= $(sort ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET} \
+                       $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}))
 CORPORA_SET  ?= $(sort ${TRAIN_SET} ${HELDOUT_SET})
 
 # Define what type of phrase table we want to generate.
@@ -234,6 +241,12 @@ ifdef TC_USE_SRC_MODELS
 TRUECASING_NC1_SRC_LM  ?= ${TRAIN_TC}_${SRC_LANG}.nc1.binlm${GZ}
 endif
 
+# PLIVE_DECODE_VARIANT is used for selecting which cow run (TUNE_DECODE_VARIANTS)
+# to used for PortageLive.
+# Leave PLIVE_DECODE_VARIANT undefined or blank to use weights from the main 
+# cow run based on TUNE_DECODE, or specify one of the variants from 
+# TUNE_DECODE_VARIANTS to use weights from the cow run corresponding to that variant.
+#PLIVE_DECODE_VARIANT ?=
 
 
 # If we are lucky enough to have a cluster, we'll change the shell for certain
@@ -281,19 +294,19 @@ endif
 endif
 
 ifeq ($(strip ${TRAIN_LM} ${MIXLM}),)
-$(error You must always define a training corpus for language model)
+$(error You must always define a training corpus for language models)
 endif
 
 ifeq (${TRAIN_TM},)
-$(error You must always define a training corpus for translation model)
+$(error You must always define a training corpus for translation models)
 endif
 
 ifeq (${TRAIN_TC},)
-$(error You must always define a training corpus for truecasing  models)
+$(error You must always define a training corpus for truecasing models)
 endif
 
 ifeq (${TUNE_DECODE},)
-$(error You must always define a tuning corpus train the decoder)
+$(error You must always define a tuning corpus to train the decoder)
 endif
 
 ifeq (${SRC_LANG},)
