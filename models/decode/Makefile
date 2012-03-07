@@ -52,9 +52,9 @@ MODEL_DIR ?= ../../models
 # Indicates what prefix/file to use for training a decoder model
 TUNE_DECODE     ?= dev1
 # What source file to use for tuning the decoder.
-TUNE_DECODE_SRC  = ${TUNE_DECODE}${SRCX}
-# What target file to use for tuning the decoder.
-TUNE_DECODE_TGT  = ${TUNE_DECODE}${TGTX}
+TUNE_DECODE_SRC  := ${TUNE_DECODE}${SRCX}
+# What reference files to use for tuning the decoder.
+TUNE_DECODE_TGTS  := $(notdir $(wildcard ${CORPORA_DIR}/${TUNE_DECODE}_${TGT_LANG}*${LANGX}))
 
 # Specific PSUB options
 PSUB_OPTS ?= 
@@ -106,6 +106,7 @@ endif
 # Threre are two differents vpath for heldout because in the chinese case for example the src_ext != tgt_ext
 vpath %${SRCX}  ${CORPORA_DIR}
 vpath %${TGTX}  ${CORPORA_DIR}
+vpath %${LANGX}  ${CORPORA_DIR}
 vpath %${RULES} ${CORPORA_DIR}
 vpath ${DECODING_MODEL_TEMPLATE} ${TEMPLATE_DIR}
 
@@ -231,7 +232,7 @@ clean.canoe.ini:
 .PHONY: train
 train: ${DECODING_MODEL}
 ${DECODING_MODEL}: SHELL=${FRAMEWORK_SHELL}
-${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TGT}
+${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TGTS}
 	_LOCAL=1 mkdir -p foos
 	RP_PSUB_OPTS="-${MERT_CPUS} -N tune.decode.model" \
 	${MERT} \
