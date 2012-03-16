@@ -82,6 +82,10 @@ clean.content clean.logs hide.logs: %:
 	${MAKE} -C rescore $@
 	${MAKE} -C confidence $@
 	${MAKE} -C mixlm $@
+ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
+	${RM} -r $(addprefix decode., ${TUNE_DECODE_VARIANTS})
+	${RM} -r $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
+endif
 
 
 

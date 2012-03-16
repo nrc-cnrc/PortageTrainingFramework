@@ -85,6 +85,9 @@ clean.content clean.logs hide.logs: %:
 	${MAKE} -C corpora $@
 	${MAKE} -C models $@
 	${MAKE} -C translate $@
+ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
+	${RM} -r $(addprefix translate., ${TUNE_DECODE_VARIANTS})
+endif
 
 # Clean auxiliary files from make doc, but not the .pdf itself.
 clean.doc: SHELL=${GUARD_SHELL}
@@ -147,13 +150,12 @@ $(addprefix translate., ${TUNE_DECODE_VARIANTS}): translate.%: tune
 	   cd $@/models; ln -s ../../models/* .; rm decode*; rm -rf CVS; cd -; \
 	   ln -s ../../models/decode.$* $@/models/decode; \
 	fi
-	${MAKE} -C translate.$* all
+	${MAKE} -C translate.$* all TUNE_DECODE=${TUNE_DECODE}$*
 
 .PHONY: $(addprefix eval., ${TUNE_DECODE_VARIANTS})
 # Get BLEU scores for the test set(s)
 $(addprefix eval., ${TUNE_DECODE_VARIANTS}): eval.%: translate.%
-	${MAKE} -C translate.$* bleu
-	if [ ! -e translate/translate.$* ]; then ln -s ../translate.$* translate/; fi
+	${MAKE} -C translate.$* bleu TUNE_DECODE=${TUNE_DECODE}$*
 endif
 
 
