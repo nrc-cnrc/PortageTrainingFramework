@@ -130,7 +130,9 @@ PARALLELISM_LEVEL_TM ?= 5
 PARALLELISM_LEVEL_TUNE_DECODE  ?= 10
 PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
 PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= 10
-PARALLELISM_LEVEL_TRANSLATE    ?= 10
+# Be careful not to over-parallelize for translation if models take long to load, especially if translating many test files.
+# One can run canoe-timing-stats.pl on the resulting logs to help assess.
+PARALLELISM_LEVEL_TRANSLATE    ?= 1
 ifeq (${MAKELEVEL},0)
    $(info Running in cluster mode.)
 endif
@@ -150,7 +152,9 @@ PARALLELISM_LEVEL_TM ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_DECODE  ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_RESCORE ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= ${NCPUS}
-PARALLELISM_LEVEL_TRANSLATE    ?= ${NCPUS}
+# Be careful not to over-parallelize for translation if models take long to load, especially if translating many test files.
+# One can run canoe-timing-stats.pl on the resulting logs to help assess.
+PARALLELISM_LEVEL_TRANSLATE    ?= 1
 # Disable CLUSTER mode in all of Portage's software.
 export PORTAGE_NOCLUSTER=1
 ifeq (${MAKELEVEL},0)
@@ -248,6 +252,9 @@ endif
 # TUNE_DECODE_VARIANTS to use weights from the cow run corresponding to that variant.
 #PLIVE_DECODE_VARIANT ?=
 
+# Define USE_STATIC_MIXLM to translate using the dev1 mixlm weights instead
+# of computing dynamic weights for each test set.
+#USE_STATIC_MIXLM ?= 1
 
 # If we are lucky enough to have a cluster, we'll change the shell for certain
 # commands and allow them to run on nodes.

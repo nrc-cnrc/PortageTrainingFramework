@@ -86,14 +86,17 @@ PSUB_OPTS ?=
 # Indicates the nbest list size.
 NBEST_SIZE ?= 1000
 
-# Number of parallel chunks to process.
-PARALLELISM_LEVEL_TRANSLATE ?= 5
+# Number of parallel chunks to process. Be careful not to over-parallelize.
+PARALLELISM_LEVEL_TRANSLATE ?= 1
 
 # Some ad-hoc post procssing.
 POST_PROCESSING ?= cat
 
 # How many cpus to use when translating.
 TRANS_CPUS ?= 1
+
+# If you need to add any other options to canoe-parallel.
+CANOE_PARALLEL_EXTRAS ?=
 
 # What to use to monitor resources.
 TIME_MEM ?= time-mem
@@ -115,7 +118,6 @@ endif
 endif
 
 
-
 .DEFAULT_GOAL := help
 .SECONDARY:
 .SUFFIXES:
@@ -134,12 +136,10 @@ vpath ${TRUECASING_LM}   ${TRUECASING_DIR} models/tc
 vpath ${TRUECASING_MAP}  ${TRUECASING_DIR} models/tc
 
 
-
 .PHONY: all
 all:  SHELL=${GUARD_SHELL}
 all: final_result
 	@echo "Your translations are available in $(notdir ${CURDIR})/" >&2
-
 
 
 ########################################
@@ -177,14 +177,12 @@ final_result: ${FINAL_RESULT}
 	${POST_PROCESSING} < $< > $@
 
 
-
 # What the user can expect from this module.
 .PHONY: list_final_output
 list_final_output: SHELL=${GUARD_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
 	@echo "${FINAL_RESULT}"
-
 
 
 # An alias that indicate what/how to translate the translation set without rescoring.
@@ -194,7 +192,6 @@ translate: out
 # An alias to translate and rescore the translation set.
 .PHONY: rescore
 rescore: rat
-
 
 
 # This is where we would document this module's help.
@@ -208,7 +205,6 @@ help:
 	@echo "The main targets in this Makefile are:"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 	@echo "Most likely you want to run either: make all or make translate."
-
 
 
 ########################################
@@ -230,7 +226,6 @@ hide.logs: SHELL=${GUARD_SHELL}
 hide.logs: hide_logs_sub
 
 
-
 ########################################
 # Resources Summary
 .PHONY: time-mem
@@ -238,45 +233,54 @@ time-mem: SHELL=${GUARD_SHELL}
 time-mem: resource_summary_sub
 
 
-
 ########################################
 # If there is no decoding model available, warn the user since we do not know
 # how to make the decoding model in this module.
-#.PHONY: check_decoding_model # Cannot be phony or else it will trigger always remaking targets.
+# Cannot be phony or else it will trigger always remaking targets.
 check_decoding_model: SHELL=${GUARD_SHELL}
 check_decoding_model:
 	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] \
 	|| ! echo "ERROR: No decoding model (${DECODING_MODEL}) available. Please train ${DECODING_MODEL_DIR} first!" >&2
 
+
 ########################################
 # Create a specific canoe.ini per test set.
-# You could add some specific target if you need to customize a canoe.ini.cow
+# You could add a specific target if you need to customize a canoe.ini.cow
 # for a particular file.
+# For dynamic mixlm's, we use weights computed specifically for the test set.
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): SHELL=${GUARD_SHELL}
 ifdef MIXLM
-include models/mixlm/Makefile.toolkit
+ifndef USE_STATIC_MIXLM
+USE_DYNAMIC_MIXLM = 1
+endif
+endif
 
-.INTERMEDIATE: components
-.INTERMEDIATE: $(addsuffix .distances, ${TEST_SET})
-.INTERMEDIATE: $(addsuffix .weights, ${TEST_SET})
+ifdef USE_DYNAMIC_MIXLM
+include ../models/mixlm/Makefile.toolkit
+
+.INTERMEDIATE: $(addsuffix .distances, ${TEST_SET}) $(addsuffix .weights, ${TEST_SET})
 
 clean.content: clean.mixlm
 
 .PHONY: clean.mixlm
 clean.mixlm: SHELL=${GUARD_SHELL}
 clean.mixlm:
-	${RM} *.distances components *.weights *.mixlm
+	${RM} components_* *.distances *.weights *.mixlm
 
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: %.mixlm
-endif
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: check_decoding_model
-	sed -e 's#models/lm/${TUNE_DECODE}.mixlm#$*.mixlm#g' ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
+	sed -e 's#models/mixlm/${TUNE_DECODE}.mixlm#$*.mixlm#g' ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
-# example: increase the beam threshold and stack size.
-#	cat $< \
+else
+$(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: check_decoding_model
+	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
+	configtool check $@
+# Example: increase the beam threshold and stack size.
+#	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} \
 #	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \
 #	| sed "s/${TUNE_DECODE}/$*/" \
 #	> $@
+endif
 
 clean.content: clean.decoding.models
 
@@ -287,7 +291,6 @@ clean.decoding.models: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.decoding
 clean.decoding.models.%: SHELL=${GUARD_SHELL}
 clean.decoding.models.%:
 	${RM} ${DECODING_MODEL}.$*
-
 
 
 ################################################################################
@@ -303,17 +306,17 @@ ifdef DO_RESCORING
 else
 %.out: SHELL=${FRAMEWORK_SHELL}
 %.out: ${DECODING_MODEL}.% %${RULEX}
-	@_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $(notdir ${CURDIR})/$@"
 	RP_PSUB_OPTS="-${TRANS_CPUS}" \
 	canoe-parallel.sh \
-		-lb \
 		-n ${PARALLELISM_LEVEL_TRANSLATE} \
+		${CANOE_PARALLEL_EXTRAS} \
 		canoe \
 		-f $< \
 		-palign \
 		< $(word 2, $^) \
 		2> log.$@ \
-	| nbest2rescore.pl -canoe -tagoov -palout=$@.pal  2> log.$@.pal \
+	| nbest2rescore.pl -canoe -tagoov -palout=$@.pal \
 	| tee  $@.oov \
 	| perl -pe 's/<OOV>(.+?)<\/OOV>/\1/g;' \
 	> $@
@@ -323,7 +326,7 @@ OUT_BLEU_DEP = $(addsuffix .out.bleu, ${TEST_SET})
 .PHONY: out.bleu
 out.bleu: SHELL=${GUARD_SHELL}
 out.bleu: ${OUT_BLEU_DEP}
-	@echo "Lowercase BLEU scores:"
+	@echo "Lowercase BLEU scores for $(notdir ${CURDIR})/:"
 	@egrep Human $+
 
 # Specifing dependencies for calculating BLEU scores for translation coming out
@@ -334,7 +337,7 @@ TC_BLEU_DEP = $(addsuffix .tc.bleu, ${TEST_SET})
 .PHONY: tc.bleu
 tc.bleu: SHELL=${GUARD_SHELL}
 tc.bleu: ${TC_BLEU_DEP}
-	@echo "Truecase BLEU scores:"
+	@echo "Truecase BLEU scores for $(notdir ${CURDIR})/:"
 	@egrep Human $+
 
 ${TC_BLEU_DEP}: %.tc.bleu: %.out.tc %${TGTTCX}
@@ -343,16 +346,6 @@ ${TC_BLEU_DEP}: %.tc.bleu: %.out.tc %${TGTTCX}
 out.detok: $(addsuffix .out.detok, ${TEST_SET})
 %.out.detok: SHELL=${GUARD_SHELL}
 
-# Invalid, can't compare the detokenized translation with a tokenized and
-# lowercase reference.
-#.PHONY: out.detok.bleu
-#out.detok.bleu: $(addsuffix .out.detok.bleu, ${TEST_SET})
-#$(addsuffix .out.detok.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
-#%.out.detok.bleu: %.out.detok %${TGTX}
-#	@echo "Calculating BLEU for $@"
-#	cat $(word 2, $+) \
-#	| utf8_casemap -c l \
-#	| bleumain -c $< - > $@
 
 clean.content: clean.translate
 
@@ -362,18 +355,17 @@ clean.translate: $(foreach f, ${TEST_SET}, clean.translate.$f)
 	${RM} -r canoe-parallel.* run-p.*
 	${RM} tc_tmp_*
 
-clean.translate.%:  SHELL=${GUARD_SHELL}
+clean.translate.%: SHELL=${GUARD_SHELL}
 clean.translate.%:
 	${RM} $*.out $*.out.oov $*.out.pal $*.out.bleu $*.tc.bleu
 	${RM} $*.out.detok $*.out.detok.bleu
 
 
-#.PHONY: check_rescoring_model # Cannot be phony or else it will trigger always remaking targets.
+# Cannot be phony or else it will trigger always remaking targets.
 check_rescoring_model: SHELL=${GUARD_SHELL}
 check_rescoring_model:
 	@[[ -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]] \
 	|| ! echo "ERROR: No rescoring model (${RESCORING_MODEL}) available. Please train ${RESCORING_MODEL_DIR} first!" >&2
-
 
 
 ################################################################################
@@ -401,7 +393,7 @@ RAT_BLEU_DEP = $(addsuffix .rat.bleu, ${TEST_SET})
 .PHONY: rat.bleu
 rat.bleu: SHELL=${GUARD_SHELL}
 rat.bleu: ${RAT_BLEU_DEP}
-	@echo "Rescoring BLEU scores:"
+	@echo "Rescoring BLEU scores for $(notdir ${CURDIR})/:"
 	@egrep Human $+
 
 # Specifing dependencies for calculating BLEU scores for rescored translations.
@@ -411,16 +403,6 @@ ${RAT_BLEU_DEP}: %.rat.bleu: %.rat %${TGTX}
 rat.detok: $(addsuffix .rat.detok, ${TEST_SET})
 %.rat.detok: SHELL=${GUARD_SHELL}
 
-# Invalid, can't compare the detokenized translation with a tokenized and
-# lowercase reference.
-#.PHONY: rat.detok.bleu
-#rat.detok.bleu: $(addsuffix .rat.detok.bleu, ${TEST_SET})
-#$(addsuffix .rat.detok.bleu, ${TEST_SET}): SHELL=${GUARD_SHELL}
-#%.rat.detok.bleu: %.rat.detok %${TGTX}
-#	@echo "Calculating BLEU for $@"
-#	cat $(word 2, $+) \
-#	| utf8_casemap -c l \
-#	| bleumain -c $< - > $@
 
 clean.content: clean.rescore
 
@@ -429,12 +411,11 @@ clean.rescore: SHELL=${GUARD_SHELL}
 clean.rescore: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.rescore.$f)
 	${RM} -r canoe-parallel.* run-p.*
 
-clean.rescore.%:  SHELL=${GUARD_SHELL}
+clean.rescore.%: SHELL=${GUARD_SHELL}
 clean.rescore.%:
 	${RM} $*.rat $*.rat.bleu
 	${RM} $*.rat.detok $*.rat.detok.bleu
 	${RM} -r workdir-$*${RULEX}-${NBEST_SIZE}best
-
 
 
 ################################################################################
@@ -453,7 +434,7 @@ endif
 %.ce: SHELL=${FRAMEWORK_SHELL}
 
 %.ce: ${CONFIDENCE_MODEL} %${SRCTCX} ${DECODING_MODEL}.%
-	@_LOCAL=1 echo "Generating $@"
+	@_LOCAL=1 echo "Generating $(notdir ${CURDIR})/$@"
 	${TIME_MEM} \
 	translate.pl -with-ce \
 		-n ${PARALLELISM_LEVEL_TRANSLATE} \
@@ -479,7 +460,6 @@ clean.ce:
 	${RM} *.ce
 
 
-
 ################################################################################
 # TRUECASING
 .PHONY: tc
@@ -500,7 +480,7 @@ endif
 ifdef TC_USE_SRC_MODELS
 	@_LOCAL=1; [[ -f ${TRUECASING_DIR}/${TRUECASING_NC1_SRC_LM} ]] || ! echo "ERROR: Can't access truecasing nc1 source lm ${TRUECASING_DIR}/${TRUECASING_NC1_SRC_LM}" >&2
 endif
-	@_LOCAL=1 echo "Truecasing $@"
+	@_LOCAL=1 echo "Truecasing $(notdir ${CURDIR})/$@"
 	${TIME_MEM} \
 	truecase.pl \
 		-text $<$(if ${TC_SRC_OPTS},.oov,) \
@@ -524,13 +504,11 @@ clean.truecasing: SHELL=${GUARD_SHELL}
 clean.truecasing: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.truecasing.$f.out.guard)
 clean.truecasing: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.truecasing.$f.rat.guard)
 
-clean.truecasing.%.guard:  SHELL=${GUARD_SHELL}
+clean.truecasing.%.guard: SHELL=${GUARD_SHELL}
 clean.truecasing.%.guard:
 	${RM} $*.tc
 	${RM} $*.tc.detok
 	${RM} canoe_tc_tmp_*.tm
-
-
 
 
 ################################################################################
@@ -540,9 +518,8 @@ clean.truecasing.%.guard:
 # General detokenizeer.
 %.detok: SHELL=${GUARD_SHELL}
 %.detok: %
-	@echo "Detokenizing $<"
+	@echo "Detokenizing $(notdir ${CURDIR})/$<"
 	${DETOKENIZER} < $< > $@
-
 
 
 ########################################
@@ -551,7 +528,6 @@ clean.truecasing.%.guard:
 configtool: SHELL=${GUARD_SHELL}
 configtool: ${DECODING_MODEL_TEMPLATE}
 	configtool check $<
-
 
 
 ########################################
@@ -566,7 +542,6 @@ bleu:
 	grep Human *.bleu
 
 
-
 ########################################
 # Hook to perform detokenization
 .PHONY: detok
@@ -579,7 +554,6 @@ detok: rat.detok
 endif
 
 
-
 ########################################
 # How to calculate BLEU.
 # This target expect two files:
@@ -587,9 +561,8 @@ endif
 #  - a reference file with TGTX as it extension.
 %.bleu: SHELL=${GUARD_SHELL}
 %.bleu:
-	@echo "Calculating BLEU for $@"
+	@echo "Calculating BLEU for $(notdir ${CURDIR})/$@"
 	bleumain -c $(filter-out %${TGTX}, $+) $(filter %${TGTX}, $+) > $@
-
 
 
 ########################################
@@ -598,10 +571,9 @@ endif
 bleucompare: $(addsuffix .bleucompare, ${TEST_SET})
 
 COMPARE_TO ?= UNDEFINED/
-%.bleucompare:  SHELL = ${GUARD_SHELL}
-%.bleucompare:  %.out %${TGTX}
+%.bleucompare: SHELL = ${GUARD_SHELL}
+%.bleucompare: %.out %${TGTX}
 	@bleucompare $(filter %.out, $+) ${COMPARE_TO}/translate/$(filter %.out, $+) REFS $(filter %${TGTX}, $+)
-
 
 
 ########################################
@@ -613,7 +585,6 @@ full: out.detok.bleu
 full: rat.bleu
 full: rat.detok.bleu
 full: configtool
-
 
 
 .PHONY: oov

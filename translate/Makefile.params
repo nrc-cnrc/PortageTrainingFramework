@@ -13,3 +13,10 @@
 
 
 # User defines for translate/.
+
+# Define USE_STATIC_MIXLM to translate using the dev1 mixlm weights instead
+# of computing dynamic weights for each test set.
+#USE_STATIC_MIXLM ?= 1
+
+# Ex.: define extra parameters for translation with canoe-parallel.sh
+#CANOE_PARALLEL_EXTRAS ?= -no-lb

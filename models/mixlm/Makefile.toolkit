@@ -4,13 +4,13 @@
 # @file Makefile.toolkit
 # @brief Targets required to build a .mixlm
 #
-# @author Samuel Larkin
+# @author Samuel Larkin and Darlene Stewart
 #
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2010, Sa Majeste la Reine du Chef du Canada /
-# Copyright 2010, Her Majesty in Right of Canada
+# Copyright 2011, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2011, Her Majesty in Right of Canada
 
 
 # Make sure you have defined the following before using this toolkit:
@@ -20,32 +20,41 @@
 # GZ = .gz
 # ORDER = 5
 
-
-components:
-	echo "$(strip ${MIXLM})" | tr " " "\n" > $@
+MIXLM_CPUS ?= 1
 
 
-%.distances: components %_${SRC_LANG}${LANGX}
+components_%: SHELL=${GUARD_SHELL}
+components_%:
+	echo "$(strip $(foreach lm, ${MIXLM}, $(notdir $(wildcard models/mixlm/${lm}_$**.binlm.gz))))" \
+		| tr " " "\n" > $@
+
+
+%.distances: SHELL=${FRAMEWORK_SHELL}
+%.distances: components_${SRC_LANG} %_${SRC_LANG}${LANGX}
+	RP_PSUB_OPTS="-${MIXLM_CPUS} -N $@" \
+	${TIME_MEM} \
 	mx-calc-distances.sh \
 		-v \
 		-d models/mixlm/ \
-		-e _${SRC_LANG}-kn-${ORDER}g.binlm.gz \
 		em \
-		$(filter components, $+) \
+		$(filter components_${SRC_LANG}, $+) \
 		$(filter %_${SRC_LANG}${LANGX}, $+) \
-		> $@
+		> $@ 2> log.$*.mixlm
 
 
+%.weights: SHELL=${GUARD_SHELL}
 %.weights: %.distances
-	mx-dist2weights -v normalize $< > $@
+	${TIME_MEM} \
+	mx-dist2weights -v normalize $< > $@ 2>> log.$*.mixlm
 
 
-%.mixlm: %.weights components %_${TGT_LANG}${LANGX}
+%.mixlm: SHELL=${GUARD_SHELL}
+%.mixlm: %.weights components_${TGT_LANG} %_${TGT_LANG}${LANGX}
+	${TIME_MEM} \
 	mx-mix-models.sh \
 		-d models/mixlm/ \
-		-e _${TGT_LANG}-kn-${ORDER}g.binlm.gz \
 		mixlm \
 		$(filter %.weights, $+) \
-		$(filter components, $+) \
+		$(filter components_${TGT_LANG}, $+) \
 		$(filter %_${TGT_LANG}${LANGX}, $+) \
-		> $@
+		> $@ 2>> log.$*.mixlm
