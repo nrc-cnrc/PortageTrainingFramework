@@ -128,16 +128,17 @@ sublm.${TGT_LANG}: ${MIXLM_TGT_MODELS}
 
 # Create Language Models.
 # If for some reason one of the sublm was already created in models/lm, don't
-# recreate it, just link to it.
+# recreate it, just link to it; otherwise build it here in the mixlm directory
+# (which requires using make -f, not make -C).
 ${MIXLM_SRC_MODELS}: SHELL=${GUARD_SHELL}
 ${MIXLM_SRC_MODELS}: %.binlm${GZ}:
 	[[ -s "${LM_DIR}/$@" ]] && ln -s ${LM_DIR}/$@ \
-	|| ${MAKE} -C ${LM_DIR} LM_LANG=${SRC_LANG} TRAIN_LM=$(*:_${SRC_LANG}-kn-${ORDER}g=) $@
+	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${SRC_LANG} TRAIN_LM=$(*:_${SRC_LANG}-kn-${ORDER}g=) $@
 	
 ${MIXLM_TGT_MODELS}: SHELL=${GUARD_SHELL}
 ${MIXLM_TGT_MODELS}: %.binlm${GZ}:
 	[[ -s "${LM_DIR}/$@" ]] && ln -s ${LM_DIR}/$@ \
-	|| ${MAKE} -C ${LM_DIR} LM_LANG=${TGT_LANG} TRAIN_LM=$(*:_${TGT_LANG}-kn-${ORDER}g=) $@
+	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${TGT_LANG} TRAIN_LM=$(*:_${TGT_LANG}-kn-${ORDER}g=) $@
 
 
 .PHONY: mixlm
