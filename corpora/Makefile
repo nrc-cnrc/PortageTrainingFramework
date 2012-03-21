@@ -174,8 +174,8 @@ ${TGT_TOK_LIST}: %${ALIGNX}: %${RAWX}
 ## Compress the source/language corpora if needed.
 $(addsuffix ${GZ}, ${SRC_TOK_LIST} ${TGT_TOK_LIST}): SHELL=${CORPUS_SHELL}
 $(addsuffix ${GZ}, ${SRC_TOK_LIST} ${TGT_TOK_LIST}): %${GZ}: %
-	${RP_SHELL_OPTS} ${TIME_MEM} \
-	cat $< | gzip > $@ ${LOG_STDERR}
+	${RP_SHELL_OPTS} \
+	cat $< | ${TIME_MEM} gzip > $@ ${LOG_STDERR}.gzip
 
 
 
@@ -276,14 +276,14 @@ lc: ${LC}
 %${LANGX}: SHELL=${CORPUS_SHELL}
 %${LANGX}: %${ALIGNX}
 	@$(check_utf8)
-	${RP_SHELL_OPTS} ${TIME_MEM} \
-	cat $< | ${LOWERCASE} > $@ ${LOG_STDERR}
+	${RP_SHELL_OPTS} \
+	cat $< | ${TIME_MEM} ${LOWERCASE} ${LOG_STDERR} > $@
 
 %${LANGXZ}: SHELL=${CORPUS_SHELL}
 %${LANGXZ}: %${ALIGNX}${GZ}
 	@$(check_utf8)
-	${RP_SHELL_OPTS} ${TIME_MEM} \
-	zcat $< | ${LOWERCASE} | gzip > $@ ${LOG_STDERR}
+	${RP_SHELL_OPTS} \
+	zcat $< | ${TIME_MEM} ${LOWERCASE} ${LOG_STDERR} | gzip > $@
 
 
 
