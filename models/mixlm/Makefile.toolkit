@@ -44,17 +44,15 @@ components_%:
 
 %.weights: SHELL=${GUARD_SHELL}
 %.weights: %.distances
-	${TIME_MEM} \
-	mx-dist2weights -v normalize $< > $@ 2>> log.$*.mixlm
+	mx-dist2weights -v normalize $< > $@
 
 
 %.mixlm: SHELL=${GUARD_SHELL}
 %.mixlm: %.weights components_${TGT_LANG} %_${TGT_LANG}${LANGX}
-	${TIME_MEM} \
 	mx-mix-models.sh \
 		-d models/mixlm/ \
 		mixlm \
 		$(filter %.weights, $+) \
 		$(filter components_${TGT_LANG}, $+) \
 		$(filter %_${TGT_LANG}${LANGX}, $+) \
-		> $@ 2>> log.$*.mixlm
+		> $@
