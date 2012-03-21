@@ -342,8 +342,8 @@ clean: clean.content clean.logs
 
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
-	${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
 	${RM} ${TOK}
+	${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ} *${ALIGNX}${GZ}
 
 clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
