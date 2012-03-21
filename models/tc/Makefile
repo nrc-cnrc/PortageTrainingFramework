@@ -27,9 +27,6 @@ include ../../Makefile.toolkit
 # What is this module's name.
 MODULE_NAME ?= tc
 
-# Let's make this usage on the cluster.
-SHELL = ${FRAMEWORK_SHELL}
-
 # Where to find the corpus' file.
 CORPORA_DIR ?= ../../corpora
 
@@ -101,6 +98,7 @@ help:
 
 
 .PHONY: all
+all: SHELL=${GUARD_SHELL}
 ifdef DO_TRUECASING
 all: ${TRUECASING_MAP}
 all: ${TRUECASING_LM}
@@ -138,6 +136,7 @@ clean.map: SHELL=${GUARD_SHELL}
 clean.map:
 	${RM} -r *.map *.map.tppt vocabMap2tpt.*
 
+lm-clean.content lm-clean.logs: SHELL=${GUARD_SHELL}
 lm-clean.content lm-clean.logs: lm-%:
 	${MAKE} -f ../lm/Makefile CORPUS_EXT=${TCX} $*
 
@@ -255,6 +254,7 @@ else
 	${MAKE} -f ../lm/Makefile CORPUS_EXT=${TCX} $@
 endif
 
+%.tplm: SHELL=${GUARD_SHELL}
 %.tplm:
 	${MAKE} -f ../lm/Makefile CORPUS_EXT=${TCX} $@
 

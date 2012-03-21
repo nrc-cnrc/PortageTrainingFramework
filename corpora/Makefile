@@ -29,9 +29,6 @@ RAWX ?= .raw
 # What is the truecase corpus extension.
 TCX ?= .tc
 
-# Change make's default shell to a distributed one, if working on a cluster.
-SHELL = ${FRAMEWORK_SHELL}
-
 
 # What command to use for lowercasing corpora.
 ifdef ICU
@@ -108,6 +105,7 @@ FILES_TO_BE_LOCKED = ${LIST_FINAL_OUTPUT}
 
 # Defines all that needs to be done by this makefile.
 .PHONY: all
+all: SHELL=${GUARD_SHELL}
 all: lc
 all: rule
 ifdef DO_TRUECASING
@@ -129,33 +127,56 @@ list_final_output:
 	@echo ${TC}
 
 
+# Arrange to run recipes for processing small files using a local shell;
+# otherwise use the FRAMEWORK_SHELL with one CPU for the job.
+SMALL_SETS := ${TUNE_DECODE} $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}) \
+              ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET}
+IS_SMALL_SET = $(findstring $(basename $@), $(addsuffix _${SRC_LANG}, ${SMALL_SETS}) \
+                                            $(addsuffix _${TGT_LANG}, ${SMALL_SETS}))
 
+CORPUS_SHELL = $(if ${IS_SMALL_SET},${GUARD_SHELL},${FRAMEWORK_SHELL})
+RP_SHELL_OPTS = $(if  ${IS_SMALL_SET},,RP_PSUB_OPTS="-1")
+# Don't run time-mem when processing small files.
+TIME_MEM = $(if ${IS_SMALL_SET},,time-mem)
+LOG_STDERR = $(if ${IS_SMALL_SET},,2> log.$(@:${GZ}=))
+
+                   
 ########################################
 # TOKENIZATION.
 # For the tokenization targets, we automatically detect raw files and if we
 # find any, there will be a rule to process them.  If no raw files are found
 # then the following targets are automatically disabled.
 
-## Tokenizes source corpora without sentence splitting.
+## Tokenize source corpora without sentence splitting.
 SRC_RAW_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${SRC_LANG}${RAWX}))
 SRC_TOK_LIST ?= $(SRC_RAW_LIST:${RAWX}=${ALIGNX})
 TOK += ${SRC_TOK_LIST}
 
+${SRC_TOK_LIST}: SHELL=${CORPUS_SHELL}
 ${SRC_TOK_LIST}: %${ALIGNX}: %${RAWX}
 	@${check_utf8}
-	RP_PSUB_OPTS="-1" \
-	${SRC_TOKENIZER} < $< > $@
+	${RP_SHELL_OPTS} ${TIME_MEM} \
+	${SRC_TOKENIZER} < $< > $@ ${LOG_STDERR}
 
 
-## Tokenizes target corpora without sentence splitting.
+## Tokenize target corpora without sentence splitting.
 TGT_RAW_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${TGT_LANG}${RAWX}))
 TGT_TOK_LIST ?= $(TGT_RAW_LIST:${RAWX}=${ALIGNX})
 TOK += ${TGT_TOK_LIST}
 
+${TGT_TOK_LIST}: SHELL=${CORPUS_SHELL}
 ${TGT_TOK_LIST}: %${ALIGNX}: %${RAWX}
 	@${check_utf8}
-	RP_PSUB_OPTS="-1" \
-	${TGT_TOKENIZER} < $< > $@
+	${RP_SHELL_OPTS} ${TIME_MEM} \
+	${TGT_TOKENIZER} < $< > $@ ${LOG_STDERR}
+
+
+## Compress the source/language corpora if needed.
+$(addsuffix ${GZ}, ${SRC_TOK_LIST} ${TGT_TOK_LIST}): SHELL=${CORPUS_SHELL}
+$(addsuffix ${GZ}, ${SRC_TOK_LIST} ${TGT_TOK_LIST}): %${GZ}: %
+	${RP_SHELL_OPTS} ${TIME_MEM} \
+	cat $< | gzip > $@ ${LOG_STDERR}
+
 
 
 ## HOW to handle big source language corpora.
@@ -171,7 +192,7 @@ ${SRC_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
 		-psub -1 \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
 		-n ${PARALLELISM_LEVEL_CORPORA} \
-		"${SRC_TOKENIZER} < $< > $@"
+		"${SRC_TOKENIZER} < $< > $@" ${LOG_STDERR}
 
 
 ## HOW to handle big target language corpora.
@@ -187,8 +208,7 @@ ${TGT_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
 		-psub -1 \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
 		-n ${PARALLELISM_LEVEL_CORPORA} \
-		"${TGT_TOKENIZER} < $< > $@"
-
+		"${TGT_TOKENIZER} < $< > $@" ${LOG_STDERR}
 
 
 TM_TOK    ?= $(foreach t, ${TRAIN_TM}, $(filter $t%, ${TOK}))
@@ -198,33 +218,35 @@ MIXLM_TOK ?= $(foreach t, ${MIXLM}, $(filter $t%, ${TOK}))
 
 
 .PHONY: tok
+tok: SHELL=${GUARD_SHELL}
 tok: ${TOK}
 
 
 
 ########################################
 # TRUECASE.
-# Defines what corpora we need truecased/tokenized for the truecase model.
+# Define what corpora we need truecased/tokenized for the truecase model.
 .PHONY: tc
 TC := $(addsuffix _${TGT_LANG}${TCX}${GZ}, ${TRAIN_TC})
+tc: SHELL=${GUARD_SHELL}
 tc: ${TC}
 
 # Prepare truecased file.
+%${TCX}: SHELL=${GUARD_SHELL}
 %${TCX}: %${ALIGNX}
 	@${check_utf8}
-	RP_PSUB_OPTS="-1" \
 	ln -fs $< $@
 
+%${TCX}${GZ}: SHELL=${GUARD_SHELL}
 %${TCX}${GZ}: %${ALIGNX}${GZ}
 	@${check_utf8}
-	RP_PSUB_OPTS="-1" \
 	ln -fs $< $@
 
 
 
 ########################################
 # LOWERCASING.
-# Defines what corpora we need in the entire pipeline.
+# Define what corpora we need in the entire pipeline.
 .PHONY: lc
 HELDOUT_LC += $(addsuffix _${SRC_LANG}${LANGX}, ${HELDOUT_SET})
 HELDOUT_LC += $(addsuffix _${TGT_LANG}${LANGX}, ${HELDOUT_SET})
@@ -246,26 +268,30 @@ ifdef DO_CE
 LM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_LM})
 endif
 LC += ${LM_LC}
+lc: SHELL=${GUARD_SHELL}
 lc: ${LC}
 
 
-# Constructs a lowercased corpora from its aligned version.
+# Construct a lowercased corpora from its aligned version.
+%${LANGX}: SHELL=${CORPUS_SHELL}
 %${LANGX}: %${ALIGNX}
 	@$(check_utf8)
-	RP_PSUB_OPTS="-1" \
-	cat $< | ${LOWERCASE} > $@
+	${RP_SHELL_OPTS} ${TIME_MEM} \
+	cat $< | ${LOWERCASE} > $@ ${LOG_STDERR}
 
+%${LANGXZ}: SHELL=${CORPUS_SHELL}
 %${LANGXZ}: %${ALIGNX}${GZ}
 	@$(check_utf8)
-	RP_PSUB_OPTS="-1" \
-	zcat $< | ${LOWERCASE} | gzip > $@
+	${RP_SHELL_OPTS} ${TIME_MEM} \
+	zcat $< | ${LOWERCASE} | gzip > $@ ${LOG_STDERR}
 
 
 
 ########################################
 # Shortcut to only create final translation models' corpora.
 .PHONY: tm
-tm:  ${TM_LC}
+tm: SHELL=${GUARD_SHELL}
+tm: ${TM_LC}
 
 
 
@@ -275,11 +301,14 @@ tm:  ${TM_LC}
 # If you have special markup, this is where you would write your code.
 .PHONY: rule
 RULE = $(addsuffix ${RULEX}, ${HELDOUT_SET})
+rule: SHELL=${GUARD_SHELL}
 rule: ${RULE}
+
+%${RULEX}: SHELL=${CORPUS_SHELL}
 %${RULEX}: %_${SRC_LANG}${LANGX}
 	@$(check_utf8)
-	RP_PSUB_OPTS="-1" \
-	canoe-escapes.pl -add $< > $@
+	${RP_SHELL_OPTS} ${TIME_MEM} \
+	canoe-escapes.pl -add $< > $@ ${LOG_STDERR}
 
 
 
@@ -287,10 +316,13 @@ rule: ${RULE}
 # Special target to prepare a new translation set.
 TRANSLATE_SET_LIST = $(foreach t,${TRANSLATE_SET}, $t${RULEX} $t_${SRC_LANG}${LANGX})
 .PHONY: translate
+translate: SHELL=${GUARD_SHELL}
 translate: ${TRANSLATE_SET_LIST}
 
 
-# Special targte to prepare the reference.
+# Special target to prepare the reference.
+.PHONY: reference
+reference: SHELL=${GUARD_SHELL}
 reference: $(foreach t,${TRANSLATE_SET},  $t_${TGT_LANG}${LANGX})
 
 
@@ -406,6 +438,7 @@ endif
 
 ################################################################################
 # HELPERS
+
 .PHONY: debug
 debug: SHELL=${GUARD_SHELL}
 debug:

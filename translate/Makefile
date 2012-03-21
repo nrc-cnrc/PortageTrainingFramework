@@ -539,6 +539,7 @@ ifdef DO_RESCORING
 bleu: ${RAT_BLEU_DEP}
 endif
 bleu:
+	@echo "Lowercase BLEU scores for $(notdir ${CURDIR})/:"
 	grep Human *.bleu
 
 

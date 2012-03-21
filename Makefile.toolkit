@@ -20,11 +20,6 @@ endif
 ################################################################################
 # HELPERS
 ########################################
-# How to compress a file.
-# The following syntax allows to compress a symbolic link by making a copy.
-%.gz: %
-	cat $< | gzip > $@
-
 
 
 ########################################

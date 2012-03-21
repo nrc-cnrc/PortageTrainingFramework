@@ -16,8 +16,6 @@
 -include ../../Makefile.params
 include ../../gmsl/gmsl   # functions: uc
 
-SHELL = ${FRAMEWORK_SHELL}
-
 UTF8 = $(if $(findstring Darwin, ${OSTYPE}),UTF-8,utf8)
 export LANG   = en_CA.${UTF8}
 export LC_ALL = en_CA.${UTF8}
@@ -202,6 +200,7 @@ endif
 # IBM1 MODELS
 # requires: source and target corpora.
 ${IBM1_MODEL_PFX}%${L1_GIVEN_L2X}: IBM1_DIR=-r
+${IBM1_MODEL_PFX}.%.gz: SHELL=${FRAMEWORK_SHELL}
 ${IBM1_MODEL_PFX}.%.gz:
 	RP_PSUB_OPTS="-${IBM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n $(call IBM1_MODEL_PARALLELISM_LEVEL, $+) -pn $(call IBM1_MODEL_WORKERS, $+) \
@@ -218,6 +217,7 @@ ${IBM1_MODEL_PFX}.%.gz:
 ########################################
 # IBM2 MODELS
 ${IBM2_MODEL_PFX}%${L1_GIVEN_L2X}: IBM2_DIR=-r
+${IBM2_MODEL_PFX}.%.gz: SHELL=${FRAMEWORK_SHELL}
 ${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	RP_PSUB_OPTS="-${IBM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_WORKERS} \
@@ -236,6 +236,7 @@ ${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 ########################################
 # HMM1 MODELS
 ${HMM1_MODEL_PFX}%${L1_GIVEN_L2X}: HMM1_DIR=-r
+${HMM1_MODEL_PFX}.%.gz: SHELL=${FRAMEWORK_SHELL}
 ${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	RP_PSUB_OPTS="-${HMM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_WORKERS} \
@@ -254,6 +255,7 @@ ${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 ########################################
 # HMM2 MODELS
 ${HMM2_MODEL_PFX}%${L1_GIVEN_L2X}: HMM2_DIR=-r
+${HMM2_MODEL_PFX}.%.gz: SHELL=${FRAMEWORK_SHELL}
 ${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	RP_PSUB_OPTS="-${HMM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_WORKERS} \
@@ -274,6 +276,7 @@ ${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 #Note: We use "-end-dist" instead of "-start-dist -final-dist -anchor" because
 #      PORTAGEshared lacks "-start-dist"
 ${HMM3_MODEL_PFX}%${L1_GIVEN_L2X}: HMM3_DIR=-r
+${HMM3_MODEL_PFX}.%.gz: SHELL=${FRAMEWORK_SHELL}
 ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	RP_PSUB_OPTS="-${HMM3_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${HMM3_MODEL_PARALLELISM_LEVEL} -pn ${HMM3_MODEL_WORKERS} \
@@ -293,9 +296,11 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 # JPT MODELS
 # WARNING: The following two targets must precede the target to generate jpts.
 # WARNING: % is purposefully not surrounded by dots for zn-adapt.
+${JPT_MODEL_PFX}.merged%${JOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${JPT_MODEL_PFX}.merged%${JOINTX}:
 	merge_counts $@ $(filter %.${JOINTX}, $+) &> log.$(basename $@)
 
+${JPT_MODEL_PFX}.merged%${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${JPT_MODEL_PFX}.merged%${RJOINTX}:
 	merge_counts $@ $(filter %.${RJOINTX}, $+) &> log.$(basename $@)
 
@@ -304,6 +309,7 @@ ${JPT_MODEL_PFX}.merged%${RJOINTX}:
 ${JPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: JPT_MODEL_TYPE=-ibm 1
 ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: JPT_MODEL_TYPE=-ibm 2
 ${JPT_MODEL_PFX}.hmm%: JPT_MODEL_TYPE=-hmm
+${JPT_MODEL_PFX}.%.${JOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${JPT_MODEL_PFX}.%.${JOINTX}:
 	RP_PSUB_OPTS="-${JPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
@@ -324,6 +330,7 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 
 ########################################
 # SIGNIFICANCE PRUNING
+${SIG_MODEL_PFX}.%.${TRAIN_TM}.${JOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${SIG_MODEL_PFX}.%.${TRAIN_TM}.${JOINTX}:
 	RP_PSUB_OPTS="-${SIG_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
@@ -342,6 +349,7 @@ ${SIG_MODEL_PFX}.%.${TRAIN_TM}.${JOINTX}:
 
 # According to Howard: generating a sig for L1 to L2 and then using
 # reverse_joint_phr_tab.py to produce a sig for L2 to L1 is valide.
+${SIG_MODEL_PFX}.%.${TRAIN_TM}.${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${SIG_MODEL_PFX}.%.${TRAIN_TM}.${RJOINTX}:
 	RP_PSUB_OPTS="-${SIG_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
@@ -366,6 +374,7 @@ ${CPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
 ${CPT_MODEL_PFX}.hmm%: WORD_MODEL_TYPE=-hmm
 ${CPT_MODEL_PFX}.%: CPT_PRUNE1=-prune1w 100
 
+${CPT_MODEL_PFX}%${L1_2_L2X}: SHELL=${FRAMEWORK_SHELL}
 ${CPT_MODEL_PFX}%${L1_2_L2X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
@@ -387,6 +396,7 @@ ${CPT_MODEL_PFX}%${L1_2_L2X}:
 # Requires:
 # - forward & backward phrase alignment models;
 # - reversed joint frequency files.
+${CPT_MODEL_PFX}%${L2_2_L1X}: SHELL=${FRAMEWORK_SHELL}
 ${CPT_MODEL_PFX}%${L2_2_L1X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
@@ -436,6 +446,7 @@ portageLive:
 # WARNING: Using tmtext_sort.sh produces a valid jpt for joint2cond but
 # produces an INVALID jpt for merge_counts.  Prefer the version using LC_ALL=C
 # sort rather than tmtext_sort.
+%.${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
 %.${RJOINTX}: %.${JOINTX}
 	@_LOCAL=1; echo "Generating $@" >&2
 	RP_PSUB_OPTS="-1 -N $@" \

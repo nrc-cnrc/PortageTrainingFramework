@@ -42,10 +42,6 @@ include ../../gmsl/gmsl   # functions: uc
 # What is this module's name.
 MODULE_NAME ?= tm
 
-# TODO: Make sure this Makefile works for Portage's cluster.
-# This will require that run-parallel.sh -c RP_OPTS be functional.
-SHELL = ${FRAMEWORK_SHELL}
-
 # Where we can find the parallel corpora.
 CORPORA_DIR ?= ../../corpora
 
@@ -75,6 +71,7 @@ vpath %${L2X} ${CORPORA_DIR}
 # ALL
 # Define all the work to be done.
 .PHONY: all
+all: SHELL=${GUARD_SHELL}
 all: ${PT_TYPES}
 
 
@@ -180,6 +177,7 @@ clean.jpts:
 	${RM} -r JPTPAR*
 
 .PHONY: jpts  $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
+jpts: SHELL=${GUARD_SHELL}
 jpts: $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 # Definition of the generated makefile rules/targets:
@@ -225,6 +223,7 @@ clean.sig:
 	${RM} -r work_directory
 
 .PHONY: sigs  $(addsuffix _sig, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
+sigs: SHELL=${GUARD_SHELL}
 sigs: $(addsuffix _sig, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 # To create a sigpruned jpt we need an original jpt.
@@ -267,6 +266,7 @@ clean.cpts:
 	$(RM) ${CPT_MODEL_PFX}.*
 
 .PHONY: cpts  $(addsuffix _cpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) merged_cpt
+cpts: SHELL=${GUARD_SHELL}
 cpts: jpts
 cpts: ibm2_cpt
 cpts: hmm1_cpt
@@ -423,6 +423,7 @@ endif
 tppt_list := $(addsuffix .tppt, $(basename $(foreach a, $(PT_TYPES:=_list), ${$a})))
 
 .PHONY: tppt
+tppt portageLive: SHELL=${GUARD_SHELL}
 tppt portageLive: ${tppt_list}
 
 
@@ -435,16 +436,19 @@ tppt portageLive: ${tppt_list}
 
 # Verify that make is capable of generating all required targets for merged_cpt and some other cpt.
 .PHONY: unittest1
+unittest1: SHELL=${GUARD_SHELL}
 unittest1:
 	make -Bnj1 tppt PT_TYPES='ibm2_cpt hmm3_cpt merged_cpt' MERGED_CPT_JPT_TYPES='IBM2 HMM1 HMM3 HMM2 IBM1' MERGED_CPT_ZN_MODEL=IBM1
 
 # Verify that make is capable of generating all required target for one cpt that has been significance pruned.
 .PHONY: unittest2
+unittest2: SHELL=${GUARD_SHELL}
 unittest2:
 	make -Bnj1 USE_SIGPRUNING=1 SIG_OPTS="-keep -sigopts '-par-driver fork'" ibm2_cpt
 
 # Verify that make is capable of generating all required target for a merged cpt that has been significance pruned.
 .PHONY: unittest3
+unittest3: SHELL=${GUARD_SHELL}
 unittest3:
 	make -Bnj1 USE_SIGPRUNING=1 SIG_OPTS="-keep -sigopts '-par-driver fork'" merged_cpt
 

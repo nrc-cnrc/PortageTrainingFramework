@@ -27,9 +27,6 @@ include ../../Makefile.toolkit
 # What is this module's name.
 MODULE_NAME ?= lm
 
-# Let's make this usage on the cluster.
-SHELL = ${FRAMEWORK_SHELL}
-
 # Defines the IRST environment variables.
 # Where is IRSTLM located
 IRSTLM ?= $(PORTAGE)/pkgs/irstlm
@@ -119,6 +116,7 @@ endif
 
 ########################################
 .PHONY: all
+all: SHELL=${GUARD_SHELL}
 all: ${LM_TYPES}
 
 
@@ -176,9 +174,11 @@ portageLive: $(addsuffix .tplm, ${LM_NAME})
 ########################################
 # Adds sentence start and end markers
 .PHONY: mark
+mark: SHELL=${GUARD_SHELL}
 mark: ${CORPUS_NAME}.marked.gz
 
 #.SECONDARY: ${CORPUS_NAME}.marked.gz
+%.marked.gz: SHELL=${FRAMEWORK_SHELL}
 %.marked.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "Marking up $<"
 	RP_PSUB_OPTS="-N $@" \
@@ -200,10 +200,12 @@ clean.mark:
 # iARPA
 # Compressed irstlm format
 .PHONY: irstlm
+irstlm: SHELL=${GUARD_SHELL}
 irstlm: $(addsuffix .ilm.gz, ${LM_NAME})
 
 # Here we've added LM_DESC to strip it out from the marked corpus file name.
 #.SECONDARY: $(addsuffix .ilm.gz, ${LM_NAME})
+%${LM_DESC}.ilm.gz: SHELL=${FRAMEWORK_SHELL}
 %${LM_DESC}.ilm.gz: %.marked.gz
 	@_LOCAL=1 echo "  Creating IRSTLM $@"
 	_LOCAL=1 ${RM} $@
@@ -231,11 +233,13 @@ clean.irstlm:
 ########################################
 # arpa text compressed format
 .PHONY: arpa
+arpa: SHELL=${GUARD_SHELL}
 arpa: $(addsuffix .lm.gz, ${LM_NAME})
 
 # Here we've added LM_DESC to strip it out from the corpus file name.
 #.SECONDARY: $(addsuffix .lm.gz, ${LM_NAME})
 ifeq (${LM_TOOLKIT}, SRI)
+%${LM_DESC}.lm.gz: SHELL=${FRAMEWORK_SHELL}
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -250,6 +254,7 @@ ifeq (${LM_TOOLKIT}, SRI)
 	>& log.$(basename $@)
 
 else ifeq (${LM_TOOLKIT}, IRST)
+%.lm.gz: SHELL=${FRAMEWORK_SHELL}
 %.lm.gz: %.ilm.gz
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -268,6 +273,7 @@ else ifeq (${LM_TOOLKIT}, MIT)
 # Note that MITLM is finicky about spaces thus we need to collapse several
 # spaces into one space and remove any leading or traling spaces.
 # The perl regex was proposed by the creators of MITLM.
+%${LM_DESC}.lm.gz: SHELL=${FRAMEWORK_SHELL}
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -298,9 +304,11 @@ clean.arpa:
 # BINARY FORMAT
 # arpa bin compressed format
 .PHONY: blmt
+blmt: SHELL=${GUARD_SHELL}
 blmt: $(addsuffix .blmt, ${LM_NAME})
 
 #.SECONDARY: $(addsuffix .blmt, ${LM_NAME})
+%.blmt: SHELL=${FRAMEWORK_SHELL}
 %.blmt: %.ilm.gz
 	@_LOCAL=1 echo "  Creating bin.ARPA format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -322,9 +330,11 @@ clean.blmt:
 ########################################
 # qARPA format
 .PHONY: quantize
+quantize: SHELL=${GUARD_SHELL}
 quantize: $(addsuffix .qlm.gz, ${LM_NAME})
 
 #.SECONDARY: $(addsuffix .qlm.gz, ${LM_NAME})
+%.qlm: SHELL=${FRAMEWORK_SHELL}
 %.qlm: %.lm.gz
 	@_LOCAL=1 echo "  qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -346,9 +356,11 @@ clean.quantize:
 ########################################
 # Quantize binary
 .PHONY: Qblmt
+Qblmt: SHELL=${GUARD_SHELL}
 Qblmt: $(addsuffix .Qblmt, ${LM_NAME})
 
 #.SECONDARY: $(addsuffix .Qblmt, ${LM_NAME})
+%.Qblmt: SHELL=${FRAMEWORK_SHELL}
 %.Qblmt: %.qlm.gz
 	@_LOCAL=1 echo "  bin.qARPA $< to $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -370,9 +382,11 @@ clean.Qblmt:
 ########################################
 # Sort the arpa format
 .PHONY: sort_arpa
+sort_arpa: SHELL=${GUARD_SHELL}
 sort_arpa: $(addsuffix .lm.sorted.gz, ${LM_NAME})
 
 #.SECONDARY: $(addsuffix .lm.sorted.gz, ${LM_NAME})
+%.lm.sorted.gz: SHELL=${FRAMEWORK_SHELL}
 %.lm.sorted.gz: %.lm.gz
 	${TIME_MEM} \
 	lm_sort_filter.sh -lm $< $@ >& log.$(basename $@)
@@ -389,9 +403,11 @@ clean.sort_arpa:
 ########################################
 # Portage's bin lm format
 .PHONY: binlm
+binlm: SHELL=${GUARD_SHELL}
 binlm: $(addsuffix .binlm.gz, ${LM_NAME})
 
 #.SECONDARY: $(addsuffix .binlm.gz, ${LM_NAME})
+%.binlm.gz: SHELL=${FRAMEWORK_SHELL}
 %.binlm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	${TIME_MEM} \
@@ -409,9 +425,11 @@ clean.binlm:
 ########################################
 # Pruning ARPA format => ARPA format
 .PHONY: prune
+prune: SHELL=${GUARD_SHELL}
 prune: $(addsuffix .plm.gz, ${LM_NAME})
 
 #.SECONDARY: $(addsuffix .plm.gz, ${LM_NAME})
+%.plm.gz: SHELL=${FRAMEWORK_SHELL}
 %.plm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	prune-lm --threshold=1e-6 $< /dev/stdout \
@@ -423,6 +441,7 @@ prune: $(addsuffix .plm.gz, ${LM_NAME})
 ########################################
 # Create Tightly Packed Language Model.
 .PHONY: tplm
+tplm: SHELL=${GUARD_SHELL}
 tplm: $(addsuffix .tplm, ${LM_NAME})
 
 %.tplm: SHELL=${FRAMEWORK_SHELL}
@@ -445,6 +464,7 @@ clean.tplm:
 ########################################
 # All valid/possible LMs
 .PHONY: all_lm
+all_lm: SHELL=${GUARD_SHELL}
 all_lm: arpa
 all_lm: blmt
 all_lm: quantize
@@ -485,12 +505,16 @@ endif
 ########################################
 # PERPLEXITY
 .PHONY: ppx
+ppx: SHELL=${GUARD_SHELL}
 ppx: $(addprefix ppx., ${LM_NAME})
+ppx.%: SHELL=${FRAMEWORK_SHELL}
 ppx.%: %.binlm.gz ${PPX_TEST_SET}
 	lm_eval -v -limit $+
 
 .PHONY: ppx.irstlm
+ppx.irstlm: SHELL=${GUARD_SHELL}
 ppx.irstlm: $(addprefix ppx.irstlm.${LM_NAME}, .lm.gz .blmt .qlm.gz .Qblmt)
+ppx.irstlm.%: SHELL=${FRAMEWORK_SHELL}
 ppx.irstlm.%: ${PPX_TEST_SET} %
 	compile-lm $* --eval=$< >& $(basename $@)
 

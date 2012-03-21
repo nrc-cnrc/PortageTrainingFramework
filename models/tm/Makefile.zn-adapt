@@ -29,8 +29,6 @@ MAKEFILE_PARAMS ?= Makefile.params
 # What is this module's name.
 MODULE_NAME ?= tm
 
-SHELL = ${FRAMEWORK_SHELL}
-
 # Where are located the corpora files.
 CORPORA_DIR ?= ../../corpora
 
@@ -141,9 +139,11 @@ CPT_LIST = ${CPT_MODEL_PFX}.zn-adapt.${L1_2_L2X}
 
 
 .PHONY: all
+all: SHELL=${GUARD_SHELL}
 all: zn-adapt
 
 .PHONY: zn-adapt
+zn-adapt: SHELL=${GUARD_SHELL}
 zn-adapt: ${CPT_LIST}
 
 
@@ -211,6 +211,7 @@ ${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}:  ${JPT_MODEL_PFX}.merged.${RJOINTX}
 tppt_list = ${CPT_LIST:gz=tppt}
 
 .PHONY: tppt
+tppt portageLive: SHELL=${GUARD_SHELL}
 tppt portageLive: ${tppt_list}
 
 
@@ -284,6 +285,7 @@ time-mem: resource_summary_sub
 ########################################
 # UNITTESTS
 .PHONY: unittest1
+unittest1: SHELL=${GUARD_SHELL}
 unittest1:
 	make -Bnj1 all
 

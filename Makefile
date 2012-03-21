@@ -23,14 +23,17 @@ include Makefile.toolkit
 .SUFFIXES:
 
 .PHONY: all
+all: SHELL=${GUARD_SHELL}
 all: tune
 ifneq ($(strip ${TEST_SET}),)
 all: eval
 endif
-
+all:
+	@echo "Training and translating using the framework are all done."
 
 
 .PHONY: help
+help: SHELL=${GUARD_SHELL}
 help:
 ifeq (${LM_TOOLKIT},IRST)
 	@echo "Please run the following in order for this framework to run properly:"
@@ -59,8 +62,10 @@ endif
 
 
 .PHONY: doc
+doc: SHELL=${GUARD_SHELL}
 doc: tutorial.pdf
 
+%.pdf: SHELL=${GUARD_SHELL}
 %.pdf: %.tex
 # latex actually needs to be run three times for the table of contents to be
 # generated correctly (a trivial change on one line has a significant ripple
@@ -99,6 +104,7 @@ clean.doc:
 ########################################
 # Prepare the corpora.
 .PHONY: corpora
+corpora: SHELL=${GUARD_SHELL}
 corpora: check_setup
 	${MAKE} -C corpora all
 
@@ -108,6 +114,7 @@ corpora: check_setup
 # Create models for truecasing (TC).
 # Create the Translation Model (TM).
 .PHONY: models lm ldm tc tm decode cow rescore rat confidence
+tune models lm mixlm ldm tc tm decode cow rescore rat confidence: SHELL=${GUARD_SHELL}
 tune models lm mixlm ldm tc tm decode cow rescore rat confidence: %: corpora
 	${MAKE} -C models $@
 
@@ -115,6 +122,7 @@ tune models lm mixlm ldm tc tm decode cow rescore rat confidence: %: corpora
 
 .PHONY: translate
 # Tune weights and apply them to the test sets
+translate: SHELL=${GUARD_SHELL}
 translate: tune
 	${MAKE} -C translate all
 
@@ -122,12 +130,14 @@ translate: tune
 
 .PHONY: eval
 # Get BLEU scores for the test set(s)
+eval: SHELL=${GUARD_SHELL}
 eval: translate
 	${MAKE} -C translate bleu
 
 
 
 .PHONY: check_setup
+check_setup: SHELL=${GUARD_SHELL}
 check_setup:
 	${MAKE} -C models/lm check_setup
 
@@ -142,6 +152,7 @@ endif
 
 .PHONY: $(addprefix translate., ${TUNE_DECODE_VARIANTS})
 # Tune weights and apply them to the test set(s)
+$(addprefix translate., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
 $(addprefix translate., ${TUNE_DECODE_VARIANTS}): translate.%: tune
 	if [ ! -e $@ ]; then \
 	   mkdir $@; \
@@ -154,6 +165,7 @@ $(addprefix translate., ${TUNE_DECODE_VARIANTS}): translate.%: tune
 
 .PHONY: $(addprefix eval., ${TUNE_DECODE_VARIANTS})
 # Get BLEU scores for the test set(s)
+$(addprefix eval., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
 $(addprefix eval., ${TUNE_DECODE_VARIANTS}): eval.%: translate.%
 	${MAKE} -C translate.$* bleu TUNE_DECODE=${TUNE_DECODE}$*
 endif
@@ -165,6 +177,7 @@ ifneq ($(wildcard $(dir $(shell which train_ibm))/INSTALL_SUMMARY),)
 check_setup: log.INSTALL_SUMMARY
 endif
 
+log.INSTALL_SUMMARY: SHELL=${GUARD_SHELL}
 log.INSTALL_SUMMARY:
 	cat `dirname $$(which train_ibm)`/INSTALL_SUMMARY >log.INSTALL_SUMMARY
 
@@ -175,6 +188,7 @@ log.INSTALL_SUMMARY:
 # NOTE: In order to able to execute portageLive we should at the very least
 # have tuned the system.  To do so, we will rely on the all target.
 .PHONY: portageLive
+portageLive: SHELL=${GUARD_SHELL}
 portageLive: all
 	${MAKE} -C models portageLive
 ifdef DO_RESCORING
@@ -198,6 +212,7 @@ endif
 # The end result should be .al files .
 PREPARE_CORPORA_MAKEFILE ?= Makefile.prepare.corpora
 .PHONY: prepare.corpora
+prepare.corpora: SHELL=${GUARD_SHELL}
 prepare.corpora:
 	${MAKE} -C corpora -f ${PREPARE_CORPORA_MAKEFILE} all
 
@@ -213,7 +228,7 @@ resource_summary:
 	@${MAKE} --no-print-directory -s -C translate time-mem
 
 .PHONY: time-mem
-time-mem: SHELL=/bin/bash
+time-mem: SHELL=${GUARD_SHELL}
 time-mem: export PORTAGE_INTERNAL_CALL=1
 time-mem:
 	@echo "Resource summary for `pwd`:"
@@ -235,7 +250,7 @@ DU_DIRS += models/ldm
 endif
 
 .PHONY: summary
-summary: SHELL=/bin/bash
+summary: SHELL=${GUARD_SHELL}
 summary: export PORTAGE_INTERNAL_CALL=1
 summary: time-mem
 	@echo

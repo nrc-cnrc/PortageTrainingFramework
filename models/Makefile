@@ -19,8 +19,6 @@ include ../Makefile.params
 # Lastly include the master toolkit
 include ../Makefile.toolkit
 
-SHELL = ${GUARD_SHELL}
-
 ifeq ("portageLive","$(findstring portageLive,${MAKECMDGOALS})")
    $(info mkdir -p portageLive)
    # Don't do the mkdir on a dryrun (-n).
@@ -35,6 +33,7 @@ _PLIVE_DECODE_VARIANT := $(strip $(if ${PLIVE_DECODE_VARIANT}, .${PLIVE_DECODE_V
 .SUFFIXES:
 
 .PHONY: all
+all: SHELL=${GUARD_SHELL}
 all: tune
 
 
@@ -42,6 +41,7 @@ all: tune
 ########################################
 # HELP MESSAGE.
 .PHONY: help
+help: SHELL=${GUARD_SHELL}
 help:
 ifeq (${LM_TOOLKIT},IRST)
 	@echo "Please run the following in order for this framework to run properly:"
@@ -103,13 +103,16 @@ time-mem:
 ################################################################################
 # MINIMUM MANDATORY TARGETS.
 .PHONY: models
+models: SHELL=${GUARD_SHELL}
 models: lm mixlm tm
 
 
 
 .PHONY: lm
 # Create the Language Model (LM).
+lm: SHELL=${GUARD_SHELL}
 lm: lm.${TGT_LANG}
+lm.%: SHELL=${GUARD_SHELL}
 lm.%:
 	${MAKE} -C lm all LM_LANG=$*
 
@@ -119,6 +122,7 @@ lm.%:
 # Create mixture language model.
 # NOTE: we make mixlm dependent on lm in case the lms inside the mixlm repeat
 # some lm in lm/.
+mixlm: SHELL=${GUARD_SHELL}
 mixlm: lm
 	${MAKE} -C $@ all
 
@@ -126,6 +130,7 @@ mixlm: lm
 
 .PHONY: tm
 # Create the Translation Model (TM).
+tm: SHELL=${GUARD_SHELL}
 tm:
 	${MAKE} -C $@ all
 
@@ -133,12 +138,14 @@ tm:
 
 .PHONY: tune
 # Tune the required models.
+tune: SHELL=${GUARD_SHELL}
 tune: decode $(addprefix decode., ${TUNE_DECODE_VARIANTS})
 
 
 
 .PHONY: cow decode
 # Run COW to tune the decoding model.
+cow decode: SHELL=${GUARD_SHELL}
 cow: decode
 decode: models
 	${MAKE} -C $@ all
@@ -146,6 +153,7 @@ decode: models
 # Tune multiple decoding variants, if necessary.
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 .PHONY: $(addprefix decode., ${TUNE_DECODE_VARIANTS})
+$(addprefix decode., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
 $(addprefix decode., ${TUNE_DECODE_VARIANTS}): decode.%: models
 	if [ ! -e $@ ]; then \
 	   mkdir $@; \
@@ -157,6 +165,7 @@ endif
 
 .PHONY: rat rescore
 # Run RAT to tune the rescoring model.
+rat rescore: SHELL=${GUARD_SHELL}
 rat: rescore
 rescore: decode
 	${MAKE} -C $@ all
@@ -166,6 +175,7 @@ rescore: decode
 ################################################################################
 # Targets based on master Makefile.params
 .PHONY: ldm
+ldm: SHELL=${GUARD_SHELL}
 ifdef USE_LDM
 models: ldm
 
@@ -182,6 +192,7 @@ endif
 
 
 .PHONY: confidence
+confidence: SHELL=${GUARD_SHELL}
 ifdef DO_CE
 tune: confidence $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
 
@@ -193,6 +204,7 @@ portageLive: portageLive_models_confidence${_PLIVE_DECODE_VARIANT}
 portageLive_models_confidence${_PLIVE_DECODE_VARIANT}: portageLive_models_lm_src
 portageLive_models_confidence${_PLIVE_DECODE_VARIANT}: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 
+portageLive_models_lm_src: SHELL=${GUARD_SHELL}
 portageLive_models_lm_src:
 	${MAKE} -C lm portageLive LM_LANG=${SRC_LANG}
 
@@ -202,6 +214,7 @@ confidence: lm.${SRC_LANG} decode
 # Tune multiple confidence variants, if necessary.
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 .PHONY: $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
+$(addprefix confidence., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
 $(addprefix confidence., ${TUNE_DECODE_VARIANTS}): confidence.%: lm.${SRC_LANG} decode.%
 	if [ ! -e $@ ]; then \
 	   mkdir $@; \
@@ -218,6 +231,7 @@ endif
 
 .PHONY: tc
 # Create models for truecasing (TC).
+tc: SHELL=${GUARD_SHELL}
 ifdef DO_TRUECASING
 models: tc
 
@@ -245,12 +259,14 @@ portageLive: portageLive_models_lm
 portageLive: portageLive_models_mixlm
 portageLive: portageLive_models_tm
 portageLive: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
+portageLive: SHELL=${GUARD_SHELL}
 portageLive:
 	ln -sf ../prime.sh $@
 	pwd > $@/README
 	portage_info >> $@/README
 
 portageLive: portageLive/soap-translate.sh
+portageLive/soap-translate.sh: SHELL=${GUARD_SHELL}
 portageLive/soap-translate.sh: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 	mkdir -p $(dir $@)
 	echo "#!/bin/bash" > $@
@@ -260,11 +276,13 @@ portageLive/soap-translate.sh: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 # We need this dependency since decode will copy the tplms for portageLive.
 portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_lm portageLive_models_tm
 
+portageLive_models_%: SHELL=${GUARD_SHELL}
 portageLive_models_%:
 	${MAKE} -C $* portageLive
 
 ifneq ("$(wildcard ../plugins)","")
 portageLive: portageLive/plugins
+portageLive/plugins: SHELL=${GUARD_SHELL}
 portageLive/plugins:
 	ln -fs ../../plugins $@
 endif
