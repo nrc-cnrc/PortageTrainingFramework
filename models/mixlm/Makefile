@@ -154,6 +154,9 @@ $(addsuffix .distances, ${TUNE_SETS}): %.distances: ${MIXLM_SRC_MODELS}
 # models to be present before calculating the final mixlm.
 $(addsuffix .mixlm, ${TUNE_SETS}): %.mixlm: ${MIXLM_TGT_MODELS}
 
+# We need the lm to generate the components files.
+components_${SRC_LANG}: ${MIXLM_SRC_MODELS}
+components_${TGT_LANG}: ${MIXLM_TGT_MODELS}
 
 
 .PHONY: portageLive

@@ -25,7 +25,6 @@ MIXLM_CPUS ?= 1
 
 components_%: SHELL=${GUARD_SHELL}
 components_%:
-	[[ -d "models" ]] || ! echo "No models symlink." >&2
 	echo "$(strip $(foreach lm, ${MIXLM}, $(notdir $(wildcard models/mixlm/${lm}_$**.binlm.gz))))" \
 		| tr " " "\n" > $@
 
