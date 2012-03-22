@@ -54,6 +54,7 @@ TUNE_SETS = ${TUNE_DECODE} $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}) 
 #.INTERMEDIATE: components_${SRC_LANG}, components_${TGT_LANG}
 .INTERMEDIATE: $(addsuffix .distances, ${TUNE_SETS})
 .INTERMEDIATE: $(addsuffix .weights, ${TUNE_SETS})
+.SECONDARY:
 
 
 # Watch out for already trained lms.
