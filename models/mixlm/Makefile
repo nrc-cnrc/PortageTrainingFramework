@@ -44,7 +44,6 @@ LM_DIR ?= models/lm
 
 
 $(info ln -fs ../../models)
-$(info ${CURDIR})
 $(shell ln -fs ../../models)
 
 TUNE_SETS = ${TUNE_DECODE} $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}) ${TUNE_RESCORE} ${TUNE_CE}
