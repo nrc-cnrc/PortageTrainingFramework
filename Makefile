@@ -9,8 +9,8 @@
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, Her Majesty in Right of Canada
+# Copyright 2008, 2012, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2012 Her Majesty in Right of Canada
 
 # Mandatory include: master config file.
 include Makefile.params
@@ -24,12 +24,12 @@ include Makefile.toolkit
 
 .PHONY: all
 all: SHELL=${GUARD_SHELL}
-all: tune
+all: tune_main
 ifneq ($(strip ${TEST_SET}),)
 all: eval
 endif
 all:
-	@echo "Training and translating using the framework are all done."
+	@echo "Training, tuning and translating using the framework are all done."
 
 
 .PHONY: help
@@ -43,8 +43,14 @@ ifeq (${LM_TOOLKIT},IRST)
 endif
 	@echo "Your corpora are:"
 	@echo "   train lm: ${TRAIN_LM}"
+ifneq ($(strip ${MIXLM}),)
+	@echo "   train mixlm: ${MIXLM}"
+endif
 	@echo "   train tm: ${TRAIN_TM}"
 	@echo "   tune decode: ${TUNE_DECODE}"
+ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
+	@echo "   tune decode variants: (addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})"
+endif
 	@echo "   tune rescore: ${TUNE_RESCORE}"
 ifneq ($(strip ${TUNE_CE}),)
 	@echo "   tune ce: ${TUNE_CE}"
@@ -113,26 +119,62 @@ corpora: check_setup
 # Create the Language Model (LM).
 # Create models for truecasing (TC).
 # Create the Translation Model (TM).
-.PHONY: models lm ldm tc tm decode cow rescore rat confidence
-tune models lm mixlm ldm tc tm decode cow rescore rat confidence: SHELL=${GUARD_SHELL}
-tune models lm mixlm ldm tc tm decode cow rescore rat confidence: %: corpora
+.PHONY: models lm mixlm ldm tc tm
+models lm mixlm ldm tc tm: SHELL=${GUARD_SHELL}
+models lm mixlm ldm tc tm: %: corpora
 	${MAKE} -C models $@
 
 
 
-.PHONY: translate
-# Tune weights and apply them to the test sets
-translate: SHELL=${GUARD_SHELL}
-translate: tune
-	${MAKE} -C translate all
+.PHONY: tune_main
+tune_main: SHELL=${GUARD_SHELL}
+tune_main: tune_variant		# tune_variant tunes the main variant
 
 
 
-.PHONY: eval
+# Tune and test using multiple alternate tuning variants, if necessary.
+ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
+
+all: $(addprefix tune_variant., ${TUNE_DECODE_VARIANTS})
+
+ifneq ($(strip ${TEST_SET}),)
+all: $(addprefix eval., ${TUNE_DECODE_VARIANTS})
+endif
+endif
+
+
+
+TUNE_VARIANT_LIST := tune_variant $(addprefix tune_variant., ${TUNE_DECODE_VARIANTS})
+DECODE_LIST := decode $(addprefix decode., ${TUNE_DECODE_VARIANTS})
+COW_LIST := cow $(addprefix cow., ${TUNE_DECODE_VARIANTS})
+CONFIDENCE_LIST := confidence $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
+TUNE_LIST := tune ${TUNE_VARIANT_LIST} ${DECODE_LIST} ${COW_LIST} rescore rat ${CONFIDENCE_LIST}
+
+.PHONY: ${TUNE_LIST}
+# Tune weights
+${TUNE_LIST}: SHELL=${GUARD_SHELL}
+${TUNE_LIST}: %: models
+	${MAKE} -C models $@
+
+
+
+.PHONY: translate $(addprefix translate., ${TUNE_DECODE_VARIANTS})
+# Apply tuned weights to the test sets
+translate $(addprefix translate., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
+translate $(addprefix translate., ${TUNE_DECODE_VARIANTS}): translate%: tune_variant%
+	if [ ! -e $@ ]; then \
+	   mkdir $@; \
+	   cp -p translate/Makefile* $@; \
+	fi
+	${MAKE} -C translate$* all TUNE_VARIANT_TAG=$*
+
+
+
+.PHONY: eval $(addprefix eval., ${TUNE_DECODE_VARIANTS})
 # Get BLEU scores for the test set(s)
-eval: SHELL=${GUARD_SHELL}
-eval: translate
-	${MAKE} -C translate bleu
+eval $(addprefix eval., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
+eval $(addprefix eval., ${TUNE_DECODE_VARIANTS}): eval%: translate%
+	${MAKE} -C translate$* bleu TUNE_VARIANT_TAG=$*
 
 
 
@@ -140,35 +182,6 @@ eval: translate
 check_setup: SHELL=${GUARD_SHELL}
 check_setup:
 	${MAKE} -C models/lm check_setup
-
-
-########################################
-# Tune and test using multiple decoding variants, if necessary.
-
-ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
-ifneq ($(strip ${TEST_SET}),)
-all: $(addprefix eval., ${TUNE_DECODE_VARIANTS})
-endif
-
-.PHONY: $(addprefix translate., ${TUNE_DECODE_VARIANTS})
-# Tune weights and apply them to the test set(s)
-$(addprefix translate., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
-$(addprefix translate., ${TUNE_DECODE_VARIANTS}): translate.%: tune
-	if [ ! -e $@ ]; then \
-	   mkdir $@; \
-	   cp -p translate/Makefile* $@; \
-	   mkdir $@/models; \
-	   cd $@/models; ln -s ../../models/* .; rm decode*; rm -rf CVS; cd -; \
-	   ln -s ../../models/decode.$* $@/models/decode; \
-	fi
-	${MAKE} -C translate.$* all TUNE_DECODE=${TUNE_DECODE}$*
-
-.PHONY: $(addprefix eval., ${TUNE_DECODE_VARIANTS})
-# Get BLEU scores for the test set(s)
-$(addprefix eval., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
-$(addprefix eval., ${TUNE_DECODE_VARIANTS}): eval.%: translate.%
-	${MAKE} -C translate.$* bleu TUNE_DECODE=${TUNE_DECODE}$*
-endif
 
 
 ########################################
@@ -232,13 +245,13 @@ time-mem: SHELL=${GUARD_SHELL}
 time-mem: export PORTAGE_INTERNAL_CALL=1
 time-mem:
 	@echo "Resource summary for `pwd`:"
-	@time-mem-tally.pl `find models translate* -type f -name log.\* | sort` \
+	@time-mem-tally.pl `find models translate translate.* -type f -name log.\* | sort` \
 	| second-to-hms.pl \
 	| expand-auto.pl
 
 
 
-DU_DIRS = models/tm/{ibm,hmm,jpt,cpt}* models/*lm/*lm* models/decode* translate*
+DU_DIRS = models/tm/{ibm,hmm,jpt,cpt}* models/*lm/*lm* models/decode* translate translate.*
 ifdef DO_CE
 DU_DIRS += models/confidence*/*.cem
 endif

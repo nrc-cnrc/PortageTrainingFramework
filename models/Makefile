@@ -10,8 +10,8 @@
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2009, Sa Majeste la Reine du Chef du Canada /
-# Copyright 2009, Her Majesty in Right of Canada
+# Copyright 2009, 2012 Sa Majeste la Reine du Chef du Canada /
+# Copyright 2009, 2012 Her Majesty in Right of Canada
 
 # Mandatory include: master config file.
 include ../Makefile.params
@@ -28,6 +28,8 @@ ifeq ("portageLive","$(findstring portageLive,${MAKECMDGOALS})")
 endif
 
 _PLIVE_DECODE_VARIANT := $(strip $(if ${PLIVE_DECODE_VARIANT}, .${PLIVE_DECODE_VARIANT}))
+
+
 
 .DEFAULT_GOAL := help
 .SUFFIXES:
@@ -51,8 +53,14 @@ ifeq (${LM_TOOLKIT},IRST)
 endif
 	@echo "Your corpora are:"
 	@echo "   train lm: ${TRAIN_LM}"
+ifneq ($(strip ${MIXLM}),)
+	@echo "   train mixlm: ${MIXLM}"
+endif
 	@echo "   train tm: ${TRAIN_TM}"
 	@echo "   tune decode: ${TUNE_DECODE}"
+ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
+	@echo "   tune decode variants: (addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})"
+endif
 	@echo "   tune rescore: ${TUNE_RESCORE}"
 ifneq ($(strip ${TUNE_CE}),)
 	@echo "   tune ce: ${TUNE_CE}"
@@ -94,7 +102,7 @@ endif
 .PHONY: time-mem
 time-mem: SHELL=${GUARD_SHELL}
 time-mem:
-	@time-mem-tally.pl `find ldm lm mixlm tm tc decode rescore confidence -type f -name log.\*` \
+	@time-mem-tally.pl `find ldm lm mixlm tm tc decode* rescore confidence* -type f -name log.\*` \
 	| second-to-hms.pl \
 	| expand-auto.pl
 
@@ -121,7 +129,7 @@ lm.%:
 .PHONY: mixlm
 # Create mixture language model.
 # NOTE: we make mixlm dependent on lm in case the lms inside the mixlm repeat
-# some lm in lm/.
+# some lms built in lm/.
 mixlm: SHELL=${GUARD_SHELL}
 mixlm: lm
 	${MAKE} -C $@ all
@@ -136,10 +144,25 @@ tm:
 
 
 
+# Tuning targets don't need to depend on models when invoked from main Makefile
+# because it first does "make -C models models"
+ifeq (${MAKELEVEL},0)
+MODELS_DEPENDENCY := models
+endif
+
+TUNE_VARIANTS := tune_variant $(addprefix tune_variant., ${TUNE_DECODE_VARIANTS})
+
 .PHONY: tune
-# Tune the required models.
+# Tune all the required models.
 tune: SHELL=${GUARD_SHELL}
-tune: decode $(addprefix decode., ${TUNE_DECODE_VARIANTS})
+tune: ${TUNE_VARIANTS}
+
+
+
+.PHONY: ${TUNE_VARIANTS}
+# Tune models for a variant (the main one (i.e. decode) or an alternate (e.g. decode.a).
+${TUNE_VARIANTS}: SHELL=${GUARD_SHELL}
+${TUNE_VARIANTS}: tune_variant%: decode%
 
 
 
@@ -147,14 +170,18 @@ tune: decode $(addprefix decode., ${TUNE_DECODE_VARIANTS})
 # Run COW to tune the decoding model.
 cow decode: SHELL=${GUARD_SHELL}
 cow: decode
-decode: models
+decode: ${MODELS_DEPENDENCY}
 	${MAKE} -C $@ all
 
 # Tune multiple decoding variants, if necessary.
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
+.PHONY: $(addprefix cow., ${TUNE_DECODE_VARIANTS})
+$(addprefix cow., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
+$(addprefix cow., ${TUNE_DECODE_VARIANTS}): cow.% : decode.%
+
 .PHONY: $(addprefix decode., ${TUNE_DECODE_VARIANTS})
 $(addprefix decode., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
-$(addprefix decode., ${TUNE_DECODE_VARIANTS}): decode.%: models
+$(addprefix decode., ${TUNE_DECODE_VARIANTS}): decode.%: ${MODELS_DEPENDENCY}
 	if [ ! -e $@ ]; then \
 	   mkdir $@; \
 	   cp -p decode/Makefile* decode/canoe.ini.template $@; \
@@ -194,7 +221,8 @@ endif
 .PHONY: confidence
 confidence: SHELL=${GUARD_SHELL}
 ifdef DO_CE
-tune: confidence $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
+${TUNE_VARIANTS}: tune_variant%: confidence%
+#tune: confidence $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
 
 models: lm.${SRC_LANG}
 
@@ -247,7 +275,7 @@ endif
 
 
 ifdef DO_RESCORING
-tune: rescore
+tune_variant: rescore		# tune_variant is the main variant
 endif
 
 

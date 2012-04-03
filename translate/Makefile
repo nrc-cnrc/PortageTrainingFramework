@@ -9,8 +9,8 @@
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, Her Majesty in Right of Canada
+# Copyright 2008, 2012 Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2012 Her Majesty in Right of Canada
 
 
 # Mandatory include: master config file.
@@ -58,8 +58,11 @@ endif
 # This is used to create a symbolic link.
 MODEL_DIR ?= ../models
 
+# Which tuning variant are we using?
+TUNE_VARIANT_TAG ?=
+
 # Indicates where to find the canoe.ini template.
-DECODING_MODEL_DIR      ?= models/decode
+DECODING_MODEL_DIR      ?= models/decode${TUNE_VARIANT_TAG}
 DECODING_MODEL          ?= canoe.ini.cow
 DECODING_MODEL_TEMPLATE ?= ${DECODING_MODEL_DIR}/${DECODING_MODEL}
 
@@ -68,7 +71,7 @@ RESCORING_MODEL_DIR ?= models/rescore
 RESCORING_MODEL     ?= rescore-model
 
 # Indidcates where to find the confidence estimation model.
-CONFIDENCE_MODEL_DIR ?= models/confidence
+CONFIDENCE_MODEL_DIR ?= models/confidence${TUNE_VARIANT_TAG}
 CONFIDENCE_MODEL     ?= ce_model.cem
 
 # Will indicate to make where to find the SETs (dev & test & eval)
@@ -130,7 +133,7 @@ vpath %${RULEX} ${CORPORA_DIR}
 vpath %${SRCTCX} ${CORPORA_DIR}
 vpath %${TGTTCX} ${CORPORA_DIR}
 
-vpath ${DECODING_MODEL}  ${DECODING_MODEL_DIR}  models/decode
+vpath ${DECODING_MODEL}  ${DECODING_MODEL_DIR}  models/decode${TUNE_VARIANT_TAG}
 vpath ${RESCORING_MODEL} ${RESCORING_MODEL_DIR} models/rescore
 vpath ${TRUECASING_LM}   ${TRUECASING_DIR} models/tc
 vpath ${TRUECASING_MAP}  ${TRUECASING_DIR} models/tc
@@ -269,7 +272,7 @@ clean.mixlm:
 
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: %.mixlm
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: check_decoding_model
-	sed -e 's#models/mixlm/${TUNE_DECODE}.mixlm#$*.mixlm#g' ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
+	sed -e 's#models/mixlm/${TUNE_DECODE}${TUNE_VARIANT_TAG}.mixlm#$*.mixlm#g' ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
 else
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: check_decoding_model
@@ -286,10 +289,11 @@ clean.content: clean.decoding.models
 
 .PHONY: clean.decoding.models
 clean.decoding.models: SHELL=${GUARD_SHELL}
-clean.decoding.models: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.decoding.models.$f)
+clean.decoding.models: $(addprefix clean.decoding.models., ${TEST_SET} ${TRANSLATE_SET})
 
-clean.decoding.models.%: SHELL=${GUARD_SHELL}
-clean.decoding.models.%:
+.PHONY: $(addprefix clean.decoding.models., ${TEST_SET} ${TRANSLATE_SET})
+$(addprefix clean.decoding.models., ${TEST_SET} ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+$(addprefix clean.decoding.models., ${TEST_SET} ${TRANSLATE_SET}): clean.decoding.models.%:
 	${RM} ${DECODING_MODEL}.$*
 
 
@@ -351,12 +355,13 @@ clean.content: clean.translate
 
 .PHONY: clean.translate
 clean.translate: SHELL=${GUARD_SHELL}
-clean.translate: $(foreach f, ${TEST_SET}, clean.translate.$f)
+clean.translate: $(addprefix clean.translate., ${TEST_SET})
 	${RM} -r canoe-parallel.* run-p.*
 	${RM} tc_tmp_*
 
-clean.translate.%: SHELL=${GUARD_SHELL}
-clean.translate.%:
+.PHONY: $(addprefix clean.translate., ${TEST_SET})
+$(addprefix clean.translate., ${TEST_SET}): SHELL=${GUARD_SHELL}
+$(addprefix clean.translate., ${TEST_SET}): clean.translate.%:
 	${RM} $*.out $*.out.oov $*.out.pal $*.out.bleu $*.tc.bleu
 	${RM} $*.out.detok $*.out.detok.bleu
 
@@ -408,11 +413,12 @@ clean.content: clean.rescore
 
 .PHONY: clean.rescore_trans
 clean.rescore: SHELL=${GUARD_SHELL}
-clean.rescore: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.rescore.$f)
+clean.rescore: $(addprefix clean.rescore., ${TEST_SET} ${TRANSLATE_SET})
 	${RM} -r canoe-parallel.* run-p.*
 
-clean.rescore.%: SHELL=${GUARD_SHELL}
-clean.rescore.%:
+.PHONY: $(addprefix clean.rescore., ${TEST_SET} ${TRANSLATE_SET})
+$(addprefix clean.rescore., ${TEST_SET} ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+$(addprefix clean.rescore., ${TEST_SET} ${TRANSLATE_SET}): clean.rescore.%:
 	${RM} $*.rat $*.rat.bleu
 	${RM} $*.rat.detok $*.rat.detok.bleu
 	${RM} -r workdir-$*${RULEX}-${NBEST_SIZE}best
@@ -500,12 +506,14 @@ $(addsuffix .tc.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
 clean.content: clean.truecasing
 
 .PHONY: clean.truecasing
+CLEAN_TC_LIST := $(addprefix clean.truecasing., $(addsuffix .out.guard, ${TEST_SET} ${TRANSLATE_SET}) \
+                                                $(addsuffix .rat.guard, ${TEST_SET} ${TRANSLATE_SET}))
 clean.truecasing: SHELL=${GUARD_SHELL}
-clean.truecasing: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.truecasing.$f.out.guard)
-clean.truecasing: $(foreach f, ${TEST_SET} ${TRANSLATE_SET}, clean.truecasing.$f.rat.guard)
+clean.truecasing: ${CLEAN_TC_LIST}
 
-clean.truecasing.%.guard: SHELL=${GUARD_SHELL}
-clean.truecasing.%.guard:
+.PHONY: ${CLEAN_TC_LIST}
+${CLEAN_TC_LIST}: SHELL=${GUARD_SHELL}
+${CLEAN_TC_LIST}: clean.truecasing.%.guard:
 	${RM} $*.tc
 	${RM} $*.tc.detok
 	${RM} canoe_tc_tmp_*.tm
