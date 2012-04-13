@@ -367,6 +367,9 @@ BASE_FILE_EXISTS = $(strip $(wildcard ${1}${ALIGNX}) $(wildcard ${1}${ALIGNX}${G
 # Look for raw or aligned or lowercase files.
 FILE_EXISTS = $(strip $(call BASE_FILE_EXISTS, ${1}) $(wildcard ${1}${LANGX}) $(wildcard ${1}${LANGXZ}))
 
+ifneq (${MAKECMDGOALS},clean)
+ifneq (${MAKECMDGOALS},clean.content)
+ifneq (${MAKECMDGOALS},clean.logs)
 
 # Verify the presence of the truecasing language model's corpus file.
 $(foreach l, $(addsuffix _${TGT_LANG}, ${TRAIN_TC}), \
@@ -432,6 +435,10 @@ $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_TC}), \
 $(foreach t, $(addsuffix _${SRC_LANG}, ${TEST_SET} ${TRANSLATE_SET}), \
 	$(if $(call  BASE_FILE_EXISTS, $t),, \
 		$(error In order to truecase your test set, you must provide the aligned corpus for $t)))
+endif
+
+endif	# MAKECMDGOALS check
+endif
 endif
 
 
