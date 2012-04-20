@@ -360,7 +360,7 @@ merged_cpt_list = ${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}
 # Meta target that will create the merged conditional phrase tables.
 merged_cpt: ${merged_cpt_list}
 
-SIG_MERGED_PFX := ${SIG_MODEL_PFX}.merged
+SIG_MERGED_PFX := ${SIG_MODEL_PFX}.a+e.merged
 JPT_MERGED_PFX := ${JPT_MODEL_PFX}.merged
 
 
@@ -381,9 +381,11 @@ ${JPT_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:   $(foreach j, ${MERGED_CPT_JPT_TYPES},
 
 # Significance pruning model depends on a "raw" joint frequency count file.
 # Significance pruning model depends on the source and target corpora.
+${SIG_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}:  SIG_THRESHOLD = a+e
 ${SIG_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}:  ${JPT_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}
 ${SIG_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
+${SIG_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:  SIG_THRESHOLD = a+e
 ${SIG_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:  ${JPT_MERGED_PFX}.${TRAIN_TM}.${JOINTX}
 ${SIG_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
