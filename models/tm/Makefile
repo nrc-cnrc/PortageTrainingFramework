@@ -381,11 +381,9 @@ ${JPT_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:   $(foreach j, ${MERGED_CPT_JPT_TYPES},
 
 # Significance pruning model depends on a "raw" joint frequency count file.
 # Significance pruning model depends on the source and target corpora.
-${SIG_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}:  SIG_THRESHOLD = a+e
 ${SIG_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}:  ${JPT_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}
 ${SIG_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
-${SIG_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:  SIG_THRESHOLD = a+e
 ${SIG_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:  ${JPT_MERGED_PFX}.${TRAIN_TM}.${JOINTX}
 ${SIG_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
