@@ -360,7 +360,7 @@ merged_cpt_list = ${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}
 # Meta target that will create the merged conditional phrase tables.
 merged_cpt: ${merged_cpt_list}
 
-SIG_MERGED_PFX := ${SIG_MODEL_PFX}.a+e.merged
+SIG_MERGED_PFX := ${SIG_MODEL_PFX}.merged
 JPT_MERGED_PFX := ${JPT_MODEL_PFX}.merged
 
 

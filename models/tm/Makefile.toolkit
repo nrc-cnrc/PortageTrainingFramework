@@ -129,7 +129,7 @@ JPT_WORKERS ?= ${JPT_PARALLELISM_LEVEL}
 SIG_CPUS ?= 1
 SIG_OPTS ?=
 SIG_THRESHOLD ?= a+e
-SIG_MODEL_PFX ?= sig
+SIG_MODEL_PFX ?= sig.${SIG_THRESHOLD}
 SIG_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 SIG_MODEL_WORKERS ?= ${SIG_MODEL_PARALLELISM_LEVEL}
 # Create variables to hold significance model prefix.
@@ -344,7 +344,7 @@ ${SIG_MODEL_PFX}.%.${TRAIN_TM}.${JOINTX}:
 		$(filter %${L1X}, $+) \
 		$(filter %${L2X}, $+) \
 		$@ \
-		&> log.$(basename $@)
+		&> >(bzip2 > log.$(basename $@))
 
 
 # According to Howard: generating a sig for L1 to L2 and then using
@@ -363,7 +363,7 @@ ${SIG_MODEL_PFX}.%.${TRAIN_TM}.${RJOINTX}:
 		$(filter %${L2X}, $+) \
 		$(filter %${L1X}, $+) \
 		$@ \
-		&> log.$(basename $@)
+		&> >(bzip2 > log.$(basename $@))
 
 
 
