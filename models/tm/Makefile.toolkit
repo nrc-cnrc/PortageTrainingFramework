@@ -344,7 +344,7 @@ ${SIG_MODEL_PFX}.%.${TRAIN_TM}.${JOINTX}:
 		$(filter %${L1X}, $+) \
 		$(filter %${L2X}, $+) \
 		$@ \
-		&> >(bzip2 > log.$(basename $@))
+		&> >(bzip2 > log.$(basename $@).bz2)
 
 
 # According to Howard: generating a sig for L1 to L2 and then using
@@ -363,7 +363,7 @@ ${SIG_MODEL_PFX}.%.${TRAIN_TM}.${RJOINTX}:
 		$(filter %${L2X}, $+) \
 		$(filter %${L1X}, $+) \
 		$@ \
-		&> >(bzip2 > log.$(basename $@))
+		&> >(bzip2 > log.$(basename $@).bz2)
 
 
 
