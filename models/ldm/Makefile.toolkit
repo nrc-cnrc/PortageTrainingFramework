@@ -69,6 +69,19 @@ TIME_MEM ?= time-mem
 # Number of cpu to use to create the final model.
 ESTIM_CPU ?= 4
 
+#
+COUNTSX ?= .counts.gz
+
+#
+LDM_FILTER_CMD ?= cat
+
+#
+LDM_MODEL_PFX ?= ldm
+
+#
+HLDM_MODEL_PFX ?= hldm
+
+
 
 ########################################
 # FUNCTIONS.
@@ -98,9 +111,11 @@ vpath %${SRC_GIVEN_TGTX} ${MODEL_DIR}
 
 
 
+# Adds the hierarchical lexicalized distortion model's option.
+ADD_HLDM_OPTS = $(and $(findstring ${HLDM_MODEL_PFX}, $1), -hier)
+
 ########################################
 # How to calculate the lexicalized counts.
-LDM_COUNTS_PFX ?= ldm.counts
 # Note we are explicitely using the guard shell which will prevent sending this
 # command to the cluster queue since parallelize.pl will take care of this for
 # us.
@@ -109,8 +124,8 @@ LDM_COUNTS_PFX ?= ldm.counts
 # - a target corpus with the TGTXZ suffix;
 # - a forward word alignment model aka target given source model with the TGT_GIVEN_SRCX suffix;
 # - a backward word alignment model aka source given target model with the SRC_GIVEN_TGTX suffix.
-${LDM_COUNTS_PFX}%: SHELL=${GUARD_SHELL}
-${LDM_COUNTS_PFX}%:
+%${COUNTSX}: SHELL=${GUARD_SHELL}
+%${COUNTSX}:
 	@_LOCAL=1; [[ $(words $(filter-out %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)) = 2 ]] || ! echo "ERROR: You must provide only one pair of corpora to create $@." >&2
 	parallelize.pl \
 		-nolocal \
@@ -120,24 +135,23 @@ ${LDM_COUNTS_PFX}%:
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
 		-s '$(call pfilter, %${SRCXZ}, %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)' \
 		-s '$(call pfilter, %${TGTXZ}, %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+)' \
-                -merge 'merge_multi_column_counts -' \
-		'dmcount -v -m ${M} $(filter %${TGT_GIVEN_SRCX}, $+) $(filter %${SRC_GIVEN_TGTX}, $+) \
+		-merge 'merge_multi_column_counts -' \
+		'dmcount -v -m ${M} $(call ADD_HLDM_OPTS, $@) $(filter %${TGT_GIVEN_SRCX}, $+) $(filter %${SRC_GIVEN_TGTX}, $+) \
 			$(call filter_interleave, %${SRCXZ}, %${TGTXZ}, %${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}, $+) | li-sort.sh > $@' \
 	>& log.$(basename $@)
 
 
 ########################################
 # How to create a lexicalized distortion models.
-LDM_MODEL_PFX ?= ldm
 # You must provide this target:
 # - one or more lexicalized distortion model counts.
-${LDM_MODEL_PFX}%${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
-${LDM_MODEL_PFX}%${SRC_2_TGTX}:
+%${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
+%${SRC_2_TGTX}:
 	RP_PSUB_OPTS="-${ESTIM_CPU}" \
 	set -o pipefail; \
 	merge_multi_column_counts - $+ \
-        | ${LDM_FILTER_CMD} \
-	| ${TIME_MEM} dmestm -s -g $(basename $@).bkoff -wtu ${WTU} -wtg ${WTG} -wt1 ${WT1} -wt2 ${WT2} \
+		| ${LDM_FILTER_CMD} \
+		| ${TIME_MEM} dmestm -s -g $(basename $@).bkoff -wtu ${WTU} -wtg ${WTG} -wt1 ${WT1} -wt2 ${WT2} \
 	2> log.$(basename $@) \
 	| gzip \
 	> $@

@@ -45,14 +45,11 @@ AVAILABLE_WORD_ALIGNMENT_MODELS := $(sort ${TMP_AVAILABLE_WORD_ALIGNMENT_MODELS}
 # List of all possible word alignment models in the framework.
 POSSIBLE_WORD_ALIGNMENT_MODELS := ibm2 hmm1 hmm2 hmm3
 
-# Hack to be able to substitute spaces.
-EMPTY :=
-
 # What will we use for the LDM's name.
-LDM_NAME ?= $(subst ${EMPTY} ${EMPTY},+,$(sort ${AVAILABLE_WORD_ALIGNMENT_MODELS}))
+LDM_NAME ?= $(call merge,+,$(sort ${AVAILABLE_WORD_ALIGNMENT_MODELS}))
 
 # For the lock target, let's specify what file we want to put read-only.
-FILES_TO_BE_LOCKED = ${LDM_COUNTS_PFX}* ${LDM_MODEL_PFX}*
+FILES_TO_BE_LOCKED = *${COUNTSX} ${LDM_MODEL_PFX}* ${HLDM_MODEL_PFX}*
 
 
 
@@ -62,26 +59,41 @@ FILES_TO_BE_LOCKED = ${LDM_COUNTS_PFX}* ${LDM_MODEL_PFX}*
 .SECONDARY:
 
 .PHONY: all
-all: ldm
+all:
 
 
 
 ########################################
 # LEXICALIZED COUNTS.
 # list of all lexicalized distortion count files required.
-LDM_COUNT_FILES := $(foreach m, ${AVAILABLE_WORD_ALIGNMENT_MODELS}, ${LDM_COUNTS_PFX}.$m.gz)
+LDM_COUNT_FILES := $(foreach m, ${AVAILABLE_WORD_ALIGNMENT_MODELS}, ${LDM_MODEL_PFX}.$m${COUNTSX})
 
-.PHONY: ldm.counts
-ldm.counts: ${LDM_COUNT_FILES}
+.PHONY:  ldm.counts
+ldm.counts:  ${LDM_COUNT_FILES}
 
+########################################
+# HIERARCHICAL LEXICALIZED COUNTS.
+# list of all hierarchical lexicalized distortion count files required.
+HLDM_COUNT_FILES := $(foreach m, ${AVAILABLE_WORD_ALIGNMENT_MODELS}, ${HLDM_MODEL_PFX}.$m${COUNTSX})
+
+.PHONY:  hldm.counts
+hldm.counts:  ${HLDM_COUNT_FILES}
+
+
+
+########################################
 # Auto-generate all dependencies for all possible word alignment models
 # To generate ldm count files we need the source corpus and the target corpus
 # To generate ldm coutn files we need word alignment models in both directions.
 $(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
    $(eval \
-	   ${LDM_COUNTS_PFX}.$m.gz:  ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}) \
+	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}) \
    $(eval \
-	   ${LDM_COUNTS_PFX}.$m.gz:  $m.${TRAIN_TM}.${TGT_GIVEN_SRCX} $m.${TRAIN_TM}.${SRC_GIVEN_TGTX}) \
+	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $m.${TRAIN_TM}.${TGT_GIVEN_SRCX} $m.${TRAIN_TM}.${SRC_GIVEN_TGTX}) \
+   $(eval \
+	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}) \
+   $(eval \
+	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $m.${TRAIN_TM}.${TGT_GIVEN_SRCX} $m.${TRAIN_TM}.${SRC_GIVEN_TGTX}) \
 )
 
 
@@ -91,20 +103,43 @@ $(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
 # Lexicalized distortion model file name.
 LDM_FILE := ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}
 
+ifdef USE_LDM
+all: ldm
+endif
+
 .PHONY: ldm
-ldm: ${LDM_FILE}
+ldm:  ${LDM_FILE}
 
 # We will build a Lexicalized Distortion Model based on all available word alignment models.
 ${LDM_FILE}:  ${LDM_COUNT_FILES}
 
 
+# Filtering LDMs.
+ifdef LDM_FILTER_SINGLETONS
+${LDM_FILE}:  LDM_FILTER_CMD=egrep -v '\|( 0)* 1( 0)* 1( 0)*$$'
+endif
+
+
 
 ########################################
-# FILTERING OF LDMs
-ifdef LDM_FILTER_SINGLETONS
-LDM_FILTER_CMD=egrep -v '\|( 0)* 1( 0)* 1( 0)*$$'
-else
-LDM_FILTER_CMD=cat
+# HIERARCHICAL LEXICALIZED DISTORTION MODEL.
+# Hirarchical Lexicalized distortion model file name.
+HLDM_FILE := ${HLDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}
+
+ifdef USE_HLDM
+all:  hldm
+endif
+
+.PHONY: hldm
+hldm:  ${HLDM_FILE}
+
+# We will build a Lexicalized Distortion Model based on all available word alignment models.
+${HLDM_FILE}:  ${HLDM_COUNT_FILES}
+
+
+# Filtering HLDMs.
+ifdef HLDM_FILTER_SINGLETONS
+${HLDM_FILE}:  LDM_FILTER_CMD=egrep -v '\|( 0)* 1( 0)* 1( 0)*$$'
 endif
 
 
@@ -112,9 +147,16 @@ endif
 ########################################
 # TIGHTLY PACKED LEXICAZILED DISTORTION MODEL.
 .PHONY: tpldm
-tpldm: ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm
+tpldm:  ${LDM_FILE:.gz=.tpldm}
+tpldm:  ${HLDM_FILE:.gz=.tpldm}
 
-${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm: ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}
+# Build a tpldm requires the .gz version.
+${LDM_FILE:.gz=.tpldm}:  %.tpldm:  %.gz
+${HLDM_FILE:.gz=.tpldm}:  %.tpldm:  %.gz
+
+
+
+
 
 
 
@@ -153,7 +195,7 @@ clean: clean.content clean.logs
 
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
-	${RM} -r ${LDM_COUNTS_PFX}* ${LDM_MODEL_PFX}*
+	${RM} *${COUNTSX} *${SRC_2_TGTX}
 	${RM} -r parallelize.pl.*
 
 clean.logs: SHELL=${GUARD_SHELL}
@@ -181,12 +223,21 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/ldm
 .PHONY: portageLive
 portageLive: SHELL=${GUARD_SHELL}
 ifdef USE_LDM
-portageLive: ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGT}.tpldm
+portageLive:  ${LDM_FILE:.gz=.tpldm}
+endif
+ifdef USE_HLDM
+portageLive:  ${HLDM_FILE:.gz=.tpldm}
+endif
+
+ifneq ("", "${USE_LDM}${USE_HLDM}")
+portageLive:
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
-	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../ldm/$< .
+	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../ldm/, $+) .
 else
 portageLive:
 	@echo "Not using a lexicalized distortion model." >&2
 endif
+
+$(info rename ldm directory to simply dm or distortion.)
 
