@@ -195,7 +195,7 @@ clean: clean.content clean.logs
 
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
-	${RM} *${COUNTSX} *${SRC_2_TGTX}
+	${RM} *${COUNTSX} *${SRC_2_TGTX} *.bkoff
 	${RM} -r parallelize.pl.*
 
 clean.logs: SHELL=${GUARD_SHELL}
@@ -221,15 +221,9 @@ time-mem: resource_summary_sub
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/ldm
 
 .PHONY: portageLive
-portageLive: SHELL=${GUARD_SHELL}
-ifdef USE_LDM
-portageLive:  ${LDM_FILE:.gz=.tpldm}
-endif
-ifdef USE_HLDM
-portageLive:  ${HLDM_FILE:.gz=.tpldm}
-endif
-
 ifneq ("", "${USE_LDM}${USE_HLDM}")
+portageLive:  $(and ${USE_LDM}, ${LDM_FILE:.gz=.tpldm})
+portageLive:  $(and ${USE_HLDM}, ${HLDM_FILE:.gz=.tpldm})
 portageLive:
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
@@ -238,6 +232,4 @@ else
 portageLive:
 	@echo "Not using a lexicalized distortion model." >&2
 endif
-
-$(info rename ldm directory to simply dm or distortion.)
 

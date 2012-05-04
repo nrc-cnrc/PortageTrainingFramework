@@ -183,10 +183,23 @@ LDM ?= $(wildcard models/ldm/ldm.*.${SRC_LANG}2${TGT_LANG}.gz)
 ifeq ("","$(or $(strip ${LDM}),$(findstring clean,${MAKECMDGOALS}))")
 $(warning "No LDMs available. Have you trained at least a distortion model?")
 endif
+$(info LDM: ${LDM})
+LDM := $(and ${USE_LDM},${LDM}\#L)
 
-DISTORTION ?= -dist-phrase-swap -dist-limit-ext -lex-dist-model-file ${LDM} -distortion-model WordDisplacement:back-lex\#m:back-lex\#s:back-lex\#d:fwd-lex\#m:fwd-lex\#s:fwd-lex\#d
-else
-DISTORTION ?= -distortion-model WordDisplacement
+# Parameters to use Lexicalized Distortion Models.
+LDM_PARAMS  := back-lex\#m\#L:back-lex\#s\#L:back-lex\#d\#L:fwd-lex\#m\#L:fwd-lex\#s\#L:fwd-lex\#d\#L
+endif
+
+ifdef USE_HLDM
+HLDM ?= $(wildcard models/ldm/hldm.*.${SRC_LANG}2${TGT_LANG}.gz)
+ifeq ("","$(or $(strip ${HLDM}),$(findstring clean,${MAKECMDGOALS}))")
+$(warning "No HLDMs available. Have you trained at least a distortion model?")
+endif
+$(info HLDM: ${HLDM})
+HLDM := $(and ${USE_HLDM},${HLDM}\#H)
+
+# Parameters to use Hierarchical Lexicalized Distortion Models.
+HLDM_PARAMS := back-hlex\#m\#H:back-hlex\#s\#H:back-hlex\#d\#H:fwd-hlex\#m\#H:fwd-hlex\#s\#H:fwd-hlex\#d\#H
 endif
 
 # NOTE: We need to keep the checks here AND in the target UNTUNED_DECODING_MODEL.
@@ -195,12 +208,14 @@ CPTS ?= $(wildcard ${CPT_SEARCH})
 ifeq ("","$(or $(strip ${CPTS}),$(findstring clean,${MAKECMDGOALS}))")
 $(warning No CPTs available. Have you trained at least one translation model?)
 endif
+$(info CPTs: ${CPTS})
 
 LM_SEARCH := models/lm/*${TGT_LANG}*.binlm.gz models/mixlm/${TUNE_DECODE}.mixlm
 LMS  ?= $(wildcard ${LM_SEARCH})
 ifeq ("","$(or $(strip ${LMS}),$(findstring clean,${MAKECMDGOALS}))")
 $(warning No LMs available. Have you trained at least one language model?)
 endif
+$(info LMs: ${LMS})
 
 ${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
@@ -214,7 +229,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      -e 's#<CPTS>#${CPTS}#g' \
 	      -e 's#<LMS>#${LMS}#g' \
 	      -e 's/^\(\[\(weight-f\|ftm\)\]\)/##mid##\1/' \
-	| configtool -p "args:${DISTORTION} ${CANOE_INI_EXTRAS}" - \
+	| configtool -p "args:$(and ${USE_LDM}${USE_HLDM}, -no-dist-limit-simple -dist-phrase-swap -dist-limit-ext) -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS} -lex-dist-model-file :${LDM}:${HLDM} ${CANOE_INI_EXTRAS}" - \
 	> $@
 	configtool check $@
 
@@ -296,3 +311,58 @@ clean.portageLive:
 
 ################################################################################
 # HELPERS
+.PHONY: testsuite
+testsuite:  unittest1
+testsuite:  unittest2
+testsuite:  unittest3
+testsuite:  unittest4
+
+# Create a canoe.ini without any Lexicalized Distortion Models what so ever.
+unittest1:
+	${MAKE} USE_LDM= USE_HLDM= canoe.ini -B
+	grep '^\[lex-dist-model-file\] --$$' canoe.ini
+	! egrep 'back-lex' canoe.ini
+	! egrep 'fwd-lex' canoe.ini
+	! grep '^\[no-dist-limit-simple\]$$' canoe.ini
+	! grep '^\[dist-phrase-swap\]$$' canoe.ini
+	! grep '^\[dist-limit-ext\]$$' canoe.ini
+
+# Create a canoe.ini that uses Lexicalized Distortion Models.
+unittest2:
+	${MAKE} USE_LDM=1 USE_HLDM= canoe.ini -B
+	grep '[^h]ldm.hmm3+ibm2.en2fr.gz' canoe.ini
+	! grep 'hldm.hmm3+ibm2.en2fr.gz' canoe.ini
+	egrep 'back-lex' canoe.ini
+	! egrep 'back-hlex' canoe.ini
+	egrep 'fwd-lex' canoe.ini
+	! egrep 'fwd-hlex' canoe.ini
+	grep '^\[no-dist-limit-simple\]$$' canoe.ini
+	grep '^\[dist-phrase-swap\]$$' canoe.ini
+	grep '^\[dist-limit-ext\]$$' canoe.ini
+
+# Create a canoe.ini that uses Hierarchical Lexicalized Distortion Models.
+unittest3:
+	${MAKE} USE_LDM= USE_HLDM=1 canoe.ini -B
+	! grep '[^h]ldm.hmm3+ibm2.en2fr.gz' canoe.ini
+	grep 'hldm.hmm3+ibm2.en2fr.gz' canoe.ini
+	! egrep 'back-lex' canoe.ini
+	egrep 'back-hlex' canoe.ini
+	! egrep 'fwd-lex' canoe.ini
+	egrep 'fwd-hlex' canoe.ini
+	grep '^\[no-dist-limit-simple\]$$' canoe.ini
+	grep '^\[dist-phrase-swap\]$$' canoe.ini
+	grep '^\[dist-limit-ext\]$$' canoe.ini
+
+# Create a canoe.ini that uses Lexicalized Distortion Models & Hierarchical Lexicalized Distortion Models.
+unittest4:
+	${MAKE} USE_LDM=1 USE_HLDM=2 canoe.ini -B
+	grep '[^h]ldm.hmm3+ibm2.en2fr.gz' canoe.ini
+	grep 'hldm.hmm3+ibm2.en2fr.gz' canoe.ini
+	egrep 'back-lex' canoe.ini
+	egrep 'back-hlex' canoe.ini
+	egrep 'fwd-lex' canoe.ini
+	egrep 'fwd-hlex' canoe.ini
+	grep '^\[no-dist-limit-simple\]$$' canoe.ini
+	grep '^\[dist-phrase-swap\]$$' canoe.ini
+	grep '^\[dist-limit-ext\]$$' canoe.ini
+

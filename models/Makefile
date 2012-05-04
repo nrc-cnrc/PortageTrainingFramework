@@ -203,7 +203,7 @@ rescore: decode
 # Targets based on master Makefile.params
 .PHONY: ldm
 ldm: SHELL=${GUARD_SHELL}
-ifdef USE_LDM
+ifneq ("","${USE_LDM}${USE_HLDM}")
 models: ldm
 
 portageLive: portageLive_models_ldm
