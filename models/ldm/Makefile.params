@@ -19,6 +19,29 @@
 # enable this filter.
 #LDM_FILTER_SINGLETONS=1
 
+# When the corpus is too large and dmestm can't run in available memory, we can
+# filter out singleton phrase pairs from the HLDM model.  Set this variable to
+# enable this filter.
+#HLDM_FILTER_SINGLETONS=1
+
 # Maximum phrase length.
 #M = 8
+
+# How many jobs to create when creating the counts.
+#PARALLELISM_LEVEL_LDM ?= 30
+
+# How many workers to use to process those jobs.
+#PARALLELISM_LEVEL_LDM_WORKERS ?= ${PARALLELISM_LEVEL_LDM}
+
+# How many cpus each workers should use.
+#COUNT_CPUS ?= 1
+
+# Define this variable if you want to merge your ldm counts in a fillup manner.
+#USE_FILLUP ?=
+
+# NOTE:
+# You must define USE_LDM and/or USE_HLDM in the master Makefile.params in
+# order for the framework to build and, more importantly, use [Hierarchical]
+# Lexicalized Distortion Models.
+
 

@@ -58,7 +58,7 @@ FILES_TO_BE_LOCKED = *${COUNTSX} ${LDM_MODEL_PFX}* ${HLDM_MODEL_PFX}*
 .SUFFIXES:
 .SECONDARY:
 
-.PHONY: all
+.PHONY:  all
 all:
 
 
@@ -107,7 +107,7 @@ ifdef USE_LDM
 all: ldm
 endif
 
-.PHONY: ldm
+.PHONY:  ldm
 ldm:  ${LDM_FILE}
 
 # We will build a Lexicalized Distortion Model based on all available word alignment models.
@@ -130,7 +130,7 @@ ifdef USE_HLDM
 all:  hldm
 endif
 
-.PHONY: hldm
+.PHONY:  hldm
 hldm:  ${HLDM_FILE}
 
 # We will build a Lexicalized Distortion Model based on all available word alignment models.
@@ -146,7 +146,7 @@ endif
 
 ########################################
 # TIGHTLY PACKED LEXICAZILED DISTORTION MODEL.
-.PHONY: tpldm
+.PHONY:  tpldm
 tpldm:  ${LDM_FILE:.gz=.tpldm}
 tpldm:  ${HLDM_FILE:.gz=.tpldm}
 
@@ -175,12 +175,14 @@ ${HLDM_FILE:.gz=.tpldm}:  %.tpldm:  %.gz
 
 ########################################
 # HELP OPTIONS
-.PHONY: help
+.PHONY:  help
 help: SHELL=${GUARD_SHELL}
 help:
 	@echo "Train a lexicalized distortion model."
 	@echo
 	@echo "To train your distortion model, type: make all"
+	@echo
+	@echo "Have a look at Makefile.params in the current directory to enable custom tweaks."
 	@echo
 	@echo "The main targets in this Makefile are:"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
@@ -189,7 +191,7 @@ help:
 
 ########################################
 # Clean up
-.PHONY: clean clean.content clean.logs hide.logs
+.PHONY:  clean clean.content clean.logs hide.logs
 clean: SHELL=${GUARD_SHELL}
 clean: clean.content clean.logs
 
@@ -210,7 +212,7 @@ hide.logs: hide_logs_sub
 
 ########################################
 # Resources Summary
-.PHONY: time-mem
+.PHONY:  time-mem
 time-mem: SHELL=${GUARD_SHELL}
 time-mem: resource_summary_sub
 
@@ -220,7 +222,7 @@ time-mem: resource_summary_sub
 # What is needed for PortageLive.
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/ldm
 
-.PHONY: portageLive
+.PHONY:  portageLive
 ifneq ("", "${USE_LDM}${USE_HLDM}")
 portageLive:  $(and ${USE_LDM}, ${LDM_FILE:.gz=.tpldm})
 portageLive:  $(and ${USE_HLDM}, ${HLDM_FILE:.gz=.tpldm})
