@@ -89,11 +89,11 @@ $(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
    $(eval \
 	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}) \
    $(eval \
-	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $m.${TRAIN_TM}.${TGT_GIVEN_SRCX} $m.${TRAIN_TM}.${SRC_GIVEN_TGTX}) \
+	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  ${TRAIN_TM}.$m.${SRC_2_TGT}.align.gz) \
    $(eval \
 	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}) \
    $(eval \
-	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $m.${TRAIN_TM}.${TGT_GIVEN_SRCX} $m.${TRAIN_TM}.${SRC_GIVEN_TGTX}) \
+	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  ${TRAIN_TM}.$m.${SRC_2_TGT}.align.gz) \
 )
 
 

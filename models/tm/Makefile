@@ -131,17 +131,17 @@ time-mem: resource_summary_sub
 clean.content: clean.word_alignment_models
 
 .PHONY: clean.word_alignment_models
-clean.word_alignment_models: SHELL=${GUARD_SHELL}
+clean.word_alignment_models:  SHELL=${GUARD_SHELL}
 clean.word_alignment_models:
 	${RM} $(addsuffix .*, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 .PHONY: word_alignment_models  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
-word_alignment_models: $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
+word_alignment_models:  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 
 # All word alignment models depend on ibm1 word alignment models except, of course, for ibm1 word alignment models.
 $(foreach m, $(filter-out ${IBM1_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-   $(eval ${m}_model: ibm1_model) \
+   $(eval ${m}_model:  ${IBM1_MODEL_PFX}_model) \
 )
 
 # the meta target for word alignment model depends on word alignment model files.
@@ -162,6 +162,34 @@ $(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
 #
 #${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 #${IBM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+
+
+
+########################################
+# ALIGNMENT FILES.
+
+clean.content: clean.alignment_files
+
+.PHONY: clean.alignment_files
+clean.alignment_files:  SHELL=${GUARD_SHELL}
+clean.alignment_files:
+	${RM} *.${L1_2_L2}.align.gz  *.${L2_2_L1}.align.gz
+
+.PHONY: alignment_files  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
+alignment_files:  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
+
+
+$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+   $(eval \
+		$(call lc, $m)_alignment:  ${TRAIN_TM}.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
+   $(eval \
+		${TRAIN_TM}.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
+   $(eval \
+		${TRAIN_TM}.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}) \
+)
+
+#${TRAIN_TM}.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
+#${TRAIN_TM}.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
 
 
@@ -190,11 +218,13 @@ $(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
    $(eval \
 	   JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
    $(eval \
-	   $(call lc, ${m})_jpt: $(call lc, ${m})_model) \
+	   $(call lc, ${m})_jpt:  $(call lc, ${m})_model) \
    $(eval \
-	   $(call lc, ${m})_jpt: ${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}) \
+	   $(call lc, ${m})_jpt:  ${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}) \
    $(eval \
 		${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}) \
+   $(eval \
+		${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
    $(eval \
 		${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
 )
