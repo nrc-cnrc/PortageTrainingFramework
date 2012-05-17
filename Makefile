@@ -286,11 +286,20 @@ summary: time-mem
 # UNITTESTS
 
 ########################################
-# Unittest MixLM & LDMS.
+# Confidence Estimation & no Rescoring
 .PHONY: unittest1
-unittest1:  export MIXLM = sublm1 sublm2 sublm3
-unittest1:  export USE_LDM = 1
-unittest1:  export USE_HLDM = 1
+unittest1:  export TUNE_CE = dev3
+unittest1:  export DO_CE = 1
+unittest1:  export DO_RESCORING =
 unittest1:
+	${MAKE} all
+
+########################################
+# Unittest MixLM & LDMS.
+.PHONY: unittest2
+unittest2:  export MIXLM = sublm1 sublm2 sublm3
+unittest2:  export USE_LDM = 1
+unittest2:  export USE_HLDM = 1
+unittest2:
 	${MAKE} all
 
