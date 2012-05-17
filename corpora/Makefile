@@ -467,3 +467,19 @@ debug:
 	@echo "TC_TOK: ${TC_TOK}"
 	@echo "MIXLM_TOK: ${MIXLM_TOK}"
 
+
+
+########################################
+# Generate all corpora version in order to have sufficient corpora to exercice all paths in the framework.
+.PHONY: unittest1
+unittest1:  export TUNE_DECODE = dev1
+unittest1:  export TUNE_RESCORE = dev2
+unittest1:  export TUNE_CE = dev3
+unittest1:  export TEST_SET = test1 test2
+unittest1:  export TRAIN_LM = lm-train
+unittest1:  export TRAIN_TC = tc-train lm-ce
+unittest1:  export TRAIN_TM = tm-train
+unittest1:  export MIXLM = sublm1 sublm2 sublm3
+unittest1:
+	${MAKE} all
+
