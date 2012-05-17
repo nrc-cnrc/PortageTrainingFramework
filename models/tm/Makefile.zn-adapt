@@ -78,10 +78,12 @@ endif
 # List of file pairs.
 
 # List of all the file pairs that are in-domain. 
-domain_files ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_DOMAIN}*${LANGXZ}))
+tmp_domain_files := $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_DOMAIN}*${LANGXZ}))
+domain_files     ?= ${tmp_domain_files}
 
 # List of all the file pairs that are not in-domain aka other.
-other_files  ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}))
+tmp_other_files  := $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}))
+other_files      ?= ${tmp_other_files}
 
 
 
@@ -113,11 +115,11 @@ other_files  ?= $(notdir $(wildcard ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ}))
 ifeq ("","$(or $(findstring clean,${MAKECMDGOALS}),$(findstring help,${MAKECMDGOALS}))")
 
 ifeq ("${domain_files}", "")
-$(error Make couldn't find the domain corpora files: ${CORPORA_DIR}/${TRAIN_TM_DOMAIN}*${LANGXZ})
+$(error Make couldn't find the domain corpora files: ${domain_files})
 endif
 
 ifeq ("${other_files}", "")
-$(error Make couldn't find the non-domain corpora files: ${CORPORA_DIR}/${TRAIN_TM_OTHER}*${LANGXZ})
+$(error Make couldn't find the non-domain corpora files: ${other_files})
 endif
 
 endif
@@ -169,22 +171,40 @@ ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X}: ${domain_files} ${other_files
 ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}: ${domain_files} ${other_files}
 
 
+# Create the word alignment file for all corpus pairs.
+#
+STEM = $(sort $(subst _en.lc.gz,,$(subst _fr.lc.gz,,$1)))
+$(info other_files & domain_files: ${other_files} ${domain_files})
+$(info STEM: $(call STEM, ${other_files} ${domain_files}))
+
+$(addsuffix .${HMM3_MODEL_PFX}.${L1_2_L2}.align.gz, $(call STEM, ${domain_files} ${other_files})):  ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X}  ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+$(addsuffix .${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz, $(call STEM, ${domain_files} ${other_files})):  ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X}  ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+$(foreach c, $(call STEM, ${other_files} ${domain_files}), \
+   $(eval $c.${HMM3_MODEL_PFX}.${L1_2_L2}.align.gz:  ${c}_en.lc.gz  ${c}_fr.lc.gz) \
+   $(eval $c.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  ${c}_en.lc.gz  ${c}_fr.lc.gz) \
+)
+
+
 # Create joint frequency counts.
 # Extract phrase alignment using HMM3 models.
 JPT_HMM3_MODEL_PFX := ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}
 ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: $(addsuffix .${HMM3_MODEL_PFX}.${L1_2_L2}.align.gz, $(call STEM, ${domain_files}))
 ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${domain_files}
 
 ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: $(addsuffix .${HMM3_MODEL_PFX}.${L1_2_L2}.align.gz, $(call STEM, ${other_files}))
 ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${other_files}
 
 
 # Extract phrase alignment using IBM2 models.
 JPT_IBM2_MODEL_PFX := ${JPT_MODEL_PFX}.${IBM2_MODEL_PFX}
 ${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: $(addsuffix .${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz, $(call STEM, ${domain_files}))
 ${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_DOMAIN}.${JOINTX}: ${domain_files}
 
 ${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L2_GIVEN_L1X} ${IBM2_MODEL_PFX}.${TRAIN_TM_ALL}.${L1_GIVEN_L2X}
+${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: $(addsuffix .${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz, $(call STEM, ${other_files}))
 ${JPT_IBM2_MODEL_PFX}.${TRAIN_TM_OTHER}.${JOINTX}: ${other_files}
 
 
