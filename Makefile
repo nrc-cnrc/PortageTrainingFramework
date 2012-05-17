@@ -275,3 +275,22 @@ summary: time-mem
 	   du -hL models/portageLive; \
 	fi
 
+
+
+
+
+
+
+
+################################################################################
+# UNITTESTS
+
+########################################
+# Unittest MixLM & LDMS.
+.PHONY: unittest1
+unittest1:  export MIXLM = sublm1 sublm2 sublm3
+unittest1:  export USE_LDM = 1
+unittest1:  export USE_HLDM = 1
+unittest1:
+	${MAKE} all
+
