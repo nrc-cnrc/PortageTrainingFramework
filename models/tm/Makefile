@@ -495,3 +495,11 @@ zn-adapt:
 	${MAKE} -f Makefile.zn-adapt all
 
 
+# UNITTEST for Significance Pruning.
+.PHONY: unittest5 sigprune
+unittest5:  sigprune
+sigprune:  export USE_SIGPRUNING = 1
+sigprune:
+	${MAKE} clean.cpts
+	${MAKE} all
+
