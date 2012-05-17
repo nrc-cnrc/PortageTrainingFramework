@@ -485,3 +485,13 @@ unittest3:
 
 $(foreach a, a b, $(eval %.$a: ;echo $$@ $$*))
 
+
+# UNITTEST for ZN-ADAPT.
+.PHONY: unittest4 zn-adapt
+unittest4:  zn-adapt
+zn-adapt: export domain_files = tm-train_en.lc.gz tm-train_fr.lc.gz
+zn-adapt: export other_files = sublm1_en.lc.gz sublm1_fr.lc.gz sublm2_en.lc.gz sublm2_fr.lc.gz sublm3_en.lc.gz sublm3_fr.lc.gz
+zn-adapt:
+	${MAKE} -f Makefile.zn-adapt all
+
+
