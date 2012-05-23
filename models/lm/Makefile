@@ -270,6 +270,7 @@ else ifeq (${LM_TOOLKIT}, IRST)
 	| gzip > $@
 
 else ifeq (${LM_TOOLKIT}, MIT)
+FILTER = perl -ne 'BEGIN{$$M=4095} $$l=$$_; while(length($$l)>$$M and $$i=rindex($$l, " ", $$M) and $$i!= -1) { print substr($$l, 0, $$i), "\n"; $$l = substr($$l, $$i+1); } print $$l;'
 # Note that MITLM is finicky about spaces thus we need to collapse several
 # spaces into one space and remove any leading or traling spaces.
 # The perl regex was proposed by the creators of MITLM.
@@ -279,14 +280,24 @@ else ifeq (${LM_TOOLKIT}, MIT)
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
 	zcat $< \
 	| perl -ple 's/^\s*(.*?)\s*$$/$$1/; s/\s+/ /g;' \
+	| ${FILTER} \
 	| ${TIME_MEM} \
 	estimate-ngram \
 		-order ${ORDER} \
 		-smoothing ModKN \
 		-text /dev/stdin \
 		-write-lm $@ \
+		$(and ${KEEP_COUNTS}, -write-counts ${@:.lm.gz=.counts.gz}) \
 	2> log.$(basename $@)
 
+NRC_PRUNING := 1 1 2 3 4
+PRUNING = ${NRC_PRUNING}
+%.filt.lm.gz:  override KEEP_COUNTS=1
+%.filt.lm.gz:  %.lm.gz
+	${TIME_MEM} \
+	lm-filter.py $< ${<:.lm.gz=.counts.gz} ${PRUNING} \
+	2> log.$(@:.gz=) \
+	| gzip > $@
 else
 $(error Invalid value for LM_TOOLKIT: ${LM_TOOLKIT})
 endif
