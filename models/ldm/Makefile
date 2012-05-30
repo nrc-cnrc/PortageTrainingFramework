@@ -43,7 +43,7 @@ endif
 AVAILABLE_WORD_ALIGNMENT_MODELS := $(sort ${TMP_AVAILABLE_WORD_ALIGNMENT_MODELS})
 
 # List of all possible word alignment models in the framework.
-POSSIBLE_WORD_ALIGNMENT_MODELS := ibm2 hmm1 hmm2 hmm3
+POSSIBLE_WORD_ALIGNMENT_MODELS := ibm2 hmm1 hmm2 hmm3 giza
 
 # What will we use for the LDM's name.
 LDM_NAME ?= $(call merge,+,$(sort ${AVAILABLE_WORD_ALIGNMENT_MODELS}))
@@ -87,13 +87,13 @@ hldm.counts:  ${HLDM_COUNT_FILES}
 # To generate ldm coutn files we need word alignment models in both directions.
 $(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
    $(eval \
-	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}) \
+	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix ${SRCXZ},${TRAIN_TM}) $(addsuffix ${TGTXZ},${TRAIN_TM})) \
    $(eval \
-	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  ${TRAIN_TM}.$m.${SRC_2_TGT}.align.gz) \
+	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix .$m.${SRC_2_TGT}.align.gz,${TRAIN_TM})) \
    $(eval \
-	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  ${TRAIN_TM}${SRCXZ} ${TRAIN_TM}${TGTXZ}) \
+	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix ${SRCXZ},${TRAIN_TM}) $(addsuffix ${TGTXZ},${TRAIN_TM})) \
    $(eval \
-	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  ${TRAIN_TM}.$m.${SRC_2_TGT}.align.gz) \
+	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix .$m.${SRC_2_TGT}.align.gz,${TRAIN_TM})) \
 )
 
 
@@ -235,3 +235,14 @@ portageLive:
 	@echo "Not using a lexicalized distortion model." >&2
 endif
 
+
+
+
+
+
+
+
+################################################################################
+# UNITTESTS.
+.PHONY:  unittest1
+unittest1:
