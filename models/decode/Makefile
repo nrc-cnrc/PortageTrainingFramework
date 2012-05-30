@@ -70,7 +70,7 @@ NBEST_SIZE ?= 1000
 PARALLELISM_LEVEL_TUNE_DECODE ?= 5
 
 # What program to use to do MERT.
-MERT ?= cow.sh
+MERT ?= tune.py
 
 # How may cpus should each worker be using when doing MERT.
 MERT_CPUS ?= 1
@@ -250,17 +250,21 @@ ${DECODING_MODEL}: SHELL=${FRAMEWORK_SHELL}
 ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TGTS}
 	_LOCAL=1 mkdir -p foos
 	RP_PSUB_OPTS="-${MERT_CPUS} -N tune.decode.model" \
+	filter_models -z -r -soft-limit cpt.${TUNE_DECODE} -ldm < $(filter %${TUNE_DECODE_SRC},$+)
+	RP_PSUB_OPTS="-${MERT_CPUS} -N tune.decode.model" \
 	${MERT} \
 		-v \
-		-parallel:"-n ${PARALLELISM_LEVEL_TUNE_DECODE}" \
-		-maxiter ${MERT_MAX_ITER} \
-		-nbest-list-size 100 \
-		-filt \
-		-nofloor \
-		-workdir foos \
+		-o $@.FILT \
+		-p ${PARALLELISM_LEVEL_TUNE_DECODE} \
+		-c ${MERT_CPUS} \
+		-m ${MERT_MAX_ITER} \
+		-n 100 \
+		-a lmira \
+		--workdir=foos \
 		${MERT_EXTRAS} \
-		-f $^ \
+		-f $<.FILT $(wordlist 2,3,$+) \
 		>& log.$@
+	_LOCAL=1 configtool -p args:"`configtool weights $@.FILT`" $< > $@
 	_LOCAL=1 ${RM} -r foos *.FILT.gz *.FILT.bkoff ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
 
 clean.content: clean.cow
