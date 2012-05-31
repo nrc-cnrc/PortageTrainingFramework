@@ -52,14 +52,22 @@ RAW_CORPORA_DIR ?= .
 ifdef TOKENIZER_${SRC_LANG}
 SRC_TOKENIZER = ${TOKENIZER_${SRC_LANG}}
 else
+ifeq (${SRC_LANG},ch)
+SRC_TOKENIZER = { iconv -c -f UTF-8 -t CN-GB | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl | iconv -c -f CN-GB -t UTF-8; }
+else
 SRC_TOKENIZER = utokenize.pl -noss -lang=${SRC_LANG}
+endif
 endif
 
 # What tokenizer should we use for the target side.
 ifdef TOKENIZER_${TGT_LANG}
 TGT_TOKENIZER = ${TOKENIZER_${TGT_LANG}}
 else
+ifeq (${TGT_LANG},ch)
+TGT_TOKENIZER = { iconv -c -f UTF-8 -t CN-GB | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl | iconv -c -f CN-GB -t UTF-8; }
+else
 TGT_TOKENIZER = utokenize.pl -noss -lang=${TGT_LANG}
+endif
 endif
 
 

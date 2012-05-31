@@ -104,6 +104,7 @@ DO_TRUECASING = 1
 # Defining what tokenizers we want to use.
 #TOKENIZER_en = opennlp TokenizerME /modeldir/en-model.bin
 #TOKENIZER_fr = utokenize.pl -noss -lang=fr
+#TOKENIZER_ch = { iconv -c -f UTF-8 -t CN-GB | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl | iconv -c -f CN-GB -t UTF-8; }
 # Defining what detokenizers we want to use.
 #DETOKENIZER_en = opennlp DetokenizerME /modeldir/en-model.bin
 #DETOKENIZER_fr = udetokenizer.pl -lang=fr
