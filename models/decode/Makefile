@@ -72,8 +72,11 @@ PARALLELISM_LEVEL_TUNE_DECODE ?= 5
 # What program to use to do MERT.
 MERT ?= tune.py
 
-# How may cpus should each worker be using when doing MERT.
-MERT_CPUS ?= 1
+# How may cpus should MERT be using.
+# tune.py requires 16GB memory for java.
+MERT_CPUS ?= 4
+# How may cpus should each decode worker be using when doing MERT.
+DECODE_CPUS ?= 1
 
 # What is the maximum number of iterations mert should do?
 MERT_MAX_ITER ?= 15
@@ -151,6 +154,7 @@ clean.content:
 clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:
 	${RM} log.* run-parallel-logs*
+	${RM} -r logs/
 
 # Hide logs from user's view into .logs
 hide.logs: SHELL=${GUARD_SHELL}
@@ -249,14 +253,14 @@ train: ${DECODING_MODEL}
 ${DECODING_MODEL}: SHELL=${FRAMEWORK_SHELL}
 ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TGTS}
 	_LOCAL=1 mkdir -p foos
-	RP_PSUB_OPTS="-${MERT_CPUS} -N tune.decode.model" \
+	RP_PSUB_OPTS="-${DECODE_CPUS} -N tune.decode.model" \
 	filter_models -z -r -soft-limit cpt.${TUNE_DECODE} -ldm < $(filter %${TUNE_DECODE_SRC},$+)
 	RP_PSUB_OPTS="-${MERT_CPUS} -N tune.decode.model" \
 	${MERT} \
 		-v \
 		-o $@.FILT \
 		-p ${PARALLELISM_LEVEL_TUNE_DECODE} \
-		-c ${MERT_CPUS} \
+		-c ${DECODE_CPUS} \
 		-m ${MERT_MAX_ITER} \
 		-n 100 \
 		-a lmira \
@@ -267,15 +271,17 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 	_LOCAL=1 configtool -p args:"`configtool weights $@.FILT`" $< > $@
 	_LOCAL=1 ${RM} -r foos *.FILT.gz *.FILT.bkoff ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
 
-clean.content: clean.cow
+clean.content: clean.tune
 
-.PHONY: clean.cow
-clean.cow: SHELL=${GUARD_SHELL}
-clean.cow:
+.PHONY: clean.tune
+clean.tune: SHELL=${GUARD_SHELL}
+clean.tune:
 	${RM} -r foos canoe-parallel.* run-p.*
 	${RM} ${DECODING_MODEL}
 	${RM} ${UNTUNED_DECODING_MODEL} ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
-	${RM} *.FILT.gz *.FILT.bkoff rescore-results*
+	${RM} *.FILT.gz *.FILT.bkoff
+	${RM} summary summary.wts
+	${RM} decode-config
 
 
 
