@@ -291,6 +291,7 @@ lc: ${LC}
 %${LANGXZ}: %${ALIGNX}${GZ}
 	@$(check_utf8)
 	${RP_SHELL_OPTS} \
+	set -o pipefail; \
 	zcat $< | ${TIME_MEM} ${LOWERCASE} ${LOG_STDERR} | gzip > $@
 
 
@@ -351,7 +352,7 @@ clean: clean.content clean.logs
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
 	${RM} ${TOK}
-	${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ} *${ALIGNX} *${ALIGNX}${GZ}
+	${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
 
 clean.logs: SHELL=${GUARD_SHELL}
 clean.logs:

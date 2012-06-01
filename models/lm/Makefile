@@ -182,7 +182,8 @@ mark: ${CORPUS_NAME}.marked.gz
 %.marked.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "Marking up $<"
 	RP_PSUB_OPTS="-N $@" \
-	set -o pipefail; zcat -f $< \
+	set -o pipefail; \
+	zcat -f $< \
 	| add-start-end.sh \
 	| gzip -c \
 	> $@
@@ -278,6 +279,7 @@ FILTER = perl -ne 'BEGIN{$$M=4095} $$l=$$_; while(length($$l)>$$M and $$i=rindex
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	set -o pipefail; \
 	zcat $< \
 	| perl -ple 's/^\s*(.*?)\s*$$/$$1/; s/\s+/ /g;' \
 	| ${FILTER} \
@@ -292,8 +294,11 @@ FILTER = perl -ne 'BEGIN{$$M=4095} $$l=$$_; while(length($$l)>$$M and $$i=rindex
 
 NRC_PRUNING := 1 1 2 3 4
 PRUNING = ${NRC_PRUNING}
+%.filt.lm.gz:  SHELL=${FRAMEWORK_SHELL}
 %.filt.lm.gz:  override KEEP_COUNTS=1
 %.filt.lm.gz:  %.lm.gz
+	RP_PSUB_OPTS="-1" \
+	set -o pipefail; \
 	${TIME_MEM} \
 	lm-filter.py $< ${<:.lm.gz=.counts.gz} ${PRUNING} \
 	2> log.$(@:.gz=) \

@@ -312,6 +312,7 @@ else
 %.out: ${DECODING_MODEL}.% %${RULEX}
 	@_LOCAL=1 echo "Generating $(notdir ${CURDIR})/$@"
 	RP_PSUB_OPTS="-${TRANS_CPUS}" \
+	set -o pipefail; \
 	canoe-parallel.sh \
 		-n ${PARALLELISM_LEVEL_TRANSLATE} \
 		${CANOE_PARALLEL_EXTRAS} \

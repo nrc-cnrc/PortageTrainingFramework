@@ -197,6 +197,7 @@ TGT_TOKENIZE = ${TOKENIZE} -pretok -paraline -ss -p -lang=${TGT_LANG}
 %_${TGT_LANG}.tokss${GZ}: %_${TGT_LANG}${TCX}
 ifndef BIG_CORPUS
 	RP_PSUB_OPTS="-1" \
+	set -o pipefail; \
 	zcat -f $+ \
 	| ${TGT_UC_FILTER} \
 	| ${TIME_MEM} \
@@ -214,6 +215,7 @@ endif
 %.revtokss${GZ}: %.tokss${GZ}
 ifndef BIG_CORPUS
 	RP_PSUB_OPTS="-1" \
+	set -o pipefail; \
 	zcat -f $+ \
 	| filter-nc1.py -enc ${ENCODING}\
 	| reverse.pl \
@@ -236,6 +238,8 @@ UN_SS_P := perl -pe 's/(.)$$/$$1 /; s/(.)\n/$$1/'
 
 %_${TGT_LANG}.nc1${GZ}: SHELL=${FRAMEWORK_SHELL}
 %_${TGT_LANG}.nc1${GZ}: %_${TGT_LANG}.nc1.binlm${GZ} %_${TGT_LANG}.tokss${GZ}
+	RP_PSUB_OPTS="-1" \
+	set -o pipefail; \
 	${TIME_MEM} \
 	normc1 ${NORMC1_OPTS} -loc ${TGT_LANG}_CA.${ENCODING} $+ 2> log.$(basename $@) \
 	| ${UN_SS_P} \
@@ -273,6 +277,8 @@ SRC_TOKENIZE = ${TOKENIZE} -pretok -paraline -ss -lang=${SRC_LANG}
 %_${SRC_LANG}.tokss${GZ}: SHELL=${CORPUS_SHELL}
 %_${SRC_LANG}.tokss${GZ}: %_${SRC_LANG}${SCX}
 ifndef BIG_CORPUS
+	RP_PSUB_OPTS="-1" \
+	set -o pipefail; \
 	zcat -f $< \
 	| ${TIME_MEM} \
 	${SRC_TOKENIZE} 2> log.$(basename $@) \
@@ -296,22 +302,26 @@ endif
 map: SHELL=${GUARD_SHELL}
 map: ${TRUECASING_MAP}
 
-%.map:  SHELL=${FRAMEWORK_SHELL}
+%.map: SHELL=${FRAMEWORK_SHELL}
 ifdef TC_USE_SRC_MODELS
-%.map:  %.nc1${GZ}
+%.map: %.nc1${GZ}
+	RP_PSUB_OPTS="-1" \
+	set -o pipefail; \
 	zcat -f $< \
 	| ${LOWERCASE} \
 	| ${TIME_MEM} compile_truecase_map $< - 2> log.$@ \
 	> $@
 else
-%.map:  %${TCX}  %${LANGXZ}
+%.map: %${TCX} %${LANGXZ}
+	RP_PSUB_OPTS="-1" \
 	${TIME_MEM} \
 	compile_truecase_map $+ 2> log.$@ \
 	> $@
 endif
 
-%.map.tppt:  SHELL=${FRAMEWORK_SHELL}
+%.map.tppt: SHELL=${FRAMEWORK_SHELL}
 %.map.tppt: %.map
+	RP_PSUB_OPTS="-1" \
 	${TIME_MEM} \
 	vocabMap2tpt.sh $< 2> log.$@
 

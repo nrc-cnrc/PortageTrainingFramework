@@ -298,8 +298,10 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 ALIGN_MODEL_TYPE := -hmm
 %.${IBM1_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 1
 %.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 2
+%.${L1_2_L2}.align.gz:  SHELL=${FRAMEWORK_SHELL}
 %.${L1_2_L2}.align.gz:
 	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
+	set -o pipefail; \
 	time-mem \
 	align-words \
 		-o sri \
@@ -310,7 +312,9 @@ ALIGN_MODEL_TYPE := -hmm
 	| gzip > $@
 
 
+%.${L2_2_L1}.align.gz:  SHELL=${GUARD_SHELL}
 %.${L2_2_L1}.align.gz:  %.${L1_2_L2}.align.gz
+	set -o pipefail; \
 	zcat $< \
 	| perl -ple 's/(\d+)-(\d+)/$$2-$$1/g' \
 	| gzip \
@@ -475,6 +479,7 @@ portageLive:
 %.${RJOINTX}: %.${JOINTX}
 	@_LOCAL=1; echo "Generating $@" >&2
 	RP_PSUB_OPTS="-1 -N $@" \
+	set -o pipefail; \
 	zcat $< \
 	| reverse_joint_phr_tab.py \
 	| TMPDIR=. LC_ALL=C sort \
