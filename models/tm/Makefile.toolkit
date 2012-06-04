@@ -162,11 +162,12 @@ endif
 ########################################
 # FUNCTIONS.
 # Joins two parallel lists of words.
-interleave = $(strip $(subst \, , $(join ${1}, $(addprefix \, ${2}))))
-interleave3 = $(strip $(subst \, , $(join ${1}, $(addprefix \, $(join $2, $(addprefix \, $3))))))
+interleave  = $(strip $(subst , , $(join $1, $(addprefix , $2))))
+interleave3 = $(strip $(subst , , $(join $1, $(addprefix , $(join $2, $(addprefix , $3))))))
+interleave4 = $(strip $(subst , , $(join $1, $(addprefix , $(join $2, $(addprefix , $(join $3, $(addprefix , $4))))))))
 # Make sure we interleave only the corpora and that we exclude the models.
 # filter_interleave list1_extension list2_extension filt-out-model all-files
-filter_interleave = $(call interleave, $(filter ${1}, $(filter-out ${3}, ${4})), $(filter ${2}, $(filter-out ${3}, ${4})))
+filter_interleave = $(call interleave, $(filter $1, $(filter-out $3, $4)), $(filter $2, $(filter-out $3, $4)))
 
 
 
@@ -211,7 +212,7 @@ ${IBM1_MODEL_PFX}.%.gz:
 		${IBM1_MODEL_EXTRAS} \
 		$@ \
 		$(call interleave, $(filter %${L1X}, $+), $(filter %${L2X}, $+)) \
-		>& log.$(basename $@)
+		&> log.${@:.gz=}
 
 
 
@@ -230,7 +231,7 @@ ${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		${IBM2_MODEL_EXTRAS} \
 		$@ \
 		$(call filter_interleave, %${L1X}, %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
-		>& log.$(basename $@)
+		&> log.${@:.gz=}
 
 
 
@@ -249,7 +250,7 @@ ${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		${HMM1_MODEL_EXTRAS} \
 		$@ \
 		$(call filter_interleave, %${L1X}, %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
-		>& log.$(basename $@)
+		&> log.${@:.gz=}
 
 
 
@@ -268,7 +269,7 @@ ${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		${HMM2_MODEL_EXTRAS} \
 		$@ \
 		$(call filter_interleave, %${L1X}, %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
-		>& log.$(basename $@)
+		&> log.${@:.gz=}
 
 
 
@@ -289,7 +290,7 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		${HMM3_MODEL_EXTRAS} \
 		$@ \
 		$(call filter_interleave, %${L1X}, %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
-		>& log.$(basename $@)
+		&> log.${@:.gz=}
 
 
 
@@ -298,6 +299,21 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 ALIGN_MODEL_TYPE := -hmm
 %.${IBM1_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 1
 %.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 2
+
+.PHONY: giza
+giza:  ${TRAIN_TM}.giza.${L1_2_L2}.align.gz
+${TRAIN_TM}.giza.${L1_2_L2}.align.gz:  %.giza.${L1_2_L2}.align.gz:  %/${SRC_LANG}.lc %/${TGT_LANG}.lc  %/${L1_2_L2}.giza.alignment.gz %/${L2_2_L1}.giza.alignment.gz
+
+%.giza.${L1_2_L2}.align.gz:
+	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
+	time-mem \
+	align-words \
+		-o sri \
+		-ibm 0 -giza2 \
+		$(call interleave4, $(filter %${SRC_LANG}.lc,$+), $(filter %${TGT_LANG}.lc,$+), $(filter %${L1_2_L2}.giza.alignment.gz,$+), $(filter %${L2_2_L1}.giza.alignment.gz,$+)) \
+		2> log.${@:.gz=} \
+	| gzip > $@
+
 %.${L1_2_L2}.align.gz:  SHELL=${FRAMEWORK_SHELL}
 %.${L1_2_L2}.align.gz:
 	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
@@ -329,15 +345,16 @@ ALIGN_MODEL_TYPE := -hmm
 # WARNING: % is purposefully not surrounded by dots for zn-adapt.
 ${JPT_MODEL_PFX}.merged%${JOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${JPT_MODEL_PFX}.merged%${JOINTX}:
-	merge_counts $@ $(filter %.${JOINTX}, $+) &> log.$(basename $@)
+	merge_counts $@ $(filter %.${JOINTX}, $+) &> log.${@:.gz=}
 
 ${JPT_MODEL_PFX}.merged%${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${JPT_MODEL_PFX}.merged%${RJOINTX}:
-	merge_counts $@ $(filter %.${RJOINTX}, $+) &> log.$(basename $@)
+	merge_counts $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
 
 
 
 ${JPT_MODEL_PFX}.%.${JOINTX}:  SHELL=${FRAMEWORK_SHELL}
+${JPT_MODEL_PFX}.giza%: JPT_MODEL_TYPE = -ibm 1
 ${JPT_MODEL_PFX}.%.${JOINTX}:
 	RP_PSUB_OPTS="-${JPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
@@ -347,13 +364,13 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 		-o $@ \
 		${GEN_JPT_PARALLEL_OPTIONS} \
 		GPT \
-		-v -m ${M} \
+		-v -m ${M} ${JPT_MODEL_TYPE} \
 		-1 ${lang1} -2 ${lang2} \
 		-ext \
 		${JPT_EXTRAS} \
 		$(filter %${L2_GIVEN_L1X}, $+) $(filter %${L1_GIVEN_L2X}, $+) \
 		$(call interleave3, $(filter %${L1X},$+), $(filter %${L2X},$+), $(filter %.${L1_2_L2}.align.gz,$+)) \
-		>& log.$(basename $@)
+		&> log.${@:.gz=}
 
 
 
@@ -373,7 +390,7 @@ ${SIG_MODEL_PFX}.%.${TRAIN_TM}.${JOINTX}:
 		$(filter %${L1X}, $+) \
 		$(filter %${L2X}, $+) \
 		$@ \
-		&> >(bzip2 > log.$(basename $@).bz2)
+		&> >(bzip2 > log.${@:.gz=}.bz2)
 
 
 # According to Howard: generating a sig for L1 to L2 and then using
@@ -392,7 +409,7 @@ ${SIG_MODEL_PFX}.%.${TRAIN_TM}.${RJOINTX}:
 		$(filter %${L2X}, $+) \
 		$(filter %${L1X}, $+) \
 		$@ \
-		&> >(bzip2 > log.$(basename $@).bz2)
+		&> >(bzip2 > log.${@:.gz=}.bz2)
 
 
 
@@ -419,7 +436,7 @@ ${CPT_MODEL_PFX}%${L1_2_L2X}:
 		-ibm_l1_given_l2  $(filter %${L1_GIVEN_L2X}, $+) \
 		${JOINT2COND_PHRASE_TABLE_OPTION} \
 		$(filter %${JOINTX}, $+) \
-		>& log.$(basename $@)
+		&> log.${@:.gz=}
 
 # Special case to make valid prune1w reversed conditional phrase tables.
 # Requires:
@@ -441,7 +458,113 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 		-ibm_l1_given_l2  $(filter %${L2_GIVEN_L1X}, $+) \
 		${JOINT2COND_PHRASE_TABLE_OPTION} \
 		$(filter %.${RJOINTX}, $+) \
-		>& log.$(basename $@)
+		&> log.${@:.gz=}
+
+
+
+########################################
+# GIZA SPECIFIC TARGETS.
+${TRAIN_TM}/:  %:
+	mkdir -p $@
+
+
+# Clean up the inputs for giza.
+%/${SRC_LANG}.lc:  %_${SRC_LANG}.lc.gz %_${TGT_LANG}.lc.gz  | %/
+	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> log.giza_filter
+
+%/${TGT_LANG}.lc:  %/${SRC_LANG}.lc
+	@true
+
+
+# Create the vocabulary files.
+.PHONY:  vcb
+vcb:  ${TRAIN_TM}/${SRC_LANG}.lc.vcb
+vcb:  ${TRAIN_TM}/${TGT_LANG}.lc.vcb
+%/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %/
+	plain2snt $+
+
+%/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb 
+	@true
+
+%/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb
+	@true
+
+
+# Create the vocabulary classes.
+.PHONY: classes
+classes:  ${TRAIN_TM}/${SRC_LANG}.lc.vcb.classes 
+classes:  ${TRAIN_TM}/${TGT_LANG}.lc.vcb.classes
+%.lc.vcb.classes:  %.lc
+	mkcls -m2 -p$< -c50 -V$@ opt &> $@.log
+
+
+# Create the cooccurrence counts.
+.PHONY: cooc
+cooc:  ${TRAIN_TM}/${L1_2_L2}.cooc
+cooc:  ${TRAIN_TM}/${L2_2_L1}.cooc
+%/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %/
+	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt
+
+%/${L2_2_L1}.cooc:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb | %/
+	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt
+
+
+# Perform word alignment.
+.PHONY: cfg
+cfg:  ${TRAIN_TM}/B.gizacfg
+cfg:  ${TRAIN_TM}/F.gizacfg
+%/B.gizacfg:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes  %/${L1_2_L2}.cooc
+	mgiza \
+		-ncpus 4 \
+		-S $(filter %${SRC_LANG}.lc.vcb,$+) \
+		-T $(filter %${TGT_LANG}.lc.vcb,$+) \
+		-C $*/$(call merge,_,$(notdir $(basename $(filter %.vcb,$+)))).snt \
+		-p0 0.98 \
+		-coocurrencefile $(filter %.cooc,$+) \
+		-outputpath $* \
+		-ml 101 \
+		-o B \
+		&> $@.log
+
+%/F.gizacfg:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb.classes %/${SRC_LANG}.lc.vcb.classes  %/${L2_2_L1}.cooc
+	mgiza \
+		-ncpus 4 \
+		-S $(filter %${TGT_LANG}.lc.vcb,$+) \
+		-T $(filter %${SRC_LANG}.lc.vcb,$+) \
+		-C $*/$(call merge,_,$(notdir $(basename $(filter %.vcb,$+)))).snt \
+		-p0 0.98 \
+		-coocurrencefile $(filter %.cooc,$+) \
+		-outputpath $* \
+		-ml 101 \
+		-o F \
+		&> $@.log
+
+
+#	| perl -ne '$$id=$$_; chomp $$id; $$id=~s/# Sentence pair \(//; $$t=<>; chomp $$t; $$s=<>; chomp $$s; print "$$id$$t$$s\n"' \
+#	| sort -n \
+#	| sed -e 's/^/# Sentence pair (/; s//\n/g'
+.PHONY:  giza_al
+giza_al:  ${TRAIN_TM}/${L1_2_L2}.giza.alignment.gz
+giza_al:  ${TRAIN_TM}/${L2_2_L1}.giza.alignment.gz
+${TRAIN_TM}/${L1_2_L2}.giza.alignment.gz:  ${TRAIN_TM}/B.gizacfg
+${TRAIN_TM}/${L2_2_L1}.giza.alignment.gz:  ${TRAIN_TM}/F.gizacfg
+%.giza.alignment.gz:
+	set -o pipefail; \
+	merge_alignment.py ${<:gizacfg=A3.final.part}* \
+	| gzip > $@
+
+
+# Converts GIZA ttables in a format that portage understands.
+giza.%.${L1_GIVEN_L2X}:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/B.gizacfg
+	set -o pipefail; \
+	giza_convert_ttable.pl $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
+	| gzip > $@
+
+giza.%.${L2_GIVEN_L1X}:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/F.gizacfg
+	set -o pipefail; \
+	giza_convert_ttable.pl $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
+	| gzip > $@
+
 
 
 

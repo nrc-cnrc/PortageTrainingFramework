@@ -49,10 +49,10 @@ CORPORA_DIR ?= ../../corpora
 TRAIN_TM ?= train
 
 # This script might produce directory and we want to easily remove them.
-RM = rm -rf
+RM := rm -rf
 
 # After this Makefile, the following targets/files are precious.
-FILES_TO_BE_LOCKED = ibm* hmm* jpt* cpt*
+FILES_TO_BE_LOCKED = ibm* hmm* jpt* cpt* giza*
 
 
 
@@ -228,6 +228,14 @@ $(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
    $(eval \
 		${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
 )
+
+JPT_GIZA_MODEL_PFX ?= ${JPT_MODEL_PFX}.giza
+giza_jpt:  ${JPT_GIZA_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
+${JPT_GIZA_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  override L1X = ${SRC_LANG}.lc
+${JPT_GIZA_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  override L2X = ${TGT_LANG}.lc
+${JPT_GIZA_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  giza.${TRAIN_TM}.${L2_GIVEN_L1X}  giza.${TRAIN_TM}.${L1_GIVEN_L2X}
+${JPT_GIZA_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}.giza.${L1_2_L2}.align.gz
+${JPT_GIZA_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}/${SRC_LANG}.lc ${TRAIN_TM}/${TGT_LANG}.lc
 
 # EXAMPLE of the resulting code generated previously:
 #JPT_HMM3_MODEL_PFX ?= ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}
@@ -419,6 +427,18 @@ ${SIG_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
 
 ########################################
+clean.content: clean.giza
+
+.PHONY: clean.giza
+clean.giza: SHELL=${GUARD_SHELL}
+clean.giza:
+	${RM} giza.*
+	${RM} ${TRAIN_TM}
+
+
+
+
+########################################
 # Let's do some validation when the user wants a merged_cpt.
 ifeq ($(filter merged_cpt, ${PT_TYPES}),merged_cpt)
 # Make sure there is only one MERGED_CPT_ZN_MODEL.
@@ -502,4 +522,5 @@ sigprune:  export USE_SIGPRUNING = 1
 sigprune:
 	${MAKE} clean.cpts
 	${MAKE} all
+
 
