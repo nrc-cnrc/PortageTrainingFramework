@@ -301,8 +301,8 @@ ALIGN_MODEL_TYPE := -hmm
 %.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 2
 
 .PHONY: giza
-giza:  ${TRAIN_TM}.giza.${L1_2_L2}.align.gz
-${TRAIN_TM}.giza.${L1_2_L2}.align.gz:  %.giza.${L1_2_L2}.align.gz:  %/${SRC_LANG}.lc %/${TGT_LANG}.lc  %/${L1_2_L2}.giza.alignment.gz %/${L2_2_L1}.giza.alignment.gz
+giza:  $(addsuffix, .giza.${L1_2_L2}.align.gz, ${TRAIN_TM})
+$(addsuffix, .giza.${L1_2_L2}.align.gz, ${TRAIN_TM}):  %.giza.${L1_2_L2}.align.gz:  %/${SRC_LANG}.lc %/${TGT_LANG}.lc  %/${L1_2_L2}.giza.alignment.gz %/${L2_2_L1}.giza.alignment.gz
 
 %.giza.${L1_2_L2}.align.gz:
 	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
@@ -376,8 +376,8 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 
 ########################################
 # SIGNIFICANCE PRUNING
-${SIG_MODEL_PFX}.%.${TRAIN_TM}.${JOINTX}: SHELL=${FRAMEWORK_SHELL}
-${SIG_MODEL_PFX}.%.${TRAIN_TM}.${JOINTX}:
+${SIG_MODEL_PFX}.%.${JOINTX}: SHELL=${FRAMEWORK_SHELL}
+${SIG_MODEL_PFX}.%.${JOINTX}:
 	RP_PSUB_OPTS="-${SIG_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
 	sigprune.sh \
@@ -395,8 +395,8 @@ ${SIG_MODEL_PFX}.%.${TRAIN_TM}.${JOINTX}:
 
 # According to Howard: generating a sig for L1 to L2 and then using
 # reverse_joint_phr_tab.py to produce a sig for L2 to L1 is valide.
-${SIG_MODEL_PFX}.%.${TRAIN_TM}.${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
-${SIG_MODEL_PFX}.%.${TRAIN_TM}.${RJOINTX}:
+${SIG_MODEL_PFX}.%.${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
+${SIG_MODEL_PFX}.%.${RJOINTX}:
 	RP_PSUB_OPTS="-${SIG_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
 	sigprune.sh \
@@ -464,7 +464,7 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 
 ########################################
 # GIZA SPECIFIC TARGETS.
-${TRAIN_TM}/:  %:
+$(addsuffix /,${TRAIN_TM}):  %:
 	mkdir -p $@
 
 
@@ -478,8 +478,8 @@ ${TRAIN_TM}/:  %:
 
 # Create the vocabulary files.
 .PHONY:  vcb
-vcb:  ${TRAIN_TM}/${SRC_LANG}.lc.vcb
-vcb:  ${TRAIN_TM}/${TGT_LANG}.lc.vcb
+vcb:  $(addsuffix /${SRC_LANG}.lc.vcb, ${TRAIN_TM})
+vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${TRAIN_TM})
 %/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %/
 	plain2snt $+
 
@@ -492,16 +492,16 @@ vcb:  ${TRAIN_TM}/${TGT_LANG}.lc.vcb
 
 # Create the vocabulary classes.
 .PHONY: classes
-classes:  ${TRAIN_TM}/${SRC_LANG}.lc.vcb.classes 
-classes:  ${TRAIN_TM}/${TGT_LANG}.lc.vcb.classes
+classes:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${TRAIN_TM})
+classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${TRAIN_TM})
 %.lc.vcb.classes:  %.lc
 	mkcls -m2 -p$< -c50 -V$@ opt &> $@.log
 
 
 # Create the cooccurrence counts.
 .PHONY: cooc
-cooc:  ${TRAIN_TM}/${L1_2_L2}.cooc
-cooc:  ${TRAIN_TM}/${L2_2_L1}.cooc
+cooc:  $(addsuffix /${L1_2_L2}.cooc, ${TRAIN_TM})
+cooc:  $(addsuffix /${L2_2_L1}.cooc, ${TRAIN_TM})
 %/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %/
 	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt
 
@@ -511,8 +511,8 @@ cooc:  ${TRAIN_TM}/${L2_2_L1}.cooc
 
 # Perform word alignment.
 .PHONY: cfg
-cfg:  ${TRAIN_TM}/B.gizacfg
-cfg:  ${TRAIN_TM}/F.gizacfg
+cfg:  $(addsuffix /B.gizacfg, ${TRAIN_TM})
+cfg:  $(addsuffix /F.gizacfg, ${TRAIN_TM})
 %/B.gizacfg:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes  %/${L1_2_L2}.cooc
 	mgiza \
 		-ncpus 4 \
@@ -544,10 +544,10 @@ cfg:  ${TRAIN_TM}/F.gizacfg
 #	| sort -n \
 #	| sed -e 's/^/# Sentence pair (/; s//\n/g'
 .PHONY:  giza_al
-giza_al:  ${TRAIN_TM}/${L1_2_L2}.giza.alignment.gz
-giza_al:  ${TRAIN_TM}/${L2_2_L1}.giza.alignment.gz
-${TRAIN_TM}/${L1_2_L2}.giza.alignment.gz:  ${TRAIN_TM}/B.gizacfg
-${TRAIN_TM}/${L2_2_L1}.giza.alignment.gz:  ${TRAIN_TM}/F.gizacfg
+giza_al:  $(addsuffix /${L1_2_L2}.giza.alignment.gz, ${TRAIN_TM})
+giza_al:  $(addsuffix /${L2_2_L1}.giza.alignment.gz, ${TRAIN_TM})
+$(addsuffix /${L1_2_L2}.giza.alignment.gz, ${TRAIN_TM}):  %/${L1_2_L2}.giza.alignment.gz:  %/B.gizacfg
+$(addsuffix /${L2_2_L1}.giza.alignment.gz, ${TRAIN_TM}):  %/${L2_2_L1}.giza.alignment.gz:  %/F.gizacfg
 %.giza.alignment.gz:
 	set -o pipefail; \
 	merge_alignment.py ${<:gizacfg=A3.final.part}* \

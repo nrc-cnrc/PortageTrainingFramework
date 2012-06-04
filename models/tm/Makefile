@@ -146,13 +146,15 @@ $(foreach m, $(filter-out ${IBM1_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}),
 
 # the meta target for word alignment model depends on word alignment model files.
 # both forward and backward word alignment models require source and target corpora.
-$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-   $(eval \
-		$(call lc, ${m})_model:  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}) \
-   $(eval \
-		${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
-   $(eval \
-		${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
+$(foreach c, ${TRAIN_TM}, \
+	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+		$(eval \
+			$(call lc, ${m})_model:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+		$(eval \
+			${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}:  $c${L1X} $c${L2X}) \
+		$(eval \
+			${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}:  $c${L1X} $c${L2X}) \
+	) \
 )
 
 ########################################
@@ -179,13 +181,15 @@ clean.alignment_files:
 alignment_files:  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 
-$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-   $(eval \
-		$(call lc, $m)_alignment:  ${TRAIN_TM}.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
-   $(eval \
-		${TRAIN_TM}.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
-   $(eval \
-		${TRAIN_TM}.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}) \
+$(foreach c, ${TRAIN_TM}, \
+	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+		$(eval \
+			$(call lc, $m)_alignment:  $c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
+		$(eval \
+			$c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  $c${L1X} $c${L2X}) \
+		$(eval \
+			$c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+	) \
 )
 
 #${TRAIN_TM}.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
@@ -214,28 +218,36 @@ jpts: $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 # Defining a variable to hold the jpt file's prefix.
 # jpts requires the word alignment models in both directions.
 # jpts requires the source and target corpora.
-$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-   $(eval \
-	   JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
-   $(eval \
-	   $(call lc, ${m})_jpt:  $(call lc, ${m})_model) \
-   $(eval \
-	   $(call lc, ${m})_jpt:  ${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}) \
-   $(eval \
-		${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}) \
-   $(eval \
-		${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
-   $(eval \
-		${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
+$(foreach c, ${TRAIN_TM}, \
+	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+		$(eval \
+			JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
+		$(eval \
+			$(call lc, ${m})_jpt:  $(call lc, ${m})_model) \
+		$(eval \
+			$(call lc, ${m})_jpt:  ${JPT_${m}_MODEL_PFX}.$c.${JOINTX}) \
+		$(eval \
+			${JPT_${m}_MODEL_PFX}.$c.${JOINTX}:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+		$(eval \
+			${JPT_${m}_MODEL_PFX}.$c.${JOINTX}:  $c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
+		$(eval \
+			${JPT_${m}_MODEL_PFX}.$c.${JOINTX}:  $c${L1X} $c${L2X}) \
+	) \
 )
 
 JPT_GIZA_MODEL_PFX ?= ${JPT_MODEL_PFX}.giza
-giza_jpt:  ${JPT_GIZA_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
-${JPT_GIZA_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  override L1X = ${SRC_LANG}.lc
-${JPT_GIZA_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  override L2X = ${TGT_LANG}.lc
-${JPT_GIZA_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  giza.${TRAIN_TM}.${L2_GIVEN_L1X}  giza.${TRAIN_TM}.${L1_GIVEN_L2X}
-${JPT_GIZA_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}.giza.${L1_2_L2}.align.gz
-${JPT_GIZA_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}/${SRC_LANG}.lc ${TRAIN_TM}/${TGT_LANG}.lc
+${JPT_GIZA_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
+${JPT_GIZA_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
+$(foreach c, ${TRAIN_TM}, \
+	$(eval \
+		giza_jpt:  ${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}) \
+	$(eval \
+		${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}:  giza.$c.${L2_GIVEN_L1X}  giza.$c.${L1_GIVEN_L2X}) \
+	$(eval \
+		${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}:  $c.giza.${L1_2_L2}.align.gz) \
+	$(eval \
+		${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
+)
 
 # EXAMPLE of the resulting code generated previously:
 #JPT_HMM3_MODEL_PFX ?= ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}
@@ -268,24 +280,28 @@ sigs: $(addsuffix _sig, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 # To create a sigpruned jpt we need the source and target corpora.
 # source language to target language
 # m stands for model type
-$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-   $(eval \
-	   $(call lc, ${m})_sig: $(call lc, ${m})_jpt) \
-   $(eval \
-	   $(call lc, ${m})_sig: ${SIG_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}) \
-   $(eval \
-		${SIG_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}) \
-   $(eval \
-		${SIG_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
+$(foreach c, ${TRAIN_TM}, \
+	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+		$(eval \
+			$(call lc, ${m})_sig: $(call lc, ${m})_jpt) \
+		$(eval \
+			$(call lc, ${m})_sig: ${SIG_${m}_MODEL_PFX}.$c.${JOINTX}) \
+		$(eval \
+			${SIG_${m}_MODEL_PFX}.$c.${JOINTX}:  ${JPT_${m}_MODEL_PFX}.$c.${JOINTX}) \
+		$(eval \
+			${SIG_${m}_MODEL_PFX}.$c.${JOINTX}:  $c${L1X} $c${L2X}) \
+	) \
 )
 
 
 # target language to source language
-$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-   $(eval \
-		${SIG_${m}_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}:  ${JPT_${m}_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}) \
-   $(eval \
-		${SIG_${m}_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}) \
+$(foreach c, ${TRAIN_TM}, \
+	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+		$(eval \
+			${SIG_${m}_MODEL_PFX}.$c.${RJOINTX}:  ${JPT_${m}_MODEL_PFX}.$c.${RJOINTX}) \
+		$(eval \
+			${SIG_${m}_MODEL_PFX}.$c.${RJOINTX}:  $c${L1X} $c${L2X}) \
+	) \
 )
 
 
@@ -329,13 +345,15 @@ HMM3_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${HMM3_MODEL_PFX}${HMM3_SMOOTHERS_DESCRIPTIO
 # Create a variable to hold the conditional phrase table file's name e.i. hmm1_cpt_list.
 # Create meta-level dependencies between cpts and their jpts or sigs.
 # Create a meta-level target to generate cpts.
-$(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
-   $(eval \
-		${m}_cpt_list = ${$(call uc, ${m})_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}) \
-   $(eval \
-		${m}_cpt: ${m}_$(call lc, ${CPT_DEP_TAG})) \
-   $(eval \
-		${m}_cpt: ${${m}_cpt_list}) \
+$(foreach c, ${TRAIN_TM}, \
+	$(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
+		$(eval \
+			${m}_cpt_list = ${$(call uc, ${m})_CPT_PREFIX}.$c.${L1_2_L2X}) \
+		$(eval \
+			${m}_cpt: ${m}_$(call lc, ${CPT_DEP_TAG})) \
+		$(eval \
+			${m}_cpt: ${${m}_cpt_list}) \
+	) \
 )
 
 # Let's have a target to print out the variables that contain the conditional phrase table file's name.
@@ -345,22 +363,26 @@ $(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
 # Creates dependencies for reversed Conditional Phrase Tables.
 # Conditional Phrase Tables depend on a word alignment model for Zens-Ney's smoother.
 # Conditional Phrase Tables depend on a joint frequency phrase table which can be raw or significance pruned (CPT_DEP_TAG).
-$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-   $(eval \
-		${${m}_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}) \
-   $(eval \
-		${${m}_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${${CPT_DEP_TAG}_${m}_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}) \
+$(foreach c, ${TRAIN_TM}, \
+	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+		$(eval \
+			${${m}_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+		$(eval \
+			${${m}_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${CPT_DEP_TAG}_${m}_MODEL_PFX}.$c.${RJOINTX}) \
+	) \
 )
 
 # Creates dependencies for Conditional Phrase Tables.
 # Conditional Phrase Tables depend on a word alignment model for Zens-Ney's smoother.
 # Conditional Phrase Tables depend on a jpt which can be raw or significance pruned (CPT_DEP_TAG).
 # NOTE: CPT_DEP_TAG is either JPT or SIG
-$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-   $(eval \
-		${${m}_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${${m}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}) \
-   $(eval \
-		${${m}_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${${CPT_DEP_TAG}_${m}_MODEL_PFX}.${TRAIN_TM}.${JOINTX}) \
+$(foreach c, ${TRAIN_TM}, \
+	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+		$(eval \
+			${${m}_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+		$(eval \
+			${${m}_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${CPT_DEP_TAG}_${m}_MODEL_PFX}.$c.${JOINTX}) \
+	) \
 )
 
 # EXAMPLE of the resulting code generated previously:
@@ -393,7 +415,7 @@ ${CPT_MODEL_PFX}.merged.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
 ${CPT_MODEL_PFX}.merged.hmm%: WORD_MODEL_TYPE=-hmm
 
 # Let's define what are the merged cpt file names.
-merged_cpt_list = ${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}
+merged_cpt_list = $(foreach c, ${TRAIN_TM}, ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X})
 
 # Meta target that will create the merged conditional phrase tables.
 merged_cpt: ${merged_cpt_list}
@@ -404,26 +426,40 @@ JPT_MERGED_PFX := ${JPT_MODEL_PFX}.merged
 
 # Merged conditional phrase tables depends on a word model alignment for Zens-Ney's smoother.
 # Merged conditional phrase tables depends on either a merged jpt (normal scenario) or a merged sig (when using significance pruning).
-${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${${CPT_DEP_TAG}_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}
-
-${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-${MERGED_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${${CPT_DEP_TAG}_MERGED_PFX}.${TRAIN_TM}.${JOINTX}
+$(foreach c, ${TRAIN_TM}, \
+	$(eval \
+		${MERGED_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+	$(eval \
+		${MERGED_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${CPT_DEP_TAG}_MERGED_PFX}.$c.${RJOINTX}) \
+	$(eval \
+		${MERGED_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+	$(eval \
+		${MERGED_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${CPT_DEP_TAG}_MERGED_PFX}.$c.${JOINTX}) \
+)
 
 
 # A merged jpt depends on user define type of joint frequency count file.
-.INTERMEDIATE: ${JPT_MERGED_PFX}.${TRAIN_TM}.${RJOINTX} ${JPT_MERGED_PFX}.${TRAIN_TM}.${JOINTX}
-${JPT_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}:  $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.${TRAIN_TM}.${RJOINTX})
-${JPT_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:   $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.${TRAIN_TM}.${JOINTX})
+.INTERMEDIATE: $(foreach c, ${TRAIN_TM}, ${JPT_MERGED_PFX}.$c.${RJOINTX} ${JPT_MERGED_PFX}.$c.${JOINTX})
+$(foreach c, ${TRAIN_TM}, \
+	$(eval \
+		${JPT_MERGED_PFX}.$c.${RJOINTX}:  $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.$c.${RJOINTX})) \
+	$(eval \
+		${JPT_MERGED_PFX}.$c.${JOINTX}:   $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.$c.${JOINTX})) \
+)
 
 
 # Significance pruning model depends on a "raw" joint frequency count file.
 # Significance pruning model depends on the source and target corpora.
-${SIG_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}:  ${JPT_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}
-${SIG_MERGED_PFX}.${TRAIN_TM}.${RJOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-
-${SIG_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:  ${JPT_MERGED_PFX}.${TRAIN_TM}.${JOINTX}
-${SIG_MERGED_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+$(foreach c, ${TRAIN_TM}, \
+	$(eval \
+		${SIG_MERGED_PFX}.$c.${RJOINTX}:  ${JPT_MERGED_PFX}.$c.${RJOINTX}) \
+	$(eval \
+		${SIG_MERGED_PFX}.$c.${RJOINTX}:  $c${L1X} $c${L2X}) \
+	$(eval \
+		${SIG_MERGED_PFX}.$c.${JOINTX}:  ${JPT_MERGED_PFX}.$c.${JOINTX}) \
+	$(eval \
+		${SIG_MERGED_PFX}.$c.${JOINTX}:  $c${L1X} $c${L2X}) \
+)
 
 
 ########################################
