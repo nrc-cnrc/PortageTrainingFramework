@@ -267,7 +267,7 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 		--workdir=foos \
 		${MERT_EXTRAS} \
 		-f $<.FILT $(wordlist 2,3,$+) \
-		>& log.$@
+		&> log.$@
 	_LOCAL=1 configtool -p args:"`configtool weights $@.FILT`" $< > $@
 	_LOCAL=1 ${RM} -r foos *.FILT.gz *.FILT.bkoff ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
 
