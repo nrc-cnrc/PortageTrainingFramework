@@ -37,7 +37,7 @@ else
 LOWERCASE ?= lc-utf8.pl
 endif
 
-UTF8 = $(if $(findstring Darwin, ${OSTYPE}),UTF-8,utf8)
+UTF8 := $(if $(findstring Darwin, ${OSTYPE}),UTF-8,utf8)
 export LC_ALL = en_CA.${UTF8}
 
 
@@ -47,28 +47,22 @@ ALIGN_CORPORA_DIR ?= .
 # If we have untokenized corpora, this is where we would find them.
 RAW_CORPORA_DIR ?= .
 
-# Let's allow for different tokenizer for source or target.
-# What tokenizer should we use for the source side.
-ifdef TOKENIZER_${SRC_LANG}
-SRC_TOKENIZER = ${TOKENIZER_${SRC_LANG}}
+# Let's allow for different tokenizer based on language.
+TOKENIZER_en ?= utokenize.pl -noss -lang=en
+TOKENIZER_fr ?= utokenize.pl -noss -lang=fr
+ifdef USE_ICTCLAS
+#TOKENIZER_ch ?= ictclas_run.sh 
+TOKENIZER_ch := { set -o pipefail; iconv -c -f UTF-8 -t CN-GB \
+                | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl \
+                | iconv -c -f CN-GB -t UTF-8; }
 else
-ifeq (${SRC_LANG},ch)
-SRC_TOKENIZER = { iconv -c -f UTF-8 -t CN-GB | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl | iconv -c -f CN-GB -t UTF-8; }
-else
-SRC_TOKENIZER = utokenize.pl -noss -lang=${SRC_LANG}
-endif
+TOKENIZER_ch ?= chinese_segmenter.pl
 endif
 
-# What tokenizer should we use for the target side.
-ifdef TOKENIZER_${TGT_LANG}
-TGT_TOKENIZER = ${TOKENIZER_${TGT_LANG}}
-else
-ifeq (${TGT_LANG},ch)
-TGT_TOKENIZER = { iconv -c -f UTF-8 -t CN-GB | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl | iconv -c -f CN-GB -t UTF-8; }
-else
-TGT_TOKENIZER = utokenize.pl -noss -lang=${TGT_LANG}
-endif
-endif
+# Language specific set of command to mark source devs/tests.
+MARK_RULE_en ?= canoe-escapes.pl -add
+MARK_RULE_fr ?= canoe-escapes.pl -add
+MARK_RULE_ch ?= { chinese_rule_markup.pl | chinese_rule_create.pl; }
 
 
 # We want a minimum of 100,000 lines per jobs that parallelize.pl creates.
@@ -137,8 +131,7 @@ list_final_output:
 
 # Arrange to run recipes for processing small files using a local shell;
 # otherwise use the FRAMEWORK_SHELL with one CPU for the job.
-SMALL_SETS := ${TUNE_DECODE} $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}) \
-              ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET}
+SMALL_SETS := ${HELDOUT_SET}
 IS_SMALL_SET = $(findstring $(basename $@), $(addsuffix _${SRC_LANG}, ${SMALL_SETS}) \
                                             $(addsuffix _${TGT_LANG}, ${SMALL_SETS}))
 
@@ -164,7 +157,7 @@ ${SRC_TOK_LIST}: SHELL=${CORPUS_SHELL}
 ${SRC_TOK_LIST}: %${ALIGNX}: %${RAWX}
 	@${check_utf8}
 	${RP_SHELL_OPTS} ${TIME_MEM} \
-	${SRC_TOKENIZER} < $< > $@ ${LOG_STDERR}
+	${TOKENIZER_${SRC_LANG}} < $< > $@ ${LOG_STDERR}
 
 
 ## Tokenize target corpora without sentence splitting.
@@ -176,7 +169,7 @@ ${TGT_TOK_LIST}: SHELL=${CORPUS_SHELL}
 ${TGT_TOK_LIST}: %${ALIGNX}: %${RAWX}
 	@${check_utf8}
 	${RP_SHELL_OPTS} ${TIME_MEM} \
-	${TGT_TOKENIZER} < $< > $@ ${LOG_STDERR}
+	${TOKENIZER_${TGT_LANG}} < $< > $@ ${LOG_STDERR}
 
 
 ## Compress the source/language corpora if needed.
@@ -200,7 +193,7 @@ ${SRC_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
 		-psub -1 \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
 		-n ${PARALLELISM_LEVEL_CORPORA} \
-		"${SRC_TOKENIZER} < $< > $@" ${LOG_STDERR}
+		"${TOKENIZER_${SRC_LANG}} < $< > $@" ${LOG_STDERR}
 
 
 ## HOW to handle big target language corpora.
@@ -216,7 +209,7 @@ ${TGT_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
 		-psub -1 \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
 		-n ${PARALLELISM_LEVEL_CORPORA} \
-		"${TGT_TOKENIZER} < $< > $@" ${LOG_STDERR}
+		"${TOKENIZER_${TGT_LANG}} < $< > $@" ${LOG_STDERR}
 
 
 TM_TOK    ?= $(foreach t, ${TRAIN_TM}, $(filter $t%, ${TOK}))
@@ -317,7 +310,7 @@ rule: ${RULE}
 %${RULEX}: %_${SRC_LANG}${LANGX}
 	@$(check_utf8)
 	${RP_SHELL_OPTS} ${TIME_MEM} \
-	canoe-escapes.pl -add $< > $@ ${LOG_STDERR}
+	${MARK_RULE_${SRC_LANG}} < $< > $@ ${LOG_STDERR}
 
 
 

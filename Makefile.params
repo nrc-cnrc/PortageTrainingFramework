@@ -18,9 +18,9 @@ endif
 # User definable variables
 
 # This is the from/source language (must be two lowercase letters)
-SRC_LANG ?= en
+SRC_LANG := en
 # This is the to/target language (must be two lowercase letters)
-TGT_LANG ?= fr
+TGT_LANG := fr
 
 # Here we specify the stem of the corpora files.
 # Files should look like this: <PREFIX>_<LANGUAGE>.al
@@ -28,41 +28,41 @@ TGT_LANG ?= fr
 # Warning: only TEST_SET may contain more than one <PREFIX>.
 
 # TRAIN_LM is used to create a language model.
-TRAIN_LM      ?= lm-train
+TRAIN_LM      := lm-train
 
 # TRAIN_TC is used to create a truecasing model.
 # By default, we reuse TRAIN_LM thus if you do not uncomment and define it
-# => TRAIN_TC = TRAIN_LM
+# => TRAIN_TC := TRAIN_LM
 #TRAIN_TC := tc-train
 
 # MIXLM is used to create a mixture language model which itself is composed of
 # several other language models.
-#MIXLM         ?= sublm1 sublm2 sublm3
+#MIXLM         := sublm1 sublm2 sublm3
 
 # TRAIN_TM is used to create the translation table.
-TRAIN_TM      ?= tm-train
+TRAIN_TM      := tm-train
 # TUNE_DECODE is used to train cow.
-TUNE_DECODE   ?= dev1
+TUNE_DECODE   := dev1
 # TUNE_DECODE_VARIANTS is used to tune and test using multiple tuning sets.
 # Typically, each variant is a 90% sample subset of the of the TUNE_DECODE set.
 # Ex. If TUNE_DECODE is dev1, include "a b" in TUNE_DECODE_VARIANTS to train 
 #     cow with dev1a and dev1b in addition to dev1.
-#TUNE_DECODE_VARIANTS  ?=
+#TUNE_DECODE_VARIANTS  :=
 # TUNE_RESCORE is used to train rat.
-#TUNE_RESCORE  ?= dev2
+#TUNE_RESCORE  := dev2
 # TUNE_CE is used to train confidence estimation.
 # Note: it's OK for TUNE_DECODE and TUNE_RESCORE to be the same file, but
 # TUNE_CE must be completely distinct, not only from all training data, but
 # also from all other tuning data.
-#TUNE_CE       ?= dev3
+#TUNE_CE       := dev3
 # TEST_SET are used to estimate the quality of the system.
-TEST_SET      ?= test1 test2
+TEST_SET      := test1 test2
 # Uncomment if you have source text, that doesn't have a reference, to translate.
-#TRANSLATE_SET ?=
+#TRANSLATE_SET :=
 
 # The prefix_root where we can find IRSTLM/bin, which must also be on your
 # PATH.  (Only need if you are using IRSTLM - see next variable.)
-IRSTLM ?= $(PORTAGE)/pkgs/irstlm
+IRSTLM := $(PORTAGE)/pkgs/irstlm
 
 # Change LM_TOOLKIT's value depending on the available lm toolkit that you
 # have.  If you use SRILM or MITLM, their executable scripts and programs
@@ -71,30 +71,30 @@ IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 # where SRI  => SRILM's toolkit
 #       IRST => IRSTLM's toolkit
 #       MIT  => MITLM's toolkit
-LM_TOOLKIT = MIT
+LM_TOOLKIT := MIT
 
 # Train and apply rescoring if this variable is defined.
 # Comment out to disable rescoring; uncomment to enable.
 # Expensive!  Use only if the last small BLEU increment is important to you.
-#DO_RESCORING = 1
+#DO_RESCORING := 1
 
 # Tune and apply confidence estimation if this variable is defined.
 # Comment out to disable confidence estimation; uncomment to enable.
-#DO_CE = 1
+#DO_CE := 1
 
 # Train and use a Lexicalized Distortion Model (LDM).
 # Comment out to disable using an LDM; uncomment to enable.
 # Expensive!  Use only if you know it's worthwhile.
-#USE_LDM = 1
+#USE_LDM := 1
 
 # Train and use a Hierarchical Lexicalized Distortion Model (HLDM).
 # Comment out to disable using an HLDM; uncomment to enable.
 # Expensive!  Use only if you know it's worthwhile.
-#USE_HLDM = 1
+#USE_HLDM := 1
 
 # Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
-DO_TRUECASING = 1
+DO_TRUECASING := 1
 
 # Let say you have your own (de)tokenizer and you want to use it.  Define the
 # following variables to your pgm and its arguments.  Note that the variable
@@ -102,43 +102,52 @@ DO_TRUECASING = 1
 # if you do spanish you could define TOKENIZER_es.  More generally,
 # {DE|}TOKENIZER_{${SRC_LANG}|${TGT_LANG}}.
 # Defining what tokenizers we want to use.
-#TOKENIZER_en = opennlp TokenizerME /modeldir/en-model.bin
-#TOKENIZER_fr = utokenize.pl -noss -lang=fr
-#TOKENIZER_ch = { iconv -c -f UTF-8 -t CN-GB | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl | iconv -c -f CN-GB -t UTF-8; }
+#TOKENIZER_en := opennlp TokenizerME /modeldir/en-model.bin
+#TOKENIZER_fr := utokenize.pl -noss -lang=fr
+#TOKENIZER_ch := { set -o pipefail; iconv -c -f UTF-8 -t CN-GB | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl | iconv -c -f CN-GB -t UTF-8; }
 # Defining what detokenizers we want to use.
-#DETOKENIZER_en = opennlp DetokenizerME /modeldir/en-model.bin
-#DETOKENIZER_fr = udetokenizer.pl -lang=fr
+#DETOKENIZER_en := opennlp DetokenizerME /modeldir/en-model.bin
+#DETOKENIZER_fr := udetokenizer.pl -lang=fr
+
+# If you have ictclas installed and want to use it, uncomment to enable
+# ictclas.
+# USE_ICTCLAS := 1
+
+# Language specific set of command to mark source devs/tests.
+#MARK_RULE_en := canoe-escapes.pl -add
+#MARK_RULE_fr := canoe-escapes.pl -add
+#MARK_RULE_ch := { chinese_rule_markup.pl | chinese_rule_create.pl; }
 
 # If you are on a cluster that is run-parallel.sh friendly, define the
 # following to force cluster mode.  You normally don't need to do so, though,
 # since clusters are detected automatically below.
-#USING_CLUSTER = 1
+#USING_CLUSTER := 1
 
 # If you are on a cluster but you want to force single computer mode,
 # uncomment the following line:
-#NOCLUSTER = 1
+#NOCLUSTER := 1
 
 # Automatically detects if we are on a cluster.
 ifeq ($(strip $(shell which-test.sh qsub && echo "true")),true)
    USING_CLUSTER ?= 1
 endif
 ifdef NOCLUSTER
-   USING_CLUSTER =
+   USING_CLUSTER :=
 endif
 
-OSTYPE = $(shell uname -s)
+OSTYPE := $(shell uname -s)
 
 ifdef USING_CLUSTER
-PARALLELISM_LEVEL_CORPORA ?= 10
-PARALLELISM_LEVEL_LM ?= 5
-PARALLELISM_LEVEL_LDM ?= 30
-PARALLELISM_LEVEL_TM ?= 5
-PARALLELISM_LEVEL_TUNE_DECODE  ?= 10
-PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
-PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= 10
+PARALLELISM_LEVEL_CORPORA := 10
+PARALLELISM_LEVEL_LM := 5
+PARALLELISM_LEVEL_LDM := 30
+PARALLELISM_LEVEL_TM := 5
+PARALLELISM_LEVEL_TUNE_DECODE  := 10
+PARALLELISM_LEVEL_TUNE_RESCORE := 10
+PARALLELISM_LEVEL_TUNE_CONFIDENCE := 10
 # Be careful not to over-parallelize for translation if models take long to load, especially if translating many test files.
 # One can run canoe-timing-stats.pl on the resulting logs to help assess.
-PARALLELISM_LEVEL_TRANSLATE    ?= 1
+PARALLELISM_LEVEL_TRANSLATE    := 1
 ifeq (${MAKELEVEL},0)
    $(info Running in cluster mode.)
 endif
@@ -151,16 +160,16 @@ NCPUS := $(shell test -n "$$OMP_NUM_THREADS" && echo $$OMP_NUM_THREADS || grep p
 else
 NCPUS := $(shell test -n "$$OMP_NUM_THREADS" && echo $$OMP_NUM_THREADS || sysctl -n hw.ncpu)
 endif
-PARALLELISM_LEVEL_CORPORA ?= ${NCPUS}
-PARALLELISM_LEVEL_LM ?= ${NCPUS}
-PARALLELISM_LEVEL_LDM ?= ${NCPUS}
-PARALLELISM_LEVEL_TM ?= ${NCPUS}
-PARALLELISM_LEVEL_TUNE_DECODE  ?= ${NCPUS}
-PARALLELISM_LEVEL_TUNE_RESCORE ?= ${NCPUS}
-PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= ${NCPUS}
+PARALLELISM_LEVEL_CORPORA := ${NCPUS}
+PARALLELISM_LEVEL_LM := ${NCPUS}
+PARALLELISM_LEVEL_LDM := ${NCPUS}
+PARALLELISM_LEVEL_TM := ${NCPUS}
+PARALLELISM_LEVEL_TUNE_DECODE  := ${NCPUS}
+PARALLELISM_LEVEL_TUNE_RESCORE := ${NCPUS}
+PARALLELISM_LEVEL_TUNE_CONFIDENCE := ${NCPUS}
 # Be careful not to over-parallelize for translation if models take long to load, especially if translating many test files.
 # One can run canoe-timing-stats.pl on the resulting logs to help assess.
-PARALLELISM_LEVEL_TRANSLATE    ?= 1
+PARALLELISM_LEVEL_TRANSLATE    := 1
 # Disable CLUSTER mode in all of Portage's software.
 export PORTAGE_NOCLUSTER=1
 ifeq (${MAKELEVEL},0)
@@ -186,22 +195,22 @@ TUNE_CE := $(strip ${TUNE_CE})
 # Advanced configuration variables
 
 # Compress extension.
-GZ ?= .gz
+GZ := .gz
 
 # Raw file's extension.
-ALIGNX ?= .al
+ALIGNX := .al
 
 # Extension for rule files which must also be source file.
-RULEX ?= _${SRC_LANG}.rule
+RULEX := _${SRC_LANG}.rule
 
 # Language extension for phrase table corpora.
 # Extension for corpora.
-LANGX  ?= .lc
+LANGX  := .lc
 # Extension for compressed corpora.
-LANGXZ ?= ${LANGX}${GZ}
+LANGXZ := ${LANGX}${GZ}
 
 # Language pair for this system.
-LANGS ?= ${SRC_LANG} ${TGT_LANG}
+LANGS := ${SRC_LANG} ${TGT_LANG}
 
 # By default will assume that the user wants to use the first corpora to build
 # the truecasing models.
@@ -209,10 +218,10 @@ TRAIN_TC ?= $(firstword ${TRAIN_LM})
 TRAIN_TC := $(strip ${TRAIN_TC})
 
 # Define the corpora.
-TRAIN_SET    ?= $(sort ${TRAIN_LM} ${TRAIN_TM} ${TRAIN_TC})
-HELDOUT_SET  ?= $(sort ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET} \
+TRAIN_SET    := $(sort ${TRAIN_LM} ${TRAIN_TM} ${TRAIN_TC})
+HELDOUT_SET  := $(sort ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET} \
                        $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}))
-CORPORA_SET  ?= $(sort ${TRAIN_SET} ${HELDOUT_SET})
+CORPORA_SET  := $(sort ${TRAIN_SET} ${HELDOUT_SET})
 
 # Define what type of phrase table we want to generate.
 # Can be one or more: ibm2_cpt, hmm1_cpt, hmm2_cpt, hmm3_cpt or merged_cpt
@@ -220,33 +229,33 @@ CORPORA_SET  ?= $(sort ${TRAIN_SET} ${HELDOUT_SET})
 # WARNING: changes here must be manually reflected in
 # models/rescore/rescore-model.template and models/confidence/ce-notm.template:
 # look for upper case tokens like HMM3FWD and similar ones nearby.
-# PT_TYPES ?= ibm2_cpt hmm3_cpt
-PT_TYPES ?= merged_cpt
+# PT_TYPES := ibm2_cpt hmm3_cpt
+PT_TYPES := merged_cpt
 
 # In the case where you want merged_cpt, you will need to define the following:
 # MERGED_CPT_ZN_MODEL & MERGED_CPT_JPT_TYPES
 # What word alignment model to use for Zens-Ney's smoother when build a merged_cpt?
 # MERGED_CPT_ZN_MODEL can be one of: HMM3, HMM2, HMM1, IBM2 or IBM1
-MERGED_CPT_ZN_MODEL ?= HMM3
+MERGED_CPT_ZN_MODEL := HMM3
 # What type of jpts should be use to create the final merged_cpt?
 # MERGED_CPT_JPT_TYPES can be sevaral of: HMM3, HMM2, HMM1, IBM2 or IBM1
-MERGED_CPT_JPT_TYPES ?= IBM2 HMM3
+MERGED_CPT_JPT_TYPES := IBM2 HMM3
 
 # Define what type of language model we want to generate.
-LM_TYPES ?= binlm
+LM_TYPES := binlm
 
 # Parameters for models/decode/Makefile
-#TEMPLATE_DIR    ?= ${ROOT_DIR}/models/decode
-PREFIX_DEV_COW  ?= ${TUNE_DECODE}
-PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
+#TEMPLATE_DIR    := ${ROOT_DIR}/models/decode
+PREFIX_DEV_COW  := ${TUNE_DECODE}
+PREFIX_DEV_RAT  := ${TUNE_RESCORE}
 
 # Defines the truecasing model filename.
-TRUECASING_MAP ?= ${TRAIN_TC}_${TGT_LANG}.map
-TRUECASING_LM  ?= ${TRAIN_TC}_${TGT_LANG}-kn-3g.binlm${GZ}
+TRUECASING_MAP := ${TRAIN_TC}_${TGT_LANG}.map
+TRUECASING_LM  := ${TRAIN_TC}_${TGT_LANG}-kn-3g.binlm${GZ}
 # Should we also use source language information in truecasing?
 # NOTE: use of source language models in truecasing is not compatible with rescoring.
 # Comment out to disable use of source language info; uncomment to enable.
-TC_USE_SRC_MODELS = 1
+TC_USE_SRC_MODELS := 1
 ifdef TC_USE_SRC_MODELS
 TRUECASING_NC1_SRC_LM  ?= ${TRAIN_TC}_${SRC_LANG}.nc1.binlm${GZ}
 endif
@@ -256,28 +265,28 @@ endif
 # Leave PLIVE_DECODE_VARIANT undefined or blank to use weights from the main 
 # cow run based on TUNE_DECODE, or specify one of the variants from 
 # TUNE_DECODE_VARIANTS to use weights from the cow run corresponding to that variant.
-#PLIVE_DECODE_VARIANT ?=
+#PLIVE_DECODE_VARIANT :=
 
 # Define USE_STATIC_MIXLM to translate using the dev1 mixlm weights instead
 # of computing dynamic weights for each test set.
-#USE_STATIC_MIXLM ?= 1
+#USE_STATIC_MIXLM := 1
 
 # If we are lucky enough to have a cluster, we'll change the shell for certain
 # commands and allow them to run on nodes.
 ifdef USING_CLUSTER
-FRAMEWORK_SHELL = run-parallel.sh
+FRAMEWORK_SHELL := run-parallel.sh
 else
-FRAMEWORK_SHELL = /bin/bash
+FRAMEWORK_SHELL := /bin/bash
 endif
 
 # Some commands shouldn't be run with the cluster shell, will use this one
 # instead.
-GUARD_SHELL = /bin/bash
+GUARD_SHELL := /bin/bash
 
 
 # Auto-detecting if Portage was compiled with ICU.
 ifeq ($(strip $(shell portage_info -with-icu > /dev/null && echo "true")),true)
-   ICU = 1
+   ICU := 1
    ifeq (${MAKELEVEL},0)
       $(info Portage was compiled with ICU)
    endif
