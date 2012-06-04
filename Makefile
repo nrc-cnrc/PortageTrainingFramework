@@ -303,3 +303,12 @@ unittest2:  export USE_HLDM = 1
 unittest2:
 	${MAKE} all
 
+########################################
+# Unittest LDM & HLDM with more than one corpora.
+.PHONY: unittest3
+unittest3:  export TRAIN_TM = sublm1 sublm2 sublm3
+unittest3:  export USE_LDM = 1
+unittest3:  export USE_HLDM = 1
+unittest3:
+	${MAKE} ldm
+
