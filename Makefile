@@ -294,6 +294,7 @@ unittest1:  export DO_RESCORING =
 unittest1:
 	${MAKE} all
 
+
 ########################################
 # Unittest MixLM & LDMS.
 .PHONY: unittest2
@@ -302,6 +303,9 @@ unittest2:  export USE_LDM = 1
 unittest2:  export USE_HLDM = 1
 unittest2:
 	${MAKE} all
+	[[ `find models/mixlm/ -maxdepth 1 -size +21c -name sublm\*.lm.gz | \wc -l` -eq 6 ]] || ! echo "Missing some Language Model files." >&2
+	[[ `find models/mixlm/ -maxdepth 1 -size +1c -name \*.mixlm | \wc -l` -eq 6 ]] || ! echo "Missing some the Mix Language Model file." >&2
+
 
 ########################################
 # Unittest LDM & HLDM with more than one corpora.
@@ -311,4 +315,7 @@ unittest3:  export USE_LDM = 1
 unittest3:  export USE_HLDM = 1
 unittest3:
 	${MAKE} ldm
+	[[ `find models/tm -maxdepth 1 -size +21c -name \*sublm\* | \wc -l` -eq 48 ]] || ! echo "Missing some translation model files." >&2
+	[[ `find models/ldm -maxdepth 1  -name ldm.* -size +21c | \wc -l` -eq 4 ]] || ! echo "Missing some Lexicalized Distortion Model files." >&2
+	[[ `find models/ldm -maxdepth 1  -name hldm.* -size +21c | \wc -l` -eq 4 ]] || ! echo "Missing some Hierarchical Lexicalized Distortion Model files." >&2
 
