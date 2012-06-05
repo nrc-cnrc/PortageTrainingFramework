@@ -304,7 +304,7 @@ unittest2:  export USE_HLDM = 1
 unittest2:
 	${MAKE} all
 	[[ `find models/mixlm/ -maxdepth 1 -size +21c -name sublm\*.lm.gz | \wc -l` -eq 6 ]] || ! echo "Missing some Language Model files." >&2
-	[[ `find models/mixlm/ -maxdepth 1 -size +1c -name \*.mixlm | \wc -l` -eq 6 ]] || ! echo "Missing some the Mix Language Model file." >&2
+	[[ `find models/mixlm/ -maxdepth 1 -size +1c -name dev1.mixlm | \wc -l` -eq 1 ]] || ! echo "Missing some the Mix Language Model file." >&2
 
 
 ########################################
