@@ -147,7 +147,7 @@ $(foreach m, $(filter-out ${IBM1_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}),
 # the meta target for word alignment model depends on word alignment model files.
 # both forward and backward word alignment models require source and target corpora.
 $(foreach c, ${TRAIN_TM}, \
-	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
 		$(eval \
 			$(call lc, ${m})_model:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 		$(eval \
@@ -290,18 +290,25 @@ $(foreach c, ${TRAIN_TM}, \
 			${SIG_${m}_MODEL_PFX}.$c.${JOINTX}:  ${JPT_${m}_MODEL_PFX}.$c.${JOINTX}) \
 		$(eval \
 			${SIG_${m}_MODEL_PFX}.$c.${JOINTX}:  $c${L1X} $c${L2X}) \
-	) \
-)
-
-
-# target language to source language
-$(foreach c, ${TRAIN_TM}, \
-	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
 		$(eval \
 			${SIG_${m}_MODEL_PFX}.$c.${RJOINTX}:  ${JPT_${m}_MODEL_PFX}.$c.${RJOINTX}) \
 		$(eval \
 			${SIG_${m}_MODEL_PFX}.$c.${RJOINTX}:  $c${L1X} $c${L2X}) \
 	) \
+)
+
+
+# Giza sigpruning
+${GIZA_MODEL_PFX}_sig: ${GIZA_MODEL_PFX}_jpt
+${SIG_GIZA_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
+${SIG_GIZA_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
+$(foreach c, ${TRAIN_TM}, \
+	$(eval \
+		${GIZA_MODEL_PFX}_sig: ${SIG_GIZA_MODEL_PFX}.$c.${JOINTX}) \
+	$(eval \
+		${SIG_GIZA_MODEL_PFX}.$c.${JOINTX}:  ${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}) \
+	$(eval \
+		${SIG_GIZA_MODEL_PFX}.$c.${JOINTX}:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
 )
 
 
@@ -342,11 +349,14 @@ HMM2_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${HMM2_MODEL_PFX}${HMM2_SMOOTHERS_DESCRIPTIO
 HMM3_SMOOTHERS_DESCRIPTION ?= ${SMOOTHERS_DESCRIPTION}
 HMM3_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${HMM3_MODEL_PFX}${HMM3_SMOOTHERS_DESCRIPTION}
 
+GIZA_SMOOTHERS_DESCRIPTION ?= ${SMOOTHERS_DESCRIPTION}
+GIZA_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${GIZA_MODEL_PFX}${GIZA_SMOOTHERS_DESCRIPTION}
+
 # Create a variable to hold the conditional phrase table file's name e.i. hmm1_cpt_list.
 # Create meta-level dependencies between cpts and their jpts or sigs.
 # Create a meta-level target to generate cpts.
 $(foreach c, ${TRAIN_TM}, \
-	$(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
+	$(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}, \
 		$(eval \
 			${m}_cpt_list = ${$(call uc, ${m})_CPT_PREFIX}.$c.${L1_2_L2X}) \
 		$(eval \
@@ -364,7 +374,7 @@ $(foreach c, ${TRAIN_TM}, \
 # Conditional Phrase Tables depend on a word alignment model for Zens-Ney's smoother.
 # Conditional Phrase Tables depend on a joint frequency phrase table which can be raw or significance pruned (CPT_DEP_TAG).
 $(foreach c, ${TRAIN_TM}, \
-	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
 		$(eval \
 			${${m}_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 		$(eval \
@@ -377,7 +387,7 @@ $(foreach c, ${TRAIN_TM}, \
 # Conditional Phrase Tables depend on a jpt which can be raw or significance pruned (CPT_DEP_TAG).
 # NOTE: CPT_DEP_TAG is either JPT or SIG
 $(foreach c, ${TRAIN_TM}, \
-	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
 		$(eval \
 			${${m}_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 		$(eval \
@@ -410,9 +420,10 @@ MERGED_CPT_ZN_MODEL ?= HMM3
 MERGED_CPT_JPT_TYPES ?= IBM2 HMM3
 
 # We need to specify what's the type of the models for Zen-Ney's smoother.
-${CPT_MODEL_PFX}.merged.${IBM1_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
-${CPT_MODEL_PFX}.merged.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
-${CPT_MODEL_PFX}.merged.hmm%: WORD_MODEL_TYPE=-hmm
+${CPT_MODEL_PFX}.merged.${IBM1_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 1
+${CPT_MODEL_PFX}.merged.${IBM2_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 2
+${CPT_MODEL_PFX}.merged.hmm%:  WORD_MODEL_TYPE=-hmm
+${CPT_MODEL_PFX}.merged.${GIZA_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 1
 
 # Let's define what are the merged cpt file names.
 merged_cpt_list = $(foreach c, ${TRAIN_TM}, ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X})
@@ -483,13 +494,13 @@ $(error You must specify one and only one MERGED_CPT_ZN_MODEL!)
 endif
 
 # Make sure MERGED_CPT_ZN_MODEL is valid.
-ifneq ($(filter-out HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_ZN_MODEL}),)
-$(error MERGED_CPT_ZN_MODEL must be one of HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_ZN_MODEL})
+ifneq ($(filter-out GIZA HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_ZN_MODEL}),)
+$(error MERGED_CPT_ZN_MODEL must be one of GIZA, HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_ZN_MODEL})
 endif
 
 # Make sure MERGED_CPT_JPT_TYPES are valid.
-ifneq ($(filter-out HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_JPT_TYPES}),)
-$(error MERGED_CPT_JPT_TYPES must be one of HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_JPT_TYPES})
+ifneq ($(filter-out GIZA HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_JPT_TYPES}),)
+$(error MERGED_CPT_JPT_TYPES must be one of GIZA, HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_JPT_TYPES})
 endif
 else
 ifdef USE_SIGPRUNING
@@ -559,4 +570,17 @@ sigprune:
 	${MAKE} clean.cpts
 	${MAKE} all
 
+
+.PHONY: unittest6
+unittest6:  export USE_SIGPRUNING = 1
+unittest6:
+	${MAKE} giza_cpt
+
+
+.PHONY: unittest7
+unittest7:  export USE_SIGPRUNING = 1
+unittest7:  export MERGED_CPT_ZN_MODEL = GIZA
+unittest7:  export MERGED_CPT_JPT_TYPES = IBM2 HMM3 GIZA
+unittest7:
+	${MAKE} merged_cpt
 
