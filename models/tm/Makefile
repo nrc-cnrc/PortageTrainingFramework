@@ -235,16 +235,16 @@ $(foreach c, ${TRAIN_TM}, \
 	) \
 )
 
-JPT_GIZA_MODEL_PFX ?= ${JPT_MODEL_PFX}.giza
+JPT_GIZA_MODEL_PFX ?= ${JPT_MODEL_PFX}.${GIZA_MODEL_PFX}
 ${JPT_GIZA_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
 ${JPT_GIZA_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
 $(foreach c, ${TRAIN_TM}, \
 	$(eval \
 		giza_jpt:  ${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}) \
 	$(eval \
-		${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}:  giza.$c.${L2_GIVEN_L1X}  giza.$c.${L1_GIVEN_L2X}) \
+		${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}:  ${GIZA_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${GIZA_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 	$(eval \
-		${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}:  $c.giza.${L1_2_L2}.align.gz) \
+		${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}:  $c.${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz) \
 	$(eval \
 		${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
 )
@@ -468,7 +468,7 @@ clean.content: clean.giza
 .PHONY: clean.giza
 clean.giza: SHELL=${GUARD_SHELL}
 clean.giza:
-	${RM} giza.*
+	${RM} ${GIZA_MODEL_PFX}.*
 	${RM} ${TRAIN_TM}
 
 
