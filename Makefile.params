@@ -235,10 +235,10 @@ PT_TYPES ?= merged_cpt
 # In the case where you want merged_cpt, you will need to define the following:
 # MERGED_CPT_ZN_MODEL & MERGED_CPT_JPT_TYPES
 # What word alignment model to use for Zens-Ney's smoother when build a merged_cpt?
-# MERGED_CPT_ZN_MODEL can be one of: HMM3, HMM2, HMM1, IBM2 or IBM1
+# MERGED_CPT_ZN_MODEL can be one of: GIZA, HMM3, HMM2, HMM1, IBM2 or IBM1
 MERGED_CPT_ZN_MODEL ?= HMM3
 # What type of jpts should be use to create the final merged_cpt?
-# MERGED_CPT_JPT_TYPES can be sevaral of: HMM3, HMM2, HMM1, IBM2 or IBM1
+# MERGED_CPT_JPT_TYPES can be sevaral of: GIZA, HMM3, HMM2, HMM1, IBM2 or IBM1
 MERGED_CPT_JPT_TYPES ?= IBM2 HMM3
 
 # Define what type of language model we want to generate.
