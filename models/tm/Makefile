@@ -571,12 +571,17 @@ sigprune:
 	${MAKE} all
 
 
+# Create a significance pruned conditional phrase table from giza's joint
+# counts.
 .PHONY: unittest6
 unittest6:  export USE_SIGPRUNING = 1
 unittest6:
 	${MAKE} giza_cpt
 
 
+# Create a significance pruned conditional phrase table built with a lexical
+# smoother based on giza with joint frequency counts tallied from IBM2, HMM3 &
+# GIZA.
 .PHONY: unittest7
 unittest7:  export USE_SIGPRUNING = 1
 unittest7:  export MERGED_CPT_ZN_MODEL = GIZA
@@ -584,3 +589,10 @@ unittest7:  export MERGED_CPT_JPT_TYPES = IBM2 HMM3 GIZA
 unittest7:
 	${MAKE} merged_cpt
 
+
+# Create multiple TMs.
+.PHONY: unittest8 multiple_TMs
+unittest8:  multiple_TMs
+multiple_TMs:  export TRAIN_TM = sublm1 sublm2 sublm3
+multiple_TMs:
+	${MAKE} all
