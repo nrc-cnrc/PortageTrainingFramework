@@ -137,7 +137,7 @@ SIG_MODEL_PFX ?= sig.${SIG_THRESHOLD}
 SIG_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 SIG_MODEL_WORKERS ?= ${SIG_MODEL_PARALLELISM_LEVEL}
 # Create variables to hold significance model prefix.
-$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
    $(eval \
 	   SIG_${m}_MODEL_PFX ?= ${SIG_MODEL_PFX}.${${m}_MODEL_PFX}) \
 )
@@ -561,13 +561,17 @@ $(addsuffix /${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz, ${TRAIN_TM}):  %/${L2_2_
 # Converts GIZA ttables in a format that portage understands.
 ${GIZA_MODEL_PFX}.%.${L1_GIVEN_L2X}:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/B.gizacfg
 	set -o pipefail; \
-	giza_convert_ttable.pl $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
-	| gzip > $@
+	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
+	| gzip > tmp.$@
+	train_ibm -tobin tmp.$@ $@
+	rm -f tmp.$@
 
 ${GIZA_MODEL_PFX}.%.${L2_GIVEN_L1X}:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/F.gizacfg
 	set -o pipefail; \
-	giza_convert_ttable.pl $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
-	| gzip > $@
+	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
+	| gzip > tmp.$@
+	train_ibm -tobin tmp.$@ $@
+	rm -f tmp.$@
 
 
 
