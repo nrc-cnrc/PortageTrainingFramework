@@ -203,6 +203,7 @@ log.INSTALL_SUMMARY:
 .PHONY: portageLive
 portageLive: SHELL=${GUARD_SHELL}
 portageLive: all
+	${MAKE} -C corpora portageLive
 	${MAKE} -C models portageLive
 ifdef DO_RESCORING
 	@echo ""

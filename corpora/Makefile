@@ -62,6 +62,7 @@ endif
 # Language specific set of command to mark source devs/tests.
 MARK_RULE_en ?= canoe-escapes.pl -add
 MARK_RULE_fr ?= canoe-escapes.pl -add
+# NOTE: chinese_rule_create.pl takes care of escaping "<>\" like canoe-escape.pl does.
 MARK_RULE_ch ?= { chinese_rule_markup.pl | chinese_rule_create.pl; }
 
 
@@ -333,6 +334,25 @@ FILE_OPTS = $(if $(findstring Darwin, ${OSTYPE}),-LIbz,-Libz)
 define check_utf8
 _LOCAL=1 file ${FILE_OPTS} $< | egrep -qi 'charset=utf-8|ASCII' || echo "WARNING: Please convert $< to utf-8" >&2
 endef
+
+
+
+# HACK ALERT!!!!
+ifeq ("${SRC_LANG}","ch")
+../models/portageLive/plugins:
+	mkdir -p $@
+../models/portageLive/plugins/preprocess_plugin:  | ../models/portageLive/plugins
+	echo -e '#!/bin/bash\n${TOKENIZER_${SRC_LANG}}' > $@
+	chmod +x $@
+../models/portageLive/plugins/predecode_plugin:  | ../models/portageLive/plugins
+	echo -e '#!/bin/bash\n${MARK_RULE_${SRC_LANG}}' > $@
+	chmod +x $@
+portageLive:  ../models/portageLive/plugins/preprocess_plugin
+portageLive:  ../models/portageLive/plugins/predecode_plugin
+endif
+.PHONY: portageLive
+portageLive:
+	@true
 
 
 

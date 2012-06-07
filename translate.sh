@@ -155,6 +155,15 @@ done
 # Make sure plugins in the plugins directory in the framework will be used by translate.pl.
 export PATH="${ROOTDIR}/plugins:$PATH"
 
+# HACK ALERT!!!!
+if [[ "$SRC_OPT" == "-src=ch" ]]; then
+   # When preprocessing Chinese, translate.pl must rely on preprocess_plugin &
+   # predecode_plugin to do the segmentation and the markup.  It cannot perform
+   # tokenization since it is using utokenize.pl internally nor can it simply
+   # use canoe-escape.pl to do its esacaping.
+   MODE="${MODE} --notok --nolc"
+fi
+
 run_cmd "translate.pl ${MODE} ${SRC_OPT} ${TGT_OPT} ${TC_OPT} ${CANOE_INI_OPT} ${V_OPT} ${Q_OPT} ${SOURCE_FILE}"
 
 exit
