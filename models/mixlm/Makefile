@@ -43,8 +43,14 @@ export ORDER ?= 5
 LM_DIR ?= models/lm
 
 
+ifneq (${MAKECMDGOALS},clean)
+ifneq (${MAKECMDGOALS},clean.content)
+ifneq (${MAKECMDGOALS},clean.logs)
 $(info ln -fs ../../models)
 $(shell ln -fs ../../models)
+endif
+endif
+endif
 
 TUNE_SETS = ${TUNE_DECODE} $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})
 
@@ -89,6 +95,7 @@ clean: clean.content clean.logs
 
 clean.content: SHELL=${GUARD_SHELL}
 clean.content:
+	${RM} models
 	${RM} components_* models
 	${RM} *.distances *.weights *.mixlm 
 	${RM} *.lm.gz *.binlm.gz

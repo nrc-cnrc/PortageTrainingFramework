@@ -95,6 +95,7 @@ FILES_TO_BE_LOCKED = ${DECODING_MODEL}
 ifneq (${MAKECMDGOALS},clean)
 ifneq (${MAKECMDGOALS},clean.content)
 ifneq (${MAKECMDGOALS},clean.logs)
+$(info ln -fs ${MODEL_DIR})
 $(shell ln -fs ${MODEL_DIR})
 endif
 endif
@@ -269,7 +270,7 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 		-f $<.FILT $(wordlist 2,3,$+) \
 		&> log.$@
 	_LOCAL=1 configtool -p args:"`configtool weights $@.FILT`" $< > $@
-	_LOCAL=1 ${RM} -r foos *.FILT.gz *.FILT.bkoff ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
+	_LOCAL=1 ${RM} -r foos *.FILT.gz *.FILT.bkoff ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.cow.FILT
 
 clean.content: clean.tune
 
@@ -278,7 +279,7 @@ clean.tune: SHELL=${GUARD_SHELL}
 clean.tune:
 	${RM} -r foos canoe-parallel.* run-p.*
 	${RM} ${DECODING_MODEL}
-	${RM} ${UNTUNED_DECODING_MODEL} ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.FILT.cow
+	${RM} ${UNTUNED_DECODING_MODEL} ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.cow.FILT
 	${RM} *.FILT.gz *.FILT.bkoff
 	${RM} summary summary.wts
 	${RM} decode-config
