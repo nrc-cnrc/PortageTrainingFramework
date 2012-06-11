@@ -46,7 +46,7 @@ LM_DIR ?= models/lm
 $(info ln -fs ../../models)
 $(shell ln -fs ../../models)
 
-TUNE_SETS = ${TUNE_DECODE} $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}) ${TUNE_RESCORE} ${TUNE_CE}
+TUNE_SETS = ${TUNE_DECODE} $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})
 
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
@@ -158,12 +158,35 @@ components_${SRC_LANG}: ${MIXLM_SRC_MODELS}
 components_${TGT_LANG}: ${MIXLM_TGT_MODELS}
 
 
+########################################
+# Create Tightly Packed Language Models.
+
+${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm}: SHELL=${GUARD_SHELL}
+${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm}: %.tplm:
+	[[ -s "${LM_DIR}/$@" ]] && ln -s ${LM_DIR}/$@ || ${MAKE} -f ${LM_DIR}/Makefile $@
+
+clean.content: clean.tplm
+
+.PHONY: clean.tplm
+clean.tplm: SHELL=${GUARD_SHELL}
+clean.tplm:
+	${RM} -r *.tplm
+
+
+########################################
+# Transform model for PortageLive
+PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/mixlm
 .PHONY: portageLive
 portageLive: SHELL=${GUARD_SHELL}
-portageLive:
 ifdef MIXLM
-	@! echo "ERROR: Not supported yet!" >&2
+portageLive: ${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm}
+	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
+	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../mixlm/, $+) .
+	sed -e 's/.binlm${GZ}/.tplm/g' ${TUNE_DECODE}${PLIVE_DECODE_VARIANT}.mixlm \
+		> ${PORTAGE_LIVE_DEST_DIR}/${TUNE_DECODE}${PLIVE_DECODE_VARIANT}.mixlm	
 else
+portageLive:
 	@echo "No MIXLMs defined, nothing to do." >&2
 endif
 

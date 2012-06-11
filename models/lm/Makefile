@@ -164,10 +164,15 @@ time-mem: resource_summary_sub
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/lm
 .PHONY: portageLive
 portageLive: SHELL=${GUARD_SHELL}
+ifdef TRAIN_LM
 portageLive: $(addsuffix .tplm, ${LM_NAME})
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../lm/, $+) .
+else
+portageLive:
+	@echo "No regular LMs defined, nothing to do." >&2
+endif
 
 
 
