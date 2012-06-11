@@ -184,7 +184,6 @@ endif
 SRC_LANG := $(strip ${SRC_LANG})
 TGT_LANG := $(strip ${TGT_LANG})
 TRAIN_LM := $(strip ${TRAIN_LM})
-TRAIN_TC := $(strip ${TRAIN_TC})
 MIXLM := $(strip ${MIXLM})
 TRAIN_TM := $(strip ${TRAIN_TM})
 TUNE_DECODE := $(strip ${TUNE_DECODE})
