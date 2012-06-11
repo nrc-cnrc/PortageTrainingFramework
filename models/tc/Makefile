@@ -252,14 +252,14 @@ UN_SS_P := perl -pe 's/(.)$$/$$1 /; s/(.)\n/$$1/'
 %_${TGT_LANG}-kn-3g.binlm.gz: SHELL=${GUARD_SHELL}
 ifdef TC_USE_SRC_MODELS
 %_${TGT_LANG}-kn-3g.binlm.gz: %_${TGT_LANG}.nc1${GZ}
-	${MAKE} -f ../lm/Makefile CORPUS_EXT=.nc1${GZ} CORPORA_DIR=../tc $@
+	${MAKE} -f ../lm/Makefile CORPUS_EXT=.nc1${GZ} CORPORA_DIR=../tc ${@:.binlm${GZ}=.lm${GZ}} $@
 else
 %_${TGT_LANG}-kn-3g.binlm.gz:
-	${MAKE} -f ../lm/Makefile CORPUS_EXT=${TCX} $@
+	${MAKE} -f ../lm/Makefile CORPUS_EXT=${TCX} ${@:.binlm${GZ}=.lm${GZ}} $@
 endif
 
 %.tplm: SHELL=${GUARD_SHELL}
-%.tplm:
+%.tplm: %.binlm.gz
 	${MAKE} -f ../lm/Makefile CORPUS_EXT=${TCX} $@
 
 
@@ -293,7 +293,7 @@ endif
 
 %_${SRC_LANG}.nc1.binlm${GZ}: SHELL=${GUARD_SHELL}
 %_${SRC_LANG}.nc1.binlm${GZ}: %_${SRC_LANG}.revtokss${GZ}
-	${MAKE} -f ../lm/Makefile CORPUS_EXT=.revtokss${GZ} CORPORA_DIR=../tc LM_DESC=.nc1 LM_LANG=${SRC_LANG} $@
+	${MAKE} -f ../lm/Makefile CORPUS_EXT=.revtokss${GZ} CORPORA_DIR=../tc LM_DESC=.nc1 LM_LANG=${SRC_LANG} ${@:.binlm${GZ}=.lm${GZ}} $@
 
 
 ########################################
