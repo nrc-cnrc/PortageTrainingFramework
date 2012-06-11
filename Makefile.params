@@ -132,7 +132,7 @@ ifeq ($(strip $(shell which-test.sh qsub && echo "true")),true)
    USING_CLUSTER ?= 1
 endif
 ifdef NOCLUSTER
-   USING_CLUSTER ?=
+   USING_CLUSTER =
 endif
 
 OSTYPE ?= $(shell uname -s)
