@@ -9,7 +9,6 @@
 [beam-threshold] 0.001
 [distortion-limit] 7
 [dist-limit-simple]
-[segmentation-model] none
 [cube-pruning]
 [bypass-marked]
 # Without a distortion model
