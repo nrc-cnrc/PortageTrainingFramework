@@ -341,13 +341,13 @@ endef
 ifeq ("${SRC_LANG}","ch")
 ../models/portageLive/plugins:
 	mkdir -p $@
-../models/portageLive/plugins/preprocess_plugin:  | ../models/portageLive/plugins
+../models/portageLive/plugins/tokenize_plugin:  | ../models/portageLive/plugins
 	echo -e '#!/bin/bash\n${TOKENIZER_${SRC_LANG}}' > $@
 	chmod +x $@
 ../models/portageLive/plugins/predecode_plugin:  | ../models/portageLive/plugins
 	echo -e '#!/bin/bash\n${MARK_RULE_${SRC_LANG}}' > $@
 	chmod +x $@
-portageLive:  ../models/portageLive/plugins/preprocess_plugin
+portageLive:  ../models/portageLive/plugins/tokenize_plugin
 portageLive:  ../models/portageLive/plugins/predecode_plugin
 endif
 .PHONY: portageLive
