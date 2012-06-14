@@ -338,11 +338,12 @@ endef
 
 
 # HACK ALERT!!!!
+SENTENCE_SPLITTER_ch := perl -ple "BEGIN{use encoding \"UTF-8\";} s/(\.\.\.\.\.\.|\.\.\.|\x{2026}|[\x2E]|\x{FF0E}|[\x3F]|\x{FF1F}|[\x21]|\x{FF01}|\x{3002}|\x{FF61})/$$1\\n/g"
 ifeq ("${SRC_LANG}","ch")
 ../models/portageLive/plugins:
 	mkdir -p $@
 ../models/portageLive/plugins/tokenize_plugin:  | ../models/portageLive/plugins
-	echo -e '#!/bin/bash\n${TOKENIZER_${SRC_LANG}}' > $@
+	echo -e '#!/bin/bash\n$(and ${SENTENCE_SPLITTER_${SRC_LANG}}, ${SENTENCE_SPLITTER_${SRC_LANG}} | )${TOKENIZER_${SRC_LANG}}' > $@
 	chmod +x $@
 ../models/portageLive/plugins/predecode_plugin:  | ../models/portageLive/plugins
 	echo -e '#!/bin/bash\n${MARK_RULE_${SRC_LANG}}' > $@
