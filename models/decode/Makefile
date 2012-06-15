@@ -234,7 +234,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      -e 's#<CPTS>#${CPTS}#g' \
 	      -e 's#<LMS>#${LMS}#g' \
 	      -e 's/^\(\[\(weight-f\|ftm\)\]\)/##mid##\1/' \
-	| configtool -p "args:$(and ${USE_LDM}${USE_HLDM}, -no-dist-limit-simple -dist-phrase-swap -dist-limit-ext) -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS} -lex-dist-model-file :${LDM}:${HLDM} ${CANOE_INI_EXTRAS}" - \
+	| configtool -p "args:$(and ${USE_LDM}${USE_HLDM}, -dist-phrase-swap) -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS} -lex-dist-model-file :${LDM}:${HLDM} ${CANOE_INI_EXTRAS}" - \
 	> $@
 	configtool check $@
 
