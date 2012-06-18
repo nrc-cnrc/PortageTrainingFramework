@@ -255,8 +255,9 @@ ${DECODING_MODEL}: SHELL=${FRAMEWORK_SHELL}
 ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TGTS}
 	_LOCAL=1 mkdir -p foos
 	RP_PSUB_OPTS="-${DECODE_CPUS} -N tune.decode.model" \
-	filter_models -z -r -tm-soft-limit cpt.${TUNE_DECODE} $(and ${LDM}${HLDM}, -ldm) < $(filter %${TUNE_DECODE_SRC},$+)
+	time-mem filter_models -z -r -tm-soft-limit cpt.${TUNE_DECODE} $(and ${LDM}${HLDM}, -ldm) < $(filter %${TUNE_DECODE_SRC},$+) >& log.cpt.${TUNE_DECODE}.FILT
 	RP_PSUB_OPTS="-${MERT_CPUS} -N tune.decode.model" \
+	time-mem \
 	${MERT} \
 		-v \
 		-o $@.FILT \
