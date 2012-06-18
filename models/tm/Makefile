@@ -569,6 +569,8 @@ sigprune:  export USE_SIGPRUNING = 1
 sigprune:
 	${MAKE} clean.cpts
 	${MAKE} all
+	[[ "`find -name sig.\*.merged.tm-train.\*.gz -size +21c | \wc -l`" -eq 1 ]] \
+	|| ! echo "ERROR: Seems that no sig counts were produced." >&2
 
 
 # Create a significance pruned conditional phrase table from giza's joint
@@ -577,6 +579,12 @@ sigprune:
 unittest6:  export USE_SIGPRUNING = 1
 unittest6:
 	${MAKE} giza_cpt
+	@[[ "`find -name giza.tm-train.\*_given_\*.gz -size +21c | \wc -l`" -eq 2 ]] \
+	|| ! echo "ERROR: Can't find word alignment files for giza." >&2
+	@[[ "`find -name jpt.giza.tm-train.en-fr.gz -size +21c | \wc -l`" -eq 1 ]] \
+	|| ! echo "ERROR: can't find a jpt for giza." >&2
+	@[[ "`find -name cpt.giza-kn3-zn.tm-train.en2fr.gz -size +21c | \wc -l`" -eq 1 ]] \
+	|| ! echo "ERROR: can't find a jpt for giza." >&2
 
 
 # Create a significance pruned conditional phrase table built with a lexical
@@ -596,3 +604,4 @@ unittest8:  multiple_TMs
 multiple_TMs:  export TRAIN_TM = sublm1 sublm2 sublm3
 multiple_TMs:
 	${MAKE} all
+
