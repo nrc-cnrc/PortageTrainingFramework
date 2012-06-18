@@ -327,18 +327,19 @@ testsuite:  unittest1
 testsuite:  unittest2
 testsuite:  unittest3
 testsuite:  unittest4
+testsuite:  unittest5
 
 # Create a canoe.ini without any Lexicalized Distortion Models what so ever.
+.PHONY: unittest1
 unittest1:
 	${MAKE} USE_LDM= USE_HLDM= canoe.ini -B
 	grep '^\[lex-dist-model-file\] --$$' canoe.ini
 	! egrep 'back-lex' canoe.ini
 	! egrep 'fwd-lex' canoe.ini
-	! grep '^\[no-dist-limit-simple\]$$' canoe.ini
 	! grep '^\[dist-phrase-swap\]$$' canoe.ini
-	! grep '^\[dist-limit-ext\]$$' canoe.ini
 
 # Create a canoe.ini that uses Lexicalized Distortion Models.
+.PHONY: unittest2
 unittest2:
 	${MAKE} USE_LDM=1 USE_HLDM= canoe.ini -B
 	grep '[^h]ldm.hmm3+ibm2.en2fr.gz' canoe.ini
@@ -347,11 +348,10 @@ unittest2:
 	! egrep 'back-hlex' canoe.ini
 	egrep 'fwd-lex' canoe.ini
 	! egrep 'fwd-hlex' canoe.ini
-	grep '^\[no-dist-limit-simple\]$$' canoe.ini
 	grep '^\[dist-phrase-swap\]$$' canoe.ini
-	grep '^\[dist-limit-ext\]$$' canoe.ini
 
 # Create a canoe.ini that uses Hierarchical Lexicalized Distortion Models.
+.PHONY: unittest3
 unittest3:
 	${MAKE} USE_LDM= USE_HLDM=1 canoe.ini -B
 	! grep '[^h]ldm.hmm3+ibm2.en2fr.gz' canoe.ini
@@ -360,11 +360,10 @@ unittest3:
 	egrep 'back-hlex' canoe.ini
 	! egrep 'fwd-lex' canoe.ini
 	egrep 'fwd-hlex' canoe.ini
-	grep '^\[no-dist-limit-simple\]$$' canoe.ini
 	grep '^\[dist-phrase-swap\]$$' canoe.ini
-	grep '^\[dist-limit-ext\]$$' canoe.ini
 
 # Create a canoe.ini that uses Lexicalized Distortion Models & Hierarchical Lexicalized Distortion Models.
+.PHONY: unittest4
 unittest4:
 	${MAKE} USE_LDM=1 USE_HLDM=2 canoe.ini -B
 	grep '[^h]ldm.hmm3+ibm2.en2fr.gz' canoe.ini
@@ -373,7 +372,12 @@ unittest4:
 	egrep 'back-hlex' canoe.ini
 	egrep 'fwd-lex' canoe.ini
 	egrep 'fwd-hlex' canoe.ini
-	grep '^\[no-dist-limit-simple\]$$' canoe.ini
 	grep '^\[dist-phrase-swap\]$$' canoe.ini
-	grep '^\[dist-limit-ext\]$$' canoe.ini
+
+# Recommended tune algorithm is Lattice Mira.  Let's make sure this is the what
+# the framework is using.
+.PHONY: unittest5
+unittest5:  ${DECODING_MODEL}
+	@grep -m1 MiraTrainLattice logs/log.optimize --quiet \
+	|| ! echo "Recommended practice is to use Lattice Mira for tuning but the framework is not using it by default" >&2
 
