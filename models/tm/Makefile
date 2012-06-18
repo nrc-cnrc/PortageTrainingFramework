@@ -595,7 +595,11 @@ unittest7:  export USE_SIGPRUNING = 1
 unittest7:  export MERGED_CPT_ZN_MODEL = GIZA
 unittest7:  export MERGED_CPT_JPT_TYPES = IBM2 HMM3 GIZA
 unittest7:
+	${MAKE} clean.cpts  clean.sig
+	${RM} ${JPT_MERGED_PFX}*
 	${MAKE} merged_cpt
+	@[[ "`find -name cpt.merged.giza-kn3-zn.tm-train.en2fr.gz -size +21c | \wc -l`" -eq 1 ]] \
+	|| ! echo "ERROR: can't find conditional phrase table for giza." >&2
 
 
 # Create multiple TMs.
