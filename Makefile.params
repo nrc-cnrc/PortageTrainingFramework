@@ -12,6 +12,8 @@
 # Print the Portage Copyright no matter where we start from -- but only once.
 ifeq (${MAKELEVEL},0)
    $(shell portage_info)
+   # subprograms launched by the framework don't need to bleet all the time either...
+   export PORTAGE_INTERNAL_CALL=1
 endif
 
 ################################################################################
