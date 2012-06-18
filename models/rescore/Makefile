@@ -180,6 +180,7 @@ ${UNTUNED_RESCORING_MODEL}: ${RESCORING_MODEL_TEMPLATE}
 	      -e "s#IBM\\(.\\)BKW#${IBM_DIR}/ibm\\1.${SRC_GIVEN_TGTX}#" \
 	      -e "s#HMM\\(.\\)FWD#${IBM_DIR}/hmm\\1.${TGT_GIVEN_SRCX}#" \
 	      -e "s#HMM\\(.\\)BKW#${IBM_DIR}/hmm\\1.${SRC_GIVEN_TGTX}#" \
+	| egrep -v '^#' \
 	>> $@
 
 
@@ -197,6 +198,7 @@ ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UN
 		-lb \
 		-n ${PARALLELISM_LEVEL_TUNE_RESCORE} \
 		train \
+		-a mira \
 		-v \
 		-K ${NBEST_SIZE} \
 		-o $@ \
