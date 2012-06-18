@@ -64,13 +64,12 @@ TEST_SET      ?= test1 test2
 # PATH.  (Only need if you are using IRSTLM - see next variable.)
 IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 
-# Change LM_TOOLKIT's value depending on the available lm toolkit that you
-# have.  If you use SRILM or MITLM, their executable scripts and programs
-# should be on your PATH.
+# Change LM_TOOLKIT's value depending on the LM toolkit you have.  If you use
+# SRILM or MITLM, their executable scripts and programs must be on your PATH.
 # LM_TOOLKIT={SRI,IRST,MIT} 
-# where SRI  => SRILM's toolkit
-#       IRST => IRSTLM's toolkit
-#       MIT  => MITLM's toolkit
+# where SRI  => SRILM toolkit
+#       IRST => IRSTLM toolkit
+#       MIT  => MITLM toolkit
 LM_TOOLKIT = MIT
 
 # Train and apply rescoring if this variable is defined.
