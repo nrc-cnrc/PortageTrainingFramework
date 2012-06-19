@@ -478,7 +478,7 @@ $(addsuffix /,${TRAIN_TM}):  %:
 	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> log.giza_filter
 
 %/${TGT_LANG}.lc:  %/${SRC_LANG}.lc
-	@true
+	@[[ -s $@ ]] && sleep 1 && touch $@
 
 
 # Create the vocabulary files.
@@ -489,10 +489,10 @@ vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${TRAIN_TM})
 	plain2snt $+
 
 %/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb 
-	@true
+	@[[ -s $@ ]] && sleep 1 && touch $@
 
 %/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb
-	@true
+	@[[ -s $@ ]] && sleep 1 && touch $@
 
 
 # Create the vocabulary classes.
