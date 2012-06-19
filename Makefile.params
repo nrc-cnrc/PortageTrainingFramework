@@ -47,6 +47,7 @@ TRAIN_TM      ?= tm-train
 
 # MIXTM is used to create a mixture translation model from several other
 # translation models.
+# Specify the in-domain corpus first (its word alignment models are needed).
 #MIXTM         ?= subtm1 subtm2
 
 # TUNE_DECODE is used to train cow.
