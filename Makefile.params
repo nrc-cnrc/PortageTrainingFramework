@@ -27,14 +27,15 @@ TGT_LANG ?= fr
 # Here we specify the stem of the corpora files.
 # Files should look like this: <PREFIX>_<LANGUAGE>.al
 # e.g. test1_fr.al
-# Warning: only TEST_SET may contain more than one <PREFIX>.
+# Warning: TRAIN_TC, TUNE_DECODE, TUNE_RESCORE, TUNE_CE may not contain
+#          more than one <PREFIX>.
 
 # TRAIN_LM is used to create a language model.
 TRAIN_LM      ?= lm-train
 
 # TRAIN_TC is used to create a truecasing model.
-# By default, we reuse TRAIN_LM thus if you do not uncomment and define it
-# => TRAIN_TC = TRAIN_LM
+# By default, we use the first name listedin TRAIN_LM, thus if you do not uncomment and define it
+# => TRAIN_TC = first word of TRAIN_LM
 #TRAIN_TC := tc-train
 
 # MIXLM is used to create a mixture language model which itself is composed of
@@ -43,6 +44,11 @@ TRAIN_LM      ?= lm-train
 
 # TRAIN_TM is used to create the translation table.
 TRAIN_TM      ?= tm-train
+
+# MIXTM is used to create a mixture translation model from several other
+# translation models.
+#MIXTM         ?= subtm1 subtm2
+
 # TUNE_DECODE is used to train cow.
 TUNE_DECODE   ?= dev1
 # TUNE_DECODE_VARIANTS is used to tune and test using multiple tuning sets.
@@ -50,13 +56,16 @@ TUNE_DECODE   ?= dev1
 # Ex. If TUNE_DECODE is dev1, include "a b" in TUNE_DECODE_VARIANTS to train 
 #     cow with dev1a and dev1b in addition to dev1.
 #TUNE_DECODE_VARIANTS  ?=
+
 # TUNE_RESCORE is used to train rat.
 #TUNE_RESCORE  ?= dev2
+
 # TUNE_CE is used to train confidence estimation.
 # Note: it's OK for TUNE_DECODE and TUNE_RESCORE to be the same file, but
 # TUNE_CE must be completely distinct, not only from all training data, but
 # also from all other tuning data.
 #TUNE_CE       ?= dev3
+
 # TEST_SET are used to estimate the quality of the system.
 TEST_SET      ?= test1 test2
 # Uncomment if you have source text, that doesn't have a reference, to translate.
@@ -187,6 +196,7 @@ TGT_LANG := $(strip ${TGT_LANG})
 TRAIN_LM := $(strip ${TRAIN_LM})
 MIXLM := $(strip ${MIXLM})
 TRAIN_TM := $(strip ${TRAIN_TM})
+MIXTM := $(strip ${MIXTM})
 TUNE_DECODE := $(strip ${TUNE_DECODE})
 TUNE_DECODE_VARIANTS := $(strip ${TUNE_DECODE_VARIANTS})
 TUNE_RESCORE := $(strip ${TUNE_RESCORE})
@@ -232,7 +242,7 @@ CORPORA_SET  ?= $(sort ${TRAIN_SET} ${HELDOUT_SET})
 # models/rescore/rescore-model.template and models/confidence/ce-notm.template:
 # look for upper case tokens like HMM3FWD and similar ones nearby.
 # PT_TYPES ?= ibm2_cpt hmm3_cpt
-PT_TYPES ?= merged_cpt
+PT_TYPES ?= $(strip $(if ${TRAIN_TM},merged_cpt) $(if ${MIXTM},mix_cpt))
 
 # In the case where you want merged_cpt, you will need to define the following:
 # MERGED_CPT_ZN_MODEL & MERGED_CPT_JPT_TYPES
@@ -321,7 +331,7 @@ ifeq ($(strip ${TRAIN_LM} ${MIXLM}),)
 $(error You must always define a training corpus for language models)
 endif
 
-ifeq (${TRAIN_TM},)
+ifeq ($(strip ${TRAIN_TM} ${MIXTM}),)
 $(error You must always define a training corpus for translation models)
 endif
 

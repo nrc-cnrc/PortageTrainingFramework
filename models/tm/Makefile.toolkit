@@ -12,9 +12,10 @@
 # Copyright 2010, Sa Majeste la Reine du Chef du Canada /
 # Copyright 2010, Her Majesty in Right of Canada
 
+MDIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
--include ../../Makefile.params
-include ../../gmsl/gmsl   # functions: uc
+-include ${MDIR_PFX}../../Makefile.params
+include ${MDIR_PFX}../../gmsl/gmsl   # functions: uc
 
 UTF8 = $(if $(findstring Darwin, ${OSTYPE}),UTF-8,utf8)
 export LANG   = en_CA.${UTF8}
@@ -22,13 +23,16 @@ export LC_ALL = en_CA.${UTF8}
 
 
 # Default language corpora extension.
-LANGXZ ?= .gz
+LANGX ?= .lc
+LANGXZ ?= ${LANGX}.gz
 
 # Lets rename the language identifiers for the toolkit.
 lang1 = ${SRC_LANG}
 lang2 = ${TGT_LANG}
 
 # Language file extension.
+L1 ?= _${SRC_LANG}${LANGX}
+L2 ?= _${TGT_LANG}${LANGX}
 L1X ?= _${SRC_LANG}${LANGXZ}
 L2X ?= _${TGT_LANG}${LANGXZ}
 
@@ -127,6 +131,8 @@ JPT_MODEL_PFX ?= jpt
 JPT_CPUS ?= 1
 JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 JPT_WORKERS ?= ${JPT_PARALLELISM_LEVEL}
+GEN_JPT_PARALLEL_OPTIONS ?= -w 1
+JPT_EXTRAS ?=
 
 ########################################
 # SIG MODELS.
@@ -150,6 +156,8 @@ CPT_CPUS ?= 4
 #SMOOTHERS_DESCRIPTION ?= -rf-zn
 CPT_SMOOTHERS ?= -s "KNSmoother 3"  -s ZNSmoother
 SMOOTHERS_DESCRIPTION ?= -kn3-zn
+
+MIX_CPUS ?= 1
 
 ########################################
 # TPPT MODELS.
@@ -364,7 +372,6 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 	gen-jpt-parallel.sh \
 		-n ${JPT_PARALLELISM_LEVEL} \
 		-nw ${JPT_WORKERS} \
-		-w 1 \
 		-o $@ \
 		${GEN_JPT_PARALLEL_OPTIONS} \
 		GPT \
@@ -425,8 +432,11 @@ ${CPT_MODEL_PFX}.hmm%: WORD_MODEL_TYPE=-hmm
 ${CPT_MODEL_PFX}.${GIZA_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
 ${CPT_MODEL_PFX}.%: CPT_PRUNE1=-prune1w 100
 
-${CPT_MODEL_PFX}%${L1_2_L2X}: SHELL=${FRAMEWORK_SHELL}
-${CPT_MODEL_PFX}%${L1_2_L2X}:
+# Non mixture CPT models:
+CPT_MODEL_PFXS = $(addprefix ${CPT_MODEL_PFX}., hmm ibm merged)
+
+$(addsuffix %${L1_2_L2X}, ${CPT_MODEL_PFXS}): SHELL=${FRAMEWORK_SHELL}
+$(addsuffix %${L1_2_L2X}, ${CPT_MODEL_PFXS}):
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
 	joint2cond_phrase_tables \
@@ -447,8 +457,8 @@ ${CPT_MODEL_PFX}%${L1_2_L2X}:
 # Requires:
 # - forward & backward phrase alignment models;
 # - reversed joint frequency files.
-${CPT_MODEL_PFX}%${L2_2_L1X}: SHELL=${FRAMEWORK_SHELL}
-${CPT_MODEL_PFX}%${L2_2_L1X}:
+$(addsuffix %${L2_2_L1X}, ${CPT_MODEL_PFXS}): SHELL=${FRAMEWORK_SHELL}
+$(addsuffix %${L2_2_L1X}, ${CPT_MODEL_PFXS}):
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
 	joint2cond_phrase_tables \
@@ -463,6 +473,32 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 		-ibm_l1_given_l2  $(filter %${L2_GIVEN_L1X}, $+) \
 		${JOINT2COND_PHRASE_TABLE_OPTION} \
 		$(filter %.${RJOINTX}, $+) \
+		&> log.${@:.gz=}
+
+
+
+########################################
+# MIXTURE CPT: Linear combination of CPTS
+${CPT_MIX_PFX}%${L1_2_L2X}: SHELL=${FRAMEWORK_SHELL}
+${CPT_MIX_PFX}%${L1_2_L2X}:
+	RP_PSUB_OPTS="-${MIX_CPUS} -N $@ ${PSUB_OPTS}" \
+	${TIME_MEM} \
+	train_tm_mixture \
+		-v \
+		-o $@ \
+		$(filter %${L1_2_L2X}, $+) \
+		$(filter %.${JOINTX}, $+) \
+		&> log.${@:.gz=}
+
+${CPT_MIX_PFX}%${L2_2_L1X}: SHELL=${FRAMEWORK_SHELL}
+${CPT_MIX_PFX}%${L2_2_L1X}:
+	RP_PSUB_OPTS="-${MIX_CPUS} -N $@ ${PSUB_OPTS}" \
+	${TIME_MEM} \
+	train_tm_mixture \
+		-r -v \
+		-o $@ \
+		$(filter %${L2_2_L1X}, $+) \
+		$(filter %.${JOINTX}, $+) \
 		&> log.${@:.gz=}
 
 

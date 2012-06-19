@@ -12,6 +12,7 @@
 # Copyright 2008, Sa Majeste la Reine du Chef du Canada
 # Copyright 2008, Her Majesty in Right of Canada
 
+MDIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
 # Source file requirements.
 # <PREFIX>_<LANGUAGE>.<LANGX>
@@ -20,33 +21,33 @@
 # PT_TYPES indicates what type of phrase table we want to generate.
 
 # Mandatory include: master config file.
-include ../../Makefile.params
+include ${MDIR_PFX}../../Makefile.params
 
 # Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
--include ${MAKEFILE_PARAMS}
+-include ${MDIR_PFX}${MAKEFILE_PARAMS}
 
 # This is the Makefile that contains all targets required to build Translation
 # Models and some variable's defintion that might be used by the user in its
 # Makefile.params.
-include Makefile.toolkit
+include ${MDIR_PFX}Makefile.toolkit
 
 # Lastly include the master toolkit
-include ../../Makefile.toolkit
+include ${MDIR_PFX}../../Makefile.toolkit
 
 # GNU Make Standard Library
-include ../../gmsl/gmsl   # functions: uc
-
-
+include ${MDIR_PFX}../../gmsl/gmsl   # functions: uc
 
 # What is this module's name.
 MODULE_NAME ?= tm
 
 # Where we can find the parallel corpora.
-CORPORA_DIR ?= ../../corpora
+CORPORA_DIR ?= ${MDIR_PFX}../../corpora
 
 # What parallel corpora is to be used for creating the models.
 TRAIN_TM ?= train
+
+ALL_TMS ?= ${TRAIN_TM} ${MIXTM}
 
 # This script might produce directory and we want to easily remove them.
 RM := rm -rf
@@ -59,6 +60,11 @@ FILES_TO_BE_LOCKED = ibm* hmm* jpt* cpt* giza*
 # Allows to search for alignment files in corpus.
 vpath %${L1X} ${CORPORA_DIR}
 vpath %${L2X} ${CORPORA_DIR}
+vpath %${L1} ${CORPORA_DIR}
+vpath %${L2} ${CORPORA_DIR}
+
+# Where to look for built CPTs (cpts used for mixing are moved to mixtm).
+vpath ${CPT_MODEL_PFX}%${L1_2_L2X} ${MDIR_PFX} ${MDIR_PFX}mixtm
 
 
 .DEFAULT_GOAL := help
@@ -146,7 +152,7 @@ $(foreach m, $(filter-out ${IBM1_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}),
 
 # the meta target for word alignment model depends on word alignment model files.
 # both forward and backward word alignment models require source and target corpora.
-$(foreach c, ${TRAIN_TM}, \
+$(foreach c, ${ALL_TMS}, \
 	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
 		$(eval \
 			$(call lc, ${m})_model:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
@@ -181,7 +187,7 @@ clean.alignment_files:
 alignment_files:  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 
-$(foreach c, ${TRAIN_TM}, \
+$(foreach c, ${ALL_TMS}, \
 	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
 		$(eval \
 			$(call lc, $m)_alignment:  $c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
@@ -218,7 +224,7 @@ jpts: $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 # Defining a variable to hold the jpt file's prefix.
 # jpts requires the word alignment models in both directions.
 # jpts requires the source and target corpora.
-$(foreach c, ${TRAIN_TM}, \
+$(foreach c, ${ALL_TMS}, \
 	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
 		$(eval \
 			JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
@@ -238,7 +244,7 @@ $(foreach c, ${TRAIN_TM}, \
 JPT_GIZA_MODEL_PFX ?= ${JPT_MODEL_PFX}.${GIZA_MODEL_PFX}
 ${JPT_GIZA_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
 ${JPT_GIZA_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
-$(foreach c, ${TRAIN_TM}, \
+$(foreach c, ${ALL_TMS}, \
 	$(eval \
 		giza_jpt:  ${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}) \
 	$(eval \
@@ -280,7 +286,7 @@ sigs: $(addsuffix _sig, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 # To create a sigpruned jpt we need the source and target corpora.
 # source language to target language
 # m stands for model type
-$(foreach c, ${TRAIN_TM}, \
+$(foreach c, ${ALL_TMS}, \
 	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
 		$(eval \
 			$(call lc, ${m})_sig: $(call lc, ${m})_jpt) \
@@ -355,7 +361,7 @@ GIZA_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${GIZA_MODEL_PFX}${GIZA_SMOOTHERS_DESCRIPTIO
 # Create a variable to hold the conditional phrase table file's name e.i. hmm1_cpt_list.
 # Create meta-level dependencies between cpts and their jpts or sigs.
 # Create a meta-level target to generate cpts.
-$(foreach c, ${TRAIN_TM}, \
+$(foreach c, ${ALL_TMS}, \
 	$(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}, \
 		$(eval \
 			${m}_cpt_list = ${$(call uc, ${m})_CPT_PREFIX}.$c.${L1_2_L2X}) \
@@ -373,7 +379,7 @@ $(foreach c, ${TRAIN_TM}, \
 # Creates dependencies for reversed Conditional Phrase Tables.
 # Conditional Phrase Tables depend on a word alignment model for Zens-Ney's smoother.
 # Conditional Phrase Tables depend on a joint frequency phrase table which can be raw or significance pruned (CPT_DEP_TAG).
-$(foreach c, ${TRAIN_TM}, \
+$(foreach c, ${ALL_TMS}, \
 	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
 		$(eval \
 			${${m}_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
@@ -386,7 +392,7 @@ $(foreach c, ${TRAIN_TM}, \
 # Conditional Phrase Tables depend on a word alignment model for Zens-Ney's smoother.
 # Conditional Phrase Tables depend on a jpt which can be raw or significance pruned (CPT_DEP_TAG).
 # NOTE: CPT_DEP_TAG is either JPT or SIG
-$(foreach c, ${TRAIN_TM}, \
+$(foreach c, ${ALL_TMS}, \
 	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
 		$(eval \
 			${${m}_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
@@ -437,7 +443,7 @@ JPT_MERGED_PFX := ${JPT_MODEL_PFX}.merged
 
 # Merged conditional phrase tables depends on a word model alignment for Zens-Ney's smoother.
 # Merged conditional phrase tables depends on either a merged jpt (normal scenario) or a merged sig (when using significance pruning).
-$(foreach c, ${TRAIN_TM}, \
+$(foreach c, ${ALL_TMS}, \
 	$(eval \
 		${MERGED_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 	$(eval \
@@ -450,8 +456,8 @@ $(foreach c, ${TRAIN_TM}, \
 
 
 # A merged jpt depends on user define type of joint frequency count file.
-.INTERMEDIATE: $(foreach c, ${TRAIN_TM}, ${JPT_MERGED_PFX}.$c.${RJOINTX} ${JPT_MERGED_PFX}.$c.${JOINTX})
-$(foreach c, ${TRAIN_TM}, \
+.INTERMEDIATE: $(foreach c, ${ALL_TMS}, ${JPT_MERGED_PFX}.$c.${RJOINTX} ${JPT_MERGED_PFX}.$c.${JOINTX})
+$(foreach c, ${ALL_TMS}, \
 	$(eval \
 		${JPT_MERGED_PFX}.$c.${RJOINTX}:  $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.$c.${RJOINTX})) \
 	$(eval \
@@ -461,7 +467,7 @@ $(foreach c, ${TRAIN_TM}, \
 
 # Significance pruning model depends on a "raw" joint frequency count file.
 # Significance pruning model depends on the source and target corpora.
-$(foreach c, ${TRAIN_TM}, \
+$(foreach c, ${ALL_TMS}, \
 	$(eval \
 		${SIG_MERGED_PFX}.$c.${RJOINTX}:  ${JPT_MERGED_PFX}.$c.${RJOINTX}) \
 	$(eval \
@@ -470,6 +476,67 @@ $(foreach c, ${TRAIN_TM}, \
 		${SIG_MERGED_PFX}.$c.${JOINTX}:  ${JPT_MERGED_PFX}.$c.${JOINTX}) \
 	$(eval \
 		${SIG_MERGED_PFX}.$c.${JOINTX}:  $c${L1X} $c${L2X}) \
+)
+
+
+########################################
+# MIXTURE CONDITIONAL PHRASE TABLE
+# Linear combination of MERGED CONDITIONAL PHRASE TABLES
+# requires: MERGED_CPT_JPT_TYPES to be properly defined.
+
+clean.content: clean.mix
+
+.PHONY: clean.mix
+clean.mix: SHELL=${GUARD_SHELL}
+clean.mix:
+	$(RM) ${CPT_MIX_PFX}.*
+	${RM} -r mixtm
+
+.PHONY: mix_cpt
+
+CPT_MIX_PFX := ${CPT_MODEL_PFX}.mix
+
+mix_cpt_list = ${CPT_MIX_PFX}.${L1_2_L2X}
+
+MIXING_CPTS = $(foreach c, $(filter-out ${TRAIN_TM}, ${MIXTM}), ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X})
+
+# Meta target to create the mixture conditional phrase table in mixtm/.
+mix_cpt: SHELL=${GUARD_SHELL}
+mix_cpt:
+	mkdir -p mixtm
+	cd mixtm && ${MAKE} -f ../Makefile ${mix_cpt_list}
+	ln -sf $(addprefix mixtm/, ${mix_cpt_list}) .
+
+# Let's define which merged cpt files we need to mix and the dev jpt file we need
+# for calculating the weights for the mix.
+${CPT_MIX_PFX}.${L1_2_L2X}:  $(foreach c, ${MIXTM}, ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X})
+${CPT_MIX_PFX}.${L1_2_L2X}:  ${JPT_MERGED_PFX}.${TUNE_DECODE}.${JOINTX}
+
+${CPT_MIX_PFX}.${L2_2_L1X}:  $(foreach c, ${MIXTM}, ${MERGED_CPT_PREFIX}.$c.${L2_2_L1X})
+${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_DECODE}.${JOINTX}
+
+#%.${TUNE_DECODE}.${JOINTX}: M=7
+#%.${TUNE_DECODE}.${JOINTX}: JPT_EXTRAS=-d 6
+%.${TUNE_DECODE}.${JOINTX}: JPT_PARALLELISM_LEVEL=1
+%.${TUNE_DECODE}.${JOINTX}: GEN_JPT_PARALLEL_OPTIONS=
+%.${TUNE_DECODE}.${JOINTX}: override L1X = _${SRC_LANG}${LANGX}
+%.${TUNE_DECODE}.${JOINTX}: override L2X = _${TGT_LANG}${LANGX}
+${TUNE_DECODE}.%.align.gz: override L1X = _${SRC_LANG}${LANGX}
+${TUNE_DECODE}.%.align.gz: override L2X = _${TGT_LANG}${LANGX}
+
+TM ?= $(firstword ${MIXTM})
+
+$(foreach j, ${MERGED_CPT_JPT_TYPES}, \
+	$(eval \
+		${JPT_MERGED_PFX}.${TUNE_DECODE}.${JOINTX}:  ${JPT_${j}_MODEL_PFX}.${TUNE_DECODE}.${JOINTX}) \
+	$(eval \
+		${JPT_${j}_MODEL_PFX}.${TUNE_DECODE}.${JOINTX}:  ${TUNE_DECODE}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz) \
+	$(eval \
+		${JPT_${j}_MODEL_PFX}.${TUNE_DECODE}.${JOINTX}:  ${TUNE_DECODE}${L1} ${TUNE_DECODE}${L2}) \
+	$(eval \
+		${TUNE_DECODE}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${j}_MODEL_PFX}.${TM}.${L2_GIVEN_L1X} ${${j}_MODEL_PFX}.${TM}.${L1_GIVEN_L2X}) \
+	$(eval \
+		${TUNE_DECODE}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_DECODE}${L1} ${TUNE_DECODE}${L2}) \
 )
 
 

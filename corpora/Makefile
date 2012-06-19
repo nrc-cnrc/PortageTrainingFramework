@@ -256,6 +256,8 @@ LC += ${HELDOUT_LC}
 # Note that will want to compress the TRAIN_SET for space efficiency.
 TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_TM})
 TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TM})
+TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXTM})
+TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXTM})
 LC += ${TM_LC}
 MIXLM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXLM})
 MIXLM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXLM})
