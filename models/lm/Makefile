@@ -48,15 +48,14 @@ LM_LANG ?= ${TGT_LANG}
 # What type of lms to build
 LM_TYPES ?= binlm
 
-# What is the corpus' name, extension and what file defines this corpus.
-# This is the corpus' name and looks like train_fr
-CORPUS_NAME ?= $(addsuffix _${LM_LANG}, ${TRAIN_LM})
+# What are the corpora names and extension and what files define these corpora.
+CORPORA_NAMES ?= $(addsuffix _${LM_LANG}, ${TRAIN_LM})
 
 # This indicates the corpus extension and looks like .tok.al.gz
 CORPUS_EXT  ?= ${LANGXZ}
 
 LM_DESC ?= -kn-${ORDER}g
-LM_NAME ?= $(addsuffix ${LM_DESC}, ${CORPUS_NAME})
+LM_NAMES ?= $(addsuffix ${LM_DESC}, ${CORPORA_NAMES})
 
 # Where to find the corpus' file.
 CORPORA_DIR ?= ../../corpora
@@ -72,7 +71,7 @@ endif
 PPX_TEST_SET ?= test.txt
 
 # After this Makefile, the following targets/files are precious.
-FILES_TO_BE_LOCKED = ${LM_NAME}*
+FILES_TO_BE_LOCKED = $(addsuffix *, ${LM_NAMES})
 
 # If you need to provide ngram-count some extra parameters.
 EXTRA_NGRAM_COUNT_OPTIONS ?=
@@ -127,7 +126,7 @@ all: ${LM_TYPES}
 list_final_output: SHELL=${GUARD_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
-	@echo "$(addsuffix .binlm.gz, ${LM_NAME})"
+	@echo "$(addsuffix .binlm.gz, ${LM_NAMES})"
 
 
 
@@ -165,7 +164,7 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/lm
 .PHONY: portageLive
 portageLive: SHELL=${GUARD_SHELL}
 ifdef TRAIN_LM
-portageLive: $(addsuffix .tplm, ${LM_NAME})
+portageLive: $(addsuffix .tplm, ${LM_NAMES})
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../lm/, $+) .
@@ -180,9 +179,9 @@ endif
 # Adds sentence start and end markers
 .PHONY: mark
 mark: SHELL=${GUARD_SHELL}
-mark: ${CORPUS_NAME}.marked.gz
+mark: $(addsuffix .marked.gz, ${CORPORA_NAMES})
 
-#.SECONDARY: ${CORPUS_NAME}.marked.gz
+#.SECONDARY: $(addsuffix .marked.gz, ${CORPORA_NAMES}
 %.marked.gz: SHELL=${FRAMEWORK_SHELL}
 %.marked.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "Marking up $<"
@@ -207,10 +206,10 @@ clean.mark:
 # Compressed irstlm format
 .PHONY: irstlm
 irstlm: SHELL=${GUARD_SHELL}
-irstlm: $(addsuffix .ilm.gz, ${LM_NAME})
+irstlm: $(addsuffix .ilm.gz, ${LM_NAMES})
 
 # Here we've added LM_DESC to strip it out from the marked corpus file name.
-#.SECONDARY: $(addsuffix .ilm.gz, ${LM_NAME})
+#.SECONDARY: $(addsuffix .ilm.gz, ${LM_NAMES})
 %${LM_DESC}.ilm.gz: SHELL=${FRAMEWORK_SHELL}
 %${LM_DESC}.ilm.gz: %.marked.gz
 	@_LOCAL=1 echo "  Creating IRSTLM $@"
@@ -240,10 +239,10 @@ clean.irstlm:
 # arpa text compressed format
 .PHONY: arpa
 arpa: SHELL=${GUARD_SHELL}
-arpa: $(addsuffix .lm.gz, ${LM_NAME})
+arpa: $(addsuffix .lm.gz, ${LM_NAMES})
 
 # Here we've added LM_DESC to strip it out from the corpus file name.
-#.SECONDARY: $(addsuffix .lm.gz, ${LM_NAME})
+#.SECONDARY: $(addsuffix .lm.gz, ${LM_NAMES})
 ifeq (${LM_TOOLKIT}, SRI)
 %${LM_DESC}.lm.gz: SHELL=${FRAMEWORK_SHELL}
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
@@ -326,9 +325,9 @@ clean.arpa:
 # arpa bin compressed format
 .PHONY: blmt
 blmt: SHELL=${GUARD_SHELL}
-blmt: $(addsuffix .blmt, ${LM_NAME})
+blmt: $(addsuffix .blmt, ${LM_NAMES})
 
-#.SECONDARY: $(addsuffix .blmt, ${LM_NAME})
+#.SECONDARY: $(addsuffix .blmt, ${LM_NAMES})
 %.blmt: SHELL=${FRAMEWORK_SHELL}
 %.blmt: %.ilm.gz
 	@_LOCAL=1 echo "  Creating bin.ARPA format $@"
@@ -352,9 +351,9 @@ clean.blmt:
 # qARPA format
 .PHONY: quantize
 quantize: SHELL=${GUARD_SHELL}
-quantize: $(addsuffix .qlm.gz, ${LM_NAME})
+quantize: $(addsuffix .qlm.gz, ${LM_NAMES})
 
-#.SECONDARY: $(addsuffix .qlm.gz, ${LM_NAME})
+#.SECONDARY: $(addsuffix .qlm.gz, ${LM_NAMES})
 %.qlm: SHELL=${FRAMEWORK_SHELL}
 %.qlm: %.lm.gz
 	@_LOCAL=1 echo "  qARPA $< to $@"
@@ -378,9 +377,9 @@ clean.quantize:
 # Quantize binary
 .PHONY: Qblmt
 Qblmt: SHELL=${GUARD_SHELL}
-Qblmt: $(addsuffix .Qblmt, ${LM_NAME})
+Qblmt: $(addsuffix .Qblmt, ${LM_NAMES})
 
-#.SECONDARY: $(addsuffix .Qblmt, ${LM_NAME})
+#.SECONDARY: $(addsuffix .Qblmt, ${LM_NAMES})
 %.Qblmt: SHELL=${FRAMEWORK_SHELL}
 %.Qblmt: %.qlm.gz
 	@_LOCAL=1 echo "  bin.qARPA $< to $@"
@@ -404,9 +403,9 @@ clean.Qblmt:
 # Sort the arpa format
 .PHONY: sort_arpa
 sort_arpa: SHELL=${GUARD_SHELL}
-sort_arpa: $(addsuffix .lm.sorted.gz, ${LM_NAME})
+sort_arpa: $(addsuffix .lm.sorted.gz, ${LM_NAMES})
 
-#.SECONDARY: $(addsuffix .lm.sorted.gz, ${LM_NAME})
+#.SECONDARY: $(addsuffix .lm.sorted.gz, ${LM_NAMES})
 %.lm.sorted.gz: SHELL=${FRAMEWORK_SHELL}
 %.lm.sorted.gz: %.lm.gz
 	${TIME_MEM} \
@@ -425,9 +424,9 @@ clean.sort_arpa:
 # Portage's bin lm format
 .PHONY: binlm
 binlm: SHELL=${GUARD_SHELL}
-binlm: $(addsuffix .binlm.gz, ${LM_NAME})
+binlm: $(addsuffix .binlm.gz, ${LM_NAMES})
 
-#.SECONDARY: $(addsuffix .binlm.gz, ${LM_NAME})
+#.SECONDARY: $(addsuffix .binlm.gz, ${LM_NAMES})
 %.binlm.gz: SHELL=${FRAMEWORK_SHELL}
 %.binlm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -447,9 +446,9 @@ clean.binlm:
 # Pruning ARPA format => ARPA format
 .PHONY: prune
 prune: SHELL=${GUARD_SHELL}
-prune: $(addsuffix .plm.gz, ${LM_NAME})
+prune: $(addsuffix .plm.gz, ${LM_NAMES})
 
-#.SECONDARY: $(addsuffix .plm.gz, ${LM_NAME})
+#.SECONDARY: $(addsuffix .plm.gz, ${LM_NAMES})
 %.plm.gz: SHELL=${FRAMEWORK_SHELL}
 %.plm.gz: %.lm.gz
 	RP_PSUB_OPTS="-${CPUS} -N $@" \
@@ -463,7 +462,7 @@ prune: $(addsuffix .plm.gz, ${LM_NAME})
 # Create Tightly Packed Language Model.
 .PHONY: tplm
 tplm: SHELL=${GUARD_SHELL}
-tplm: $(addsuffix .tplm, ${LM_NAME})
+tplm: $(addsuffix .tplm, ${LM_NAMES})
 
 %.tplm: SHELL=${FRAMEWORK_SHELL}
 %.tplm: %.lm.gz
@@ -527,14 +526,14 @@ endif
 # PERPLEXITY
 .PHONY: ppx
 ppx: SHELL=${GUARD_SHELL}
-ppx: $(addprefix ppx., ${LM_NAME})
+ppx: $(addprefix ppx., ${LM_NAMES})
 ppx.%: SHELL=${FRAMEWORK_SHELL}
 ppx.%: %.binlm.gz ${PPX_TEST_SET}
 	lm_eval -v -limit $+
 
 .PHONY: ppx.irstlm
 ppx.irstlm: SHELL=${GUARD_SHELL}
-ppx.irstlm: $(addprefix ppx.irstlm.${LM_NAME}, .lm.gz .blmt .qlm.gz .Qblmt)
+ppx.irstlm: $(foreach lm_name, ${LM_NAMES}, $(addprefix ppx.irstlm.${lm_name}, .lm.gz .blmt .qlm.gz .Qblmt))
 ppx.irstlm.%: SHELL=${FRAMEWORK_SHELL}
 ppx.irstlm.%: ${PPX_TEST_SET} %
 	compile-lm $* --eval=$< >& $(basename $@)
