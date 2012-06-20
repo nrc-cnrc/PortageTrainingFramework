@@ -433,7 +433,7 @@ ${CPT_MODEL_PFX}.${GIZA_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
 ${CPT_MODEL_PFX}.%: CPT_PRUNE1=-prune1w 100
 
 # Non mixture CPT models:
-CPT_MODEL_PFXS = $(addprefix ${CPT_MODEL_PFX}., hmm ibm merged)
+CPT_MODEL_PFXS = $(addprefix ${CPT_MODEL_PFX}., hmm ibm merged zn-adapt)
 
 $(addsuffix %${L1_2_L2X}, ${CPT_MODEL_PFXS}): SHELL=${FRAMEWORK_SHELL}
 $(addsuffix %${L1_2_L2X}, ${CPT_MODEL_PFXS}):
