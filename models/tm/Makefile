@@ -626,6 +626,19 @@ tppt portageLive: ${tppt_list}
 # The test target is designed to be a unittest.  Its purpose is not to run
 # commands but rather validate that all variables are properly expanded and
 # that the resulting dependencies are all correct.
+.PHONY: testsuite
+testsuite:  unittest1
+testsuite:  unittest2
+testsuite:  unittest3
+testsuite:  unittest4
+testsuite:  unittest5
+testsuite:  unittest6
+testsuite:  unittest7
+testsuite:  unittest8
+testsuite:  unittest9
+testsuite:  unittest10
+testsuite:  unittest11
+
 
 # Verify that make is capable of generating all required targets for merged_cpt and some other cpt.
 .PHONY: unittest1
@@ -733,9 +746,10 @@ indicator2:
 
 
 # MIXTURE TRANSLATION MODEL
-.PHONY: unittest11
-unittest11:  export MIXTM = sublm1 sublm2 sublm3
-unittest11:
+.PHONY: unittest11 mixture
+unittest11:  mixture
+mixture:  export MIXTM = sublm1 sublm2 sublm3
+mixture:
 	mkdir -p mixtm
 	${MAKE} mix_cpt
 	@[[ "`find -name cpt.mix.en2fr.gz -size +21c -type l | \wc -l`" -eq 1 ]] \
