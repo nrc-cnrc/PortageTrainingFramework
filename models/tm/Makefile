@@ -9,10 +9,10 @@
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, Her Majesty in Right of Canada
+# Copyright 2008, 2012 Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2012 Her Majesty in Right of Canada
 
-MDIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
+TM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
 # Source file requirements.
 # <PREFIX>_<LANGUAGE>.<LANGX>
@@ -21,28 +21,28 @@ MDIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 # PT_TYPES indicates what type of phrase table we want to generate.
 
 # Mandatory include: master config file.
-include ${MDIR_PFX}../../Makefile.params
+include ${TM_DIR_PFX}../../Makefile.params
 
 # Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
--include ${MDIR_PFX}${MAKEFILE_PARAMS}
+-include ${TM_DIR_PFX}${MAKEFILE_PARAMS}
 
 # This is the Makefile that contains all targets required to build Translation
 # Models and some variable's defintion that might be used by the user in its
 # Makefile.params.
-include ${MDIR_PFX}Makefile.toolkit
+include ${TM_DIR_PFX}Makefile.toolkit
 
 # Lastly include the master toolkit
-include ${MDIR_PFX}../../Makefile.toolkit
+include ${TM_DIR_PFX}../../Makefile.toolkit
 
 # GNU Make Standard Library
-include ${MDIR_PFX}../../gmsl/gmsl   # functions: uc
+include ${TM_DIR_PFX}../../gmsl/gmsl   # functions: uc
 
 # What is this module's name.
 MODULE_NAME ?= tm
 
 # Where we can find the parallel corpora.
-CORPORA_DIR ?= ${MDIR_PFX}../../corpora
+CORPORA_DIR ?= ${TM_DIR_PFX}../../corpora
 
 # What parallel corpora is to be used for creating the models.
 TRAIN_TM ?= train
@@ -64,7 +64,7 @@ vpath %${L1} ${CORPORA_DIR}
 vpath %${L2} ${CORPORA_DIR}
 
 # Where to look for built CPTs (cpts used for mixing are moved to mixtm).
-vpath ${CPT_MODEL_PFX}%${L1_2_L2X} ${MDIR_PFX} ${MDIR_PFX}mixtm
+vpath ${CPT_MODEL_PFX}%${L1_2_L2X} ${TM_DIR_PFX} ${TM_DIR_PFX}mixtm
 
 
 .DEFAULT_GOAL := help

@@ -9,13 +9,13 @@
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2010, Sa Majeste la Reine du Chef du Canada /
-# Copyright 2010, Her Majesty in Right of Canada
+# Copyright 2010, 2012 Sa Majeste la Reine du Chef du Canada /
+# Copyright 2010, 2012 Her Majesty in Right of Canada
 
-MDIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
+TM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
--include ${MDIR_PFX}../../Makefile.params
-include ${MDIR_PFX}../../gmsl/gmsl   # functions: uc
+-include ${TM_DIR_PFX}../../Makefile.params
+include ${TM_DIR_PFX}../../gmsl/gmsl   # functions: uc
 
 UTF8 = $(if $(findstring Darwin, ${OSTYPE}),UTF-8,utf8)
 export LANG   = en_CA.${UTF8}
