@@ -152,8 +152,8 @@ $(foreach m, $(filter-out ${IBM1_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}),
 
 # the meta target for word alignment model depends on word alignment model files.
 # both forward and backward word alignment models require source and target corpora.
-$(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
+$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
+	$(foreach c, ${ALL_TMS}, \
 		$(eval \
 			$(call lc, ${m})_model:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 		$(eval \
@@ -161,6 +161,10 @@ $(foreach c, ${ALL_TMS}, \
 		$(eval \
 			${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}:  $c${L1X} $c${L2X}) \
 	) \
+	$(eval \
+	   ${${m}_MODEL_PFX}.${L1_GIVEN_L2X}: $(foreach c, ${TRAIN_TM}, $c${L1X} $c${L2X})) \
+	$(eval \
+	   ${${m}_MODEL_PFX}.${L2_GIVEN_L1X}: $(foreach c, ${TRAIN_TM}, $c${L1X} $c${L2X})) \
 )
 
 ########################################
@@ -494,8 +498,6 @@ clean.mix:
 
 .PHONY: mix_cpt
 
-CPT_MIX_PFX := ${CPT_MODEL_PFX}.mix
-
 mix_cpt_list = ${CPT_MIX_PFX}.${L1_2_L2X}
 
 MIXING_CPTS = $(foreach c, $(filter-out ${TRAIN_TM}, ${MIXTM}), ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X})
@@ -551,6 +553,37 @@ clean.giza:
 
 
 
+########################################
+# Joint 2 multi cpt.
+# Create JPT groups based on their word alignment type.
+j2m/%:
+	mkdir -p $@
+	cd $@ && ln -s ../../jpt.$**${JOINTX} .
+
+j2mr/%:
+	mkdir -p $@
+	cd $@ && ln -s ../../jpt.$**${RJOINTX} .
+
+INDICATOR_MODEL_PFX = ${CPT_INDICATOR_PFX}-0RF.${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}
+
+# We need to group JPTs, for this we create a directory called j2m containing the proper grouping of JPTs.
+${INDICATOR_MODEL_PFX}.${L1_2_L2X}:  | $(addprefix j2m/, ${GIZA_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX})
+${INDICATOR_MODEL_PFX}.${L2_2_L1X}:  | $(addprefix j2mr/, ${GIZA_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX})
+
+ifeq ($(words ${TRAIN_TM}), 1)
+# Don't create a global word alignment model using all corpora pairs if there is only one pair.
+# Don't duplicate work already been done.
+${INDICATOR_MODEL_PFX}.${L1_2_L2X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
+${INDICATOR_MODEL_PFX}.${L2_2_L1X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
+else
+${INDICATOR_MODEL_PFX}.${L1_2_L2X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GIVEN_L1X}  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L1_GIVEN_L2X}
+${INDICATOR_MODEL_PFX}.${L2_2_L1X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GIVEN_L1X}  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L1_GIVEN_L2X}
+endif
+
+.PHONY: indicator
+indicator:  ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
+
+
 
 ########################################
 # Let's do some validation when the user wants a merged_cpt.
@@ -568,10 +601,6 @@ endif
 # Make sure MERGED_CPT_JPT_TYPES are valid.
 ifneq ($(filter-out GIZA HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_JPT_TYPES}),)
 $(error MERGED_CPT_JPT_TYPES must be one of GIZA, HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_JPT_TYPES})
-endif
-else
-ifdef USE_SIGPRUNING
-$(error Significance pruning and merged_cpt is not yet implemented!!!)
 endif
 endif
 
@@ -675,4 +704,40 @@ unittest8:  multiple_TMs
 multiple_TMs:  export TRAIN_TM = sublm1 sublm2 sublm3
 multiple_TMs:
 	${MAKE} all
+
+
+# Indicator Feature from one corpus.
+.PHONY: unittest9 indicator1
+unittest9:  indicator1
+indicator1:
+	${RM} ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
+	${MAKE} indicator
+	@[[ "`find -name ${INDICATOR_MODEL_PFX}.${L1_2_L2X} -size +21c | \wc -l`" -eq 1 ]] \
+	|| ! echo "ERROR: can't find cpt with indicator" >&2
+	@zcat ${INDICATOR_MODEL_PFX}.${L1_2_L2X} | grep -Em1 '( (1|0\.3)){3}$$' --quiet \
+	|| ! echo "ERROR: Looks like there are no indicator feature in your cpt." >&2
+
+# Inidcator Feature using several corpora.
+.PHONY: unittest10 indicator2
+unittest10:  indicator2
+indicator2:  export TRAIN_TM=tm-train sublm1 sublm2 sublm3
+indicator2:
+	${RM} ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
+	${MAKE} indicator
+	@[[ "`find -name ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GIVEN_L1X} -size +21c | \wc -l`" -eq 1 ]] \
+	|| ! echo "ERROR: Can't find global word alignment model." &>2
+	@[[ "`find -name ${INDICATOR_MODEL_PFX}.${L1_2_L2X} -size +21c | \wc -l`" -eq 1 ]] \
+	|| ! echo "ERROR: can't find cpt with indicator" >&2
+	@zcat ${INDICATOR_MODEL_PFX}.${L1_2_L2X} | grep -Em1 '( (1|0\.3)){3}$$' --quiet \
+	|| ! echo "ERROR: Looks like there are no indicator feature in your cpt." >&2
+
+
+# MIXTURE TRANSLATION MODEL
+.PHONY: unittest11
+unittest11:  export MIXTM = sublm1 sublm2 sublm3
+unittest11:
+	mkdir -p mixtm
+	${MAKE} mix_cpt
+	@[[ "`find -name cpt.mix.en2fr.gz -size +21c -type l | \wc -l`" -eq 1 ]] \
+	|| ! echo "ERROR: Can't find the mixture translation model." >&2
 

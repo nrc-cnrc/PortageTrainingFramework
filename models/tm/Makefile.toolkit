@@ -479,6 +479,8 @@ $(addsuffix %${L2_2_L1X}, ${CPT_MODEL_PFXS}):
 
 ########################################
 # MIXTURE CPT: Linear combination of CPTS
+CPT_MIX_PFX ?= ${CPT_MODEL_PFX}.mix
+
 ${CPT_MIX_PFX}%${L1_2_L2X}: SHELL=${FRAMEWORK_SHELL}
 ${CPT_MIX_PFX}%${L1_2_L2X}:
 	RP_PSUB_OPTS="-${MIX_CPUS} -N $@ ${PSUB_OPTS}" \
@@ -499,6 +501,50 @@ ${CPT_MIX_PFX}%${L2_2_L1X}:
 		-o $@ \
 		$(filter %${L2_2_L1X}, $+) \
 		$(filter %.${JOINTX}, $+) \
+		&> log.${@:.gz=}
+
+
+
+########################################
+# INDICATOR FEATURES
+CPT_INDICATOR_PFX ?= ${CPT_MODEL_PFX}.PI
+
+${CPT_INDICATOR_PFX}%:  CPT_SMOOTHERS=-s '0:RFSmoother' -a '1-100:PureIndicator'
+
+${CPT_INDICATOR_PFX}%${L1_2_L2X}:  SHELL=${FRAMEWORK_SHELL}
+#${CPT_INDICATOR_PFX}%${L1_2_L2X}:  WORD_MODEL_TYPE=-ibm 1
+${CPT_INDICATOR_PFX}%${L1_2_L2X}:
+	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
+	${TIME_MEM} \
+	joint2multi_cpt \
+		${CPT_PRUNE1} \
+		-v -i -z \
+		${WORD_MODEL_TYPE} \
+		-1 ${lang1} -2 ${lang2} \
+		${CPT_SMOOTHERS} \
+		-dir fwd \
+		-o $(subst .${L1_2_L2X},,$@) \
+		-ibm_l2_given_l1  $(filter %${L2_GIVEN_L1X}, $+) \
+		-ibm_l1_given_l2  $(filter %${L1_GIVEN_L2X}, $+) \
+		$| \
+		&> log.${@:.gz=}
+
+${CPT_INDICATOR_PFX}%${L2_2_L1X}:  SHELL=${FRAMEWORK_SHELL}
+#${CPT_INDICATOR_PFX}%${L2_2_L1X}:  WORD_MODEL_TYPE=-ibm 1
+${CPT_INDICATOR_PFX}%${L2_2_L1X}:
+	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
+	${TIME_MEM} \
+	joint2multi_cpt \
+		${CPT_PRUNE1} \
+		-v -i -z \
+		${WORD_MODEL_TYPE} \
+		-1 ${lang1} -2 ${lang2} \
+		${CPT_SMOOTHERS} \
+		-dir fwd \
+		-o $(subst .${L1_2_L2X},,$@) \
+		-ibm_l2_given_l1  $(filter %${L1_GIVEN_L2X}, $+) \
+		-ibm_l1_given_l2  $(filter %${L2_GIVEN_L1X}, $+) \
+		$| \
 		&> log.${@:.gz=}
 
 
