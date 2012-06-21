@@ -65,6 +65,7 @@ vpath %${L2} ${CORPORA_DIR}
 
 # Where to look for built CPTs (cpts used for mixing are moved to mixtm).
 vpath ${CPT_MODEL_PFX}%${L1_2_L2X} ${TM_DIR_PFX} ${TM_DIR_PFX}mixtm
+vpath %.gz ${TM_DIR_PFX} ${TM_DIR_PFX}mixtm
 
 
 .DEFAULT_GOAL := help
@@ -750,7 +751,6 @@ indicator2:
 unittest11:  mixture
 mixture:  export MIXTM = sublm1 sublm2 sublm3
 mixture:
-	mkdir -p mixtm
 	${MAKE} mix_cpt
 	@[[ "`find -name cpt.mix.en2fr.gz -size +21c -type l | \wc -l`" -eq 1 ]] \
 	|| ! echo "ERROR: Can't find the mixture translation model." >&2
