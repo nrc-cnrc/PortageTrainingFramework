@@ -738,7 +738,7 @@ indicator2:
 	${RM} ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
 	${MAKE} indicator
 	@[[ "`find -name ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GIVEN_L1X} -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: Can't find global word alignment model." &>2
+	|| ! echo "ERROR: Can't find global word alignment model." >&2
 	@[[ "`find -name ${INDICATOR_MODEL_PFX}.${L1_2_L2X} -size +21c | \wc -l`" -eq 1 ]] \
 	|| ! echo "ERROR: can't find cpt with indicator" >&2
 	@zcat ${INDICATOR_MODEL_PFX}.${L1_2_L2X} | grep -Em1 '( (1|0\.3)){3}$$' --quiet \
