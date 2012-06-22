@@ -147,13 +147,13 @@ word_alignment_models:  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 
 # All word alignment models depend on ibm1 word alignment models except, of course, for ibm1 word alignment models.
-$(foreach m, $(filter-out ${IBM1_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+$(foreach m, $(filter-out ${IBM1_MODEL_PFX} ${GIZA_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
    $(eval ${m}_model:  ${IBM1_MODEL_PFX}_model) \
 )
 
 # the meta target for word alignment model depends on word alignment model files.
 # both forward and backward word alignment models require source and target corpora.
-$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
+$(foreach m, $(call uc, $(filter-out ${GIZA_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
 	$(foreach c, ${ALL_TMS}, \
 		$(eval \
 			$(call lc, ${m})_model:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
@@ -163,10 +163,11 @@ $(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
 			${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}:  $c${L1X} $c${L2X}) \
 	) \
 	$(eval \
-	   ${${m}_MODEL_PFX}.${L1_GIVEN_L2X}: $(foreach c, ${TRAIN_TM}, $c${L1X} $c${L2X})) \
+	   ${${m}_MODEL_PFX}.${L1_GIVEN_L2X}: $(foreach c, ${ALL_TMS}, $c${L1X} $c${L2X})) \
 	$(eval \
-	   ${${m}_MODEL_PFX}.${L2_GIVEN_L1X}: $(foreach c, ${TRAIN_TM}, $c${L1X} $c${L2X})) \
+	   ${${m}_MODEL_PFX}.${L2_GIVEN_L1X}: $(foreach c, ${ALL_TMS}, $c${L1X} $c${L2X})) \
 )
+giza_model:  $(foreach c, ${ALL_TMS}, ${GIZA_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${GIZA_MODEL_PFX}.$c.${L1_GIVEN_L2X})
 
 ########################################
 # EXAMPLE of the resulting code generated previously:
@@ -193,7 +194,7 @@ alignment_files:  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 
 $(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+	$(foreach m, $(call uc, $(filter-out ${GIZA_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
 		$(eval \
 			$(call lc, $m)_alignment:  $c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
 		$(eval \
@@ -201,6 +202,12 @@ $(foreach c, ${ALL_TMS}, \
 		$(eval \
 			$c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 	) \
+	$(eval \
+		giza_alignment:  $c.${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz) \
+	$(eval \
+		$c.${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
+	$(eval \
+		$c.${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz:  $c/${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz $c/${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz) \
 )
 
 #${TRAIN_TM}.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
@@ -230,7 +237,7 @@ jpts: $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 # jpts requires the word alignment models in both directions.
 # jpts requires the source and target corpora.
 $(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+	$(foreach m, $(call uc, $(filter-out ${GIZA_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
 		$(eval \
 			JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
 		$(eval \
@@ -292,7 +299,7 @@ sigs: $(addsuffix _sig, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 # source language to target language
 # m stands for model type
 $(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+	$(foreach m, $(call uc, $(filter-out ${GIZA_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
 		$(eval \
 			$(call lc, ${m})_sig: $(call lc, ${m})_jpt) \
 		$(eval \
@@ -313,7 +320,7 @@ $(foreach c, ${ALL_TMS}, \
 ${GIZA_MODEL_PFX}_sig: ${GIZA_MODEL_PFX}_jpt
 ${SIG_GIZA_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
 ${SIG_GIZA_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
-$(foreach c, ${TRAIN_TM}, \
+$(foreach c, ${ALL_TMS}, \
 	$(eval \
 		${GIZA_MODEL_PFX}_sig: ${SIG_GIZA_MODEL_PFX}.$c.${JOINTX}) \
 	$(eval \
@@ -337,7 +344,7 @@ clean.cpts: SHELL=${GUARD_SHELL}
 clean.cpts:
 	$(RM) ${CPT_MODEL_PFX}.*
 
-.PHONY: cpts  $(addsuffix _cpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) merged_cpt
+.PHONY: cpts  $(addsuffix _cpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS} merged)
 cpts: SHELL=${GUARD_SHELL}
 cpts: jpts
 cpts: ibm2_cpt
@@ -345,9 +352,13 @@ cpts: hmm1_cpt
 cpts: hmm2_cpt
 cpts: hmm3_cpt
 cpts: merged_cpt
+cpts: giza_cpt
 
 
 # Let's define a couple of variables.
+IBM1_SMOOTHERS_DESCRIPTION ?= ${SMOOTHERS_DESCRIPTION}
+IBM1_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${IBM1_MODEL_PFX}${IBM1_SMOOTHERS_DESCRIPTION}
+
 IBM2_SMOOTHERS_DESCRIPTION ?= ${SMOOTHERS_DESCRIPTION}
 IBM2_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${IBM2_MODEL_PFX}${IBM2_SMOOTHERS_DESCRIPTION}
 
@@ -367,7 +378,7 @@ GIZA_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${GIZA_MODEL_PFX}${GIZA_SMOOTHERS_DESCRIPTIO
 # Create meta-level dependencies between cpts and their jpts or sigs.
 # Create a meta-level target to generate cpts.
 $(foreach c, ${ALL_TMS}, \
-	$(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}, \
+	$(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
 		$(eval \
 			${m}_cpt_list = ${$(call uc, ${m})_CPT_PREFIX}.$c.${L1_2_L2X}) \
 		$(eval \
@@ -385,7 +396,7 @@ $(foreach c, ${ALL_TMS}, \
 # Conditional Phrase Tables depend on a word alignment model for Zens-Ney's smoother.
 # Conditional Phrase Tables depend on a joint frequency phrase table which can be raw or significance pruned (CPT_DEP_TAG).
 $(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
+	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
 		$(eval \
 			${${m}_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 		$(eval \
@@ -398,7 +409,7 @@ $(foreach c, ${ALL_TMS}, \
 # Conditional Phrase Tables depend on a jpt which can be raw or significance pruned (CPT_DEP_TAG).
 # NOTE: CPT_DEP_TAG is either JPT or SIG
 $(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
+	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
 		$(eval \
 			${${m}_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 		$(eval \
@@ -557,19 +568,20 @@ clean.giza:
 ########################################
 # Joint 2 multi cpt.
 # Create JPT groups based on their word alignment type.
-j2m/%:
+j2m/%:  %_jpt
 	mkdir -p $@
 	cd $@ && ln -s ../../jpt.$**${JOINTX} .
 
-j2mr/%:
+j2mr/%:  %_jpt
 	mkdir -p $@
 	cd $@ && ln -s ../../jpt.$**${RJOINTX} .
 
 INDICATOR_MODEL_PFX = ${CPT_INDICATOR_PFX}-0RF.${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}
+INDICATOR_WORD_ALIGNMENT_MODELS ?= ${GIZA_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX}
 
 # We need to group JPTs, for this we create a directory called j2m containing the proper grouping of JPTs.
-${INDICATOR_MODEL_PFX}.${L1_2_L2X}:  | $(addprefix j2m/, ${GIZA_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX})
-${INDICATOR_MODEL_PFX}.${L2_2_L1X}:  | $(addprefix j2mr/, ${GIZA_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX})
+${INDICATOR_MODEL_PFX}.${L1_2_L2X}:  | $(addprefix j2m/,  ${INDICATOR_WORD_ALIGNMENT_MODELS})
+${INDICATOR_MODEL_PFX}.${L2_2_L1X}:  | $(addprefix j2mr/, ${INDICATOR_WORD_ALIGNMENT_MODELS})
 
 ifeq ($(words ${TRAIN_TM}), 1)
 # Don't create a global word alignment model using all corpora pairs if there is only one pair.
@@ -581,8 +593,8 @@ ${INDICATOR_MODEL_PFX}.${L1_2_L2X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GI
 ${INDICATOR_MODEL_PFX}.${L2_2_L1X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GIVEN_L1X}  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L1_GIVEN_L2X}
 endif
 
-.PHONY: indicator
-indicator:  ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
+.PHONY: indicator_cpt
+indicator_cpt:  ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
 
 
 
@@ -639,6 +651,45 @@ testsuite:  unittest8
 testsuite:  unittest9
 testsuite:  unittest10
 testsuite:  unittest11
+
+
+# These unittests look for clues that make was able to generate all
+# dependencies.  Does not execute commands nor build models.
+UNITTEST0_EXPECTED_NUM := $(words ${POSSIBLE_WORD_ALIGNMENT_MODELS})
+UNITTEST0_FILTER = egrep -o '($(call merge,|,$1))\b' | sort | uniq -c | sed -e 's/^ *//' | cut -f 1 -d ' ' | tr '\n' ' '
+.PHONY: unittest0
+unittest0: unittest_word_alignment_models
+unittest0: unittest_alignment_files
+unittest0: unittest_jpts
+unittest0: unittest_sigs
+unittest0: unittest_cpts
+unittest0: unittest_merged_cpt
+unittest0: unittest_mix_cpt
+unittest0: unittest_indicator_cpt
+unittest_word_alignment_models:
+	[[ "`${MAKE} -Bn word_alignment_models | $(call UNITTEST0_FILTER, cat.sh mgiza train_ibm)`" =~ "10 2 2" ]]
+unittest_alignment_files:  unittest_word_alignment_models
+	[[ "`${MAKE} -Bn alignment_files | $(call UNITTEST0_FILTER, align-words cat.sh mgiza train_ibm)`" =~ "6 10 2 2" ]]
+unittest_jpts:  unittest_alignment_files
+	[[ "`${MAKE} -Bn jpts | egrep -c 'gen-jpt-parallel.sh'`" -eq ${UNITTEST0_EXPECTED_NUM} ]]
+unittest_sigs:  unittest_jpts
+	[[ "`${MAKE} -Bn sigs | egrep -c 'sigprune.sh'`" -eq ${UNITTEST0_EXPECTED_NUM} ]]
+# NOTE that we are expecting a cpt for all possible word alignment models except for ibm1 plus one for merged_cpt.
+unittest_cpts:  unittest_jpts
+	[[ "`${MAKE} -Bn cpts | egrep -c 'joint2cond_phrase_tables'`" -eq $$((${UNITTEST0_EXPECTED_NUM}-1+1)) ]]
+unittest_merged_cpt:  unittest_jpts
+	[[ "`${MAKE} -Bn merged_cpt | egrep -c 'jpt.merged.train.en-fr.gz'`" -eq 2 ]]
+unittest_mix_cpt:  unittest_jpts
+	[[ "`${MAKE} -Bn mix_cpt | egrep -c 'train_tm_mixture'`" -eq 1 ]]
+
+# 3 align-words
+# 6 cat.sh
+# 3 gen-jpt-parallel.sh
+# 1 joint2multi_cpt
+# 3 ln
+# 2 mgiza
+unittest_indicator_cpt:  unittest_jpts
+	[[ "`${MAKE} -Bn indicator_cpt | egrep -o '\b(gen-jpt-parallel.sh|joint2multi_cpt|cat.sh|align-words|mgiza|ln)\b' | ${UNITTEST0_FILTER}`" =~ "3 6 3 1 3 2" ]]
 
 
 # Verify that make is capable of generating all required targets for merged_cpt and some other cpt.
@@ -725,11 +776,11 @@ multiple_TMs:
 unittest9:  indicator1
 indicator1:
 	${RM} ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
-	${MAKE} indicator
+	${MAKE} indicator_cpt
 	@[[ "`find -name ${INDICATOR_MODEL_PFX}.${L1_2_L2X} -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: can't find cpt with indicator" >&2
+	|| ! echo "ERROR: can't find cpt with indicator_cpt" >&2
 	@zcat ${INDICATOR_MODEL_PFX}.${L1_2_L2X} | grep -Em1 '( (1|0\.3)){3}$$' --quiet \
-	|| ! echo "ERROR: Looks like there are no indicator feature in your cpt." >&2
+	|| ! echo "ERROR: Looks like there are no indicator_cpt feature in your cpt." >&2
 
 # Inidcator Feature using several corpora.
 .PHONY: unittest10 indicator2
@@ -737,13 +788,13 @@ unittest10:  indicator2
 indicator2:  export TRAIN_TM=tm-train sublm1 sublm2 sublm3
 indicator2:
 	${RM} ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
-	${MAKE} indicator
+	${MAKE} indicator_cpt
 	@[[ "`find -name ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GIVEN_L1X} -size +21c | \wc -l`" -eq 1 ]] \
 	|| ! echo "ERROR: Can't find global word alignment model." >&2
 	@[[ "`find -name ${INDICATOR_MODEL_PFX}.${L1_2_L2X} -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: can't find cpt with indicator" >&2
+	|| ! echo "ERROR: can't find cpt with indicator_cpt" >&2
 	@zcat ${INDICATOR_MODEL_PFX}.${L1_2_L2X} | grep -Em1 '( (1|0\.3)){3}$$' --quiet \
-	|| ! echo "ERROR: Looks like there are no indicator feature in your cpt." >&2
+	|| ! echo "ERROR: Looks like there are no indicator_cpt feature in your cpt." >&2
 
 
 # MIXTURE TRANSLATION MODEL

@@ -123,7 +123,7 @@ GIZA_MODEL_PFX ?= giza
 
 ########################################
 # List of all possible word alignment models in the framework.
-POSSIBLE_WORD_ALIGNMENT_MODELS := ${IBM1_MODEL_PFX} ${IBM2_MODEL_PFX} ${HMM1_MODEL_PFX} ${HMM2_MODEL_PFX} ${HMM3_MODEL_PFX} 
+POSSIBLE_WORD_ALIGNMENT_MODELS := ${IBM1_MODEL_PFX} ${IBM2_MODEL_PFX} ${HMM1_MODEL_PFX} ${HMM2_MODEL_PFX} ${HMM3_MODEL_PFX} ${GIZA_MODEL_PFX}
 
 ########################################
 # JPT MODELS.
@@ -312,10 +312,6 @@ ALIGN_MODEL_TYPE := -hmm
 %.${IBM1_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 1
 %.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 2
 
-.PHONY: giza
-giza:  $(addsuffix .${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz, ${TRAIN_TM})
-$(addsuffix .${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz, ${TRAIN_TM}):  %.${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz:  %/${SRC_LANG}.lc %/${TGT_LANG}.lc  %/${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz %/${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz
-
 %.${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz:
 	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
 	time-mem \
@@ -425,59 +421,6 @@ ${SIG_MODEL_PFX}.%.${RJOINTX}:
 
 
 ########################################
-# CPT MODELS
-${CPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
-${CPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
-${CPT_MODEL_PFX}.hmm%: WORD_MODEL_TYPE=-hmm
-${CPT_MODEL_PFX}.${GIZA_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
-${CPT_MODEL_PFX}.%: CPT_PRUNE1=-prune1w 100
-
-# Non mixture CPT models:
-CPT_MODEL_PFXS = $(addprefix ${CPT_MODEL_PFX}., hmm ibm merged zn-adapt)
-
-$(addsuffix %${L1_2_L2X}, ${CPT_MODEL_PFXS}): SHELL=${FRAMEWORK_SHELL}
-$(addsuffix %${L1_2_L2X}, ${CPT_MODEL_PFXS}):
-	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
-	${TIME_MEM} \
-	joint2cond_phrase_tables \
-		${CPT_PRUNE1} \
-		-v -i -z \
-		${WORD_MODEL_TYPE} \
-		-1 ${lang1} -2 ${lang2} \
-		${CPT_SMOOTHERS} \
-		-multipr fwd \
-		-o $(subst .${L1_2_L2X},,$@) \
-		-ibm_l2_given_l1  $(filter %${L2_GIVEN_L1X}, $+) \
-		-ibm_l1_given_l2  $(filter %${L1_GIVEN_L2X}, $+) \
-		${JOINT2COND_PHRASE_TABLE_OPTION} \
-		$(filter %${JOINTX}, $+) \
-		&> log.${@:.gz=}
-
-# Special case to make valid prune1w reversed conditional phrase tables.
-# Requires:
-# - forward & backward phrase alignment models;
-# - reversed joint frequency files.
-$(addsuffix %${L2_2_L1X}, ${CPT_MODEL_PFXS}): SHELL=${FRAMEWORK_SHELL}
-$(addsuffix %${L2_2_L1X}, ${CPT_MODEL_PFXS}):
-	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
-	${TIME_MEM} \
-	joint2cond_phrase_tables \
-		${CPT_PRUNE1} \
-		-v -i -z \
-		${WORD_MODEL_TYPE} \
-		-1 ${lang2} -2 ${lang1} \
-		${CPT_SMOOTHERS} \
-		-multipr fwd \
-		-o $(subst .${L2_2_L1X},,$@) \
-		-ibm_l2_given_l1  $(filter %${L1_GIVEN_L2X}, $+) \
-		-ibm_l1_given_l2  $(filter %${L2_GIVEN_L1X}, $+) \
-		${JOINT2COND_PHRASE_TABLE_OPTION} \
-		$(filter %.${RJOINTX}, $+) \
-		&> log.${@:.gz=}
-
-
-
-########################################
 # MIXTURE CPT: Linear combination of CPTS
 CPT_MIX_PFX ?= ${CPT_MODEL_PFX}.mix
 
@@ -550,8 +493,60 @@ ${CPT_INDICATOR_PFX}%${L2_2_L1X}:
 
 
 ########################################
+# CPT MODELS
+${CPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
+${CPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
+${CPT_MODEL_PFX}.hmm%: WORD_MODEL_TYPE=-hmm
+${CPT_MODEL_PFX}.${GIZA_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
+${CPT_MODEL_PFX}.%: CPT_PRUNE1=-prune1w 100
+
+# Non mixture/indicator CPT models:
+
+${CPT_MODEL_PFX}%${L1_2_L2X}: SHELL=${FRAMEWORK_SHELL}
+${CPT_MODEL_PFX}%${L1_2_L2X}:
+	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
+	${TIME_MEM} \
+	joint2cond_phrase_tables \
+		${CPT_PRUNE1} \
+		-v -i -z \
+		${WORD_MODEL_TYPE} \
+		-1 ${lang1} -2 ${lang2} \
+		${CPT_SMOOTHERS} \
+		-multipr fwd \
+		-o $(subst .${L1_2_L2X},,$@) \
+		-ibm_l2_given_l1  $(filter %${L2_GIVEN_L1X}, $+) \
+		-ibm_l1_given_l2  $(filter %${L1_GIVEN_L2X}, $+) \
+		${JOINT2COND_PHRASE_TABLE_OPTION} \
+		$(filter %${JOINTX}, $+) \
+		&> log.${@:.gz=}
+
+# Special case to make valid prune1w reversed conditional phrase tables.
+# Requires:
+# - forward & backward phrase alignment models;
+# - reversed joint frequency files.
+${CPT_MODEL_PFX}%${L2_2_L1X}: SHELL=${FRAMEWORK_SHELL}
+${CPT_MODEL_PFX}%${L2_2_L1X}:
+	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
+	${TIME_MEM} \
+	joint2cond_phrase_tables \
+		${CPT_PRUNE1} \
+		-v -i -z \
+		${WORD_MODEL_TYPE} \
+		-1 ${lang2} -2 ${lang1} \
+		${CPT_SMOOTHERS} \
+		-multipr fwd \
+		-o $(subst .${L2_2_L1X},,$@) \
+		-ibm_l2_given_l1  $(filter %${L1_GIVEN_L2X}, $+) \
+		-ibm_l1_given_l2  $(filter %${L2_GIVEN_L1X}, $+) \
+		${JOINT2COND_PHRASE_TABLE_OPTION} \
+		$(filter %.${RJOINTX}, $+) \
+		&> log.${@:.gz=}
+
+
+
+########################################
 # GIZA SPECIFIC TARGETS.
-$(addsuffix /,${TRAIN_TM}):  %:
+$(addsuffix /,${ALL_TMS}):  %:
 	mkdir -p $@
 
 
@@ -565,8 +560,8 @@ $(addsuffix /,${TRAIN_TM}):  %:
 
 # Create the vocabulary files.
 .PHONY:  vcb
-vcb:  $(addsuffix /${SRC_LANG}.lc.vcb, ${TRAIN_TM})
-vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${TRAIN_TM})
+vcb:  $(addsuffix /${SRC_LANG}.lc.vcb, ${ALL_TMS})
+vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_TMS})
 %/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %/
 	plain2snt $+
 
@@ -579,16 +574,16 @@ vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${TRAIN_TM})
 
 # Create the vocabulary classes.
 .PHONY: classes
-classes:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${TRAIN_TM})
-classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${TRAIN_TM})
+classes:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${ALL_TMS})
+classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_TMS})
 %.lc.vcb.classes:  %.lc
 	mkcls -m2 -p$< -c50 -V$@ opt &> $@.log
 
 
 # Create the cooccurrence counts.
 .PHONY: cooc
-cooc:  $(addsuffix /${L1_2_L2}.cooc, ${TRAIN_TM})
-cooc:  $(addsuffix /${L2_2_L1}.cooc, ${TRAIN_TM})
+cooc:  $(addsuffix /${L1_2_L2}.cooc, ${ALL_TMS})
+cooc:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_TMS})
 %/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %/
 	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt
 
@@ -598,8 +593,8 @@ cooc:  $(addsuffix /${L2_2_L1}.cooc, ${TRAIN_TM})
 
 # Perform word alignment.
 .PHONY: cfg
-cfg:  $(addsuffix /B.gizacfg, ${TRAIN_TM})
-cfg:  $(addsuffix /F.gizacfg, ${TRAIN_TM})
+cfg:  $(addsuffix /B.gizacfg, ${ALL_TMS})
+cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
 %/B.gizacfg:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes  %/${L1_2_L2}.cooc
 	mgiza \
 		-ncpus 4 \
@@ -631,10 +626,10 @@ cfg:  $(addsuffix /F.gizacfg, ${TRAIN_TM})
 #	| sort -n \
 #	| sed -e 's/^/# Sentence pair (/; s//\n/g'
 .PHONY:  giza_al
-giza_al:  $(addsuffix /${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz, ${TRAIN_TM})
-giza_al:  $(addsuffix /${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz, ${TRAIN_TM})
-$(addsuffix /${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz, ${TRAIN_TM}):  %/${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz:  %/B.gizacfg
-$(addsuffix /${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz, ${TRAIN_TM}):  %/${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz:  %/F.gizacfg
+giza_al:  $(addsuffix /${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz, ${ALL_TMS})
+giza_al:  $(addsuffix /${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz, ${ALL_TMS})
+$(addsuffix /${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz:  %/B.gizacfg
+$(addsuffix /${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz:  %/F.gizacfg
 %.${GIZA_MODEL_PFX}.alignment.gz:
 	set -o pipefail; \
 	merge_alignment.py ${<:gizacfg=A3.final.part}* \
