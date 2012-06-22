@@ -213,10 +213,10 @@ ${TGT_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
 		"${TOKENIZER_${TGT_LANG}} < $< > $@" ${LOG_STDERR}
 
 
-TM_TOK    ?= $(foreach t, ${TRAIN_TM}, $(filter $t%, ${TOK}))
-LM_TOK    ?= $(foreach t, ${TRAIN_LM}, $(filter $t%, ${TOK}))
-TC_TOK    ?= $(foreach t, ${TRAIN_TC}, $(filter $t%, ${TOK}))
-MIXLM_TOK ?= $(foreach t, ${MIXLM}, $(filter $t%, ${TOK}))
+TM_TOK    ?= $(filter $(addsuffix %, ${TRAIN_TM}), ${TOK})
+LM_TOK    ?= $(filter $(addsuffix %, ${TRAIN_LM}), ${TOK})
+TC_TOK    ?= $(filter $(addsuffix %, ${TRAIN_TC}), ${TOK})
+MIXLM_TOK ?= $(filter $(addsuffix %, ${MIXLM}), ${TOK})
 
 
 .PHONY: tok
@@ -274,7 +274,6 @@ endif
 LC += ${LM_LC}
 lc: SHELL=${GUARD_SHELL}
 lc: ${LC}
-
 
 # Construct a lowercased corpora from its aligned version.
 %${LANGX}: SHELL=${CORPUS_SHELL}
@@ -470,6 +469,12 @@ endif
 
 ################################################################################
 # HELPERS
+
+# Auto compress files.
+%.gz:  %
+	cat $< | gzip > $@
+
+
 
 .PHONY: debug
 debug: SHELL=${GUARD_SHELL}
