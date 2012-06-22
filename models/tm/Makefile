@@ -167,7 +167,7 @@ $(foreach m, $(call uc, $(filter-out ${GIZA_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMEN
 	$(eval \
 	   ${${m}_MODEL_PFX}.${L2_GIVEN_L1X}: $(foreach c, ${ALL_TMS}, $c${L1X} $c${L2X})) \
 )
-giza_model:  $(foreach c, ${ALL_TMS}, ${GIZA_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${GIZA_MODEL_PFX}.$c.${L1_GIVEN_L2X})
+${GIZA_MODEL_PFX}_model:  $(foreach c, ${ALL_TMS}, ${GIZA_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${GIZA_MODEL_PFX}.$c.${L1_GIVEN_L2X})
 
 ########################################
 # EXAMPLE of the resulting code generated previously:
@@ -666,21 +666,58 @@ unittest0: unittest_cpts
 unittest0: unittest_merged_cpt
 unittest0: unittest_mix_cpt
 unittest0: unittest_indicator_cpt
+
+# 10 cat.sh
+# 2 mgiza
+# 2 train_ibm
 unittest_word_alignment_models:
 	[[ "`${MAKE} -Bn word_alignment_models | $(call UNITTEST0_FILTER, cat.sh mgiza train_ibm)`" =~ "10 2 2" ]]
+
+# 6 align-words
+# 10 cat.sh
+# 2 mgiza
 unittest_alignment_files:  unittest_word_alignment_models
-	[[ "`${MAKE} -Bn alignment_files | $(call UNITTEST0_FILTER, align-words cat.sh mgiza train_ibm)`" =~ "6 10 2 2" ]]
+	[[ "`${MAKE} -Bn alignment_files | $(call UNITTEST0_FILTER, align-words cat.sh mgiza train_ibm)`" =~ "6 10 2" ]]
+
+# 6 align-words
+# 10 cat.sh
+# 6 gen-jpt-parallel.sh
+# 2 mgiza
 unittest_jpts:  unittest_alignment_files
-	[[ "`${MAKE} -Bn jpts | egrep -c 'gen-jpt-parallel.sh'`" -eq ${UNITTEST0_EXPECTED_NUM} ]]
+	[[ "`${MAKE} -Bn jpts | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh mgiza)`" =~ "6 10 6 2" ]]
+
+# 6 align-words
+# 10 cat.sh
+# 6 gen-jpt-parallel.sh
+# 2 mgiza
+# 6 sigprune.sh
 unittest_sigs:  unittest_jpts
-	[[ "`${MAKE} -Bn sigs | egrep -c 'sigprune.sh'`" -eq ${UNITTEST0_EXPECTED_NUM} ]]
-# NOTE that we are expecting a cpt for all possible word alignment models except for ibm1 plus one for merged_cpt.
+	[[ "`${MAKE} -Bn sigs | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh mgiza sigprune.sh)`" =~ "6 10 6 2 6" ]]
+
+# 6 align-words
+# 10 cat.sh
+# 6 gen-jpt-parallel.sh
+# 6 joint2cond_phrase_tables
+# 2 mgiza
 unittest_cpts:  unittest_jpts
-	[[ "`${MAKE} -Bn cpts | egrep -c 'joint2cond_phrase_tables'`" -eq $$((${UNITTEST0_EXPECTED_NUM}-1+1)) ]]
+	[[ "`${MAKE} -Bn cpts | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh joint2cond_phrase_tables mgiza)`" =~ "6 10 6 6 2" ]]
+
+# 2 align-words
+# 6 cat.sh
+# 2 gen-jpt-parallel.sh
+# 1 joint2cond_phrase_tables
+unittest_merged_cpt:  export MERGED_CPT_ZN_MODEL = HMM3
+unittest_merged_cpt:  export MERGED_CPT_JPT_TYPES = IBM2 HMM3
 unittest_merged_cpt:  unittest_jpts
-	[[ "`${MAKE} -Bn merged_cpt | egrep -c 'jpt.merged.train.en-fr.gz'`" -eq 2 ]]
+	[[ "`${MAKE} -Bn merged_cpt | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh joint2cond_phrase_tables)`" =~ "2 6 2 1" ]]
+
+# 2 align-words
+# 6 cat.sh
+# 2 gen-jpt-parallel.sh
+# 1 merge_counts
+# 1 train_tm_mixture
 unittest_mix_cpt:  unittest_jpts
-	[[ "`${MAKE} -Bn mix_cpt | egrep -c 'train_tm_mixture'`" -eq 1 ]]
+	[[ "`${MAKE} -Bn mix_cpt | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh merge_counts train_tm_mixture)`" =~ "2 6 2 1 1" ]]
 
 # 3 align-words
 # 6 cat.sh
@@ -688,8 +725,10 @@ unittest_mix_cpt:  unittest_jpts
 # 1 joint2multi_cpt
 # 3 ln
 # 2 mgiza
+unittest_indicator_cpt:  export INDICATOR_WORD_ALIGNMENT_MODELS = ${GIZA_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX}
 unittest_indicator_cpt:  unittest_jpts
-	[[ "`${MAKE} -Bn indicator_cpt | egrep -o '\b(gen-jpt-parallel.sh|joint2multi_cpt|cat.sh|align-words|mgiza|ln)\b' | ${UNITTEST0_FILTER}`" =~ "3 6 3 1 3 2" ]]
+	[[ "`${MAKE} -Bn indicator_cpt | $(call UNITTEST0_FILTER, gen-jpt-parallel.sh joint2multi_cpt cat.sh align-words mgiza ln)`" =~ "3 6 3 1 3 2" ]]
+
 
 
 # Verify that make is capable of generating all required targets for merged_cpt and some other cpt.

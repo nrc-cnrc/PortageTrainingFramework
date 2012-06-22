@@ -546,7 +546,7 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 
 ########################################
 # GIZA SPECIFIC TARGETS.
-$(addsuffix /,${ALL_TMS}):  %:
+$(addsuffix /,${TRAIN_TM}):  %:
 	mkdir -p $@
 
 
@@ -560,8 +560,8 @@ $(addsuffix /,${ALL_TMS}):  %:
 
 # Create the vocabulary files.
 .PHONY:  vcb
-vcb:  $(addsuffix /${SRC_LANG}.lc.vcb, ${ALL_TMS})
-vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_TMS})
+vcb:  $(addsuffix /${SRC_LANG}.lc.vcb, ${TRAIN_TM})
+vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${TRAIN_TM})
 %/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %/
 	plain2snt $+
 
@@ -574,16 +574,16 @@ vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_TMS})
 
 # Create the vocabulary classes.
 .PHONY: classes
-classes:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${ALL_TMS})
-classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_TMS})
+classes:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${TRAIN_TM})
+classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${TRAIN_TM})
 %.lc.vcb.classes:  %.lc
 	mkcls -m2 -p$< -c50 -V$@ opt &> $@.log
 
 
 # Create the cooccurrence counts.
 .PHONY: cooc
-cooc:  $(addsuffix /${L1_2_L2}.cooc, ${ALL_TMS})
-cooc:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_TMS})
+cooc:  $(addsuffix /${L1_2_L2}.cooc, ${TRAIN_TM})
+cooc:  $(addsuffix /${L2_2_L1}.cooc, ${TRAIN_TM})
 %/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %/
 	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt
 
@@ -593,8 +593,8 @@ cooc:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_TMS})
 
 # Perform word alignment.
 .PHONY: cfg
-cfg:  $(addsuffix /B.gizacfg, ${ALL_TMS})
-cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
+cfg:  $(addsuffix /B.gizacfg, ${TRAIN_TM})
+cfg:  $(addsuffix /F.gizacfg, ${TRAIN_TM})
 %/B.gizacfg:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes  %/${L1_2_L2}.cooc
 	mgiza \
 		-ncpus 4 \
@@ -626,10 +626,10 @@ cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
 #	| sort -n \
 #	| sed -e 's/^/# Sentence pair (/; s//\n/g'
 .PHONY:  giza_al
-giza_al:  $(addsuffix /${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz, ${ALL_TMS})
-giza_al:  $(addsuffix /${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz, ${ALL_TMS})
-$(addsuffix /${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz:  %/B.gizacfg
-$(addsuffix /${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz:  %/F.gizacfg
+giza_al:  $(addsuffix /${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz, ${TRAIN_TM})
+giza_al:  $(addsuffix /${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz, ${TRAIN_TM})
+$(addsuffix /${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz, ${TRAIN_TM}):  %/${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz:  %/B.gizacfg
+$(addsuffix /${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz, ${TRAIN_TM}):  %/${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz:  %/F.gizacfg
 %.${GIZA_MODEL_PFX}.alignment.gz:
 	set -o pipefail; \
 	merge_alignment.py ${<:gizacfg=A3.final.part}* \
