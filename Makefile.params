@@ -6,8 +6,8 @@
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, Her Majesty in Right of Canada
+# Copyright 2008, 2012, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2012, Her Majesty in Right of Canada
 
 # Print the Portage Copyright no matter where we start from -- but only once.
 ifeq (${MAKELEVEL},0)
@@ -33,14 +33,14 @@ TGT_LANG ?= fr
 # TRAIN_LM is used to create a language model.
 TRAIN_LM      ?= lm-train
 
+# MIXLM is used to create a mixture language model which itself is composed of
+# several other language models.
+#MIXLM         ?= sublm1 sublm2 sublm3
+
 # TRAIN_TC is used to create a truecasing model.
 # By default, we use the first name listedin TRAIN_LM, thus if you do not uncomment and define it
 # => TRAIN_TC = first word of TRAIN_LM
 #TRAIN_TC := tc-train
-
-# MIXLM is used to create a mixture language model which itself is composed of
-# several other language models.
-#MIXLM         ?= sublm1 sublm2 sublm3
 
 # TRAIN_TM is used to create the translation table.
 TRAIN_TM      ?= tm-train
@@ -50,13 +50,23 @@ TRAIN_TM      ?= tm-train
 # Specify the in-domain corpus first (its word alignment models are needed).
 #MIXTM         ?= subtm1 subtm2
 
-# TUNE_DECODE is used to train cow.
+# TUNE_DECODE is used to tune the decoding weights.
 TUNE_DECODE   ?= dev1
 # TUNE_DECODE_VARIANTS is used to tune and test using multiple tuning sets.
 # Typically, each variant is a 90% sample subset of the of the TUNE_DECODE set.
-# Ex. If TUNE_DECODE is dev1, include "a b" in TUNE_DECODE_VARIANTS to train 
-#     cow with dev1a and dev1b in addition to dev1.
+# Ex. If TUNE_DECODE is dev1, include "a b" in TUNE_DECODE_VARIANTS to tune 
+#     with dev1a and dev1b in addition to dev1.
 #TUNE_DECODE_VARIANTS  ?=
+
+# PLIVE_DECODE_VARIANT is used to select which tuning run (which one of
+# TUNE_DECODE_VARIANTS) to use for PortageLive.
+# Leave PLIVE_DECODE_VARIANT undefined or blank to use weights from the main
+# tuning run based on TUNE_DECODE, or specify one of the variants from
+# TUNE_DECODE_VARIANTS to use weights from the tuning run corresponding to
+# that variant.
+# Recommended usage: after tuning, set this to the variant giving the best
+# bleu score on the test sets.
+#PLIVE_DECODE_VARIANT ?=
 
 # TUNE_RESCORE is used to train rat.
 #TUNE_RESCORE  ?= dev2
@@ -67,10 +77,14 @@ TUNE_DECODE   ?= dev1
 # also from all other tuning data.
 #TUNE_CE       ?= dev3
 
-# TEST_SET are used to estimate the quality of the system.
+# TEST_SET files are used to estimate the translation quality of the system.
 TEST_SET      ?= test1 test2
 # Uncomment if you have source text, that doesn't have a reference, to translate.
 #TRANSLATE_SET ?=
+
+# Define USE_STATIC_MIXLM to translate using the dev1 mixlm weights instead
+# of computing dynamic weights for each test set; this applies to mixlms only.
+#USE_STATIC_MIXLM ?= 1
 
 # The prefix_root where we can find IRSTLM/bin, which must also be on your
 # PATH.  (Only needed if you are using IRSTLM - see next variable.)
@@ -107,21 +121,20 @@ LM_TOOLKIT = MIT
 # Comment out to disable truecasing; uncomment to enable.
 DO_TRUECASING = 1
 
-# Let say you have your own (de)tokenizer and you want to use it.  Define the
+# If you have your own (de)tokenizer and you want to use it, then define the
 # following variables to your pgm and its arguments.  Note that the variable
-# names contain your source or target language two letters identifyer.  Thus,
-# if you do spanish you could define TOKENIZER_es.  More generally,
+# names contain the source or target language two-letter identifier.  For,
+# example, for Spanish source you could define TOKENIZER_es.  More generally,
 # {DE|}TOKENIZER_{${SRC_LANG}|${TGT_LANG}}.
-# Defining what tokenizers we want to use.
+# Defining what tokenizers we want to use:
 #TOKENIZER_en ?= opennlp TokenizerME /modeldir/en-model.bin
 #TOKENIZER_fr ?= utokenize.pl -noss -lang=fr
 #TOKENIZER_ch ?= { set -o pipefail; iconv -c -f UTF-8 -t CN-GB | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl | iconv -c -f CN-GB -t UTF-8; }
-# Defining what detokenizers we want to use.
+# Defining what detokenizers we want to use:
 #DETOKENIZER_en ?= opennlp DetokenizerME /modeldir/en-model.bin
 #DETOKENIZER_fr ?= udetokenizer.pl -lang=fr
 
-# If you have ictclas installed and want to use it, uncomment to enable
-# ictclas.
+# If you have ictclas installed and want to use it, uncomment to enable ictclas.
 # USE_ICTCLAS ?= 1
 
 # Language specific set of command to mark source devs/tests.
@@ -274,17 +287,6 @@ TC_USE_SRC_MODELS = 1
 ifdef TC_USE_SRC_MODELS
 TRUECASING_NC1_SRC_LM  ?= ${TRAIN_TC}_${SRC_LANG}.nc1.binlm${GZ}
 endif
-
-# PLIVE_DECODE_VARIANT is used for selecting which cow run (TUNE_DECODE_VARIANTS)
-# to used for PortageLive.
-# Leave PLIVE_DECODE_VARIANT undefined or blank to use weights from the main 
-# cow run based on TUNE_DECODE, or specify one of the variants from 
-# TUNE_DECODE_VARIANTS to use weights from the cow run corresponding to that variant.
-#PLIVE_DECODE_VARIANT ?=
-
-# Define USE_STATIC_MIXLM to translate using the dev1 mixlm weights instead
-# of computing dynamic weights for each test set.
-#USE_STATIC_MIXLM ?= 1
 
 # If we are lucky enough to have a cluster, we'll change the shell for certain
 # commands and allow them to run on nodes.
