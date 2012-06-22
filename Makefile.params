@@ -73,7 +73,7 @@ TEST_SET      ?= test1 test2
 #TRANSLATE_SET ?=
 
 # The prefix_root where we can find IRSTLM/bin, which must also be on your
-# PATH.  (Only need if you are using IRSTLM - see next variable.)
+# PATH.  (Only needed if you are using IRSTLM - see next variable.)
 IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 
 # Change LM_TOOLKIT's value depending on the LM toolkit you have.  If you use
@@ -236,6 +236,8 @@ HELDOUT_SET  ?= $(sort ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET} \
                        $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}))
 CORPORA_SET  ?= $(sort ${TRAIN_SET} ${HELDOUT_SET})
 
+ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
+
 # Define what type of phrase table we want to generate.
 # Can be one or more: ibm2_cpt, hmm1_cpt, hmm2_cpt, hmm3_cpt or merged_cpt
 # Typically, merged_cpt is used alone.
@@ -310,6 +312,9 @@ else
 endif
 
 
+
+# We include src_lang specific configuration just before we validate the configuration.
+-include Makefile.params.${SRC_LANG}
 
 ########################################
 # VALIDATION

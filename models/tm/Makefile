@@ -47,7 +47,7 @@ CORPORA_DIR ?= ${TM_DIR_PFX}../../corpora
 # What parallel corpora is to be used for creating the models.
 TRAIN_TM ?= train
 
-ALL_TMS ?= ${TRAIN_TM} ${MIXTM}
+ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
 
 # This script might produce directory and we want to easily remove them.
 RM := rm -rf
