@@ -37,7 +37,7 @@
 #COUNT_CPUS ?= 1
 
 # Define this variable if you want to merge your ldm counts in a fillup manner.
-#USE_FILLUP ?=
+USE_FILLUP ?= 1
 
 # NOTE:
 # You must define USE_LDM and/or USE_HLDM in the master Makefile.params in
