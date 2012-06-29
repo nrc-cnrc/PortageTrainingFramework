@@ -118,12 +118,12 @@ HMM3_MODEL_EXTRAS ?=
 NEW_HMM := $(addprefix(-, $(strip $(shell train_ibm -h 2>&1 | grep -om1 newhmm)))
 
 ########################################
-# GIZA MODELS
-GIZA_MODEL_PFX ?= giza
+# IBM4 MODELS
+IBM4_MODEL_PFX ?= ibm4
 
 ########################################
 # List of all possible word alignment models in the framework.
-POSSIBLE_WORD_ALIGNMENT_MODELS := ${IBM1_MODEL_PFX} ${IBM2_MODEL_PFX} ${HMM1_MODEL_PFX} ${HMM2_MODEL_PFX} ${HMM3_MODEL_PFX} ${GIZA_MODEL_PFX}
+POSSIBLE_WORD_ALIGNMENT_MODELS := ${IBM1_MODEL_PFX} ${IBM2_MODEL_PFX} ${HMM1_MODEL_PFX} ${HMM2_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM4_MODEL_PFX}
 
 ########################################
 # JPT MODELS.
@@ -143,7 +143,7 @@ SIG_MODEL_PFX ?= sig.${SIG_THRESHOLD}
 SIG_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 SIG_MODEL_WORKERS ?= ${SIG_MODEL_PARALLELISM_LEVEL}
 # Create variables to hold significance model prefix.
-$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${GIZA_MODEL_PFX}), \
+$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${IBM4_MODEL_PFX}), \
    $(eval \
 	   SIG_${m}_MODEL_PFX ?= ${SIG_MODEL_PFX}.${${m}_MODEL_PFX}) \
 )
@@ -156,6 +156,12 @@ CPT_CPUS ?= 4
 #SMOOTHERS_DESCRIPTION ?= -rf-zn
 CPT_SMOOTHERS ?= -s "KNSmoother 3"  -s ZNSmoother
 SMOOTHERS_DESCRIPTION ?= -kn3-zn
+
+########################################
+# CPT MODELS with alignment indicator features
+CPT_INDICATOR_PFX ?= ${CPT_MODEL_PFX}.PI
+CPT_PI_SMOOTHERS ?= -s '0:KNSmoother 3' -s ZNSmoother -a '1-100:PureIndicator'
+PI_SMOOTHERS_DESCRIPTION ?= -kn3-zn
 
 MIX_CPUS ?= 1
 
@@ -312,13 +318,13 @@ ALIGN_MODEL_TYPE := -hmm
 %.${IBM1_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 1
 %.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 2
 
-%.${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz:
+%.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:
 	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
 	time-mem \
 	align-words \
 		-o sri \
 		-ibm 0 -giza2 \
-		$(call interleave4, $(filter %${SRC_LANG}.lc,$+), $(filter %${TGT_LANG}.lc,$+), $(filter %${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz,$+), $(filter %${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz,$+)) \
+		$(call interleave4, $(filter %${SRC_LANG}.lc,$+), $(filter %${TGT_LANG}.lc,$+), $(filter %${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz,$+), $(filter %${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz,$+)) \
 		2> log.${@:.gz=} \
 	| gzip > $@
 
@@ -362,7 +368,7 @@ ${JPT_MODEL_PFX}.merged%${RJOINTX}:
 
 
 ${JPT_MODEL_PFX}.%.${JOINTX}:  SHELL=${FRAMEWORK_SHELL}
-${JPT_MODEL_PFX}.${GIZA_MODEL_PFX}%: JPT_MODEL_TYPE = -ibm 1
+${JPT_MODEL_PFX}.${IBM4_MODEL_PFX}%: JPT_MODEL_TYPE = -ibm 1
 ${JPT_MODEL_PFX}.%.${JOINTX}:
 	RP_PSUB_OPTS="-${JPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	gen-jpt-parallel.sh \
@@ -449,10 +455,7 @@ ${CPT_MIX_PFX}%${L2_2_L1X}:
 
 
 ########################################
-# INDICATOR FEATURES
-CPT_INDICATOR_PFX ?= ${CPT_MODEL_PFX}.PI
-
-${CPT_INDICATOR_PFX}%:  CPT_SMOOTHERS=-s '0:RFSmoother' -a '1-100:PureIndicator'
+# ALIGNMENT INDICATOR FEATURES
 
 ${CPT_INDICATOR_PFX}%${L1_2_L2X}:  SHELL=${FRAMEWORK_SHELL}
 #${CPT_INDICATOR_PFX}%${L1_2_L2X}:  WORD_MODEL_TYPE=-ibm 1
@@ -464,7 +467,7 @@ ${CPT_INDICATOR_PFX}%${L1_2_L2X}:
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
 		-1 ${lang1} -2 ${lang2} \
-		${CPT_SMOOTHERS} \
+		${CPT_PI_SMOOTHERS} \
 		-dir fwd \
 		-o $(subst .${L1_2_L2X},,$@) \
 		-ibm_l2_given_l1  $(filter %${L2_GIVEN_L1X}, $+) \
@@ -482,7 +485,7 @@ ${CPT_INDICATOR_PFX}%${L2_2_L1X}:
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
 		-1 ${lang1} -2 ${lang2} \
-		${CPT_SMOOTHERS} \
+		${CPT_PI_SMOOTHERS} \
 		-dir fwd \
 		-o $(subst .${L1_2_L2X},,$@) \
 		-ibm_l2_given_l1  $(filter %${L1_GIVEN_L2X}, $+) \
@@ -497,7 +500,7 @@ ${CPT_INDICATOR_PFX}%${L2_2_L1X}:
 ${CPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
 ${CPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
 ${CPT_MODEL_PFX}.hmm%: WORD_MODEL_TYPE=-hmm
-${CPT_MODEL_PFX}.${GIZA_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
+${CPT_MODEL_PFX}.${IBM4_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
 ${CPT_MODEL_PFX}.%: CPT_PRUNE1=-prune1w 100
 
 # Non mixture/indicator CPT models:
@@ -547,7 +550,7 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 ########################################
 # GIZA SPECIFIC TARGETS.
 $(addsuffix /,${ALL_TMS}):  %:
-	mkdir -p $@
+	_LOCAL=1 mkdir -p $@
 
 
 # Clean up the inputs for giza.
@@ -555,7 +558,7 @@ $(addsuffix /,${ALL_TMS}):  %:
 	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> log.giza_filter
 
 %/${TGT_LANG}.lc:  %/${SRC_LANG}.lc
-	@[[ -s $@ ]] && sleep 1 && touch $@
+	_LOCAL=1 test -s $@ && sleep 1 && touch $@
 
 
 # Create the vocabulary files.
@@ -565,11 +568,11 @@ vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_TMS})
 %/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %/
 	plain2snt $+
 
-%/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb 
-	@[[ -s $@ ]] && sleep 1 && touch $@
+%/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb
+	_LOCAL=1 test -s $@ && sleep 1 && touch $@
 
 %/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb
-	@[[ -s $@ ]] && sleep 1 && touch $@
+	_LOCAL=1 test -s $@ && sleep 1 && touch $@
 
 
 # Create the vocabulary classes.
@@ -577,7 +580,7 @@ vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_TMS})
 classes:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${ALL_TMS})
 classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_TMS})
 %.lc.vcb.classes:  %.lc
-	mkcls -m2 -p$< -c50 -V$@ opt &> $@.log
+	time-mem mkcls -m2 -p$< -c50 -V$@ opt &> $@.log
 
 
 # Create the cooccurrence counts.
@@ -596,6 +599,8 @@ cooc:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_TMS})
 cfg:  $(addsuffix /B.gizacfg, ${ALL_TMS})
 cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
 %/B.gizacfg:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes  %/${L1_2_L2}.cooc
+	RP_PSUB_OPTS="-4 -N $@" \
+	time-mem \
 	mgiza \
 		-ncpus 4 \
 		-S $(filter %${SRC_LANG}.lc.vcb,$+) \
@@ -609,6 +614,8 @@ cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
 		&> $@.log
 
 %/F.gizacfg:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb.classes %/${SRC_LANG}.lc.vcb.classes  %/${L2_2_L1}.cooc
+	RP_PSUB_OPTS="-4 -N $@" \
+	time-mem \
 	mgiza \
 		-ncpus 4 \
 		-S $(filter %${TGT_LANG}.lc.vcb,$+) \
@@ -626,30 +633,30 @@ cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
 #	| sort -n \
 #	| sed -e 's/^/# Sentence pair (/; s//\n/g'
 .PHONY:  giza_al
-giza_al:  $(addsuffix /${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz, ${ALL_TMS})
-giza_al:  $(addsuffix /${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz, ${ALL_TMS})
-$(addsuffix /${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz:  %/B.gizacfg
-$(addsuffix /${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz:  %/F.gizacfg
-%.${GIZA_MODEL_PFX}.alignment.gz:
+giza_al:  $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS})
+giza_al:  $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS})
+$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/B.gizacfg
+$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/F.gizacfg
+%.${IBM4_MODEL_PFX}.alignment.gz:
 	set -o pipefail; \
 	merge_alignment.py ${<:gizacfg=A3.final.part}* \
 	| gzip > $@
 
 
-# Converts GIZA ttables in a format that portage understands.
-${GIZA_MODEL_PFX}.%.${L1_GIVEN_L2X}:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/B.gizacfg
+# Converts Giza's IBM4 ttables in a format that Portage understands.
+${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/B.gizacfg
 	set -o pipefail; \
 	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
 	| gzip > tmp.$@
 	train_ibm -tobin tmp.$@ $@
-	rm -f tmp.$@
+	_LOCAL=1 rm -f tmp.$@
 
-${GIZA_MODEL_PFX}.%.${L2_GIVEN_L1X}:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/F.gizacfg
+${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/F.gizacfg
 	set -o pipefail; \
 	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
 	| gzip > tmp.$@
 	train_ibm -tobin tmp.$@ $@
-	rm -f tmp.$@
+	_LOCAL=1 rm -f tmp.$@
 
 
 

@@ -53,7 +53,7 @@ ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
 RM := rm -rf
 
 # After this Makefile, the following targets/files are precious.
-FILES_TO_BE_LOCKED = ibm* hmm* jpt* cpt* giza*
+FILES_TO_BE_LOCKED = ibm* hmm* jpt* cpt*
 
 
 
@@ -146,14 +146,16 @@ clean.word_alignment_models:
 word_alignment_models:  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 
-# All word alignment models depend on ibm1 word alignment models except, of course, for ibm1 word alignment models.
-$(foreach m, $(filter-out ${IBM1_MODEL_PFX} ${GIZA_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+# All word alignment models depend on ibm1 word alignment models except, of
+# course, for ibm1 word alignment models, and also ibm4 since we use external
+# software to create it.
+$(foreach m, $(filter-out ${IBM1_MODEL_PFX} ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
    $(eval ${m}_model:  ${IBM1_MODEL_PFX}_model) \
 )
 
 # the meta target for word alignment model depends on word alignment model files.
 # both forward and backward word alignment models require source and target corpora.
-$(foreach m, $(call uc, $(filter-out ${GIZA_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
+$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
 	$(foreach c, ${ALL_TMS}, \
 		$(eval \
 			$(call lc, ${m})_model:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
@@ -167,7 +169,7 @@ $(foreach m, $(call uc, $(filter-out ${GIZA_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMEN
 	$(eval \
 	   ${${m}_MODEL_PFX}.${L2_GIVEN_L1X}: $(foreach c, ${ALL_TMS}, $c${L1X} $c${L2X})) \
 )
-${GIZA_MODEL_PFX}_model:  $(foreach c, ${ALL_TMS}, ${GIZA_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${GIZA_MODEL_PFX}.$c.${L1_GIVEN_L2X})
+${IBM4_MODEL_PFX}_model:  $(foreach c, ${ALL_TMS}, ${IBM4_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${IBM4_MODEL_PFX}.$c.${L1_GIVEN_L2X})
 
 ########################################
 # EXAMPLE of the resulting code generated previously:
@@ -194,7 +196,7 @@ alignment_files:  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 
 $(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, $(filter-out ${GIZA_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
+	$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
 		$(eval \
 			$(call lc, $m)_alignment:  $c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
 		$(eval \
@@ -203,11 +205,11 @@ $(foreach c, ${ALL_TMS}, \
 			$c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 	) \
 	$(eval \
-		giza_alignment:  $c.${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz) \
+		ibm4_alignment:  $c.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz) \
 	$(eval \
-		$c.${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
+		$c.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
 	$(eval \
-		$c.${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz:  $c/${L1_2_L2}.${GIZA_MODEL_PFX}.alignment.gz $c/${L2_2_L1}.${GIZA_MODEL_PFX}.alignment.gz) \
+		$c.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  $c/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz $c/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz) \
 )
 
 #${TRAIN_TM}.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
@@ -237,7 +239,7 @@ jpts: $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 # jpts requires the word alignment models in both directions.
 # jpts requires the source and target corpora.
 $(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, $(filter-out ${GIZA_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
+	$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
 		$(eval \
 			JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
 		$(eval \
@@ -253,18 +255,18 @@ $(foreach c, ${ALL_TMS}, \
 	) \
 )
 
-JPT_GIZA_MODEL_PFX ?= ${JPT_MODEL_PFX}.${GIZA_MODEL_PFX}
-${JPT_GIZA_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
-${JPT_GIZA_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
+JPT_IBM4_MODEL_PFX ?= ${JPT_MODEL_PFX}.${IBM4_MODEL_PFX}
+${JPT_IBM4_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
+${JPT_IBM4_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
 $(foreach c, ${ALL_TMS}, \
 	$(eval \
-		giza_jpt:  ${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}) \
+		ibm4_jpt:  ${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}) \
 	$(eval \
-		${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}:  ${GIZA_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${GIZA_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+		${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}:  ${IBM4_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${IBM4_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 	$(eval \
-		${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}:  $c.${GIZA_MODEL_PFX}.${L1_2_L2}.align.gz) \
+		${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}:  $c.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz) \
 	$(eval \
-		${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
+		${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
 )
 
 # EXAMPLE of the resulting code generated previously:
@@ -299,7 +301,7 @@ sigs: $(addsuffix _sig, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 # source language to target language
 # m stands for model type
 $(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, $(filter-out ${GIZA_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
+	$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
 		$(eval \
 			$(call lc, ${m})_sig: $(call lc, ${m})_jpt) \
 		$(eval \
@@ -316,17 +318,17 @@ $(foreach c, ${ALL_TMS}, \
 )
 
 
-# Giza sigpruning
-${GIZA_MODEL_PFX}_sig: ${GIZA_MODEL_PFX}_jpt
-${SIG_GIZA_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
-${SIG_GIZA_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
+# IBM4 sigpruning
+${IBM4_MODEL_PFX}_sig: ${IBM4_MODEL_PFX}_jpt
+${SIG_IBM4_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
+${SIG_IBM4_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
 $(foreach c, ${ALL_TMS}, \
 	$(eval \
-		${GIZA_MODEL_PFX}_sig: ${SIG_GIZA_MODEL_PFX}.$c.${JOINTX}) \
+		${IBM4_MODEL_PFX}_sig: ${SIG_IBM4_MODEL_PFX}.$c.${JOINTX}) \
 	$(eval \
-		${SIG_GIZA_MODEL_PFX}.$c.${JOINTX}:  ${JPT_GIZA_MODEL_PFX}.$c.${JOINTX}) \
+		${SIG_IBM4_MODEL_PFX}.$c.${JOINTX}:  ${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}) \
 	$(eval \
-		${SIG_GIZA_MODEL_PFX}.$c.${JOINTX}:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
+		${SIG_IBM4_MODEL_PFX}.$c.${JOINTX}:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
 )
 
 
@@ -352,7 +354,7 @@ cpts: hmm1_cpt
 cpts: hmm2_cpt
 cpts: hmm3_cpt
 cpts: merged_cpt
-cpts: giza_cpt
+cpts: ibm4_cpt
 
 
 # Let's define a couple of variables.
@@ -371,8 +373,8 @@ HMM2_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${HMM2_MODEL_PFX}${HMM2_SMOOTHERS_DESCRIPTIO
 HMM3_SMOOTHERS_DESCRIPTION ?= ${SMOOTHERS_DESCRIPTION}
 HMM3_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${HMM3_MODEL_PFX}${HMM3_SMOOTHERS_DESCRIPTION}
 
-GIZA_SMOOTHERS_DESCRIPTION ?= ${SMOOTHERS_DESCRIPTION}
-GIZA_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${GIZA_MODEL_PFX}${GIZA_SMOOTHERS_DESCRIPTION}
+IBM4_SMOOTHERS_DESCRIPTION ?= ${SMOOTHERS_DESCRIPTION}
+IBM4_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${IBM4_MODEL_PFX}${IBM4_SMOOTHERS_DESCRIPTION}
 
 # Create a variable to hold the conditional phrase table file's name e.i. hmm1_cpt_list.
 # Create meta-level dependencies between cpts and their jpts or sigs.
@@ -445,7 +447,7 @@ MERGED_CPT_JPT_TYPES ?= IBM2 HMM3
 ${CPT_MODEL_PFX}.merged.${IBM1_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 1
 ${CPT_MODEL_PFX}.merged.${IBM2_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 2
 ${CPT_MODEL_PFX}.merged.hmm%:  WORD_MODEL_TYPE=-hmm
-${CPT_MODEL_PFX}.merged.${GIZA_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 1
+${CPT_MODEL_PFX}.merged.${IBM4_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 1
 
 # Let's define what are the merged cpt file names.
 merged_cpt_list = $(foreach c, ${TRAIN_TM}, ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X})
@@ -555,12 +557,12 @@ $(foreach j, ${MERGED_CPT_JPT_TYPES}, \
 
 
 ########################################
-clean.content: clean.giza
+clean.content: clean.ibm4
 
-.PHONY: clean.giza
-clean.giza: SHELL=${GUARD_SHELL}
-clean.giza:
-	${RM} ${GIZA_MODEL_PFX}.*
+.PHONY: clean.ibm4
+clean.ibm4: SHELL=${GUARD_SHELL}
+clean.ibm4:
+	${RM} ${IBM4_MODEL_PFX}.*
 	${RM} ${TRAIN_TM}
 
 
@@ -568,16 +570,19 @@ clean.giza:
 ########################################
 # Joint 2 multi cpt.
 # Create JPT groups based on their word alignment type.
+j2m/%: SHELL=${GUARD_SHELL}
 j2m/%:  %_jpt
 	mkdir -p $@
-	cd $@ && ln -s ../../jpt.$**${JOINTX} .
+	cd $@ && ln -s -f ../../jpt.$**${JOINTX} .
 
+j2mr/%: SHELL=${GUARD_SHELL}
 j2mr/%:  %_jpt
 	mkdir -p $@
-	cd $@ && ln -s ../../jpt.$**${RJOINTX} .
+	cd $@ && ln -s -f ../../jpt.$**${RJOINTX} .
 
-INDICATOR_MODEL_PFX = ${CPT_INDICATOR_PFX}-0RF.${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}
-INDICATOR_WORD_ALIGNMENT_MODELS ?= ${GIZA_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX}
+INDICATOR_MODEL_PFX = ${CPT_INDICATOR_PFX}${PI_SMOOTHERS_DESCRIPTION}.${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}
+INDICATOR_WORD_ALIGNMENT_MODELS ?= $(foreach c,${MERGED_CPT_JPT_TYPES},${$c_MODEL_PFX})
+#INDICATOR_WORD_ALIGNMENT_MODELS ?= ${IBM4_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX}
 
 # We need to group JPTs, for this we create a directory called j2m containing the proper grouping of JPTs.
 ${INDICATOR_MODEL_PFX}.${L1_2_L2X}:  | $(addprefix j2m/,  ${INDICATOR_WORD_ALIGNMENT_MODELS})
@@ -607,13 +612,13 @@ $(error You must specify one and only one MERGED_CPT_ZN_MODEL!)
 endif
 
 # Make sure MERGED_CPT_ZN_MODEL is valid.
-ifneq ($(filter-out GIZA HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_ZN_MODEL}),)
-$(error MERGED_CPT_ZN_MODEL must be one of GIZA, HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_ZN_MODEL})
+ifneq ($(filter-out IBM4 HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_ZN_MODEL}),)
+$(error MERGED_CPT_ZN_MODEL must be one of IBM4, HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_ZN_MODEL})
 endif
 
 # Make sure MERGED_CPT_JPT_TYPES are valid.
-ifneq ($(filter-out GIZA HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_JPT_TYPES}),)
-$(error MERGED_CPT_JPT_TYPES must be one of GIZA, HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_JPT_TYPES})
+ifneq ($(filter-out IBM4 HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_JPT_TYPES}),)
+$(error MERGED_CPT_JPT_TYPES must be one of IBM4, HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_JPT_TYPES})
 endif
 endif
 
@@ -725,7 +730,7 @@ unittest_mix_cpt:  unittest_jpts
 # 1 joint2multi_cpt
 # 3 ln
 # 2 mgiza
-unittest_indicator_cpt:  export INDICATOR_WORD_ALIGNMENT_MODELS = ${GIZA_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX}
+unittest_indicator_cpt:  export INDICATOR_WORD_ALIGNMENT_MODELS = ${IBM4_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX}
 unittest_indicator_cpt:  unittest_jpts
 	[[ "`${MAKE} -Bn indicator_cpt | $(call UNITTEST0_FILTER, gen-jpt-parallel.sh joint2multi_cpt cat.sh align-words mgiza ln)`" =~ "3 6 3 1 3 2" ]]
 
@@ -773,33 +778,33 @@ sigprune:
 	|| ! echo "ERROR: Seems that no sig counts were produced." >&2
 
 
-# Create a significance pruned conditional phrase table from giza's joint
+# Create a significance pruned conditional phrase table from IBM4 joint
 # counts.
 .PHONY: unittest6
 unittest6:  export USE_SIGPRUNING = 1
 unittest6:
-	${MAKE} giza_cpt
-	@[[ "`find -name giza.tm-train.\*_given_\*.gz -size +21c | \wc -l`" -eq 2 ]] \
-	|| ! echo "ERROR: Can't find word alignment files for giza." >&2
-	@[[ "`find -name jpt.giza.tm-train.en-fr.gz -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: can't find a jpt for giza." >&2
-	@[[ "`find -name cpt.giza-kn3-zn.tm-train.en2fr.gz -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: can't find a jpt for giza." >&2
+	${MAKE} ibm4_cpt
+	@[[ "`find -name ibm4.tm-train.\*_given_\*.gz -size +21c | \wc -l`" -eq 2 ]] \
+	|| ! echo "ERROR: Can't find word alignment files for ibm4." >&2
+	@[[ "`find -name jpt.ibm4.tm-train.en-fr.gz -size +21c | \wc -l`" -eq 1 ]] \
+	|| ! echo "ERROR: can't find a jpt for ibm4." >&2
+	@[[ "`find -name cpt.ibm4-kn3-zn.tm-train.en2fr.gz -size +21c | \wc -l`" -eq 1 ]] \
+	|| ! echo "ERROR: can't find a jpt for ibm4." >&2
 
 
 # Create a significance pruned conditional phrase table built with a lexical
-# smoother based on giza with joint frequency counts tallied from IBM2, HMM3 &
-# GIZA.
+# smoother based on ibm4 with joint frequency counts tallied from IBM2, HMM3 &
+# IBM4.
 .PHONY: unittest7
 unittest7:  export USE_SIGPRUNING = 1
-unittest7:  export MERGED_CPT_ZN_MODEL = GIZA
-unittest7:  export MERGED_CPT_JPT_TYPES = IBM2 HMM3 GIZA
+unittest7:  export MERGED_CPT_ZN_MODEL = IBM4
+unittest7:  export MERGED_CPT_JPT_TYPES = IBM2 HMM3 IBM4
 unittest7:
 	${MAKE} clean.cpts  clean.sig
 	${RM} ${JPT_MERGED_PFX}*
 	${MAKE} merged_cpt
-	@[[ "`find -name cpt.merged.giza-kn3-zn.tm-train.en2fr.gz -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: can't find conditional phrase table for giza." >&2
+	@[[ "`find -name cpt.merged.ibm4-kn3-zn.tm-train.en2fr.gz -size +21c | \wc -l`" -eq 1 ]] \
+	|| ! echo "ERROR: can't find conditional phrase table for ibm4." >&2
 
 
 # Create multiple TMs.
