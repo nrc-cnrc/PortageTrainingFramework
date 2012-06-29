@@ -251,23 +251,30 @@ CORPORA_SET  ?= $(sort ${TRAIN_SET} ${HELDOUT_SET})
 
 ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
 
+# In the case where you want merged_cpt, you will need to define the following:
+# MERGED_CPT_ZN_MODEL & MERGED_CPT_JPT_TYPES
+# What word alignment model to use for Zens-Ney's smoother when build a merged_cpt?
+# MERGED_CPT_ZN_MODEL can be one of: IBM4, HMM3, HMM2, HMM1, IBM2 or IBM1
+MERGED_CPT_ZN_MODEL ?= HMM3
+# What type of jpts should be use to create the final merged_cpt?
+# MERGED_CPT_JPT_TYPES can be sevaral of: IBM4, HMM3, HMM2, HMM1, IBM2 or IBM1
+MERGED_CPT_JPT_TYPES ?= IBM2 HMM3
+# Are we using alignment indicator features?
+MERGED_CPT_USE_ALIGNMENT_INDICATORS ?= 0
+
 # Define what type of phrase table we want to generate.
-# Can be one or more: ibm2_cpt, hmm1_cpt, hmm2_cpt, hmm3_cpt or merged_cpt
-# Typically, merged_cpt is used alone.
+# Can be one or more: ibm2_cpt, hmm1_cpt, hmm2_cpt, hmm3_cpt, ibm4_cpt,
+# merged_cpt, or indicator_cpt.
+# Typically, merged_cpt or indicator_cpt is used alone.
 # WARNING: changes here must be manually reflected in
 # models/rescore/rescore-model.template and models/confidence/ce-notm.template:
 # look for upper case tokens like HMM3FWD and similar ones nearby.
 # PT_TYPES ?= ibm2_cpt hmm3_cpt
-PT_TYPES ?= $(strip $(if ${TRAIN_TM},merged_cpt) $(if ${MIXTM},mix_cpt))
-
-# In the case where you want merged_cpt, you will need to define the following:
-# MERGED_CPT_ZN_MODEL & MERGED_CPT_JPT_TYPES
-# What word alignment model to use for Zens-Ney's smoother when build a merged_cpt?
-# MERGED_CPT_ZN_MODEL can be one of: GIZA, HMM3, HMM2, HMM1, IBM2 or IBM1
-MERGED_CPT_ZN_MODEL ?= HMM3
-# What type of jpts should be use to create the final merged_cpt?
-# MERGED_CPT_JPT_TYPES can be sevaral of: GIZA, HMM3, HMM2, HMM1, IBM2 or IBM1
-MERGED_CPT_JPT_TYPES ?= IBM2 HMM3
+ifeq (${MERGED_CPT_USE_ALIGNMENT_INDICATORS},1)
+   PT_TYPES ?= $(strip $(if ${TRAIN_TM},indicator_cpt) $(if ${MIXTM},mix_cpt))
+else
+   PT_TYPES ?= $(strip $(if ${TRAIN_TM},merged_cpt) $(if ${MIXTM},mix_cpt))
+endif
 
 # Define what type of language model we want to generate.
 LM_TYPES ?= binlm
