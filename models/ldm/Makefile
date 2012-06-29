@@ -34,19 +34,24 @@ include ../../gmsl/gmsl
 # What is this module's name.
 MODULE_NAME ?= ldm
 
-# Find out about what are the word alignment models the user asked for by
+# List of all possible word alignment models in the framework.
+# These must be ordered from most reliable to least reliable, because of the
+# fill-up procedure.
+POSSIBLE_WORD_ALIGNMENT_MODELS := ibm4 hmm3 hmm2 hmm1 ibm2 ibm1
+
+# Function to sort a list of models from arbitrary order to best-first order.
+sort_aligners = $(foreach aligner,${POSSIBLE_WORD_ALIGNMENT_MODELS},$(filter $1,${aligner}))
+
+# Find out what the word alignment models the user asked for are,
 # based on the type of conditional phrase tables that was specified.
-TMP_AVAILABLE_WORD_ALIGNMENT_MODELS := $(filter-out merged, $(PT_TYPES:_cpt=))
-ifneq ($(filter merged, $(PT_TYPES:_cpt=)),)
+TMP_AVAILABLE_WORD_ALIGNMENT_MODELS := $(filter-out merged indicator, $(PT_TYPES:_cpt=))
+ifneq ($(filter merged indicator, $(PT_TYPES:_cpt=)),)
 TMP_AVAILABLE_WORD_ALIGNMENT_MODELS += $(call lc, ${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES})
 endif
-AVAILABLE_WORD_ALIGNMENT_MODELS := $(sort ${TMP_AVAILABLE_WORD_ALIGNMENT_MODELS})
-
-# List of all possible word alignment models in the framework.
-POSSIBLE_WORD_ALIGNMENT_MODELS := ibm2 hmm1 hmm2 hmm3 giza
+AVAILABLE_WORD_ALIGNMENT_MODELS := $(call sort_aligners,${TMP_AVAILABLE_WORD_ALIGNMENT_MODELS})
 
 # What will we use for the LDM's name.
-LDM_NAME ?= $(call merge,+,$(sort ${AVAILABLE_WORD_ALIGNMENT_MODELS}))
+LDM_NAME ?= $(call merge,+,$(call sort_aligners,${AVAILABLE_WORD_ALIGNMENT_MODELS}))
 
 # For the lock target, let's specify what file we want to put read-only.
 FILES_TO_BE_LOCKED = *${COUNTSX} ${LDM_MODEL_PFX}* ${HLDM_MODEL_PFX}*
