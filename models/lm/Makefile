@@ -294,7 +294,7 @@ FILTER = perl -ne 'BEGIN{$$M=4095} $$l=$$_; while(length($$l)>$$M and $$i=rindex
 		-text /dev/stdin \
 		-write-lm $@ \
 		$(and ${KEEP_COUNTS}, -write-counts ${@:.lm.gz=.counts.gz}) \
-	2> log.$(basename $@)
+	>& log.$(basename $@)
 
 NRC_PRUNING := 1 1 2 3 4
 PRUNING = ${NRC_PRUNING}
