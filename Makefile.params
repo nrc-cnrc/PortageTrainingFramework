@@ -238,9 +238,11 @@ LANGXZ ?= ${LANGX}${GZ}
 # Language pair for this system.
 LANGS ?= ${SRC_LANG} ${TGT_LANG}
 
-# By default will assume that the user wants to use the first corpora to build
+# By default we assume that the user wants to use the first corpus to build
 # the truecasing models.
-TRAIN_TC ?= $(firstword ${TRAIN_LM})
+ifdef DO_TRUECASING
+   TRAIN_TC ?= $(firstword ${TRAIN_LM})
+endif
 TRAIN_TC := $(strip ${TRAIN_TC})
 
 # Define the corpora.
@@ -350,8 +352,10 @@ ifeq ($(strip ${TRAIN_TM} ${MIXTM}),)
 $(error You must always define a training corpus for translation models)
 endif
 
+ifdef DO_TRUECASING
 ifeq (${TRAIN_TC},)
 $(error You must always define a training corpus for truecasing models)
+endif
 endif
 
 ifeq (${TUNE_DECODE},)
