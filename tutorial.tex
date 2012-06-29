@@ -15,6 +15,29 @@
 \renewcommand{\ttdefault}{txtt}
 \newcommand{\bs}{\textbackslash{}}
 
+% Official typesetting of PORTAGEshared, now called Portage 1.x
+\newcommand{\PS}{Portage 1.5\xspace}
+
+% Try generating a PDF with coloured hyperlinks.
+\newif\ifcolourlinks
+%\colourlinksfalse
+\colourlinkstrue
+
+\ifcolourlinks
+   \usepackage{color}
+   \usepackage[colorlinks=true,
+               pdftex,
+               linktocpage,
+               backref=page,
+               pdftitle={Portage 1.5 Tutorial},
+               pdfauthor={Joanis, Stewart, Larkin and Foster}
+              ]{hyperref}
+\else
+   \usepackage{hyperref}
+\fi
+
+
+
 % \code formats an inline code snippet without line breaking; it treats the
 % underscore as a normal character. Use \url to format a code snippet with
 % automatic line breaking, but then underscores are not rendered as characters
@@ -29,8 +52,6 @@
 
 \newcommand{\phs}{\tild{s}}   % source phrase
 \newcommand{\pht}{\tild{t}}   % target phrase
-% Official typesetting of PORTAGEshared, now called Portage 1.x
-\newcommand{\PS}{Portage 1.4\xspace}
 \newcommand{\tip}{\textbf{Useful Tip \large{\ding{43}} }}
 \newcommand{\margintip}{\marginpar[{\textbf{Tip \large{\ding{43}}}}]{\textbf{\reflectbox{\large{\ding{43}}} Tip}}}
 \newcommand{\tipsummary}{\noindent\textbf{Tip summary \large{\ding{43}} }}
@@ -46,7 +67,7 @@
 \title{\PS Tutorial: \\
        A toy experiment using the \\
        experimental framework}
-\date{September, 2011}
+\date{Last updated June 2012}
 \author{Eric Joanis, Darlene Stewart, Samuel Larkin, George Foster}
 
 \begin{document}
@@ -61,7 +82,7 @@
 An adaptation of George Foster's \emph{Running Portage: A Toy Example} \\
 to Samuel Larkin's experimental framework,\\
 %updated to reflect recommended usage of \PS.
-updated to reflect recommended usage of Portage 1.4.3.
+updated to reflect recommended usage of Portage 1.5.0.
 \end{center}
 
 \vfill
@@ -71,12 +92,12 @@ updated to reflect recommended usage of Portage 1.4.3.
 {~} \\ \footnotesize
    Technologies langagi{\`e}res interactives /
       Interactive Language Technologies \\
-   Institut de technologie de l'information /
-      Institute for Information Technology \\
+   Technologies de l'information et des communications /
+      Information and Communications Technologies \\
    Conseil national de recherches Canada /
       National Research Council Canada \\
-   Copyright \copyright\ 2008--2011, Sa Majest{\'e} la Reine du Chef du Canada
-   \\ Copyright \copyright\ 2008--2011, Her Majesty in Right of Canada
+   Copyright \copyright\ 2008--2012, Sa Majest{\'e} la Reine du Chef du Canada
+   \\ Copyright \copyright\ 2008--2012, Her Majesty in Right of Canada
 \end{center}
 
 \vfill
@@ -103,8 +124,8 @@ better explain how to use the \PS software suite.
 \PS can be viewed as a set of programs for turning a bilingual corpus into a
 translation system. Here this process is illustrated with a small ``toy''
 example of French to English translation, using text from the Hansard corpus.
-The training corpus is too small for good translation, but large enough to give
-the flavour of a more realistic setup. Running time is several hours.
+The training corpus is too small for good translation, but is used the same way
+a more realistic setup would be. Total running time is one to several hours.
 
 \subsection{Making Sure \PS is Installed}
 
@@ -117,12 +138,12 @@ set your environment variable \code{\$PORTAGE} to the directory where \PS is
 installed, which is also done by \code{SETUP.bash}.  Follow the
 instructions in \code{INSTALL} before you proceed with this document.
 
-To make sure \PS is installed properly, try \code{canoe -h}, \code{cow.sh
--h}, \code{tokenize.pl -h} and \code{ce.pl -h}.  If you get usage
-information for each of these programs, you should be ready to proceed.  If one
-of them gives you an error message, then some part of your installation is
-incomplete.  See the section \emph{Verifying your installation} in
-\code{INSTALL} for troubleshooting suggestions.
+To make sure \PS is installed properly, try \code{canoe -h}, \code{tune.py
+-h}, \code{utokenize.pl -h}, \code{ce.pl -h}, and \code{filter-nc1.py -h}.  If
+you get usage information for each of these programs, you should be ready to
+proceed.  If one of them gives you an error message, then some part of your
+installation is incomplete.  See the section \emph{Verifying your installation}
+in \code{INSTALL} for troubleshooting suggestions.
 
 \subsection{Running the Toy Experiment}
 
@@ -148,43 +169,46 @@ be specified relative to \code{toy.experiment}. Similary, whenever we quote a
 \code{toy.experiment} directory, not from the location of the previous
 commands.
 
-As you work through the example, the commands that you should type\footnote{You
-can copy and paste commands from this PDF document onto the command line in
-your interactive shell if you wish.} are shown in bold and preceded by a
-prompt, \code{>}, and the system's response is not, though system output is not
-usually fully reproduced here, for brevity's sake. When it is, results
-(especially numbers) may vary a little from the ones shown, due to platform
-differences. Note that many results presented here are truncated in precision
-for presentation purposes.
+As you work through the example, the commands that you should type\footnote{This
+   PDF document was generated in such a way that you can copy and paste commands
+   from here onto the command line of your interactive shell if you wish.}
+are shown in bold and preceded by a prompt, \code{>}, and the system's response
+is not.  System output is not usually fully reproduced here, for brevity's
+sake. When it is, results (especially numbers) may vary a little from the ones
+shown, due to platform differences. Note that many results presented here are
+truncated in precision for presentation purposes.
 
 Many of the commands are expressed as \code{make} targets. This has the
 advantage of requiring less typing, while still allowing you to see the actual
 commands executed by the system because they are always echoed by \code{make}.
 (You could also type them directly.) \code{make} also lets you skip
-sections in this document (except for the first one, since it is done
+sections of this document (except for the first one, since it is done
 manually). For example, if you are not interested in any steps before decoder
 weight optimization, you can go directly to section~\ref{COW} and type
 \code{make tune} to begin at that point. \code{make} will automatically run all
 the commands required from previous sections before doing the step you
-specifically requested. Here are some other useful make commands:
+specifically requested. Here are some other useful \code{make} commands:
 \begin{itemize}
 \item \code{make all}: run all remaining steps at any point.
 \item \code{make clean}: clean up and return the directory to its initial state
-\item \code{make -j} \emph{target} or \code{make -j N} \emph{target}: build
+\item \code{make -j} \emph{target} or \code{make -j} \emph{N target}: build
       \emph{target} by running commands in parallel whenever possible (up to
-      N ways parallel if N is specified). This lets you take advantage of
-      multi-core capabilities of your machine, but use with caution: many
-      commands in the framework are already internally parallelized, as
-      discussed in section~\ref{FrameworkParams}.
-\item \code{make help} display some help and the main targets available in
+      \emph{N} ways parallel if \emph{N} is specified). This lets you take
+      advantage of a computing cluster if you have one. If you use a single
+      multi-core computer, you don't need \code{-j}, since many commands in the
+      framework are already internally parallelized, as discussed in
+      section~\ref{FrameworkParams}.
+\item \code{make help}: display some help and the main targets available in
       the makefile.
-\item \code{make summary} display the resources used by the framework: time and
-      memory used, as well as disk space for the runtime models (most
+\item \code{make summary}: display the resources used by the framework: time
+      and memory used, as well as disk space for the runtime models (most
       informative once training has been completed; discussed further in
       section~\ref{FrameworkParams}).
 \end{itemize}
 
 \subsection{Overview of the Process}
+
+TODO: REVIEW THIS SECTION ONCE THE REST HAS BEEN DONE.
 
 Here is an overview of the \PS process, as described in the following
 sections (section numbers are in brackets):
@@ -193,20 +217,21 @@ sections (section numbers are in brackets):
       alignment, lowercasing (\S\ref{Lowercasing}), and splitting
       (\S\ref{Splitting}).
 \item Model training (\S\ref{Training}): includes language model (\S\ref{LM}),
-      translation model (\S\ref{TM}), lexicalized distortion mode (\S\ref{LDM}),
-      truecasing model (\S\ref{TC}), decoder weight optimization (\S\ref{COW}),
-      confidence estimation model training (\S\ref{CE}), and rescoring model
-      training (\S\ref{RAT}).
+      translation model (\S\ref{TM}), hierarchical lexicalized distortion mode
+      (\S\ref{LDM}), truecasing model (\S\ref{TC}), decoder weight optimization
+      (\S\ref{COW}), confidence estimation model training (\S\ref{CE}), and
+      rescoring model training (\S\ref{RAT}).
 \item Translating and testing (\S\ref{TranslatingTesting}): includes
       decoding (\S\ref{Decoding}), confidence estimation(\S\ref{CETrans}),
       rescoring (\S\ref{RATTrans}), truecasing (\S\ref{Truecasing}) and testing
       (\S\ref{Testing}).
 \end{enumerate}
 These steps are fairly standard, but of course there are many variants on the
-sample process illustrated here. For more information, see the \PS
-user manual (found in \url{$PORTAGE/doc/user-manual.html} on the CD).
+sample process illustrated here. For more information, see the \PS user manual
+(found in \url{$PORTAGE/doc/user-manual.html} on the CD).
 For detailed information about a particular program, run the program with the
-\code{-h} flag (or see \url{$PORTAGE/doc/usage.html} on the CD).
+\code{-h} flag (or see \url{$PORTAGE/doc/usage.html} on the CD).  
+
 
 \section{Corpus Preparation} \label{CorpusPreparation}
 
@@ -227,16 +252,16 @@ results with \PS.
 The corpus, which we assume you have tokenized and sentence-aligned, as
 discussed above, must be split into separate portions in order to run
 experiments. Distinct, non-overlapping sub-corpora are required for model
-training (see \S\ref{Training}), for tuning decoder weights
-(\S\ref{COW}) and rescoring weights (\S\ref{RAT}), for confidence
-estimation (if you use it; \S\ref{CE}), and for testing
-(\S\ref{Testing}).\footnote{In this example, we use separate corpora for
-tuning decoder and rescoring weights, but this is not necessary.  However,
-confidence estimation must absolutely have its own separate tuning set.}
-Typically, the tuning and testing corpora are around 1000 segments each.  If
-the corpus is chronological, then it is a good idea to choose these corpora
-from the most recent material, which is likely to resemble future text more
-closely.
+training (see \S\ref{Training}), for tuning decoder weights (\S\ref{COW}) and
+rescoring weights (\S\ref{RAT}), for confidence estimation (if you use it;
+\S\ref{CE}), and for testing (\S\ref{Testing}).\footnote{In this example, we
+use separate corpora for tuning decoder and rescoring weights, but this is not
+necessary.  However, confidence estimation must absolutely have its own
+separate tuning set, which can be reused as a test set, but not as a decoder or
+rescoring tuning set.} Typically, the tuning and testing corpora are 1000 to
+2000 segments each.  If the corpus is chronological, then it is a good idea to
+choose these corpora from the most recent material, which is likely to resemble
+future text more closely.
 
 Since proper splitting of a corpus must take into account its structure
 and nature, these steps are not handled by the experimental framework. For the
@@ -251,20 +276,25 @@ links) into your copy's corpora directory:
 \begin{small}
 \begin{alltt}
    > \textbf{cp $PORTAGE/test-suite/tutorial-data/*.al* corpora/}
-   > \textbf{wc corpora/*.al}
-      100   2114  11589 corpora/dev1_en.al
-      100   2330  13680 corpora/dev1_fr.al
-      100   2095  11462 corpora/dev2_en.al
-      100   2443  13905 corpora/dev2_fr.al
-      100   2383  13061 corpora/devCE_en.al
-      100   2840  16209 corpora/devCE_fr.al
-      100   2379  13292 corpora/test_en.al
-      100   2616  15622 corpora/test_fr.al
-      800  19201 108820 total
-   > \textbf{zcat train_en.al.gz | wc}
-      8892  182186  981455
-   > \textbf{zcat train_fr.al.gz | wc}
-      8892  208400 1178176
+   > \textbf{wc_stats corpora/*.al* | expand-auto.pl}
+      #Lines   #Words   #Char     [...]   filename
+      100      2115     11589     [...]   corpora/dev1_en.al
+      100      2330     13680     [...]   corpora/dev1_fr.al
+      100      2095     11462     [...]   corpora/dev2_en.al
+      100      2443     13905     [...]   corpora/dev2_fr.al
+      100      2383     13061     [...]   corpora/dev3_en.al
+      100      2840     16209     [...]   corpora/dev3_fr.al
+      8896     182273   981921    [...]   corpora/lm-train_en.al.gz
+      8893     208404   1178207   [...]   corpora/lm-train_fr.al.gz
+      100      2379     13292     [...]   corpora/test1_en.al
+      100      2616     15622     [...]   corpora/test1_fr.al
+      100      2383     13061     [...]   corpora/test2_en.al
+      100      2840     16209     [...]   corpora/test2_fr.al
+      8892     182186   981455    [...]   corpora/tm-train_en.al.gz
+      8892     208400   1178176   [...]   corpora/tm-train_fr.al.gz
+
+      36573    805687   4457849   [...]   TOTAL
+      [...]
 \end{alltt}
 \end{small}
 
@@ -277,6 +307,12 @@ training files can and should be compressed, as shown here.  Most programs and
 modules in Portage transparently handle compressed files, compressing and
 decompressing them on the fly as needed.
 
+If you inspect them, you might notice that the \code{lm-train*} and
+\code{tm-train*} files are almost identical, but that the \code{lm-train*} have
+more text.  When training the language model, it is a good idea to add
+available monolingual material to the target side of the parallel corpus, as we
+simulated doing here.
+
 \subsection{Setting Framework Parameters} \label{FrameworkParams}
 
 Now you need to edit \code{Makefile.params} to set some global parameters:
@@ -284,20 +320,16 @@ Now you need to edit \code{Makefile.params} to set some global parameters:
 \item swap the values of \code{SRC_LANG} and
 \code{TGT_LANG}, to select translation from French to English, rather than
 the other way around, which is the default;
-\item set \code{TRAIN_LM} and \code{TRAIN_TM} to
-\code{train} instead of \code{lm-train} and \code{tm-train} since we
-won't be using a separate corpora to train the translation and language models;
-\item set \code{TUNE_CE} to \code{devCE} (also, remember to uncomment the
-line by removing the \code{\#} at the start);
-\item set \code{TEST_SET} to \code{test} instead of the default
-  \code{test1 test2} because we have only one test set;
+\item \code{TRAIN_LM} and \code{TRAIN_TM} already have the right values, so
+they don't need to be changed;
+\item set \code{TUNE_RESCORE} to \code{dev2} and \code{TUNE_CE} to \code{dev3}
+by uncommenting the lines defining them, i.e., by removing the \code{\#} at the
+beginning of these lines;
+\item \code{TEST_SET} already points to our two test sets, so no change is
+needed;
 \item select a language modeling option (see below for more info about this
-  choice):
-\begin{itemize}
-\item to use SRILM, make sure the \code{LM_TOOLKIT} variable is set to
-\code{SRI};
-\item to use MITLM, set the \code{LM_TOOLKIT} variable to \code{MIT}.
-\end{itemize}
+  choice): set the \code{LM_TOOLKIT} variable to \code{SRI} or \code{MIT} to
+  use SRILM or MITLM, respectively.
 %\item set \code{DO_RESCORING} to \code{1} by uncommenting the relevant line.
 \end{itemize}
 In this toy experiment, we will use the default value for all other parameters.
@@ -305,36 +337,37 @@ In this toy experiment, we will use the default value for all other parameters.
 While in \code{Makefile.params}, you should read through all the variables in
 the \emph{User definable variables} section of the file.  This is where most of
 the configurable behaviours are set, such as whether to do rescoring and/or
-truecasing, what LM toolkit you are using (if any), levels of parallelism, etc.
+truecasing, which optional models to use, the levels of parallelism, etc.
 
 We recommend you use SRILM (\url{http://www.speech.sri.com/projects/srilm/}) as
 your language modeling toolkit, if your licensing requirements permit it; if
 not, we recommend MITLM (\url{http://code.google.com/p/mitlm/}), another
 excellent LM toolkit, which allows commercial use.  Although not recommended,
-IRSTLM remains another option.  See \code{Makefile.params} and type \code{make
+IRSTLM remains another option.\footnote{These recommendations are based on our
+empirical results: we get similar BLEU scores when using MITLM and SRILM, but
+lower ones when using IRSTLM.} See \code{Makefile.params} and type \code{make
 help} for more details.
 
 Another set of parameters you might want to adjust are the various
-\code{PARALLELISM_LEVEL_*} variables.  \PS is written in such a way as to
-take advantage of multi-processor computers and/or multi-node computing
-clusters, doing tasks in parellel where possible.  If you're not running on a
-cluster, the number of CPUs on your machine is a good choice for all five
-variables (this is the default).  If you are running on a cluster, the
-framework uses \code{qsub} to submit jobs, via the \code{run-parallel.sh}
-and \code{psub} scripts, and you can set the five variables according to
-resources available to you.
+\code{PARALLELISM_LEVEL_*} variables.  \PS is written in such a way as to take
+advantage of multi-processor computers and/or multi-node computing clusters,
+doing tasks in parellel where possible.  If you're not running on a cluster,
+the number of CPUs on your machine is a good choice for all these variables
+(this is the default).  If you are running on a cluster, the framework uses
+\code{qsub} to submit jobs, via the \code{run-parallel.sh} and \code{psub}
+scripts, and you can set these variables according to resources available to
+you.
 
-When running this framework, you might notice that most commands are preceded
-by control variables \code{RP_PSUB_OPTS=...} or \code{_LOCAL=1}.  These
-strings only have an impact when running on a cluster, and are written in such
-a way that they are ignored otherwise.  When working on a cluster, commands
-preceded by \code{_LOCAL=1} are inexpensive ones that get
-run directly instead of being submitted to the queueing system, while
-\code{RP_PSUB_OPTS=...} is used to specify additional options to
-\code{psub}, which is used in \PS to encapsulate the invocation of
-\code{qsub}.  If your cluster has specific usage rules or if you require
-additional parameters to \code{qsub}, you might want to customize
-\code{psub} itself or add options as required in this framework.
+When running this framework, you might notice that many commands are preceded
+by control variables \code{RP_PSUB_OPTS=...} or \code{_LOCAL=1}.  These strings
+only have an impact when running on a cluster, and are ignored otherwise.  When
+working on a cluster, commands preceded by \code{_LOCAL=1} are inexpensive ones
+that get run directly instead of being submitted to the queueing system, while
+\code{RP_PSUB_OPTS=...} is used to specify additional options to \code{psub},
+which is used in \PS to encapsulate the invocation of \code{qsub}.  If your
+cluster has specific usage rules or if you require additional parameters to
+\code{qsub}, you might want to customize \code{psub} itself or add options as
+required in this framework.
 
 \tip\margintip Many commands run in this framework will also be preceded by
 \code{time-mem}. This utility script measures the time taken by a command, just
@@ -346,9 +379,9 @@ report should still reflect the situation so far.  The output of \code{make
 time-mem} can be very useful to determine which steps are taking the most time
 and/or the most memory.  They can help you determine if you have enough
 computing resources to process your corpora.  They can also help you determine
-the cost of various choices you can make in Portage.  You can also type
-\code{make summary} to get the \code{time-mem} information as well as the
-space on disk of the models needed at runtime, such as would be deployed on a
+the cost of various choices you can make in \PS.  The command \code{make
+summary} will give you the \code{time-mem} information as well as the space on
+disk of the models needed at runtime, such as would be deployed on a
 translation server.\tipend
 
 For the sake of brevity, when we quote executed commands in this document, we
@@ -360,7 +393,8 @@ variables mentioned above.
 To reduce data sparseness, we convert all files to lowercase.\footnote{We show
 \code{utf8\_casemap} being used.  If you installed Portage without ICU, you
 will see \code{lc-utf8.pl} instead.} We keep the lowercase and truecase
-versions separately, because we'll use the truecase version to train a
+versions separate, because we'll use the lowercase version to train language
+and translation models, while use the truecase version will be used to train a
 truecasing model.
 \begin{small}
 \begin{alltt}
@@ -368,23 +402,24 @@ truecasing model.
    > \textbf{make lc}
    cat dev1_fr.al | utf8_casemap -c l > dev1_fr.lc
    [...]
-   zcat train_en.al.gz | utf8_casemap -c l | gzip > train_en.lc.gz
+   zcat lm-train_fr.al.gz | utf8_casemap -c l | gzip > lm-train_fr.lc.gz
 \end{alltt}
 \end{small}
 
 The decoder, \code{canoe}, treats \code{<}, \code{>} and \verb*X\X as
 special characters in order to support markup for special translation rules.
 We won't use any markup in this example, but we still need to escape any
-occurrences of the three special characters (in the source language only, since
-this is only required for the input to \code{canoe}).
+occurrences of the three special characters in the files we'll provide as input
+to \code{canoe}: the source side of the dev and test files.
 
 \begin{small}
 \begin{alltt}
    > \textbf{make rule}
-   canoe-escapes.pl -add dev1_fr.lc > dev1_fr.rule
-   canoe-escapes.pl -add dev2_fr.lc > dev2_fr.rule
-   canoe-escapes.pl -add devCE_fr.lc > devCE_fr.rule
-   canoe-escapes.pl -add test_fr.lc > test_fr.rule
+   canoe-escapes.pl -add < dev1_fr.lc > dev1_fr.rule
+   canoe-escapes.pl -add < dev2_fr.lc > dev2_fr.rule
+   canoe-escapes.pl -add < dev3_fr.lc > dev3_fr.rule
+   canoe-escapes.pl -add < test1_fr.lc > test1_fr.rule
+   canoe-escapes.pl -add < test2_fr.lc > test2_fr.rule
 \end{alltt}
 \end{small}
 
@@ -392,27 +427,34 @@ this is only required for the input to \code{canoe}).
 \section{Training} \label{Training}
 
 This step creates various models and parameter files that are required for
-translation. There are six steps in training.  Three are mandatory: creating a
+translation. There are many steps in training.  Three are mandatory: creating a
 language model (\S\ref{LM}), creating a translation model (\S\ref{TM}), and
-optimizing decoder weights (\S\ref{COW}).  Four are optional: creating a
-truecasing model (\S\ref{TC}), creating a lexicalized distortion model
-(\S\ref{LDM}), training a rescoring model (\S\ref{RAT}), and training a
-confidence estimation (CE) model (\S\ref{CE}).
+optimizing decoder weights (\S\ref{COW}).  Several are optional: creating a
+truecasing model (\S\ref{TC}), creating a (possibly hierarchical) lexicalized
+distortion model (\S\ref{LDM}), training a rescoring model (\S\ref{RAT}), and
+training a confidence estimation (CE) model (\S\ref{CE}).
+
+TODO THE PARAGRAPH ABOVE NEEDS TO MENTION MIXTM AND MIXLM, AND MAYBE IMPROVE
+HOW HLDMS ARE MENTIONED.
 
 \subsection{Creating a Language Model} \label{LM}
 
-Portage does not come with programs for language model training. However, it
-accepts models in the widely-used ``ARPA'' format which is produced by
-toolkits such as SRILM or MITLM. The following sections describe the training
-process for SRILM and MITLM.\footnote{In this toy example, we use only the
-target language part of the parallel training corpus to train the language
-model, but this is not the recommended practice.  If you have access to larger
-corpora of monolingual text in your target language, you can use them to train
-additional language models.  The framework does not support training multiple
-language models, but you can train them externally and add them to the
-\code{canoe.ini.template} file (see \S\ref{COW}).} Commands are assumed to be
-issued from the \code{toy.experiment} directory (so run \code{cd ..} from the
-corpora directory if you have not already done so).
+\PS does not come with programs for language model training. However, it
+accepts models in the widely-used ``ARPA'' format which is produced by most
+language modelling toolkits.  The following sections describe the training
+process for SRILM and MITLM.\footnote{In this toy example, we manually added a
+few sentences to the target language part of the parallel training corpus to
+illustrate using more text to train the language model than the translation
+model.  If you have access to some additional monolingual text, adding it to
+\code{lm-train} is the simplest option.  If you have access to large amounts of
+monolingual text in your target language, you can use them to train additional
+language models, or mixture language models.  TODO REWORK THIS FOOTNOTE ONCE
+MIXLM STUFF IS WRITTEN.  The framework does not support training multiple
+language models TODO CHECK IF THIS IS STILL TRUE, but you can train them
+externally and add them to the \code{canoe.ini.template} file (see
+\S\ref{COW}).} Commands are assumed to be issued from the \code{toy.experiment}
+directory (so run \code{cd ..} from the corpora directory if you have not
+already done so).
 
 \subsubsection{SRILM}
 
@@ -424,12 +466,12 @@ model:
    [...]
    make -C models lm
    make -C lm all LM_LANG=en
-   Creating ARPA text format train_en-kn-5g.lm.gz
+   Creating ARPA text format lm-train_en-kn-5g.lm.gz
    ngram-count -interpolate -kndiscount -order 5 \bs
-      -text ../../corpora/train_en.lc.gz -lm train_en-kn-5g.lm.gz \bs
-      >& log.train_en-kn-5g.lm
-   arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \bs
-      >& log.train_en-kn-5g.binlm
+      -text ../../corpora/lm-train_en.lc.gz -lm lm-train_en-kn-5g.lm.gz \bs
+      >& log.lm-train_en-kn-5g.lm
+   arpalm2binlm lm-train_en-kn-5g.lm.gz lm-train_en-kn-5g.binlm.gz \bs
+      >& log.lm-train_en-kn-5g.binlm
 \end{alltt}
 \end{small}
 The first command executed, \code{ngram-count}, produces the language model
@@ -440,27 +482,31 @@ converts it into the Portage binary language model format for fast loading.
 \subsubsection{MITLM}
 
 If you are using the MITLM toolkit, here is the command used to produce the
-model needed for this example, \code{train_en-kn-5g.binlm.gz}:
+model needed for this example, \code{lm-train_en-kn-5g.binlm.gz}:
 \begin{small}
 \begin{alltt}
    > \textbf{make lm}
    [...]
    make -C models lm
    make -C lm all LM_LANG=en
-   Creating ARPA text format train_en-kn-5g.lm.gz
-   zcat ../../corpora/train_en.lc.gz \bs
+   Creating ARPA text format lm-train_en-kn-5g.lm.gz
+   zcat ../../corpora/lm-train_en.lc.gz \bs
       | perl -ple 's/^{\bs}s*(.*?){\bs}s*$/$1/; s/{\bs}s+/ /g;' \bs
+      | perl -ne 'BEGIN\{$M=4095\} $l=$_; while(length($l)>$M [...]' \bs
       | estimate-ngram -order 5 -smoothing ModKN -text /dev/stdin \bs
-        -write-lm train_en-kn-5g.lm.gz 2> log.train_en-kn-5g.lm
-   arpalm2binlm train_en-kn-5g.lm.gz train_en-kn-5g.binlm.gz \bs
-      >& log.train_en-kn-5g.binlm
+        -write-lm lm-train_en-kn-5g.lm.gz >& log.lm-train_en-kn-5g.lm
+   arpalm2binlm lm-train_en-kn-5g.lm.gz lm-train_en-kn-5g.binlm.gz \bs
+      >& log.lm-train_en-kn-5g.binlm
 \end{alltt}
 \end{small}
 The first command executed, \code{estimate-ngram}, produces the language model
-itself in ``ARPA'' format.  The \code{perl} command that precedes it removes
-extraneous whitespace, because \code{estimate-ngram} is picky about its input.
-The second command, \code{arpalm2binlm}, converts it into the Portage binary
-language model format for fast loading.
+itself in ``ARPA'' format.  The first \code{perl} filter that precedes it
+removes extraneous whitespace, because \code{estimate-ngram} is picky about its
+input.  The second \code{perl} filter cuts lines that are longer than 4KB at
+the last word boundary before this internal limit of MITLM's, to avoid breaking
+words (or worse, utf-8 characters) apart.  The second command,
+\code{arpalm2binlm}, converts the model into the Portage binary language model
+format for fast loading.
 
 
 \subsection{Creating a Truecasing Model} \label{TC}
@@ -472,32 +518,32 @@ need both a lowercased version and the original ``truecase'' version of the
 training corpus in the target language.
 
 The basic truecasing model consists of two different models: a ``casemap'',
-which maps each lower case words to its possible truecase variants, as observed
+which maps each lower case word to its possible truecase variants, as observed
 in the training corpus, and a standard language model trained on the truecase
 corpus.
 
-With version 1.4.3, we have introduced a new variant of truecasing which
-carries casing information from the source sentence to the target sentence,
-including the casing for the first word in the sentence, the casing of OOVs
-(out-of-vocabulary words), and unusual casing for sequences of several words
-(such as all caps).
+Since version 1.4.3, we use a variant of truecasing which carries casing
+information from the source sentence to the target sentence, including the
+casing for the first word in the sentence, the casing of out-of-vocabulary
+words (OOVs), and unusual casing for sequences of several words (such as all
+caps).
 
-Truecasing with source information is now the default.\footnote{If you want to
-use basic truecasing, as in previous versions of Portage, comment out the line
-\code{TC\_USE\_SRC\_MODELS=1} in the advanced configuration section of
+Truecasing with source information is the default.\footnote{If you want to
+use basic truecasing, as in versions of Portage before 1.4.3, comment out the
+line \code{TC\_USE\_SRC\_MODELS=1} in the advanced configuration section of
 \code{Makefile.params}.}  It requires three language models: source-side and
 target-side case-normalizing\footnote{``Normalized case'' means that the first
 character of the sentence is in lowercase unless the word inherently requires
 the upper case.  E.g., ``his flat in is London.'' and ``London is on the
 Thames.'' are in normalized case.  The acronym ``nc1'', used in some file
-names, means ``normalized-cased first word''.} language models, as well as the
-main truecasing LM.  The target-side case-normalizing LM is used only for
-generating a normalized-case target-side training corpus; it is not used in
-translation.  The main truecasing LM and the ``casemap'' are trained on the
-normalized-case target-side training corpus.  Together, they are used to
-determine the case for the output of the decoder.  Then additional case
-information from the source sentence, including the first word, is transfered
-to that truecased output of the decoder.
+names, stands for ``normalized-cased first word'', i.e., normalized case.}
+language models, as well as the main truecasing LM.  The target-side
+case-normalizing LM is used only for generating a normalized-case target-side
+training corpus; it is not used in translation.  The main truecasing LM and the
+``casemap'' are trained on the normalized-case target-side training corpus.
+Together, they are used to determine the case for the output of the decoder.
+Then additional case information from the source sentence, including the first
+word, is transfered to that truecased output of the decoder.
 
 Running \code{make tc} at the root of the framework will build all necessary
 files and models.  Breaking with the convention in rest of this document, we'll
@@ -509,14 +555,14 @@ improve readability.
    > \textbf{make tc}
    make -C models tc
    make -C tc all
-   zcat -f ../../corpora/train_en.tc.gz \bs
+   zcat -f ../../corpora/lm-train_en.tc.gz \bs
         | perl -ne 'use encoding "UTF-8"; s/^[^[:lower:]]+$/{\bs}n/; print $_ unless /^$/;' \bs
-        | utokenize.pl -pretok -paraline -ss -p -lang=en 2> log.train_en.tokss \bs
-        | gzip > train_en.tokss.gz
+        | utokenize.pl -pretok -paraline -ss -p -lang=en 2> log.lm-train_en.tokss \bs
+        | gzip > lm-train_en.tokss.gz
 \end{alltt}
 \end{small}
 
-We first generate \code{train_en.tokss.gz}, a variant of the target-side
+We first generate \code{lm-train_en.tokss.gz}, a variant of the target-side
 training corpus with all-caps sentences (which are misleading for training
 truecasing models) removed and sentence splitting re-done.  Sentence splitting
 is re-applied because corpus text from some sources such as TMX files may
@@ -525,87 +571,117 @@ important for case normalization.
 
 \begin{small}
 \begin{alltt}
-   zcat -f train_en.tokss.gz | filter-nc1.py -enc UTF-8 \bs
-        | reverse.pl | gzip > train_en.revtokss.gz
+   zcat -f lm-train_en.tokss.gz | filter-nc1.py -enc UTF-8 \bs
+        | reverse.pl | gzip > lm-train_en.revtokss.gz
 \end{alltt}
 \end{small}
 
-Second, we generate \code{train_en.revtokss.gz}, a permutation of the target-side
-training corpus needed to train the target-side case-normalizing LM.
+Second, we generate \code{lm-train_en.revtokss.gz}, an inversion of the
+target-side training corpus needed to train the target-side case-normalizing
+LM.
 
 \begin{small}
 \begin{alltt}
    make -f ../lm/Makefile CORPUS_EXT=.revtokss.gz CORPORA_DIR=../tc LM_DESC=.nc1 \bs
-        train_en.nc1.binlm.gz
-   [commands to train case-normalizing target-language LM train_en.nc1.binlm.gz]
+        lm-train_en.nc1.binlm.gz
+   [commands to train case-normalizing target-language LM lm-train_en.nc1.binlm.gz]
 \end{alltt}
 \end{small}
 
 Third, we internally re-invoke \code{make} to train a language model (as in
-section~\ref{LM}) on this permuted corpus, producing \code{train_en.binlm.gz},
-the target-side case-normalizing language model.
+section~\ref{LM}) on this permuted corpus, producing \code{lm-train_en.binlm.gz},
+the target-side case-normalizing language model.  The actual commands use
+depend on your LM toolkit.
 
 \begin{small}
 \begin{alltt}
-   normc1 -ignore 1 -extended -notitle -loc en_CA.UTF-8 train_en.nc1.binlm.gz \bs
-        train_en.tokss.gz 2> log.train_en.nc1 \bs
-        | perl -pe 's/(.)$/$1 /; s/(.){\bs}n/$1/' | gzip > train_en.nc1.gz
+   normc1 -ignore 1 -extended -notitle -loc en_CA.UTF-8 lm-train_en.nc1.binlm.gz \bs
+        lm-train_en.tokss.gz 2> log.lm-train_en.nc1 \bs
+        | perl -pe 's/(.)$/$1 /; s/(.){\bs}n/$1/' | gzip > lm-train_en.nc1.gz
 \end{alltt}
 \end{small}
 
 Next, \code{normc1} uses the case-normalizing LM to produce
-\code{train_en.nc1.gz}, the normalized-case target-side training corpus.
+\code{lm-train_en.nc1.gz}, the normalized-case target-side training corpus.
 
 \begin{small}
 \begin{alltt}
-   zcat -f train_en.nc1.gz |  utf8_casemap -c l \bs
-        | compile_truecase_map train_en.nc1.gz - 2> log.train_en.map > train_en.map
+   zcat -f lm-train_en.nc1.gz |  utf8_casemap -c l \bs
+        | compile_truecase_map lm-train_en.nc1.gz - 2> log.lm-train_en.map > lm-train_en.map
 \end{alltt}
 \end{small}
 
 Here we generate the casemap for the main target-side truecasing model,
-\code{train_en.map}, using \code{compile_truecase_map}, which compiles the
+\code{lm-train_en.map}, using \code{compile_truecase_map}, which compiles the
 casemap by processing the normalized-case and lowercase versions of the corpus
-simultaneously.
+simultaneously, and recording, for each lower case word, all the cased variants
+found in the normalized-case file, along with their distribution.
 
 \begin{small}
 \begin{alltt}
-   make -f ../lm/Makefile CORPUS_EXT=.nc1.gz CORPORA_DIR=../tc train_en-kn-3g.binlm.gz
-   [commands to train truecasing LM train_en-kn-3g.binlm.gz]
+   make -f ../lm/Makefile CORPUS_EXT=.nc1.gz CORPORA_DIR=../tc lm-train_en-kn-3g.binlm.gz
+   [commands to train truecasing LM lm-train_en-kn-3g.binlm.gz]
 \end{alltt}
 \end{small}
 
 Then, we invoke \code{make} again, this time to produce
-\code{train_en-kn-3g.binlm.gz}, the main target-size truecasing LM, trained on
+\code{lm-train_en-kn-3g.binlm.gz}, the main target-size truecasing LM, trained on
 the normalized-case corpus.
 
 \begin{small}
 \begin{alltt}
-   zcat -f ../../corpora/train_fr.al.gz \bs
-        | utokenize.pl -pretok -paraline -ss -lang=fr 2> log.train_fr.tokss \bs
+   zcat -f ../../corpora/lm-train_fr.al.gz \bs
+        | utokenize.pl -pretok -paraline -ss -lang=fr 2> log.lm-train_fr.tokss \bs
         | perl -pe 'use encoding "UTF-8"; s/^[^[:lower:]]+($|( : ))//;' \bs
-        | gzip > train_fr.tokss.gz
-   zcat -f train_fr.tokss.gz | filter-nc1.py -enc UTF-8 \bs
-        | reverse.pl | gzip > train_fr.revtokss.gz
+        | gzip > lm-train_fr.tokss.gz
+   zcat -f lm-train_fr.tokss.gz | filter-nc1.py -enc UTF-8 \bs
+        | reverse.pl | gzip > lm-train_fr.revtokss.gz
    make -f ../lm/Makefile CORPUS_EXT=.revtokss.gz CORPORA_DIR=../tc LM_DESC=.nc1 \bs
-        LM_LANG=fr train_fr.nc1.binlm.gz
-   [commands to train case-normalizing source-language LM train_fr.nc1.binlm.gz]
+        LM_LANG=fr lm-train_fr.nc1.binlm.gz
+   [commands to train case-normalizing source-language LM lm-train_fr.nc1.binlm.gz]
 \end{alltt}
 \end{small}
 
 The final three commands do the same thing as the first three, this time to
-produce \code{train_fr.nc1.binlm.gz}, the source-side case-normalizing language
-model needed by the new truecasing workflow.
+produce the source-side case-normalizing language model needed by the new
+truecasing workflow, \code{lm-train_fr.nc1.binlm.gz}.
 
 \subsection{Creating a Translation Model} \label{TM}
 
-Creating a translation model involves two main steps: 1) training IBM and HMM word
-alignment models in both directions, then 2) using them to extract phrase pairs
-from the corpus.  We illustrate the use of two separate phrase tables: one
-from IBM2 word alignments, and one from HMM word alignments, whose counts we
-merge afterwards (we recommended doing the same for your experiments as well).
+Creating a translation model involves two main steps: 1) training IBM2 and HMM word
+alignment models in both directions, and optionally IBM4, then 2) using them to
+extract phrase pairs from the corpus.
+
+There are many ways to combine the counts obtained from different alignments.
+Through ongoing experimentation, our recommendations have changed in the past
+and will likely change again; the best setup depends on your data and
+resources, but we try to maintain a good general setup as the default in the
+framework.
+
+Here we illustrate the method we currently recommend: merge the counts from all
+the alignment methods to estimate the main probability feature, using one
+alignment method to estimate a lexical smoothing feature.
 You can do all this by typing \code{make tm} in your \code{toy.experiment}
 directory, but we will break it down into several steps here.
+
+By default, \code{make tm} will only include IBM2 (\S\ref{IBM2}) and HMM
+(\S\ref{HMM}) word-alignment models.  In \S\ref{IBM4}, we'll see how you can
+include a IBM4 word-alignment model and tally its counts along with the other
+two methods.
+
+In \S\ref{PI}, we'll see how you can also produce alignment indicator features
+telling the system which aligner produced which phrase pairs.  The alignment
+indicator features are helpful because the different alignments make different
+kinds of error in the phrase pairs they produce; the high diversity of phrase
+pairs obtained from two or three separate alignment methods helps the system,
+while the indicator features allow the system to learn to give more weight to
+alignments suggested by the more reliable alignment method.  Now, we don't need
+to know how reliable each method is, because the system will learn that
+automatically during tuning (see \S\ref{COW}).
+
+In \S\ref{MIXTM}, finally, we'll look at interpolating probability estimates
+coming from various corpora, in a way that is adapted to your in-domain
+material.
 
 \subsubsection{Creating a Translation Model Using IBM2 Alignments} \label{IBM2}
 
@@ -617,20 +693,20 @@ as a prerequisite.  We do this for both directions.
 \begin{alltt}
    > \textbf{cd models/tm}
    > \textbf{make ibm2_model}
-   cat.sh -n 4 -pn 4 -v -n1 5 -n2 0 -bin ibm1.train.en_given_fr.gz
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
-      >& log.ibm1.train.en_given_fr
-   cat.sh -n 4 -pn 4 -v -r -n1 5 -n2 0 -bin ibm1.train.fr_given_en.gz \bs
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
-      >& log.ibm1.train.fr_given_en
+   cat.sh -n 4 -pn 4 -v -n1 5 -n2 0 -bin ibm1.tm-train.en_given_fr.gz
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
+      >& log.ibm1.tm-train.en_given_fr
+   cat.sh -n 4 -pn 4 -v -r -n1 5 -n2 0 -bin ibm1.tm-train.fr_given_en.gz \bs
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
+      >& log.ibm1.tm-train.fr_given_en
    cat.sh -n 4 -pn 4 -v -n1 0 -n2 5 -slen 20 -tlen 20 -bksize 20 \bs
-      -bin -i ibm1.train.en_given_fr.gz ibm2.train.en_given_fr.gz \bs
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
-      >& log.ibm2.train.en_given_fr
+      -bin -i ibm1.tm-train.en_given_fr.gz ibm2.tm-train.en_given_fr.gz \bs
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
+      >& log.ibm2.tm-train.en_given_fr
    cat.sh -n 4 -pn 4 -v -r -n1 0 -n2 5 -slen 20 -tlen 20 -bksize 20 \bs
-      -bin -i ibm1.train.fr_given_en.gz ibm2.train.fr_given_en.gz \bs
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
-      >& log.ibm2.train.fr_given_en
+      -bin -i ibm1.tm-train.fr_given_en.gz ibm2.tm-train.fr_given_en.gz \bs
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
+      >& log.ibm2.tm-train.fr_given_en
 \end{alltt}
 \end{small}
 The \code{train_ibm} program could have been used directly, but we use
@@ -645,16 +721,16 @@ iteration:
 \begin{small}
 \begin{alltt}
    > \textbf{grep -h ppx log.ibm[12]*en_given_fr}
-   Parallel iter (IBM1): prev ppx = 356.599, size = 1461411 word pairs.
-   Parallel iter (IBM1): prev ppx = 109.263, size = 1350718 word pairs.
-   Parallel iter (IBM1): prev ppx = 66.443, size = 1182917 word pairs.
-   Parallel iter (IBM1): prev ppx = 52.8037, size = 1016137 word pairs.
-   Parallel iter (IBM1): prev ppx = 47.908, size = 874686 word pairs.
-   Parallel iter (IBM2): prev ppx = 45.755, size = 874415 word pairs.
-   Parallel iter (IBM2): prev ppx = 29.4005, size = 874073 word pairs.
-   Parallel iter (IBM2): prev ppx = 23.4925, size = 849903 word pairs.
-   Parallel iter (IBM2): prev ppx = 20.8623, size = 741721 word pairs.
-   Parallel iter (IBM2): prev ppx = 19.5686, size = 617726 word pairs.
+   parallel iter (IBM1): prev ppx = 351.448, size = 1402947 word pairs.
+   parallel iter (IBM1): prev ppx = 108.875, size = 1332170 word pairs.
+   parallel iter (IBM1): prev ppx = 66.4431, size = 1178494 word pairs.
+   parallel iter (IBM1): prev ppx = 52.8119, size = 1015983 word pairs.
+   parallel iter (IBM1): prev ppx = 47.9137, size = 874944 word pairs.
+   parallel iter (IBM2): prev ppx = 45.759, size = 874673 word pairs.
+   parallel iter (IBM2): prev ppx = 29.4061, size = 874333 word pairs.
+   parallel iter (IBM2): prev ppx = 23.4947, size = 850139 word pairs.
+   parallel iter (IBM2): prev ppx = 20.8628, size = 741848 word pairs.
+   parallel iter (IBM2): prev ppx = 19.5686, size = 617840 word pairs.
 \end{alltt}
 \end{small}
 
@@ -665,10 +741,10 @@ summarize at any level just as you can globally:
    > \textbf{make time-mem}
    find -type f -name log.\* | sort | xargs time-mem-tally-pl -no-dir -m tm \bs
       | second-to-hms.pl | expand-auto.pl
-      log.ibm1.train.en_given_fr:TIME-MEM  WALL TIME: 1m3s   CPU TIME: 28s   VSZ: 0.102G  RSS: 0.012G
-      log.ibm1.train.fr_given_en:TIME-MEM  WALL TIME: 1m0s   CPU TIME: 28s   VSZ: 0.099G  RSS: 0.013G
-      log.ibm2.train.en_given_fr:TIME-MEM  WALL TIME: 57s    CPU TIME: 24s   VSZ: 0.099G  RSS: 0.012G
-      log.ibm2.train.fr_given_en:TIME-MEM  WALL TIME: 58s    CPU TIME: 24s   VSZ: 0.099G  RSS: 0.014G
+      log.ibm1.tm-train.en_given_fr:TIME-MEM  WALL TIME: 1m3s   CPU TIME: 28s   VSZ: 0.102G  RSS: 0.012G
+      log.ibm1.tm-train.fr_given_en:TIME-MEM  WALL TIME: 1m0s   CPU TIME: 28s   VSZ: 0.099G  RSS: 0.013G
+      log.ibm2.tm-train.en_given_fr:TIME-MEM  WALL TIME: 57s    CPU TIME: 24s   VSZ: 0.099G  RSS: 0.012G
+      log.ibm2.tm-train.fr_given_en:TIME-MEM  WALL TIME: 58s    CPU TIME: 24s   VSZ: 0.099G  RSS: 0.014G
    tm:TIME-MEM                             WALL TIME: 3m58s  CPU TIME: 1m44s VSZ: 0.102G  RSS: 0.014G
 \end{alltt}
 \end{footnotesize}
@@ -676,18 +752,37 @@ summarize at any level just as you can globally:
 The IBM models are written to files \code{ibm[12].*} and contain word
 translation/alignment probabilities.
 
-\subsubsection*{Training Joint-Count Phrase Tables}
+\subsubsection*{Creating the alignment file}
 
-Now we extract the joint-count phrase table from the same parallel corpus,
-using IBM2 word alignment models in both directions together.
+Now we use the alignment model to produce and save the alignment of the
+training corpus according to the IBM2 alignment method.  We did not use to save
+these, because they are reasonably cheap to reproduce for IBM2, and we did not
+usually reuse them anyway, but for HMM and other alignment models, they are
+expensive to reproduce and, furthermore, we now reuse the alignments for other
+purposes, so it's worth saving them.
+
 \begin{small}
 \begin{alltt}
    > \textbf{make ibm2_jpt}
-   gen-jpt-parallel.sh -n 4 -nw 4 -w 1 -o jpt.ibm2.train.fr-en.gz \bs
-      GPT -v -m 8 -ibm 2 -1 fr -2 en \bs
-      ibm2.train.en_given_fr.gz ibm2.train.fr_given_en.gz \bs
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
-      >& log.jpt.ibm2.train.fr-en
+   align-words -o sri -ibm 2 ibm2.tm-train.en_given_fr.gz  ibm2.tm-train.fr_given_en.gz \bs
+      ./../../corpora/tm-train_fr.lc.gz ./../../corpora/tm-train_en.lc.gz \bs
+      2> log.tm-train.ibm2.fr2en.align | gzip > tm-train.ibm2.fr2en.align.gz
+   [...]
+\end{alltt}
+\end{small}
+
+\subsubsection*{Training Joint-Count Phrase Tables}
+
+With the alignment saved, extracting the joint-count phrase table from the
+parallel corpus is reasonably quick.  The make command issued above should have
+also launched this:
+\begin{small}
+\begin{alltt}
+   gen-jpt-parallel.sh -n 4 -nw 4 -o jpt.ibm2.tm-train.fr-en.gz -w 1 \bs
+      GPT -v -m 8 -1 fr -2 en -ext
+      ibm2.tm-train.en_given_fr.gz ibm2.tm-train.fr_given_en.gz \bs
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
+      tm-train.ibm2.fr2en.align.gz >& log.jpt.ibm2.tm-train.fr-en
 \end{alltt}
 \end{small}
 The joint-count phrase table contains the co-occurrence frequency for
@@ -703,25 +798,35 @@ this step after doing the HMM models.
 
 Now we repeat the same steps using HMM word alignment models, using the
 ``hmm3'' variant, which is the default.  This variant corresponds to the HMM
-parameter settings we recommend using as a starting point.
+parameter settings we recommend using to create translation models.  If you
+inspect the alignments, you will find that ``hmm3'' alignment leave a lot of
+words unaligned and seem to be of rather poor quality.  They were tuned
+specifically to maximize BLEU scores on a complete translation system, not for
+independent use.  If you want to produce alignments for display or other uses
+that exploit the alignment directly, we recommend the ``hmm2'' or ``hmm1''
+variant instead.
+
 \begin{small}
 \begin{alltt}
    > \textbf{make hmm3_jpt}
    cat.sh -n 4 -pn 4 -v -n1 0 -n2 5 -hmm -end-dist -anchor \bs
       -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 -bin \bs
-      -i ibm1.train.en_given_fr.gz hmm3.train.en_given_fr.gz \bs
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
-      >& log.hmm3.train.en_given_fr
+      -i ibm1.tm-train.en_given_fr.gz hmm3.tm-train.en_given_fr.gz \bs
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
+      >& log.hmm3.tm-train.en_given_fr
    cat.sh -n 4 -pn 4 -v -r -n1 0 -n2 5 -hmm -end-dist -anchor \bs
       -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 -bin \bs
-      -i ibm1.train.fr_given_en.gz hmm3.train.fr_given_en.gz \bs
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
-      >& log.hmm3.train.fr_given_en
-   gen-jpt-parallel.sh -n 4 -nw 4 -w 1 -o jpt.hmm3.train.fr-en.gz \bs
-      GPT -v -m 8 -hmm -1 fr -2 en \bs
-      hmm3.train.en_given_fr.gz hmm3.train.fr_given_en.gz \bs
-      ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
-      >& log.jpt.hmm3.train.fr-en
+      -i ibm1.tm-train.fr_given_en.gz hmm3.tm-train.fr_given_en.gz \bs
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
+      >& log.hmm3.tm-train.fr_given_en
+   align-words -o sri -hmm hmm3.tm-train.en_given_fr.gz hmm3.tm-train.fr_given_en.gz \bs
+      ./../../corpora/tm-train_fr.lc.gz ./../../corpora/tm-train_en.lc.gz \bs
+      2> log.tm-train.hmm3.fr2en.align | gzip > tm-train.hmm3.fr2en.align.gz
+   gen-jpt-parallel.sh -n 4 -nw 4 -o jpt.hmm3.tm-train.fr-en.gz -w 1 \bs
+      GPT -v -m 8 -hmm -1 fr -2 en -ext \bs
+      hmm3.tm-train.en_given_fr.gz hmm3.tm-train.fr_given_en.gz \bs
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
+      tm-train.hmm3.fr2en.align.gz >& log.jpt.hmm3.tm-train.fr-en
 \end{alltt}
 \end{small}
 
@@ -743,32 +848,33 @@ hmm1_cpt}: this variable enumerates which models you want to generate when you
 type \code{make all}. All models you generate will be used in subsequent
 steps, so generate only the ones you intend to use. (You should work in
 different copies of the framework if you want to experiment with different
-variants.)
+settings.)
 
 \subsubsection{Creating a Conditional Phrase Table}
 
-Now that we have joint-count phrase tables from our IBM2 and HMM3
+Now that we have joint-count phrase tables from our IBM2 and HMM
 word-alignment models, we merge their counts together in a single joint-count
 phrase table.
 \begin{small}
 \begin{alltt}
-   > \textbf{make jpt.merged.train.fr-en.gz}
-   merge_counts jpt.merged.train.fr-en.gz \bs
-      jpt.ibm2.train.fr-en.gz jpt.hmm3.train.fr-en.gz
+   > \textbf{make jpt.merged.tm-train.fr-en.gz}
+   merge_counts jpt.merged.tm-train.fr-en.gz \bs
+      jpt.ibm2.tm-train.fr-en.gz jpt.hmm3.tm-train.fr-en.gz
 \end{alltt}
 \end{small}
 
 Finally we compute the conditional phrase table, using two different
-smoo\-thers to calculate the probabilities.\footnote{In general, we often obtain
+smoo\-thers to calculate the probabilities.\footnote{In general, we obtain
 better translation quality when using phrase probabilities estimated from
-relative frequencies (``RFSmoother'') along with probability estimates
+occurrence counts (relative frequency, ``RFSmoother'', or a smoothed variant
+such as ``KNSmoother'' or ``GTSmoother'') along with probability estimates
 calculated using Zens-Ney lexical smoothing (``ZNSmoother''). Other smoothing
-options are also available. Recent results have shown that using Kneser-Ney
-smoothing with Zens-Ney smoothing, without the relative frequency estimate,
-gives the best results in a wide range of cases.  It is probably worth trying
-this combination with your data.  If you edit \code{models/tm/Makefile.params},
-you will find an example that does just that: look for the string
-\code{-kn3-zn} and uncomment the two lines there.}
+options are also available. Results in the past couple years have shown that
+using Kneser-Ney smoothing with Zens-Ney smoothing, without the relative
+frequency estimate, gives the best results in a wide range of cases.  This is
+now the default.  The variables \code{CPT\us{}SMOOTHERS} and
+\code{SMOOTHERS\us{}DESCRIPTION} in \code{models/tm/Makefile.params} control
+the choice of smoothers.}
 Although stored together in the same phrase table, they are separate probability
 models, whose relative weights will be tuned during decoder weight optimization
 (see \S\ref{COW}).
@@ -776,34 +882,36 @@ models, whose relative weights will be tuned during decoder weight optimization
 \begin{alltt}
    > \textbf{make merged_cpt}
    joint2cond_phrase_tables -prune1 100 -v -i -z -hmm -1 fr -2 en \bs
-      -s RFSmoother -s ZNSmoother -multipr fwd -o cpt.merged.hmm3-rf-zn.train \bs
-      -ibm_l2_given_l1 hmm3.train.en_given_fr.gz \bs
-      -ibm_l1_given_l2 hmm3.train.fr_given_en.gz \bs
-      -reduce-mem -no-sort jpt.merged.train.fr-en.gz \bs
-      >& log.cpt.merged.hmm3-rf-zn-kn3.train.fr2en
+      -s "KNSmoother 3" -s ZNSmoother -multipr fwd -o cpt.merged.hmm3-kn3-zn.tm-train \bs
+      -ibm_l2_given_l1 hmm3.tm-train.en_given_fr.gz \bs
+      -ibm_l1_given_l2 hmm3.tm-train.fr_given_en.gz \bs
+      -reduce-mem -no-sort jpt.merged.tm-train.fr-en.gz \bs
+      >& log.cpt.merged.hmm3-kn3-zn.tm-train.fr2en
 \end{alltt}
 \end{small}
-The phrase table \code{cpt.merged.hmm3-rf-zn.train.fr2en.gz} is the main source
+The phrase table \code{cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz} is the main source
 of information for French to English translation. Each of its lines is of the
 form:
-\begin{verbatim}
-   fr ||| en ||| p1(fr|en) p2(fr|en) p1(en|fr) p2(en|fr)
-\end{verbatim}
-where \code{fr} is a French source phrase, \code{en} is an English target
-phrase, \code{p(fr|en)} is the probability that \code{fr} is the
-translation of \code{en} (the ``backward'' probability), and
-\code{p(en|fr)} is the probability that \code{en} is the translation of
-\code{fr} (the ``forward'' probability). In our example here, \code{p1} is
-the relative-frequency estimate of this probability, while \code{p2} is the
-Zens-Ney lexical smoothing based estimate: those are the smoothers we
-recommend using. There can be any number of backward and forward probability
-estimates, reflecting the number of smoothers you use.
+\begin{alltt}
+   \emph{fr} ||| \emph{en} ||| p1(\emph{fr}|\emph{en}) p2(\emph{fr}|\emph{en}) p1(\emph{en}|\emph{fr}) p2(\emph{en}|\emph{fr})
+\end{alltt}
+%
+where \code{\emph{fr}} is a French source phrase, \code{\emph{en}} is an
+English target phrase, \code{p(\emph{fr}|\emph{en})} is the probability that
+\code{\emph{fr}} is the translation of \code{\emph{en}} (the ``backward''
+probability), and \code{p(\emph{en}|\emph{fr})} is the probability that
+\code{\emph{en}} is the translation of \code{\emph{fr}} (the ``forward''
+probability). In our example here, \code{p1} is the relative-frequency estimate
+of this probability, while \code{p2} is the Zens-Ney lexical smoothing based
+estimate: those are the smoothers we recommend using. There can be any number
+of backward and forward probability estimates, reflecting the number of
+smoothers you use.
 %
 Here are two sample lines from this file:
 \begin{small}
 \begin{alltt}
-   > \textbf{zgrep '| proposed regulations |' cpt.merged.hmm3-rf-zn.train.fr2en.gz}
-   projets de règlement ||| proposed regulations ||| 0.67 0.0016 1 0.026
+   > \textbf{zgrep '| proposed regulations |' cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz}
+   projets de règlement ||| proposed regulations ||| 0.55 0.0016 0.82 0.026
    règlements proposés ||| proposed regulations ||| 0.33 0.018 1 0.42
 \end{alltt}
 \end{small}
@@ -811,51 +919,148 @@ Note that this example is carefully chosen; because of the small size of the
 training corpus, many other entries in the phrase table are not such good
 translations.
 
-\subsection{Creating a Lexicalized Distortion Model} \label{LDM}
+\subsubsection{Creating a Translation Model Using IBM4 Alignments} \label{IBM4}
 
-Lexicalized Distortion Models (LDMs) are not used by default in this
+Recent experiments have shown that is it beneficial to combine the JPTs
+obtained from IBM2 and HMM models with an additional one obtained from IBM4
+models.  \PS does not include software to train or use IBM4 models, however, so
+if you wish to use this option, you must independently obtain Giza (or,
+preferebaly, the MGiza++ variant, which the framework is configured to
+support) and make sure it is found on your PATH.
+
+\begin{small}
+\begin{alltt}
+   > \textbf{make ibm4_jpt}
+   [lots of commands get run]
+\end{alltt}
+\end{small}
+%
+Running \code{make ibm4_jpt} in \code{models/tm} will invoke MGiza++ to train
+IBM4 models and align the training corpus using it, performing necessary
+conversions before and after to ensure compatibility with \PS software.  Our
+own \code{align-words} and \code{gen-jpt-parallel.sh} are then used to produce
+a standard symmetrized alignment file and extract phrase pairs from it,
+finishing with the same procedure as with IBM2 and HMM models.
+
+If you wish to build and use IBM4 translation models, you should
+edit \code{Makefile.params} at the root of the framework, and add \code{IBM4} to
+the \code{MERGED_CPT_JPT_TYPES} variable, before the \code{HMM3} and \code{IBM2}
+values, which you will find there already.
+
+When you create IBM4-based JPTs, their counts will be merged along
+with IBM2's and HMM's to create the merged CPT, as described above.
+
+\subsubsection{Adding alignment indicator features} \label{PI}
+
+In our NIST OpenMT 2012 system, we found that the decoder could benefit from
+knowing which alignment method suggested which phrase pairs.  With the new
+lattice MIRA tuning method (which is now the default), we're able to throw more
+features at the system than before, such as the alignment indicator features,
+and it is able to exploit them to improve the quality of the translations
+produced (or, at least, their BLEU scores), without merely overfitting the dev
+set, as the Powell tuning algorithm tends to do when faced with too many
+features.
+
+The alignment indicator features are simply flags, one per alignment method.
+To enable generating them, you can set
+\code{MERGED_CPT_USE_ALIGNMENT_INDICATORS} to \code{1} in the top-level
+\code{Makefile.params}.  Having done so, the default merged CPT file
+(\code{cpt.merged...}) will not be generated, instead you will get a
+\code{cpt.PI...} file with identical contents in the first three columns, plus
+an fourth column containing two or three values (one per aligner), each at 1
+(meaning that alignment had the phrase pair) at 0.3 (meaning that alignment did
+not).  The 0.3 works as a constant arbitrary penalty that gets applied whenever
+a given aligner did not produce a given phrase pair.  The penalty value is
+arbitrary here in the phrase table, but its weight gets tuned so as to
+maximized BLEU scores on your dev set later.
+
+To generate the CPT with alignment indicator features at this point, you can
+run \code{make indicator_cpt}:
+\begin{small}
+\begin{alltt}
+   > \textbf{make indicator_cpt}
+   mkdir -p j2m/ibm4
+   cd j2m/ibm4 && ln -s -f ../../jpt.ibm4*fr-en.gz .
+   mkdir -p j2m/hmm3
+   cd j2m/hmm3 && ln -s -f ../../jpt.hmm3*fr-en.gz .
+   mkdir -p j2m/ibm2
+   cd j2m/ibm2 && ln -s -f ../../jpt.ibm2*fr-en.gz .
+   joint2multi_cpt -prune1w 100 -v -i -z -1 fr -2 en \bs
+      -s '0:KNSmoother 3' -s ZNSmoother -a '1-100:PureIndicator' \bs
+      -dir fwd -o cpt.PI-kn3-zn.hmm3 \bs
+      -ibm_l2_given_l1  hmm3.tm-train.en_given_fr.gz \bs
+      -ibm_l1_given_l2  hmm3.tm-train.fr_given_en.gz \bs
+      j2m/ibm4 j2m/hmm3 j2m/ibm2 &> log.cpt.PI-kn3-zn.hmm3.fr2en
+\end{alltt}
+\end{small}
+
+The \code{joint2multi_cpt} program used above is a versatile tool for
+generating phrase tables with all sorts of features.  It can produce anything
+that \code{joint2cond_phrase_table} can, plus a number of ways to exploit the
+fact that counts come from different sources.  Here we use it with just one
+particular setting that has been proved to be effective empirically.
+
+Important warning: if you've created both the \code{cpt.merge...} and
+\code{cpt.PI...} files in the same instance of the framework, the tuning step
+will use the both, which is not a good idea.  You should remove one or the
+other before proceding:
+\begin{small}
+\begin{alltt}
+   > \textbf{rm cpt.merged.*}
+\emph{or}
+   > \textbf{rm cpt.PI*}
+\end{alltt}
+\end{small}
+You will need to work in two separate copies of the framework if you want to
+experiment with both of these methods.
+
+\subsection{Creating a Hierarchical Lexicalized Distortion Model} \label{LDM}
+
+Hierarchical Lexicalized Distortion Models (HLDMs) are not used by default in this
 framework.  If you want to enable their creation and use, you should set
-\code{USE_LDM} to \code{1} in \code{Makefile.params} (by removing the initial
+\code{USE_HLDM} to \code{1} in \code{Makefile.params} (by removing the initial
 \code{\#} to uncomment the appropriate line).
 
-The LDM is created in two steps: 1) counting occurrences of the different types
-of distortion instances over the training corpus, using the program
-\code{dmcount}, and 2) estimating scores from these counts, using the program
-\code{dmestm}.  If you trained more than one phrase table, as we did above,
-the first step is repeated for each phrase table.
+The framework also support using regular (non-hierarchical) Lexicalized
+Distortion Models (LDMs), but recent experiments have shown that HLDMs are much
+more effective, so we recommend using those instead.  The key difference between
+the two variants is how one defines the different distortion configurations.
+HLDMs use a more natural definition that overcomes some of the weaknesses of
+LDMs.
+
+HLDMs and LDMs are created in two steps: 1) counting occurrences of the
+different types of distortion instances over the training corpus, using the
+program \code{dmcount}, and 2) estimating scores from these counts, using the
+program \code{dmestm}.  If you trained more than one phrase table, as we did
+above, the first step is repeated for each phrase table.
 \begin{small}
 \begin{alltt}
    > \textbf{cd models/ldm}
    > \textbf{make all}
    parallelize.pl -nolocal -psub -1 -n 4 -np 4 -w 100000 \bs
-      -s '../../corpora/train_fr.lc.gz' -s '../../corpora/train_en.lc.gz' \bs
+      -s '../../corpora/tm-train_fr.lc.gz' -s '../../corpora/tm-train_en.lc.gz' ../tm/tm-train.hmm3.fr2en.align.gz \bs
       -merge 'merge_multi_column_counts -' \bs
-      'dmcount -v -m 8 \bs
-       ../tm/ibm2.train.en_given_fr.gz ../tm/ibm2.train.fr_given_en.gz \bs
-       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
-       > ldm.counts.ibm2.gz' \bs
-      >& log.ldm.counts.ibm2
-   parallelize.pl -nolocal -psub -1 -n 4 -np 4 -w 100000 \bs
-      -s '../../corpora/train_fr.lc.gz' -s '../../corpora/train_en.lc.gz' \bs
-      -merge 'merge_multi_column_counts -' \bs
-      'dmcount -v -m 8 \bs
-       ../tm/hmm3.train.en_given_fr.gz ../tm/hmm3.train.fr_given_en.gz \bs
-       ../../corpora/train_fr.lc.gz ../../corpora/train_en.lc.gz \bs
-       > ldm.counts.hmm3.gz' \bs
-      >& log.ldm.counts.hmm3
-   merge_multi_column_counts - ldm.counts.hmm3.gz ldm.counts.ibm2.gz \bs
-      | time-mem dmestm -s -g ldm.hmm3+ibm2.fr2en.bkoff \bs
-        -wtu 5 -wtg 5 -wt1 5 -wt2 5 2> log.ldm.hmm3+ibm2.fr2en \bs
-      | gzip > ldm.hmm3+ibm2.fr2en.gz
+      'dmcount -ext -v -m 8 -hier \bs
+       ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz ../tm/tm-train.hmm3.fr2en.align.gz \bs
+       > hldm.hmm3.counts.gz'
+      >& log.hldm.hmm3.counts
+   parallelize.pl [...] 'dmcount [...] > hldm.ibm2.counts.gz' \bs
+      >& log.hldm.ibm2.counts
+   parallelize.pl [...] 'dmcount [...] > hldm.ibm4.counts.gz' \bs
+      >& log.hldm.ibm4.counts
+   merge_multi_column_counts - hldm.hmm3.counts.gz hldm.ibm2.counts.gz hldm.ibm4.counts.gz \bs
+      | dmestm -s -g hldm.hmm3+ibm2+ibm4.fr2en.bkoff \bs
+        -wtu 5 -wtg 5 -wt1 5 -wt2 5 2> log.hldm.hmm3+ibm2+ibm4.fr2en \bs
+      | gzip > hldm.hmm3+ibm2+ibm4.fr2en.gz
 \end{alltt}
 \end{small}
 
 Estimating lexicalized distortion parameters (step 2, \code{dmestm}) might
 require a lot of memory, sometimes two to three times as much as training
 phrase tables.  As mentioned before, you can use \code{make time-mem} to see
-your resource usage after the process has completed to place your resource
-allocation.  We generally observe a small gain in translation quality (as
-measured by BLEU) when using LDMs, although you will need to determine,
+your resource usage after the process has completed to plan your resource
+allocation.  We generally observe a fair gain in translation quality (as
+measured by BLEU) when using HLDMs, although you will need to determine,
 depending on your situation, whether this gain is worth the added memory and
 time requirements.
 
@@ -864,25 +1069,43 @@ time requirements.
 of any command where each input line is processed independently.  It takes care
 of splitting the input(s) into chunks, running the chunks in parallel, and
 concatenating (or otherwise merging) the outputs.  In this example the output
-from all instances of \code{dmcount} is simply concatenated together, which
-works correctly because \code{dmestm} tallies counts when it sees repeated
-phrase pairs.  Run \code{parallelize.pl -h} for more details.\tipend
+from all instances of \code{dmcount} are merged using
+\code{merge_multi_column_counts}, a tool that adds counts together when it sees
+the same key in two files.  The default is to simply concatenate the parts
+together, which is appropriate for programs that produce one line of output per
+line of input.  Run \code{parallelize.pl -h} for more details.\tipend
 
-The rest of this document assumes you did not train LDMs, so if you modified
-your \code{Makefile.params} file to set \code{USE_LDM = 1}, you should comment
+The rest of this document assumes you did not train HLDMs, so if you modified
+your \code{Makefile.params} file to set \code{USE_HLDM = 1}, you should comment
 out that line before proceeding to the next section.
+
+TODO MAYBE REMOVE THE ABOVE COMMENT AND USE HLDMs IN TUNING?
+
+\subsection{Mixture Models and Domain Adaptation} \label{MIX}
+
+TODO
+
+\subsubsection{Mixture Language Models} \label{MIXLM}
+
+TODO
+
+\subsubsection{Mixture Translation Models} \label{MIXTM}
+
+TODO
 
 \subsection{Optimizing Decoder Weights} \label{COW}
 
 The language and translation models are the main sources of information used
 for translation, which is performed by the \code{canoe} decoder.  Optionally,
-we might train an LDM as an additional source of information, but we're not
-including it here.  In order to get reasonable translation quality, the weights
-on these (and other) sources of information need to be tuned. The tuning
-process is carried out by a script called \code{cow.sh}, which runs
-\code{canoe} several times.  \code{cow.sh} takes in an initial \code{canoe.ini}
-configuration file and produces an optimized configuration file,
-\code{canoe.ini.cow}.
+we might have trained an HLDM as an additional source of information, and we
+might have included alignment indicator features.  In order to get reasonable
+translation quality, the weights on these (and other) sources of information
+need to be tuned. The tuning process is carried out by a script called
+\code{tune.py}, which runs \code{canoe} several times, refining the weights at
+each iteration.  \code{tune.py} takes an initial \code{canoe.ini} configuration
+file and a dev set (with reference translations), and produces a tuned
+configuration file, \code{canoe.ini.cow}, optimized to maximize BLEU on that
+dev set.
 
 You can run all the steps below by typing \code{make decode} or \code{make cow}
 in your main \code{toy.experiment} directory, but we'll break it down into
@@ -927,7 +1150,7 @@ So we make the \code{canoe.ini} file:
    cat canoe.ini.template \bs
       | sed -e 's/<SL>/fr/g' \bs
             -e 's/<TL>/en/g' \bs
-            -e 's#<CPTS>#models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.gz#g' \bs
+            -e 's#<CPTS>#models/tm/cpt.merged.hmm3-kn3-zn.train.fr2en.gz#g' \bs
             -e 's#<LMS>#models/lm/train_en-kn-5g.binlm.gz#g' \bs
             -e 's/^\bs(\bs[\bs(weight-f\bs|ftm\bs)\bs]\bs)/##mid##\bs1/' \bs
       | configtool -p "args:-distortion-model WordDisplacement " - \bs
@@ -956,7 +1179,7 @@ fwd-lex\#m fwd-lex\#s fwd-lex\#d}; and the options \code{[dist-phrase-swap]} and
 \begin{alltt}
    > \textbf{cat canoe.ini}
    [ttable-multi-prob]
-      models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.gz
+      models/tm/cpt.merged.hmm3-kn3-zn.train.fr2en.gz
    [lmodel-file]
       models/lm/train_en-kn-5g.binlm.gz
    [ttable-limit] 30
@@ -1092,7 +1315,7 @@ adds the weights tuned on the development corpus:
 \begin{alltt}
    > \textbf{cat canoe.ini.cow}
    [ttable-multi-prob]
-      models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.gz
+      models/tm/cpt.merged.hmm3-kn3-zn.train.fr2en.gz
    [lmodel-file]
       models/lm/train_en-kn-5g.binlm.gz
    [weight-d] 0.4966295362
@@ -1684,7 +1907,7 @@ fully expanded:
 \begin{small}
 \begin{alltt}
    > \textbf{du -hL models/portageLive/}
-   14M     models/portageLive/models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.tppt
+   14M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.train.fr2en.tppt
    26M     models/portageLive/models/tm
    2.4M    models/portageLive/models/tc/nc1-lm.fr.tplm
    700K    models/portageLive/models/tc/tc-map.en.tppt
@@ -1738,8 +1961,8 @@ Resource summary for $PORTAGE/toy.experiment:
          log.train_fr.nc1.tplm:TIME-MEM                        WALL TIME: 5s       CPU TIME: 2s         VSZ: 0.070G   RSS: 0.009G
          log.train_fr.tokss:TIME-MEM                           WALL TIME: 2s       CPU TIME: 2s         VSZ: 0.048G   RSS: 0.008G
       tc:TIME-MEM                                              WALL TIME: 48s      CPU TIME: 25s        VSZ: 0.090G   RSS: 0.015G
-         log.cpt.merged.hmm3-rf-zn.train.fr2en:TIME-MEM        WALL TIME: 14s      CPU TIME: 17s        VSZ: 0.036G   RSS: 0.006G
-         log.cpt.merged.hmm3-rf-zn.train.fr2en.tppt:TIME-MEM   WALL TIME: 15s      CPU TIME: 7s         VSZ: 0.049G   RSS: 0.007G
+         log.cpt.merged.hmm3-kn3-zn.train.fr2en:TIME-MEM       WALL TIME: 14s      CPU TIME: 17s        VSZ: 0.036G   RSS: 0.006G
+         log.cpt.merged.hmm3-kn3-zn.train.fr2en.tppt:TIME-MEM  WALL TIME: 15s      CPU TIME: 7s         VSZ: 0.049G   RSS: 0.007G
          log.hmm3.train.en_given_fr:TIME-MEM                   WALL TIME: 3m15s    CPU TIME: 7m45s      VSZ: 0.102G   RSS: 0.019G
          log.hmm3.train.fr_given_en:TIME-MEM                   WALL TIME: 3m33s    CPU TIME: 7m16s      VSZ: 0.124G   RSS: 0.018G
          log.ibm1.train.en_given_fr:TIME-MEM                   WALL TIME: 2m51s    CPU TIME: 1m54s      VSZ: 0.099G   RSS: 0.012G
@@ -1804,8 +2027,8 @@ by the models.  When you run \code{make summary}, you will first get the
    3.5M    models/tm/jpt.hmm3.train.fr-en.gz
    1.3M    models/tm/jpt.ibm2.train.fr-en.gz
    3.8M    models/tm/jpt.merged.train.fr-en.gz
-   12M     models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.gz
-   14M     models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.tppt
+   12M     models/tm/cpt.merged.hmm3-kn3-zn.train.fr2en.gz
+   14M     models/tm/cpt.merged.hmm3-kn3-zn.train.fr2en.tppt
    3.4M    models/lm/train_en-kn-5g.binlm.gz
    5.4M    models/lm/train_en-kn-5g.lm.gz
    5.4M    models/lm/train_en-kn-5g.tplm
@@ -1818,7 +2041,7 @@ by the models.  When you run \code{make summary}, you will first get the
    98M     total
 
    Disk usage for portageLive models:
-   14M     models/portageLive/models/tm/cpt.merged.hmm3-rf-zn.train.fr2en.tppt
+   14M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.train.fr2en.tppt
    26M     models/portageLive/models/tm
    2.4M    models/portageLive/models/tc/nc1-lm.fr.tplm
    700K    models/portageLive/models/tc/tc-map.en.tppt
