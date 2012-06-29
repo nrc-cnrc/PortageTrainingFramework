@@ -246,7 +246,7 @@ time-mem: SHELL=${GUARD_SHELL}
 time-mem: export PORTAGE_INTERNAL_CALL=1
 time-mem:
 	@echo "Resource summary for `pwd`:"
-	@time-mem-tally.pl `find models translate translate.* -type f -name log.\* | sort` \
+	@time-mem-tally.pl `find models translate translate.* -type f -name log.\* -o -name \*.log | sort` \
 	| second-to-hms.pl \
 	| expand-auto.pl
 
