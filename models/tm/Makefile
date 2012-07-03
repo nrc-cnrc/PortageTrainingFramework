@@ -571,14 +571,14 @@ clean.ibm4:
 # Joint 2 multi cpt.
 # Create JPT groups based on their word alignment type.
 j2m/%: SHELL=${GUARD_SHELL}
-j2m/%:  %_jpt
+j2m/%:  $(foreach c, ${ALL_TMS}, ${JPT_MODEL_PFX}.%.$c.${JOINTX})
 	mkdir -p $@
-	cd $@ && ln -s -f ../../jpt.$**${JOINTX} .
+	cd $@ && ln -s -f $(addprefix ../../,$+) .
 
 j2mr/%: SHELL=${GUARD_SHELL}
-j2mr/%:  %_jpt
+j2mr/%:  $(foreach c, ${ALL_TMS}, ${JPT_MODEL_PFX}.%.$c.${RJOINTX})
 	mkdir -p $@
-	cd $@ && ln -s -f ../../jpt.$**${RJOINTX} .
+	cd $@ && ln -s -f $(addprefix ../../,$+) .
 
 INDICATOR_MODEL_PFX = ${CPT_INDICATOR_PFX}${PI_SMOOTHERS_DESCRIPTION}.${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}
 INDICATOR_WORD_ALIGNMENT_MODELS ?= $(foreach c,${MERGED_CPT_JPT_TYPES},${$c_MODEL_PFX})
