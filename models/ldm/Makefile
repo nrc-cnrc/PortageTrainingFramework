@@ -88,18 +88,26 @@ hldm.counts:  ${HLDM_COUNT_FILES}
 
 ########################################
 # Auto-generate all dependencies for all possible word alignment models
-# To generate ldm count files we need the source corpus and the target corpus
-# To generate ldm coutn files we need word alignment models in both directions.
+# To generate (h)ldm count files we need word alignment models in both directions.
 $(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
-   $(eval \
-	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix ${SRCXZ},${TRAIN_TM}) $(addsuffix ${TGTXZ},${TRAIN_TM})) \
    $(eval \
 	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix .$m.${SRC_2_TGT}.align.gz,${TRAIN_TM})) \
    $(eval \
-	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix ${SRCXZ},${TRAIN_TM}) $(addsuffix ${TGTXZ},${TRAIN_TM})) \
-   $(eval \
 	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix .$m.${SRC_2_TGT}.align.gz,${TRAIN_TM})) \
 )
+# To generate (h)ldm count files we need the source corpus and the target corpus
+# NOTE: IBM4 models require filtered corpora thus we need to write a separate rule.
+$(foreach m, $(filter-out ibm4, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+   $(eval \
+	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix ${SRCXZ},${TRAIN_TM}) $(addsuffix ${TGTXZ},${TRAIN_TM})) \
+   $(eval \
+	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix ${SRCXZ},${TRAIN_TM}) $(addsuffix ${TGTXZ},${TRAIN_TM})) \
+)
+# Pick up filtered corpora for (h)ldm models based on IBM4.
+%.ibm4${COUNTSX}:  SRCXZ=${SRC_LANG}.lc
+%.ibm4${COUNTSX}:  TGTXZ=${TGT_LANG}.lc
+${LDM_MODEL_PFX}.ibm4${COUNTSX}:  ../tm/${TRAIN_TM}/${SRC_LANG}.lc ../tm/${TRAIN_TM}/${TGT_LANG}.lc
+${HLDM_MODEL_PFX}.ibm4${COUNTSX}:  ../tm/${TRAIN_TM}/${SRC_LANG}.lc ../tm/${TRAIN_TM}/${TGT_LANG}.lc
 
 
 
