@@ -830,6 +830,7 @@ indicator1:
 .PHONY: unittest10 indicator2
 unittest10:  indicator2
 indicator2:  export TRAIN_TM=tm-train sublm1 sublm2 sublm3
+indicator2:  export INDICATOR_WORD_ALIGNMENT_MODELS = ${IBM4_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX}
 indicator2:
 	${RM} ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
 	${MAKE} indicator_cpt
