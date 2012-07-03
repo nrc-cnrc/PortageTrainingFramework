@@ -82,8 +82,8 @@ LDM_MODEL_PFX ?= ldm
 # Hierarchical Lexicalized Distortion Model file prefix.
 HLDM_MODEL_PFX ?= hldm
 
-# Define this variable if you want to merge your ldm counts in a fillup manner.
-USE_FILLUP ?=
+# Define this variable if you don't want to merge your ldm counts in a fillup manner.
+DONT_USE_FILLUP ?=
 
 
 
@@ -154,7 +154,7 @@ ADD_HLDM_OPTS = $(and $(findstring ${HLDM_MODEL_PFX}, $1), -hier)
 %${SRC_2_TGTX}:
 	RP_PSUB_OPTS="-${ESTIM_CPU}" \
 	set -o pipefail; \
-	merge_multi_column_counts $(and ${USE_FILLUP},-fillup) - $+ \
+	merge_multi_column_counts $(if ${DONT_USE_FILLUP},,-fillup) - $+ \
 		| ${LDM_FILTER_CMD} \
 		| ${TIME_MEM} dmestm -s -g $(basename $@).bkoff -wtu ${WTU} -wtg ${WTG} -wt1 ${WT1} -wt2 ${WT2} \
 	2> log.$(basename $@) \
