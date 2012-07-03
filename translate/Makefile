@@ -259,6 +259,11 @@ endif
 endif
 
 ifdef USE_DYNAMIC_MIXLM
+# Directory path for LM models in mixlm file, relative to the location of the mixlm file.
+# For a dynamic mixlm, the mixlm file itself is here in the translate directory,
+# but the LM models are in models/mixlm. 
+MIXLM_MODELS_DIR ?= models/mixlm
+
 include ../models/mixlm/Makefile.toolkit
 
 .INTERMEDIATE: $(addsuffix .distances, ${TEST_SET}) $(addsuffix .weights, ${TEST_SET})

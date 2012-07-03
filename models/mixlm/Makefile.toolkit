@@ -22,6 +22,9 @@
 
 MIXLM_CPUS ?= 1
 
+# Directory path for LM models in mixlm file, relative to the location of the mixlm file.
+MIXLM_MODELS_DIR ?=
+
 
 # The dependency list cannot be relied on for the source lm filenames because
 # they are not available when this tookkit is used by translate/Makefile.
@@ -37,7 +40,7 @@ components_%:
 	${TIME_MEM} \
 	mx-calc-distances.sh \
 		-v \
-		-d models/mixlm/ \
+		$(if ${MIXLM_MODELS_DIR}, -d ${MIXLM_MODELS_DIR}/) \
 		em \
 		$(filter components_${SRC_LANG}, $+) \
 		$(filter %_${SRC_LANG}${LANGX}, $+) \
@@ -52,9 +55,10 @@ components_%:
 %.mixlm: SHELL=${GUARD_SHELL}
 %.mixlm: %.weights components_${TGT_LANG} %_${TGT_LANG}${LANGX}
 	mx-mix-models.sh \
-		-d models/mixlm/ \
+		$(if ${MIXLM_MODELS_DIR}, -d ${MIXLM_MODELS_DIR}/) \
 		mixlm \
 		$(filter %.weights, $+) \
 		$(filter components_${TGT_LANG}, $+) \
 		$(filter %_${TGT_LANG}${LANGX}, $+) \
 		> $@
+		
