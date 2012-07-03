@@ -59,7 +59,7 @@ resource_summary_sub: SHELL=${GUARD_SHELL}
 resource_summary_sub:
 	@find -type f -name log.\* -o -name \*.log \
 	| sort \
-        | sed 's/^\.\///' \
+	| sed 's/^\.\///' \
 	| xargs time-mem-tally.pl -no-dir -m ${MODULE_NAME} \
 	| second-to-hms.pl \
 	| expand-auto.pl
