@@ -818,6 +818,7 @@ multiple_TMs:
 # Indicator Feature from one corpus.
 .PHONY: unittest9 indicator1
 unittest9:  indicator1
+indicator1:  export INDICATOR_WORD_ALIGNMENT_MODELS = ${IBM4_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX}
 indicator1:
 	${RM} ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
 	${MAKE} indicator_cpt
