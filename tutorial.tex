@@ -217,7 +217,7 @@ sections (section numbers are in brackets):
       alignment, lowercasing (\S\ref{Lowercasing}), and splitting
       (\S\ref{Splitting}).
 \item Model training (\S\ref{Training}): includes language model (\S\ref{LM}),
-      translation model (\S\ref{TM}), hierarchical lexicalized distortion mode
+      translation model (\S\ref{TM}), hierarchical lexicalized distortion model
       (\S\ref{LDM}), truecasing model (\S\ref{TC}), decoder weight optimization
       (\S\ref{COW}), confidence estimation model training (\S\ref{CE}), and
       rescoring model training (\S\ref{RAT}).
@@ -446,7 +446,8 @@ process for SRILM and MITLM.\footnote{In this toy example, we manually added a
 few sentences to the target language part of the parallel training corpus to
 illustrate using more text to train the language model than the translation
 model.  If you have access to some additional monolingual text, adding it to
-\code{lm-train} is the simplest option.  If you have access to large amounts of
+your main LM training corpus (\code{TRAIN\us{}LM})
+is the simplest option.  If you have access to large amounts of
 monolingual text in your target language, you can use them to train additional
 language models, or mixture language models.  TODO REWORK THIS FOOTNOTE ONCE
 MIXLM STUFF IS WRITTEN.  The framework does not support training multiple
@@ -942,10 +943,10 @@ own \code{align-words} and \code{gen-jpt-parallel.sh} are then used to produce
 a standard symmetrized alignment file and extract phrase pairs from it,
 finishing with the same procedure as with IBM2 and HMM models.
 
-If you wish to build and use IBM4 translation models, you should
-edit \code{Makefile.params} at the root of the framework, and add \code{IBM4} to
-the \code{MERGED_CPT_JPT_TYPES} variable, before the \code{HMM3} and \code{IBM2}
-values, which you will find there already.
+If you wish to build and use IBM4 translation models, you should edit
+\code{Makefile.params} at the root of the framework, and add \code{IBM4} to the
+\code{MERGED_CPT_JPT_TYPES} variable, along with the \code{HMM3} and
+\code{IBM2} values, which you will find already there.
 
 When you create IBM4-based JPTs, their counts will be merged along
 with IBM2's and HMM's to create the merged CPT, as described above.
@@ -957,9 +958,9 @@ knowing which alignment method suggested which phrase pairs.  With the new
 lattice MIRA tuning method (which is now the default), we're able to throw more
 features at the system than before, such as the alignment indicator features,
 and it is able to exploit them to improve the quality of the translations
-produced (or, at least, their BLEU scores), without merely overfitting the dev
-set, as the Powell tuning algorithm tends to do when faced with too many
-features.
+produced (as measured by BLEU).  Unlike the Powell tuning algorithm,
+MIRA can exploit a large number of features effectively without overfitting the
+dev set.
 
 The alignment indicator features are simply flags, one per alignment method.
 To enable generating them, you can set
@@ -967,12 +968,12 @@ To enable generating them, you can set
 \code{Makefile.params}.  Having done so, the default merged CPT file
 (\code{cpt.merged...}) will not be generated, instead you will get a
 \code{cpt.PI...} file with identical contents in the first three columns, plus
-an fourth column containing two or three values (one per aligner), each at 1
-(meaning that alignment had the phrase pair) at 0.3 (meaning that alignment did
-not).  The 0.3 works as a constant arbitrary penalty that gets applied whenever
-a given aligner did not produce a given phrase pair.  The penalty value is
-arbitrary here in the phrase table, but its weight gets tuned so as to
-maximized BLEU scores on your dev set later.
+a fourth column containing two or three values (one per aligner), with values 1
+(the alignment produced the phrase pair) or 0.3 (otherwise).  The 0.3 works as
+a constant arbitrary penalty that gets applied whenever a given aligner did not
+produce a given phrase pair.  The penalty value is arbitrary here in the phrase
+table, but its weight gets tuned so as to maximize BLEU scores on your dev set
+later.
 
 To generate the CPT with alignment indicator features at this point, you can
 run \code{make indicator_cpt}:
@@ -996,9 +997,9 @@ run \code{make indicator_cpt}:
 
 The \code{joint2multi_cpt} program used above is a versatile tool for
 generating phrase tables with all sorts of features.  It can produce anything
-that \code{joint2cond_phrase_table} can, plus a number of ways to exploit the
-fact that counts come from different sources.  Here we use it with just one
-particular setting that has been proved to be effective empirically.
+that \code{joint2cond_phrase_table} can, plus additional features that reflect
+the provenance of each phrase pair.  Here we use it with just one particular
+setting that has been proved to be effective empirically.
 
 Important warning: if you've created both the \code{cpt.merge...} and
 \code{cpt.PI...} files in the same instance of the framework, the tuning step
@@ -1038,20 +1039,21 @@ above, the first step is repeated for each phrase table.
    > \textbf{cd models/ldm}
    > \textbf{make all}
    parallelize.pl -nolocal -psub -1 -n 4 -np 4 -w 100000 \bs
-      -s '../../corpora/tm-train_fr.lc.gz' -s '../../corpora/tm-train_en.lc.gz' ../tm/tm-train.hmm3.fr2en.align.gz \bs
+      -s ../../corpora/tm-train_fr.lc.gz -s ../../corpora/tm-train_en.lc.gz \bs
+      -s ../tm/tm-train.hmm3.fr2en.align.gz \bs
       -merge 'merge_multi_column_counts -' \bs
       'dmcount -ext -v -m 8 -hier \bs
-       ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz ../tm/tm-train.hmm3.fr2en.align.gz \bs
-       > hldm.hmm3.counts.gz'
+         ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
+         ../tm/tm-train.hmm3.fr2en.align.gz > hldm.hmm3.counts.gz' \bs
       >& log.hldm.hmm3.counts
    parallelize.pl [...] 'dmcount [...] > hldm.ibm2.counts.gz' \bs
       >& log.hldm.ibm2.counts
    parallelize.pl [...] 'dmcount [...] > hldm.ibm4.counts.gz' \bs
       >& log.hldm.ibm4.counts
-   merge_multi_column_counts - hldm.hmm3.counts.gz hldm.ibm2.counts.gz hldm.ibm4.counts.gz \bs
-      | dmestm -s -g hldm.hmm3+ibm2+ibm4.fr2en.bkoff \bs
-        -wtu 5 -wtg 5 -wt1 5 -wt2 5 2> log.hldm.hmm3+ibm2+ibm4.fr2en \bs
-      | gzip > hldm.hmm3+ibm2+ibm4.fr2en.gz
+   merge_multi_column_counts -fillup - hldm.ibm4.counts.gz hldm.hmm3.counts.gz hldm.ibm2.counts.gz \bs
+      | dmestm -s -g hldm.ibm4+hmm3+ibm2.fr2en.bkoff \bs
+        -wtu 5 -wtg 5 -wt1 5 -wt2 5 2> log.hldm.ibm4+hmm3+ibm2.fr2en \bs
+      | gzip > hldm.ibm4+hmm3+ibm2.fr2en.gz
 \end{alltt}
 \end{small}
 
@@ -1059,10 +1061,19 @@ Estimating lexicalized distortion parameters (step 2, \code{dmestm}) might
 require a lot of memory, sometimes two to three times as much as training
 phrase tables.  As mentioned before, you can use \code{make time-mem} to see
 your resource usage after the process has completed to plan your resource
-allocation.  We generally observe a fair gain in translation quality (as
-measured by BLEU) when using HLDMs, although you will need to determine,
-depending on your situation, whether this gain is worth the added memory and
-time requirements.
+allocation.
+
+We generally observe a fair gain in translation quality (as measured by BLEU)
+when using HLDMs, although you will need to determine, depending on your
+situation, whether this gain is worth the added memory and time requirements.
+
+If you need to reduce the memory footprint of \code{dmestm}, you can turn on
+singleton filtering, which will remove from the count files all phrase pairs
+that occur only once, before doing the estimation.  As a result, you will need
+a lot less memory, but the model might not be as good, but it's a trade-off that
+you can measure empirically on your data.  To turn on singleton filtering, edit
+\code{models/ldm/Makefile.params} and uncomment the line defining
+\code{HLDM_FILTER_SINGLETONS}.
 
 \tip\margintip The commands for step 1 illustrate the use of one of our generic utilities:
 \code{parallelize.pl}.  This script can be used to parallelize the execution
@@ -1107,9 +1118,22 @@ file and a dev set (with reference translations), and produces a tuned
 configuration file, \code{canoe.ini.cow}, optimized to maximize BLEU on that
 dev set.
 
-You can run all the steps below by typing \code{make decode} or \code{make cow}
-in your main \code{toy.experiment} directory, but we'll break it down into
-several steps here.
+We used to perform the weight optimization with an algorithm called Powell's,
+using a script called \code{cow.sh} (where COW stands for Canoe Optimize
+Weights).  Both are still part of \PS, but we are now using a better tuning
+algorithm, MIRA (as mentioned in \S\ref{PI}), and a more general script that
+supports an array of tuning algorithms, \code{tune.py}.  Although Powell's
+algorithm worked reasonably well, we found it did not cope well with large
+feature sets, and it was not stable: the weights found would sometimes overfit
+the dev set and not generalize well to new data.  MIRA overcomes both of these
+issues.  Furthermore, it consistently finds better weights than Powell did.
+MIRA comes in two variants, one using the full decoder lattice, one working
+from N-best lists.  We use lattice MIRA for optimizing decoder weights, and
+n-best MIRA for optimizing rescoring weights (\S\ref{RAT}).
+
+You can run all the steps below by typing \code{make decode} in your main
+\code{toy.experiment} directory, but we'll break it down into several steps
+here.
 
 \subsubsection{The Decoder Configuration File: \code{canoe.ini}}
 
@@ -1128,77 +1152,90 @@ In this framework, we start with a template configuration file,
 \end{alltt}
 \end{small}
 
-The framework will automatically insert the phrase tables and language models
-generated in the previous steps into the \code{canoe.ini} file when you
-make it.  These are the template parameters it will replace:
+The framework will automatically insert the phrase tables, language models
+and (H)LDMs generated in the previous steps into the \code{canoe.ini} file when
+you make it.  These are the template parameters it will replace:
 \begin{itemize}
 \item \code{<SL>}:   source language code, e.g. ``fr'';
 \item \code{<TL>}:   target language code, e.g., ``en'';
 \item \code{<CPTS>}: all conditional phrase tables trained above and found
-                       in the \code{models/tm} directory; and
+                     in the \code{models/tm} directory; and
 \item \code{<LMS>}:  all language models trained trained above and found in
-                       the \code{models/lm} directory);
-\item If \code{USE_LDM} is set in \code{Makefile.params}, special
-processing is also done to insert the necessary LDM parameters into the
-\code{canoe.ini} file.
+                     the \code{models/lm} directory);
+\item If \code{USE_HLDM} or \code{USE_LDM} is set in \code{Makefile.params},
+special processing is also done to insert the necessary (H)LDM parameters into
+the \code{canoe.ini} file.
 \end{itemize}
 
-So we make the \code{canoe.ini} file:
+So we make the \code{canoe.ini} file:\footnote{Note that here, we kept all the
+optional paths discussed in previous sections: alignment indicator features,
+HLDMs, IBM4 alignments.  Output will differ if you choose a different path
+through this tutorial.}
 \begin{small}
 \begin{alltt}
    > \textbf{make canoe.ini}
+   ln -fs ../../models
+   HLDM: models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz
+   CPTs: models/tm/cpt.PI-kn3-zn.hmm3.fr2en.gz
+   LMs: models/lm/lm-train_en-kn-5g.binlm.gz
    cat canoe.ini.template \bs
       | sed -e 's/<SL>/fr/g' \bs
             -e 's/<TL>/en/g' \bs
-            -e 's#<CPTS>#models/tm/cpt.merged.hmm3-kn3-zn.train.fr2en.gz#g' \bs
-            -e 's#<LMS>#models/lm/train_en-kn-5g.binlm.gz#g' \bs
+            -e 's#<CPTS>#models/tm/cpt.PI-kn3-zn.hmm3.tm-train.fr2en.gz#g' \bs
+            -e 's#<LMS>#models/lm/lm-train_en-kn-5g.binlm.gz#g' \bs
             -e 's/^\bs(\bs[\bs(weight-f\bs|ftm\bs)\bs]\bs)/##mid##\bs1/' \bs
-      | configtool -p "args:-distortion-model WordDisplacement " - \bs
+      | configtool -p "args:-dist-phrase-swap -distortion-model WordDisplacement::\bs
+        back-hlex#m#H:back-hlex#s#H:back-hlex#d#H:fwd-hlex#m#H:fwd-hlex#s#H:fwd-hlex#d#H\bs
+        -lex-dist-model-file ::models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz#H " - \bs
       > canoe.ini
    configtool check canoe.ini
    ok
 \end{alltt}
 \end{small}
-This command silently creates a soft link to the \code{models} directory---this
-way, all models appear to be relative to the current directly, which makes it easier
-to find them.  We create such symlinks everywhere we need access to the
-models.  The \code{sed} commands replace the template parameters by the
-appropriate values.  The first \code{configtool} command inserts the lexicalized
-distortion parameters if necessary.  The final command, \code{configtool
-check canoe.ini}, confirms that the \code{canoe.ini} file produced is
-error-free---it checks that all parameters are compatible and that all models
-can be found.
+This command creates a soft link to the \code{models} directory---this way, all
+models appear to be relative to the current directly, which makes it easier to
+find them.  We create such symlinks everywhere we need access to the models.
+The \code{sed} commands replace the template parameters by the appropriate
+values.  The first \code{configtool} command inserts the distortion parameters
+chosen by your framework parameters.  The final command, \code{configtool check
+canoe.ini}, confirms that the \code{canoe.ini} file produced is error-free---it
+checks that all parameters are compatible and that all models can be found.
 
-Here is the result:\footnote{If you set \code{USE\_LDM=1}, you would also see a
-line pointing to the LDM file, \code{[lex-dist-model-file]
-models/ldm/ldm.hmm3+ibm2.fr2en.gz}; the \code{[distortion-model]} block would
-include the six LDM features, \code{back-lex\#m back-lex\#s back-lex\#d
-fwd-lex\#m fwd-lex\#s fwd-lex\#d}; and the options \code{[dist-phrase-swap]} and
-\code{[dist-limit-ext]} would be enabled.}
+Here is the result:
 \begin{small}
 \begin{alltt}
    > \textbf{cat canoe.ini}
-   [ttable-multi-prob]
-      models/tm/cpt.merged.hmm3-kn3-zn.train.fr2en.gz
-   [lmodel-file]
-      models/lm/train_en-kn-5g.binlm.gz
+   [ttable-multi-prob] 
+      models/tm/cpt.PI-kn3-zn.hmm3.fr2en.gz
+   [lex-dist-model-file] 
+      models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz#H
+   [lmodel-file] 
+      models/lm/lm-train_en-kn-5g.binlm.gz
    [ttable-limit] 30
    [ttable-threshold] 0
    [stack] 20000
    [beam-threshold] 0.001
    [distortion-limit] 7
-   [distortion-model]
-      WordDisplacement
-   [segmentation-model] none
+   [dist-limit-simple]
+   [dist-phrase-swap]
    [bypass-marked]
    [cube-pruning]
    [use-ftm]
+   [weight-w] -1
+   [distortion-model] 
+      WordDisplacement
+      back-hlex#m#H
+      back-hlex#s#H
+      back-hlex#d#H
+      fwd-hlex#m#H
+      fwd-hlex#s#H
+      fwd-hlex#d#H
 \end{alltt}
 \end{small}
 
-When using this framework, do not modify \code{canoe.ini} directly.  To
-change the training parameters for language models or phrase tables, modify the
-parameters or Makefiles appropriately in \code{models/lm} and
+When using this framework, do not modify \code{canoe.ini} directly.
+To change the training parameters for language models or phrase tables, modify
+the parameters or Makefiles appropriately in \code{models/lm} and
 \code{models/tm} and regenerate those models. Be careful, though: the
 \code{canoe.ini} file will include all models generated in the same
 framework, so you should work in different copies of the framework if you want
@@ -1220,136 +1257,199 @@ to reasonable defaults, but may need adjustment depending on the
 speed/quality trade-offs you're willing to make or other models you wish to
 use.
 
-\subsubsection{Running COW (Canoe Optimize Weights)}
+\subsubsection{Running \code{tune.py}}
 
 Besides the configuration file, the other main arguments required by
-\code{cow.sh} are a directory in which to store temporary files, a source
-file and one or more correct (i.e., human) translations of the source
-file.\footnote{This example uses only one translation, but when multiple
-reference translations are available, it is advantageous to use them.}
-Here we call the temporary directory \code{foos}, and we use the \code{dev1}
-files for weight tuning:
+\code{tune.py} are a directory in which to store temporary files, a source
+file and one or more human translations of the source file, which we call
+reference translations.\footnote{This example uses only one translation, but
+when multiple reference translations are available, it is advantageous to use
+them all.} Here we call the temporary directory \code{foos}, and we use the
+\code{dev1} files for weight tuning:
 \begin{small}
 \begin{alltt}
    > \textbf{make all}
    mkdir -p foos
-   cow.sh -v -parallel:"-n 4" -maxiter 15 -nbest-list-size 100 \bs
-      -filt -nofloor -workdir foos -f canoe.ini
-      ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc \bs
-      >& log.canoe.ini.cow
+   filter_models -z -r -tm-soft-limit cpt.dev1 -ldm < ../../corpora/dev1_fr.rule \bs
+      >& log.cpt.dev1.FILT
+   tune.py -v -o canoe.ini.cow.FILT -p 4 -c 1 -m 15 -n 100 -a lmira --workdir=foos \bs
+      -f canoe.ini.FILT ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc \bs
+      &> log.canoe.ini.cow
+   configtool -p args:"`configtool weights canoe.ini.cow.FILT`" canoe.ini > canoe.ini.cow
    rm -f -r foos *.FILT.gz *.FILT.bkoff canoe.ini.FILT canoe.ini.FILT.cow
 \end{alltt}
 \end{small}
-Because \code{cow.sh} takes a while to run (between 30 minutes and three
+Because \code{tune.py} takes a while to run (between 30 minutes and three
 hours in this example, depending on your system)\footnote{Running time for
-\code{cow.sh} can be reduced by executing it in parallel. Type
-\code{cow.sh -h} to see documentation on this option; modify
+\code{tune.py} can be reduced by executing it in parallel. Type
+\code{tune.py -h} to see documentation on this option; modify
 \code{PARALLELISM\us{}LEVEL\us{}TUNE\us{}DECODE} in \code{Makefile.params} to
-adjust cow parallelism in this framework.} and writes large amounts of logging
+adjust tuning parallelism in this framework.} and writes large amounts of logging
 information, it is usually a good idea to redirect all of its output to a log
 file, as is done here; and also to run it in the background (not done here).
-Progress is most easily monitored by looking at the file
-\code{rescore-results},
-which shows the translation quality (measured by BLEU score---see
-\S\ref{Testing} for a description), as well as the current weights, for
+Progress is most easily monitored by looking at the files \code{summary}, which
+shows the translation quality (measured by BLEU score---see \S\ref{Testing} for
+a description), and \code{summary.wts}, which shows the decoder weights for
 each iteration.
 
-\tip \margintip The scripts \code{best-rr-val} and \code{all-best-rr-vals} can
-be handy if you are monitoring multiple experiments. \tipend
-
-Note that the BLEU score does not necessarily increase
-monotonically, as can be seen in several places in the \code{rescore-results}
-file obtained with this example:
-% cat rescore-results | perl -pe 's/(\.\d\d\d\d)\d+(:| \S|$)/\1\2/g; s/   -d/  -d/' | cut -c1-92
+Note that the BLEU score does not always increase monotonically, as can
+be seen in the \code{summary} file.
+% cat summary | perl -pe 's/(\.\d\d\d\d)\d+(:| \S|$)/\1\2/g; s/   -d/  -d/'
+% cat summary.wts | perl -pe 's/(\.\d\d\d)\d+(:| \S|$)/\1\2/g; s/   -d/  -d/' | tr ' ' $'\t' | expand-auto.pl -t 1
 \begin{footnotesize}
 \begin{alltt}
-> \textbf{cat rescore-results}
-BLEU score: 0.175702  -d 1 -w 0 -lm 1 -tm 1:1 -ftm 1:1
-BLEU score: 0.138512  -d 0.0305 -w 0.0627 -lm 1 -tm 0.1566:0.1862 -ftm -0.1986:0.0424
-BLEU score: 0.168389  -d 0.4184 -w -0.0291 -lm 1 -tm 0.0050:0.1416 -ftm 0.0128:0.0588
-BLEU score: 0.168268  -d 0.0422 -w -0.7845 -lm 1 -tm 0.0637:0.1968 -ftm 0.5699:0.4498
-BLEU score: 0.169137  -d 0.4170 -w -0.4870 -lm 1 -tm 0.4649:-0.0837 -ftm 0.3092:0.5002
-BLEU score: 0.201762  -d 0.4026 -w -0.6294 -lm 1 -tm 0.3919:0.0030 -ftm -0.0031:0.3425
-BLEU score: 0.203570  -d 0.6529 -w -0.5167 -lm 1 -tm 0.3340:0.0316 -ftm -0.1029:0.3483
-BLEU score: 0.210349  -d 0.5032 -w -0.4448 -lm 1 -tm 0.3490:0.0305 -ftm -0.0990:0.3400
-BLEU score: 0.210680  -d 0.4978 -w -0.4444 -lm 1 -tm 0.3489:0.0304 -ftm -0.0991:0.3363
-BLEU score: 0.210787  -d 0.4966 -w -0.4423 -lm 1 -tm 0.3483:0.0303 -ftm -0.0938:0.3363
-BLEU score: 0.210787  -d 0.4952 -w -0.4423 -lm 1 -tm 0.3484:0.0302 -ftm -0.0939:0.3363
-BLEU score: 0.210787  -d 0.4953 -w -0.4424 -lm 1 -tm 0.3484:0.0302 -ftm -0.0939:0.3364
+> \textbf{cat summary}
+decode-score=0.1773 prev-optimizer-score=0 prev-nbest-size=0 avg-wt-diff=0.0
+decode-score=0.1931 prev-optimizer-score=0.007G prev-nbest-size=0 avg-wt-diff=0.6506
+decode-score=0.2033 prev-optimizer-score=0.007G prev-nbest-size=0 avg-wt-diff=0.0983
+decode-score=0.2077 prev-optimizer-score=3.669G prev-nbest-size=0 avg-wt-diff=0.0902
+decode-score=0.2119 prev-optimizer-score=0.007G prev-nbest-size=0 avg-wt-diff=0.0699
+decode-score=0.2114 prev-optimizer-score=0.007G prev-nbest-size=0 avg-wt-diff=0.0762
+decode-score=0.2038 prev-optimizer-score=1.671G prev-nbest-size=0 avg-wt-diff=0.0496
+decode-score=0.2088 prev-optimizer-score=0.007G prev-nbest-size=0 avg-wt-diff=0.0603
+[...]
+> \textbf{cat summary.wts}
+1.0   1.0   1.0    1.0   1.0   1.0   1.0    -1.0   1.0 1.0    1.0   1.0   1.0   1.0   1.0   1.0
+0.224 0.409 0.250  0.346 0.424 0.309 0.308  -0.358 1.0 0.017  0.215 0.264 0.276 0.284 0.346 0.550
+0.188 0.532 -0.081 0.404 0.555 0.155 0.234  -0.548 1.0 -0.013 0.213 0.231 0.190 0.402 0.332 0.740
+0.337 0.541 0.093  0.259 0.439 0.180 0.177  -0.763 1.0 -0.035 0.037 0.131 0.268 0.341 0.274 0.797
+0.292 0.507 -0.055 0.357 0.413 0.140 0.232  -0.667 1.0 -0.018 0.102 0.395 0.133 0.332 0.315 0.839
+0.196 0.407 0.066  0.276 0.283 0.192 0.179  -0.630 1.0 -0.007 0.116 0.187 0.185 0.423 0.322 0.676
+0.256 0.477 0.083  0.421 0.309 0.184 0.125  -0.521 1.0 -0.006 0.194 0.256 0.193 0.326 0.279 0.684
+0.216 0.582 0.079  0.355 0.397 0.199 0.159  -0.584 1.0 -0.044 0.144 0.173 0.186 0.374 0.299 0.800
+[...]
 \end{alltt}
 \end{footnotesize}
 When the last iteration still shows an improvement (which is not the case
-here), it is sometimes a sign that we should have allowed \code{cow.sh} to run
-more iterations, by setting the \code{-maxiter} option to a higher value.  You
-will notice that there are two weights after \code{-tm} (truncated in the
-output shown above): one for each of the backward probability estimates in the
-merged phrase table.  For the same reason, there are two weights after
-\code{-ftm}.  If we were using LDMs, there would be seven weights after
-\code{-d}: standard WordDisplacement model (``distortion penalty''), as well as
-the six-feature lexicalized distortion model.
+here), it is sometimes a sign that we should have allowed \code{tune.py} to run
+more iterations, by setting the \code{-m} option to a higher value (which is
+controlled by the \code{MERT_MAX_ITER} variable in the framework.
 
-While \code{cow.sh} is working, it saves $n$-best lists and other intermediate
-files to a temporary work directory called \code{foos}. If you wish to prevent
-these (large) files from being automatically cleaned up on completion, remove
-the \code{rm} command executed after \code{cow.sh} in \code{Makefile}.
+It's hard to make sense of the contents of \code{summary.wts} here: it shows
+the weigth of each feature at each iteration.  A more verbose version of the
+same information is shown in \code{logs/log.decode}, along with lots of logging
+information about decoding.  Here is an excerpt from the end of that log file:
+\begin{small}
+\begin{alltt}
+Log-linear model used:
+index  weight      feature description
+1      0.240071    DistortionModel:WordDisplacement
+2      0.464304    DistortionModel:back-hlex#m#0
+3      0.0923178   DistortionModel:back-hlex#s#0
+4      0.373179    DistortionModel:back-hlex#d#0
+5      0.360726    DistortionModel:fwd-hlex#m#0
+6      0.190095    DistortionModel:fwd-hlex#s#0
+7      0.0599524   DistortionModel:fwd-hlex#d#0
+8      -0.45526    LengthFeature
+9      1           LanguageModel:models/lm/lm-train_en-kn-5g.binlm.gz;SimpleAutoVoc
+10     -0.0114234  TranslationModel:cpt.dev1.FILT.gz(col=0)
+11     0.238571    TranslationModel:cpt.dev1.FILT.gz(col=1)
+12     0.187018    ForwardTranslationModel:cpt.dev1.FILT.gz(col=2)
+13     0.12948     ForwardTranslationModel:cpt.dev1.FILT.gz(col=3)
+14     0.371249    AdirectionalModel:cpt.dev1.FILT.gz(col=0)
+15     0.227184    AdirectionalModel:cpt.dev1.FILT.gz(col=1)
+16     0.667892    AdirectionalModel:cpt.dev1.FILT.gz(col=2)
+\end{alltt}
+\end{small}
+Here the features used are listed with their respective weights in a way that
+is easy to read.  You will notice that there are two ``TranslationModel''
+weights and features: one for each of the backward probability estimates in the
+merged phrase table.  Similary, there are two ``ForwardTranslationModel''
+weights and features.  The three ``AdirectionalModel'' are the alignment
+indicator features we generated.  Since we are using HLDMs, there are seven
+``DistortionModel'' weights and features.  Finally, we have our language model
+and the length feature which, with its negative weight here, encourages the
+decoder to explore longer sentences, at least partially in compensation with
+the language model's tendency to prefer short sentences.
 
-\tip \margintip A lot of information is logged to \code{log.canoe.ini.cow};
-this can be summarized using the command \code{cowpie.py log.canoe.ini.cow}
-(type \code{cowpie.py -h} for details). \tipend
+While \code{tune.py} is working, it saves lattices or $n$-best lists, and other
+intermediate files, to a temporary work directory called \code{foos}. If you
+wish to prevent these (large) files from being automatically cleaned up on
+completion, remove the \code{rm} command executed after \code{tune.py} in
+\code{Makefile}.
 
-\tip \margintip The scripts \code{cow-timing.pl} and
-\code{canoe-timing-stats.pl} provide detailed running time information for the
-various components of \code{cow.sh}. \tipend
+% EJJ No longer works, and I don't see an equivalent for tune.py...  I suppose
+% the summary file itself is the equivalent now.
+%\tip \margintip A lot of information is logged to \code{log.canoe.ini.cow}
+%this can be summarized using the command \code{cowpie.py log.canoe.ini.cow}
+%(type \code{cowpie.py -h} for details). \tipend
 
-\tip \margintip If you have experiments in various directories with names
-following, say, \code{framework.<experiment name>}, go in their common parent
-directory and run \code{summarize-canoe-results.py framework.*} to see where
-they're all at in terms of BLEU scores and cow iterations completed.  \tipend
+% EJJ No equivalent to cow-timeing.pl for tune.py, which is unfortunate.
+%\tip \margintip The scripts \code{cow-timing.pl} and
+%\code{canoe-timing-stats.pl} provide detailed running time information for the
+%various components of \code{cow.sh}. \tipend
+\tip \margintip The script \code{canoe-timing-stats.pl} provides statistics
+about the time the decoder spends loading models and translating sentences,
+globally and on a per-sentence basis.  Run from the parent directory of your
+experiments, this command can be helpful: \code{canoe-timing-stats.pl
+*/models/decode/logs/log.decode}; it can alert you if there are performance
+problems with some of your systems. \tipend
 
-The final output from \code{cow.sh} is written to the file
-\code{canoe.ini.cow} (assuming the original configuration file was called
-\code{canoe.ini}). This duplicates the contents of \code{canoe.ini}, but
-adds the weights tuned on the development corpus:
-% cat canoe.ini.cow | perl -pe 's/(\.\d\d\d\d\d\d)\d+/\1/g; s/(\.\d\d\d\d\d\d)\d+/\1/g if /weight-d/; s/^/   /'
+\tip \margintip The script \code{summarize-canoe-results.py} can be handy if
+you are monitoring multiple experiments: try \code{summarize-canoe-results.py
+*} in the parent directory of your experiments.  It will summarize all the
+experiments you did, reporting BLEU scores obtained on your dev set as well as
+on your test set(s).  For experiments still in progress, it reports iterations
+completed and the BLEU score on dev so far.\tipend
+
+The final output from \code{tune.py} is written to the file
+\code{canoe.ini.cow} This duplicates the contents of \code{canoe.ini}, but adds
+the weights tuned on the development corpus:
+% cat canoe.ini.cow | perl -pe 's/(\.\d\d\d\d\d\d)\d+/\1/g; s/(\.\d\d\d\d)\d+/\1/g if /weight-d/; s/^/   /'
 \begin{small}
 \begin{alltt}
    > \textbf{cat canoe.ini.cow}
-   [ttable-multi-prob]
-      models/tm/cpt.merged.hmm3-kn3-zn.train.fr2en.gz
-   [lmodel-file]
-      models/lm/train_en-kn-5g.binlm.gz
-   [weight-d] 0.4966295362
-   [weight-w] -0.4423593283
+   [ttable-multi-prob] 
+      models/tm/cpt.PI-kn3-zn.hmm3.fr2en.gz
+   [lex-dist-model-file] 
+      models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz
+   [lmodel-file] 
+      models/lm/lm-train_en-kn-5g.binlm.gz
    [weight-l] 1
-   [weight-t] 0.3483754396:0.03033262119
-   [weight-f] -0.09389718622:0.3363513947
+   [weight-t] -0.018770:0.102704
+   [weight-f] 0.395305:0.133720
+   [weight-a] 0.332245:0.315304:0.839850
    [ttable-limit] 30
    [ttable-threshold] 0
    [stack] 20000
    [beam-threshold] 0.001
    [distortion-limit] 7
-   [distortion-model]
-      WordDisplacement
-   [segmentation-model] none
+   [dist-limit-simple]
+   [dist-phrase-swap]
    [bypass-marked]
    [cube-pruning]
    [use-ftm]
+   [weight-d] 0.2921:0.5074:-0.0554:0.3579:0.4131:0.1402:0.2326
+   [weight-w] -0.667455
+   [distortion-model] 
+      WordDisplacement
+      back-hlex#m#0
+      back-hlex#s#0
+      back-hlex#d#0
+      fwd-hlex#m#0
+      fwd-hlex#s#0
+      fwd-hlex#d#0
 \end{alltt}
 \end{small}
-The \code{weight-} parameters above pertain to the distortion model
-(\code{weight-d}), the word-length penalty (\code{weight-w}), the language
-model (\code{weight-l}), the backward scores of the translation models
-(\code{weight-t}), and the forward scores of the translation models
-(\code{weight-f}).
-The language model often obtains the highest weight, as is the
-case here.\footnote{A note of warning about the LM weight: following Doug Paul's
+
+The set of \code{weight-} parameters above provide the decoder features weights:
+\begin{itemize}
+\item the language model (\code{weight-l}),
+\item the backward scores of the translation models (\code{weight-t}),
+\item the forward scores of the translation models (\code{weight-f}),
+\item the adirectional features (alignment indicator features) of the translation models (\code{weight-a}),
+\item the distortion models (basic + HLDM) (\code{weight-d}), and
+\item the word-length penalty (\code{weight-w}).
+\end{itemize}
+The language model often obtains the highest weight, as is the case
+here.\footnote{A note of warning about the LM weight: following Doug Paul's
 ``ARPA'' LM format, all LM formats we know use base-10 log probs (including our
 own binary LM and TPLM formats), but canoe interprets them as natural logs:
 throughout \PS, logs are natural by default, not base 10.  This known bug has
 minimal impact; correcting it simply requires multiplying the desired
-\code{weight-l} values by log(10), which \code{cow.sh}, \code{rat.sh} and
-\code{rescore\_train} do implicitly. We chose not to fix it to avoid having to
-adjust all previously tuned sets of weights.}
+\code{weight-l} values by log(10), which \code{tune.py} and \code{rat.sh} do
+implicitly. We chose not to fix it to avoid having to adjust all previously
+tuned sets of weights.}
 
 
 \subsection{Training a Confidence Estimation Model} \label{CE}
@@ -1546,9 +1646,9 @@ Lines starting with \code{\#} are comments and are ignored by the software.
 \subsubsection{Running RAT (Rescore And Translate)}
 
 Apart from the rescoring model, \code{rat.sh} needs a source file and one or
-more reference translations for it (same as \code{cow.sh}). These may be the
-same files used for \code{cow.sh}, but it is sometimes better to use different
-ones, so here we use \code{dev2}:\footnote{As with \code{cow.sh}, you can
+more reference translations for it (same as \code{tune.py}). These may be the
+same files used for \code{tune.py}, but it is sometimes better to use different
+ones, so here we use \code{dev2}:\footnote{As with \code{tune.py}, you can
 speed this up using parallelism, in this case via the -n option to
 \code{rat.sh}, given before the \code{train} token (type \code{rat.sh -h}
 for details). In this framework, parallelism is controlled via the
@@ -1635,7 +1735,7 @@ produced depends on the various \code{DO_*} variables in
 \subsubsection{Decoding Only} \label{Decoding}
 
 As mentioned before, there are three options for translating. The simplest is
-to decode using the configuration file produced by \code{cow.sh} and stop.
+to decode using the configuration file produced by \code{tune.py} and stop.
 To do so, make sure \code{DO_RESCORING} is not set in \code{Makefile.params}.
 \footnote{You can accomplish the same result by adding \code{DO\us{}RESCORING=}
 to the make command line, i.e., type \\
