@@ -288,7 +288,7 @@ clean.content: clean.sig
 .PHONY: clean.sig
 clean.sig: SHELL=${GUARD_SHELL}
 clean.sig:
-	$(RM) ${SIG_MODEL_PFX}.*  cnts.${JPT_MODEL_PFX}.*
+	$(RM) ${SIG_MODEL_PFX}.*  sig.cnts.${JPT_MODEL_PFX}.*
 	${RM} -r JPTPAR*
 	${RM} -r work_directory
 
