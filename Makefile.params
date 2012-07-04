@@ -50,7 +50,7 @@ TRAIN_TM      ?= tm-train
 # Specify the in-domain corpus first (its word alignment models are needed).
 #MIXTM         ?= subtm1 subtm2
 
-# TUNE_DECODE is used to tune the decoding weights.
+# TUNE_DECODE is used to tune the decoding weights (using tune.py).
 TUNE_DECODE   ?= dev1
 # TUNE_DECODE_VARIANTS is used to tune and test using multiple tuning sets.
 # Typically, each variant is a 90% sample subset of the of the TUNE_DECODE set.
@@ -68,7 +68,7 @@ TUNE_DECODE   ?= dev1
 # bleu score on the test sets.
 #PLIVE_DECODE_VARIANT ?=
 
-# TUNE_RESCORE is used to train rat.
+# TUNE_RESCORE is used to tune the rescoring weights (using rat.sh).
 #TUNE_RESCORE  ?= dev2
 
 # TUNE_CE is used to train confidence estimation.
