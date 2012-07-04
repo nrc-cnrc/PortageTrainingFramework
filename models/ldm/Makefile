@@ -257,5 +257,20 @@ endif
 
 ################################################################################
 # UNITTESTS.
-.PHONY:  unittest1
+
+########################################
+# Creating Lexicalized Distortion Models with IBM4 models require special
+# attention to which corpora get picked up.  Make sure we pick up the proper
+# filtered corpora and that the count file is properly created.
+.PHONY: unittest1
+unittest1: export PT_TYPES=ibm4_cpt
+unittest1: export USE_LDM=1
+unittest1: export AVAILABLE_WORD_ALIGNMENT_MODELS=ibm4
 unittest1:
+	${MAKE} -C ../tm ibm4_model
+	${MAKE} all
+	@ [[ `find -name ${LDM_MODEL_PFX}.${LDM_NAME}${COUNTSX} -size +21c` ]] \
+	|| ! echo "ERROR: failed to generate count file." >&2
+	@ [[ `find -name ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX} -size +21c` ]] \
+	|| ! echo "ERROR: failed to generate lexicalized distortion model file." >&2
+
