@@ -60,8 +60,9 @@ TOKENIZER_ch ?= chinese_segmenter.pl
 endif
 
 # Language specific set of command to mark source devs/tests.
-MARK_RULE_en ?= canoe-escapes.pl -add
-MARK_RULE_fr ?= canoe-escapes.pl -add
+MARK_RULE_DEFAULT := canoe-escapes.pl -add
+MARK_RULE_en ?= ${MARK_RULE_DEFAULT}
+MARK_RULE_fr ?= ${MARK_RULE_DEFAULT}
 # NOTE: chinese_rule_create.pl takes care of escaping "<>\" like canoe-escape.pl does.
 MARK_RULE_ch ?= { chinese_rule_markup.pl | chinese_rule_create.pl; }
 
@@ -312,7 +313,7 @@ rule: ${RULE}
 %${RULEX}: %_${SRC_LANG}${LANGX}
 	@$(check_utf8)
 	${RP_SHELL_OPTS} ${TIME_MEM} \
-	${MARK_RULE_${SRC_LANG}} < $< > $@ ${LOG_STDERR}
+	$(or ${MARK_RULE_${SRC_LANG}}, ${MARK_RULE_DEFAULT}) < $< > $@ ${LOG_STDERR}
 
 
 
@@ -347,7 +348,7 @@ ifeq ("${SRC_LANG}","ch")
 	echo -e '#!/bin/bash\n$(and ${SENTENCE_SPLITTER_${SRC_LANG}}, ${SENTENCE_SPLITTER_${SRC_LANG}} | )${TOKENIZER_${SRC_LANG}}' > $@
 	chmod +x $@
 ../models/portageLive/plugins/predecode_plugin:  | ../models/portageLive/plugins
-	echo -e '#!/bin/bash\n${MARK_RULE_${SRC_LANG}}' > $@
+	echo -e '#!/bin/bash\n$(or ${MARK_RULE_${SRC_LANG}}, ${MARK_RULE_DEFAULT})' > $@
 	chmod +x $@
 portageLive:  ../models/portageLive/plugins/tokenize_plugin
 portageLive:  ../models/portageLive/plugins/predecode_plugin
