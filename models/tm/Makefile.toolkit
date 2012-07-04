@@ -359,11 +359,11 @@ ALIGN_MODEL_TYPE := -hmm
 # WARNING: % is purposefully not surrounded by dots for zn-adapt.
 ${JPT_MODEL_PFX}.merged%${JOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${JPT_MODEL_PFX}.merged%${JOINTX}:
-	merge_counts $@ $(filter %.${JOINTX}, $+) &> log.${@:.gz=}
+	time-mem merge_counts $@ $(filter %.${JOINTX}, $+) &> log.${@:.gz=}
 
 ${JPT_MODEL_PFX}.merged%${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${JPT_MODEL_PFX}.merged%${RJOINTX}:
-	merge_counts $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
+	time-mem merge_counts $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
 
 
 
