@@ -1,5 +1,5 @@
 \documentclass[11pt,letterpaper]{article}
-\usepackage[letterpaper, top=1in, bottom=1in, left=1.25in, right=1.25in]{geometry}
+\usepackage[letterpaper, top=1in, bottom=1in, left=1in, right=1.50in]{geometry}
 \usepackage{isolatin1}
 \usepackage{xspace}
 \usepackage{pifont}
@@ -209,23 +209,32 @@ specifically requested. Here are some other useful \code{make} commands:
 
 \subsection{Overview of the Process}
 
-TODO: REVIEW THIS SECTION ONCE THE REST HAS BEEN DONE.
-
 Here is an overview of the \PS process, as described in the following
 sections:
 \begin{enumerate}
-\item Corpus preparation (\S\ref{CorpusPreparation}): includes tokenization,
-      alignment, lowercasing (\S\ref{Lowercasing}), and splitting
-      (\S\ref{Splitting}).
-\item Model training (\S\ref{Training}): includes language model (\S\ref{LM}),
-      translation model (\S\ref{TM}), hierarchical lexicalized distortion model
-      (\S\ref{LDM}), truecasing model (\S\ref{TC}), decoder weight optimization
-      (\S\ref{COW}), confidence estimation model training (\S\ref{CE}), and
+\item Corpus preparation (\S\ref{CorpusPreparation}) includes
+      tokenization,
+      alignment,
+      corpus splitting (\S\ref{splitting}),
+      and
+      lowercasing (\S\ref{Lowercasing}).
+\item Model training (\S\ref{Training}) includes
+      language model (\S\ref{LM}),
+      truecasing model (\S\ref{TC}),
+      translation model (\S\ref{TM}),
+      hierarchical lexicalized distortion model (\S\ref{LDM}),
+      mixture models (\S\ref{MIX}),
+      decoder weight optimization (\S\ref{COW}),
+      confidence estimation model training (\S\ref{CE}),
+      and
       rescoring model training (\S\ref{RAT}).
-\item Translating and testing (\S\ref{TranslatingTesting}): includes
-      decoding (\S\ref{Decoding}), confidence estimation(\S\ref{CETrans}),
-      rescoring (\S\ref{RATTrans}), truecasing (\S\ref{Truecasing}) and testing
-      (\S\ref{Testing}).
+\item Translating and testing (\S\ref{TranslatingTesting}) includes
+      decoding (\S\ref{Decoding}),
+      confidence estimation(\S\ref{CETrans}),
+      rescoring (\S\ref{RATTrans}),
+      truecasing (\S\ref{Truecasing}),
+      and
+      testing (\S\ref{Testing}).
 \end{enumerate}
 These steps are fairly standard, but of course there are many variants on the
 sample process illustrated here. For more information, see the \PS user manual
@@ -432,11 +441,9 @@ translation. There are many steps in training.  Three are mandatory: creating a
 language model (\S\ref{LM}), creating a translation model (\S\ref{TM}), and
 optimizing decoder weights (\S\ref{COW}).  Several are optional: creating a
 truecasing model (\S\ref{TC}), creating a (possibly hierarchical) lexicalized
-distortion model (\S\ref{LDM}), training a rescoring model (\S\ref{RAT}), and
-training a confidence estimation (CE) model (\S\ref{CE}).
-
-TODO THE PARAGRAPH ABOVE NEEDS TO MENTION MIXTM AND MIXLM, AND MAYBE IMPROVE
-HOW HLDMS ARE MENTIONED.
+distortion model (\S\ref{LDM}), using mixture language and translation models
+for domain adaptation (\S\ref{MIX}), training a rescoring model (\S\ref{RAT}),
+and training a confidence estimation (CE) model (\S\ref{CE}).
 
 \subsection{Creating a Language Model} \label{LM}
 
@@ -1087,12 +1094,6 @@ from all instances of \code{dmcount} are merged using
 the same key in two files.  The default is to simply concatenate the parts
 together, which is appropriate for programs that produce one line of output per
 line of input.  Run \code{parallelize.pl -h} for more details.\tipend
-
-The rest of this document assumes you did not train HLDMs, so if you modified
-your \code{Makefile.params} file to set \code{USE_HLDM = 1}, you should comment
-out that line before proceeding to the next section.
-
-TODO MAYBE REMOVE THE ABOVE COMMENT AND USE HLDMs IN TUNING?
 
 \subsection{Mixture Models and Domain Adaptation} \label{MIX}
 
@@ -1886,8 +1887,6 @@ it was already done by \code{translate.pl} along with truecasing.
 If you are using rescoring, \code{make detok} will also detokenize the
 rescoring output, generating \code{test*.rat.tc.detok} and
 \code{test*.rat.detok}.
-
-% TODO fix the framework so that it does handle truecasing.
 
 \subsection{Testing} \label{Testing}
 
