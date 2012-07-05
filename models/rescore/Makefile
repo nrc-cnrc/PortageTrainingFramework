@@ -193,10 +193,11 @@ train: ${RESCORING_MODEL}
 ${RESCORING_MODEL}:  SHELL=${FRAMEWORK_SHELL}
 ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
 	@_LOCAL=1 echo "Tuning the rescoring model."
-	RP_PSUB_OPTS="-${RAT_TRANS_CPUS} -N $@" \
+	RP_PSUB_OPTS="-4 -N $@" \
 	rat.sh \
 		-lb \
 		-n ${PARALLELISM_LEVEL_TUNE_RESCORE} \
+		-psub -${RAT_TRANS_CPUS} \
 		train \
 		-a mira \
 		-v \
