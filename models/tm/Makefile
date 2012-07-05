@@ -241,8 +241,6 @@ jpts: $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 $(foreach c, ${ALL_TMS}, \
 	$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
 		$(eval \
-			JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
-		$(eval \
 			$(call lc, ${m})_jpt:  $(call lc, ${m})_model) \
 		$(eval \
 			$(call lc, ${m})_jpt:  ${JPT_${m}_MODEL_PFX}.$c.${JOINTX}) \
@@ -255,7 +253,6 @@ $(foreach c, ${ALL_TMS}, \
 	) \
 )
 
-JPT_IBM4_MODEL_PFX ?= ${JPT_MODEL_PFX}.${IBM4_MODEL_PFX}
 ${JPT_IBM4_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
 ${JPT_IBM4_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
 $(foreach c, ${ALL_TMS}, \
@@ -476,25 +473,17 @@ $(foreach c, ${ALL_TMS}, \
 # A merged jpt depends on user define type of joint frequency count file.
 .INTERMEDIATE: $(foreach c, ${ALL_TMS}, ${JPT_MERGED_PFX}.$c.${RJOINTX} ${JPT_MERGED_PFX}.$c.${JOINTX})
 $(foreach c, ${ALL_TMS}, \
-	$(eval \
-		${JPT_MERGED_PFX}.$c.${RJOINTX}:  $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.$c.${RJOINTX})) \
-	$(eval \
-		${JPT_MERGED_PFX}.$c.${JOINTX}:   $(foreach j, ${MERGED_CPT_JPT_TYPES}, ${JPT_${j}_MODEL_PFX}.$c.${JOINTX})) \
-)
+	$(foreach m, $(call uc, ${MERGED_CPT_JPT_TYPES}), \
+		$(eval \
+			${JPT_MERGED_PFX}.$c.${RJOINTX}:  ${JPT_${m}_MODEL_PFX}.$c.${RJOINTX}) \
+		$(eval \
+			${JPT_MERGED_PFX}.$c.${JOINTX}:  ${JPT_${m}_MODEL_PFX}.$c.${JOINTX}) \
+		$(eval \
+			${SIG_MERGED_PFX}.$c.${RJOINTX}:  ${SIG_${m}_MODEL_PFX}.$c.${RJOINTX}) \
+		$(eval \
+			${SIG_MERGED_PFX}.$c.${JOINTX}:  ${SIG_${m}_MODEL_PFX}.$c.${JOINTX}) \
+))
 
-
-# Significance pruning model depends on a "raw" joint frequency count file.
-# Significance pruning model depends on the source and target corpora.
-$(foreach c, ${ALL_TMS}, \
-	$(eval \
-		${SIG_MERGED_PFX}.$c.${RJOINTX}:  ${JPT_MERGED_PFX}.$c.${RJOINTX}) \
-	$(eval \
-		${SIG_MERGED_PFX}.$c.${RJOINTX}:  $c${L1X} $c${L2X}) \
-	$(eval \
-		${SIG_MERGED_PFX}.$c.${JOINTX}:  ${JPT_MERGED_PFX}.$c.${JOINTX}) \
-	$(eval \
-		${SIG_MERGED_PFX}.$c.${JOINTX}:  $c${L1X} $c${L2X}) \
-)
 
 
 ########################################
@@ -568,7 +557,7 @@ clean.ibm4:
 
 
 ########################################
-# Joint 2 multi cpt.
+# INDICATOR FEATURE CONDITIONAL PHRASE TABLE
 # Create JPT groups based on their word alignment type.
 j2m/%: SHELL=${GUARD_SHELL}
 j2m/%:  $(foreach c, ${ALL_TMS}, ${JPT_MODEL_PFX}.%.$c.${JOINTX})

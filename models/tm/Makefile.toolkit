@@ -133,6 +133,11 @@ JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 JPT_WORKERS ?= ${JPT_PARALLELISM_LEVEL}
 GEN_JPT_PARALLEL_OPTIONS ?= -w 1
 JPT_EXTRAS ?=
+# Create variables to hold jpt model prefix.
+$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${IBM4_MODEL_PFX}), \
+   $(eval \
+	   JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
+)
 
 ########################################
 # SIG MODELS.
@@ -389,6 +394,16 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 
 ########################################
 # SIGNIFICANCE PRUNING
+${SIG_MODEL_PFX}.merged%${JOINTX}: SHELL=${FRAMEWORK_SHELL}
+${SIG_MODEL_PFX}.merged%${JOINTX}:
+	time-mem merge_counts $@ $(filter %.${JOINTX}, $+) &> log.${@:.gz=}
+
+${SIG_MODEL_PFX}.merged%${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
+${SIG_MODEL_PFX}.merged%${RJOINTX}:
+	time-mem merge_counts $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
+
+
+
 ${SIG_MODEL_PFX}.%.${JOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${SIG_MODEL_PFX}.%.${JOINTX}:
 	RP_PSUB_OPTS="-${SIG_CPUS} -N $@ ${PSUB_OPTS}" \
