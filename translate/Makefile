@@ -114,8 +114,8 @@ TIME_MEM ?= time-mem
 ifneq (${MAKECMDGOALS},clean)
 ifneq (${MAKECMDGOALS},clean.content)
 ifneq (${MAKECMDGOALS},clean.logs)
-$(info if [ ! -e $(notdir ${MODEL_DIR}) ]; then ln -s ${MODEL_DIR}; fi)
-$(shell if [ ! -e $(notdir ${MODEL_DIR}) ]; then ln -s ${MODEL_DIR}; fi)
+$(info ln -fs ${MODEL_DIR})
+$(shell ln -fs ${MODEL_DIR})
 endif
 endif
 endif
