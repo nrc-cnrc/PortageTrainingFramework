@@ -598,8 +598,11 @@ ${INDICATOR_MODEL_PFX}.${L1_2_L2X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GI
 ${INDICATOR_MODEL_PFX}.${L2_2_L1X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GIVEN_L1X}  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L1_GIVEN_L2X}
 endif
 
+# Let's define what are the indicator cpt file names.
+indicator_cpt_list = ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
+
 .PHONY: indicator_cpt
-indicator_cpt:  ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
+indicator_cpt:  ${indicator_cpt_list}
 
 
 
