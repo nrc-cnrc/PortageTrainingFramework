@@ -560,14 +560,14 @@ clean.ibm4:
 # INDICATOR FEATURE CONDITIONAL PHRASE TABLE
 # Create JPT groups based on their word alignment type.
 j2m/%: SHELL=${GUARD_SHELL}
-j2m/%:  $(foreach c, ${ALL_TMS}, ${JPT_MODEL_PFX}.%.$c.${JOINTX})
+j2m/%:  $(foreach c, ${ALL_TMS}, ${${CPT_DEP_TAG}_MODEL_PFX}.%.$c.${JOINTX})
 	mkdir -p $@
-	cd $@ && ln -s -f $(addprefix ../../,$+) .
+	cd $@ && for f in $+; do ln -fs ../../$$f ${JPT_MODEL_PFX}.$${f##${${CPT_DEP_TAG}_MODEL_PFX}.}; done
 
 j2mr/%: SHELL=${GUARD_SHELL}
-j2mr/%:  $(foreach c, ${ALL_TMS}, ${JPT_MODEL_PFX}.%.$c.${RJOINTX})
+j2mr/%:  $(foreach c, ${ALL_TMS}, ${${CPT_DEP_TAG}_MODEL_PFX}.%.$c.${RJOINTX})
 	mkdir -p $@
-	cd $@ && ln -s -f $(addprefix ../../,$+) .
+	cd $@ && for f in $+; do ln -fs ../../$$f ${JPT_MODEL_PFX}.$${f##${${CPT_DEP_TAG}_MODEL_PFX}.}; done
 
 INDICATOR_MODEL_PFX = ${CPT_INDICATOR_PFX}${PI_SMOOTHERS_DESCRIPTION}.${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}
 INDICATOR_WORD_ALIGNMENT_MODELS ?= $(foreach c,${MERGED_CPT_JPT_TYPES},${$c_MODEL_PFX})
