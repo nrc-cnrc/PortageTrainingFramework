@@ -594,6 +594,14 @@ indicator_cpt_list = ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
 indicator_cpt:  ${indicator_cpt_list}
 
 
+clean.content: clean.indicator
+
+.PHONY: clean.indicator
+clean.indicator: SHELL=${GUARD_SHELL}
+clean.indicator:
+	${RM} -r j2m j2mr
+
+
 
 ########################################
 # Let's do some validation when the user wants a merged_cpt.
