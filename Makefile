@@ -213,13 +213,15 @@ ifdef DO_RESCORING
 	@echo ""
 endif
 	@echo "You now have all that is needed for PortageLive."
-	@echo "From the framework root, run one of the following to"
-	@echo "transfer your PortageLive models:"
-	@echo "rsync -Larz models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>"
-	@echo "scp -r models/portageLive/* <RHOST>:/<DEST_DIR_RHOST>"
-	@echo "cp -Lr models/portageLive/* /<DEST_DIR>"
+	@echo "From the framework root, run one of the following commands to"
+	@echo "transfer the PortageLive models to your server:"
+	@echo "rsync -Larz models/portageLive/* <REMOTE_HOST>:<DEST_DIR_ON_REMOTE_HOST>"
+	@echo "scp -r models/portageLive/* <REMOTE_HOST>:<DEST_DIR_ON_REMOTE_HOST>"
+	@echo "cp -Lr models/portageLive/* <DEST_DIR_ON_LOCAL_HOST>"
 
-
+# convenient synonyms
+portagelive: portageLive
+PortageLive: portageLive
 
 ########################################
 # If you need to preprocess your corpora, you can call this target to do the job.
@@ -263,13 +265,14 @@ ifdef USE_LDM
 DU_DIRS += models/ldm
 endif
 
+
 .PHONY: summary
 summary: SHELL=${GUARD_SHELL}
 summary: export PORTAGE_INTERNAL_CALL=1
 summary: time-mem
 	@echo
 	@echo "Disk usage for all models:"
-	@ ( GLOBIGNORE="*/log.*:translate.sh"; du -sch ${DU_DIRS} )
+	@( GLOBIGNORE="*/log.*:translate.sh"; du -sch ${DU_DIRS} 2> /dev/null || true)
 	@if [[ -e models/portageLive ]]; then \
 	   echo; \
 	   echo "Disk usage for portageLive models:"; \
