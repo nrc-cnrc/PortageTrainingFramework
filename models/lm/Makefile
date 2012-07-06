@@ -116,7 +116,7 @@ endif
 ########################################
 .PHONY: all
 all: SHELL=${GUARD_SHELL}
-all: ${LM_TYPES}
+all: ${LM_TYPES} pretrained.${LM_LANG}
 
 
 
@@ -172,6 +172,26 @@ else
 portageLive:
 	@echo "No regular LMs defined, nothing to do." >&2
 endif
+
+
+
+########################################
+# Create symbolic links to pre-trained models
+
+LM_PRETRAINED_SRC_LMS ?= $(subst _${TGT_LANG},_${SRC_LANG}, ${LM_PRETRAINED_TGT_LMS})
+LM_PRETRAINED_LMS ?= ${LM_PRETRAINED_SRC_LMS} ${LM_PRETRAINED_TGT_LMS}
+
+.PHONY: pretrained.${SRC_LANG} pretrained.${TGT_LANG}
+pretrained.${SRC_LANG}: $(notdir ${LM_PRETRAINED_SRC_LMS})
+pretrained.${TGT_LANG}: $(notdir ${LM_PRETRAINED_TGT_LMS})
+
+fix_path = $(strip $(if $(filter /, $(firstword $(subst /,/ ,$(1)))), $(1), $(addprefix ../../, $(1))))
+
+$(notdir ${LM_PRETRAINED_LMS}): SHELL=${GUARD_SHELL}
+$(notdir ${LM_PRETRAINED_LMS}): %:
+	ln -s "$(call fix_path, $(filter %/$@, ${LM_PRETRAINED_LMS}))" . && [[ -s $@ ]]
+	t="$(subst .binlm.gz,.tplm,$(call fix_path, $(filter %/$@, ${LM_PRETRAINED_LMS})))"; \
+		[[ ! -s "$$t" ]] || ln -s "$$t" .
 
 
 

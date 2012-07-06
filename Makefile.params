@@ -30,17 +30,35 @@ TGT_LANG ?= fr
 # Warning: TRAIN_TC, TUNE_DECODE, TUNE_RESCORE, TUNE_CE may not contain
 #          more than one <PREFIX>.
 
-# TRAIN_LM is used to create a language model.
+# TRAIN_LM is used to create language models. 
+# NOTE: Do not include stems for any files listed in LM_PRETRAINED_TGT_LMS.
 TRAIN_LM      ?= lm-train
+
+# LM_PRETRAINED_TGT_LMS specifies file paths to additional pre-trained target
+# language LMs to use with the LM module, for example a generic model LM.
+# These file names should end with the extension .binlm.gz and must include
+# the string _${TGT_LANG}, where ${TGT_LANG} is the target language, e.g. _fr .
+# Paths may be absolute or relative to the location of this Makefile.params file.
+#LM_PRETRAINED_TGT_LMS ?= /path/to/generic/generic_fr-kn-5g.binlm.gz
 
 # MIXLM is used to create a mixture language model which itself is composed of
 # several other language models.
+# NOTE: Do not include stems for any files listed in MIXLM_PRETRAINED_TGT_LMS.
 #MIXLM         ?= sublm1 sublm2 sublm3
+
+# MIXLM_PRETRAINED_TGT_LMS specifies file paths to additional pre-trained target
+# language LMs to use with the MIXLM module, for example a generic model LM.
+# These file names should end with the extension .binlm.gz and must include
+# the string _${TGT_LANG}, where ${TGT_LANG} is the target language, e.g. _fr .
+# Paths may be absolute or relative to the location of this Makefile.params file.
+# Note: The corresponding source side language LMs will also be used, and
+# are expected to be located in the same directory.
+#MIXLM_PRETRAINED_TGT_LMS ?= /path/to/generic/generic_fr-kn-5g.binlm.gz
 
 # TRAIN_TC is used to create a truecasing model.
 # By default, we use the first name listedin TRAIN_LM, thus if you do not uncomment and define it
 # => TRAIN_TC = first word of TRAIN_LM
-#TRAIN_TC := tc-train
+#TRAIN_TC ?= tc-train
 
 # TRAIN_TM is used to create the translation table.
 TRAIN_TM      ?= tm-train
@@ -344,8 +362,8 @@ $(error When asking for rescoring, you must not define TC_USE_SRC_MODELS!)
 endif
 endif
 
-ifeq ($(strip ${TRAIN_LM} ${MIXLM}),)
-$(error You must always define a training corpus for language models)
+ifeq ($(strip ${TRAIN_LM} ${LM_PRETRAINED_TGT_LMS} ${MIXLM} ${MIXLM_PRETRAINED_TGT_LMS}),)
+$(error You must always define a training corpus and/or pretrained models for language models)
 endif
 
 ifeq ($(strip ${TRAIN_TM} ${MIXTM}),)

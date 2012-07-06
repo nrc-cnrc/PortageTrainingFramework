@@ -25,12 +25,21 @@ MIXLM_CPUS ?= 1
 # Directory path for LM models in mixlm file, relative to the location of the mixlm file.
 MIXLM_MODELS_DIR ?=
 
+# File paths to additional pre-trained target language LMs to use.
+# MIXLM_PRETRAINED_TGT_LMS is usually defined in the top level Makefile.params.
+MIXLM_PRETRAINED_TGT_LMS ?=
+MIXLM_PRETRAINED_SRC_LMS ?= $(subst _${TGT_LANG},_${SRC_LANG}, ${MIXLM_PRETRAINED_TGT_LMS})
+
+MIXLM_PRETRAINED_${SRC_LANG}_LMS := ${MIXLM_PRETRAINED_SRC_LMS}
+MIXLM_PRETRAINED_${TGT_LANG}_LMS := ${MIXLM_PRETRAINED_TGT_LMS}
+
 
 # The dependency list cannot be relied on for the source lm filenames because
 # they are not available when this tookkit is used by translate/Makefile.
 components_%: SHELL=${GUARD_SHELL}
 components_%:
 	echo "$(foreach lm,${MIXLM},`basename models/mixlm/${lm}_$**.binlm.gz`)" \
+	     "$(notdir ${MIXLM_PRETRAINED_$*_LMS})" \
 		| tr " " "\n" > $@
 
 
