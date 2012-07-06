@@ -40,7 +40,7 @@ MODULE_NAME ?= ldm
 POSSIBLE_WORD_ALIGNMENT_MODELS := ibm4 hmm3 hmm2 hmm1 ibm2 ibm1
 
 # Function to sort a list of models from arbitrary order to best-first order.
-sort_aligners = $(foreach aligner,${POSSIBLE_WORD_ALIGNMENT_MODELS},$(filter $1,${aligner}))
+sort_aligners = $(filter $1, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 # Find out what the word alignment models the user asked for are,
 # based on the type of conditional phrase tables that was specified.
