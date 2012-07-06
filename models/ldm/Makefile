@@ -268,7 +268,7 @@ unittest1: export USE_LDM=1
 unittest1: export AVAILABLE_WORD_ALIGNMENT_MODELS=ibm4
 unittest1: export TRAIN_TM=tm-train sublm1
 unittest1:
-	${MAKE} -C ../tm ibm4_model
+	${MAKE} -C ../tm ibm4_model alignment_files
 	${MAKE} all
 	@ [[ `find -name ${LDM_MODEL_PFX}.${LDM_NAME}${COUNTSX} -size +21c` ]] \
 	|| ! echo "ERROR: failed to generate count file." >&2
