@@ -31,7 +31,7 @@ TGT_LANG ?= fr
 #          more than one <PREFIX>.
 
 # TRAIN_LM is used to create language models. 
-# NOTE: Do not include stems for any files listed in LM_PRETRAINED_TGT_LMS.
+# NOTE: Do not include stems for any files listed in LM_PRETRAINED_TGT_LMS below.
 TRAIN_LM      ?= lm-train
 
 # LM_PRETRAINED_TGT_LMS specifies file paths to additional pre-trained target
@@ -43,7 +43,7 @@ TRAIN_LM      ?= lm-train
 
 # MIXLM is used to create a mixture language model which itself is composed of
 # several other language models.
-# NOTE: Do not include stems for any files listed in MIXLM_PRETRAINED_TGT_LMS.
+# NOTE: Do not include stems for any files listed in MIXLM_PRETRAINED_TGT_LMS below.
 #MIXLM         ?= sublm1 sublm2 sublm3
 
 # MIXLM_PRETRAINED_TGT_LMS specifies file paths to additional pre-trained target
@@ -51,8 +51,9 @@ TRAIN_LM      ?= lm-train
 # These file names should end with the extension .binlm.gz and must include
 # the string _${TGT_LANG}, where ${TGT_LANG} is the target language, e.g. _fr .
 # Paths may be absolute or relative to the location of this Makefile.params file.
-# Note: The corresponding source side language LMs will also be used, and
-# are expected to be located in the same directory.
+# Note: The corresponding source language LMs are also required, should have
+# the same name except for the language code, and should be located in the same
+# directory.
 #MIXLM_PRETRAINED_TGT_LMS ?= /path/to/generic/generic_fr-kn-5g.binlm.gz
 
 # TRAIN_TC is used to create a truecasing model.
