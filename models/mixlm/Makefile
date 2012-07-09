@@ -146,12 +146,13 @@ ${MIXLM_SRC_MODELS} ${MIXLM_TGT_MODELS}: %.binlm${GZ}:
 	[[ -s "${LM_DIR}/$@" ]] && ln -s "${LM_DIR}/$@" . \
 	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${LM_LANG} TRAIN_LM=$(*:_${LM_LANG}-kn-${ORDER}g=) $@
 
-$(notdir ${MIXLM_PRETRAINED_LMS}): SHELL=${GUARD_SHELL}
-$(notdir ${MIXLM_PRETRAINED_LMS}): %:
-	${MAKE} -f ${LM_DIR}/Makefile $@ LM_PRETRAINED_LMS="$(filter %/$@, ${MIXLM_PRETRAINED_LMS})"
+.PHONY: pretrained.${SRC_LANG} pretrained.${TGT_LANG}
+pretrained.${SRC_LANG} pretrained.${TGT_LANG}: SHELL=${GUARD_SHELL}
+pretrained.${SRC_LANG} pretrained.${TGT_LANG}: pretrained.%:
+	${MAKE} -f ${LM_DIR}/Makefile $@ LM_PRETRAINED_TGT_LMS="${MIXLM_PRETRAINED_TGT_LMS}"
 
 .PHONY: mixlm
-mixlm: $(addsuffix .mixlm, ${TUNE_SETS})
+mixlm: pretrained.${SRC_LANG} pretrained.${TGT_LANG} $(addsuffix .mixlm, ${TUNE_SETS})
 
 # Just in case, we will specify that we need the source side sub language
 # models to be present before calculating the distance.

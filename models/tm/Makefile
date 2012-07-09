@@ -49,6 +49,9 @@ TRAIN_TM ?= train
 
 ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
 
+# We need a dev set for tuning the mixture weights in a mixtm.
+TUNE_MIXTM ?= ${TUNE_DECODE}
+
 # This script might produce directory and we want to easily remove them.
 RM := rm -rf
 
@@ -79,7 +82,7 @@ vpath %.gz ${TM_DIR_PFX} ${TM_DIR_PFX}mixtm
 # Define all the work to be done.
 .PHONY: all
 all: SHELL=${GUARD_SHELL}
-all: ${PT_TYPES}
+all: pretrained_cpt ${PT_TYPES}
 
 
 
@@ -343,15 +346,17 @@ clean.cpts: SHELL=${GUARD_SHELL}
 clean.cpts:
 	$(RM) ${CPT_MODEL_PFX}.*
 
-.PHONY: cpts  $(addsuffix _cpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS} merged)
+.PHONY: cpts  $(addsuffix _cpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 cpts: SHELL=${GUARD_SHELL}
 cpts: jpts
 cpts: ibm2_cpt
 cpts: hmm1_cpt
 cpts: hmm2_cpt
 cpts: hmm3_cpt
-cpts: merged_cpt
 cpts: ibm4_cpt
+cpts: pretrained_cpt
+cpts: merged_cpt
+cpts: mix_cpt
 
 
 # Let's define a couple of variables.
@@ -433,6 +438,43 @@ $(foreach c, ${ALL_TMS}, \
 
 
 ########################################
+# PRETRAINED CONDITIONAL PHRASE TABLES
+
+clean.content: clean.pretrained
+
+.PHONY: clean.pretrained
+clean.pretrained: SHELL=${GUARD_SHELL}
+clean.pretrained:
+	${RM} ${pretrained_cpt_list}
+
+pretrained_cpt_list = $(notdir ${TM_PRETRAINED_TMS})
+
+# Target to create symbolic links to pre-trained conditional phrase tables.
+.PHONY: pretrained_cpt $(addprefix pretrained., ${pretrained_cpt_list})
+pretrained_cpt: $(addprefix pretrained., ${pretrained_cpt_list}) 
+
+fix_path = $(strip $(if $(filter /, $(firstword $(subst /,/ ,$(1)))), $(1), $(addprefix ${TM_DIR_PFX}../../, $(1))))
+
+pretrained_cpt_paths = $(foreach f, ${TM_PRETRAINED_TMS}, $(call fix_path, $f))
+
+$(foreach f, ${pretrained_cpt_paths}, \
+	$(eval \
+		pretrained.$(notdir $f):  $f) \
+)
+
+$(addprefix pretrained., ${pretrained_cpt_list}): SHELL=${GUARD_SHELL}
+$(addprefix pretrained., ${pretrained_cpt_list}): pretrained.%: 
+	[[ ! -e $* ]] || [[ -L $* ]] || ! echo "Error: TM $* already exists as a normal file."
+	$(if $(filter-out cpt.%, $*),! echo "Error: Name of pre-trained TM file must start with cpt.: $<")
+	ln -sf $< .
+
+${pretrained_cpt_paths}: SHELL=${GUARD_SHELL}
+${pretrained_cpt_paths}: %:
+	! echo "Error: Pre-trained TM file $@ does not exist."
+
+
+
+########################################
 # MERGED CONDITIONAL PHRASE TABLES
 # requires: MERGED_CPT_ZN_MODEL & MERGED_CPT_JPT_TYPES to be properly defined.
 MERGED_CPT_SMOOTHERS_DESCRIPTION ?= ${SMOOTHERS_DESCRIPTION}
@@ -450,6 +492,7 @@ ${CPT_MODEL_PFX}.merged.${IBM4_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 1
 merged_cpt_list = $(foreach c, ${TRAIN_TM}, ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X})
 
 # Meta target that will create the merged conditional phrase tables.
+.PHONY: merged_cpt
 merged_cpt: ${merged_cpt_list}
 
 SIG_MERGED_PFX := ${SIG_MODEL_PFX}.merged
@@ -499,49 +542,45 @@ clean.mix:
 	$(RM) ${CPT_MIX_PFX}.*
 	${RM} -r mixtm
 
-.PHONY: mix_cpt
-
 mix_cpt_list = ${CPT_MIX_PFX}.${L1_2_L2X}
 
-MIXING_CPTS = $(foreach c, $(filter-out ${TRAIN_TM}, ${MIXTM}), ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X})
-
 # Meta target to create the mixture conditional phrase table in mixtm/.
+.PHONY: mix_cpt
 mix_cpt: SHELL=${GUARD_SHELL}
 mix_cpt:
 	mkdir -p mixtm
+	cd mixtm && ${MAKE} -f ../Makefile pretrained_cpt TM_PRETRAINED_TMS="${MIXTM_PRETRAINED_TMS}"
 	cd mixtm && ${MAKE} -f ../Makefile ${mix_cpt_list}
 	ln -sf $(addprefix mixtm/, ${mix_cpt_list}) .
 
 # Let's define which merged cpt files we need to mix and the dev jpt file we need
 # for calculating the weights for the mix.
-${CPT_MIX_PFX}.${L1_2_L2X}:  $(foreach c, ${MIXTM}, ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X})
-${CPT_MIX_PFX}.${L1_2_L2X}:  ${JPT_MERGED_PFX}.${TUNE_DECODE}.${JOINTX}
+${CPT_MIX_PFX}.${L1_2_L2X}:  $(foreach c, ${MIXTM}, ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X}) \
+                             $(foreach c, $(notdir ${MIXTM_PRETRAINED_TMS}), $c)
+${CPT_MIX_PFX}.${L1_2_L2X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM}.${JOINTX}
 
-${CPT_MIX_PFX}.${L2_2_L1X}:  $(foreach c, ${MIXTM}, ${MERGED_CPT_PREFIX}.$c.${L2_2_L1X})
-${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_DECODE}.${JOINTX}
+${CPT_MIX_PFX}.${L2_2_L1X}:  $(foreach c, ${MIXTM}, ${MERGED_CPT_PREFIX}.$c.${L2_2_L1X}) \
+                             $(foreach c, $(notdir ${MIXTM_PRETRAINED_TMS}), $c)
+${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM}.${JOINTX}
 
-#%.${TUNE_DECODE}.${JOINTX}: M=7
-#%.${TUNE_DECODE}.${JOINTX}: JPT_EXTRAS=-d 6
-%.${TUNE_DECODE}.${JOINTX}: JPT_PARALLELISM_LEVEL=1
-%.${TUNE_DECODE}.${JOINTX}: GEN_JPT_PARALLEL_OPTIONS=
-%.${TUNE_DECODE}.${JOINTX}: override L1X = _${SRC_LANG}${LANGX}
-%.${TUNE_DECODE}.${JOINTX}: override L2X = _${TGT_LANG}${LANGX}
-${TUNE_DECODE}.%.align.gz: override L1X = _${SRC_LANG}${LANGX}
-${TUNE_DECODE}.%.align.gz: override L2X = _${TGT_LANG}${LANGX}
-
-TM ?= $(firstword ${MIXTM})
+%.${TUNE_MIXTM}.${JOINTX}: JPT_PARALLELISM_LEVEL=1
+%.${TUNE_MIXTM}.${JOINTX}: GEN_JPT_PARALLEL_OPTIONS=
+%.${TUNE_MIXTM}.${JOINTX}: override L1X = _${SRC_LANG}${LANGX}
+%.${TUNE_MIXTM}.${JOINTX}: override L2X = _${TGT_LANG}${LANGX}
+${TUNE_MIXTM}.%.align.gz: override L1X = _${SRC_LANG}${LANGX}
+${TUNE_MIXTM}.%.align.gz: override L2X = _${TGT_LANG}${LANGX}
 
 $(foreach j, ${MERGED_CPT_JPT_TYPES}, \
 	$(eval \
-		${JPT_MERGED_PFX}.${TUNE_DECODE}.${JOINTX}:  ${JPT_${j}_MODEL_PFX}.${TUNE_DECODE}.${JOINTX}) \
+		${JPT_MERGED_PFX}.${TUNE_MIXTM}.${JOINTX}:  ${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM}.${JOINTX}) \
 	$(eval \
-		${JPT_${j}_MODEL_PFX}.${TUNE_DECODE}.${JOINTX}:  ${TUNE_DECODE}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz) \
+		${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM}.${JOINTX}:  ${TUNE_MIXTM}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz) \
 	$(eval \
-		${JPT_${j}_MODEL_PFX}.${TUNE_DECODE}.${JOINTX}:  ${TUNE_DECODE}${L1} ${TUNE_DECODE}${L2}) \
+		${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM}.${JOINTX}:  ${TUNE_MIXTM}${L1} ${TUNE_MIXTM}${L2}) \
 	$(eval \
-		${TUNE_DECODE}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${j}_MODEL_PFX}.${TM}.${L2_GIVEN_L1X} ${${j}_MODEL_PFX}.${TM}.${L1_GIVEN_L2X}) \
+		${TUNE_MIXTM}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${j}_MODEL_PFX}.${MIXTM_TRAIN_MIX}.${L2_GIVEN_L1X} ${${j}_MODEL_PFX}.${MIXTM_TRAIN_MIX}.${L1_GIVEN_L2X}) \
 	$(eval \
-		${TUNE_DECODE}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_DECODE}${L1} ${TUNE_DECODE}${L2}) \
+		${TUNE_MIXTM}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM}${L1} ${TUNE_MIXTM}${L2}) \
 )
 
 

@@ -181,19 +181,35 @@ endif
 LM_PRETRAINED_SRC_LMS ?= $(subst _${TGT_LANG},_${SRC_LANG}, ${LM_PRETRAINED_TGT_LMS})
 LM_PRETRAINED_LMS ?= ${LM_PRETRAINED_SRC_LMS} ${LM_PRETRAINED_TGT_LMS}
 
+ifneq ($(filter ${LM_PRETRAINED_TGT_LMS}, ${LM_PRETRAINED_SRC_LMS}),)
+$(error Target language specification _${TGT_LANG} missing in pre-trained LM file name(s): \
+        $(filter ${LM_PRETRAINED_TGT_LMS}, ${LM_PRETRAINED_SRC_LMS}))
+endif
+
 .PHONY: pretrained.${SRC_LANG} pretrained.${TGT_LANG}
-pretrained.${SRC_LANG}: $(notdir ${LM_PRETRAINED_SRC_LMS})
-pretrained.${TGT_LANG}: $(notdir ${LM_PRETRAINED_TGT_LMS})
+.PHONY: $(addprefix pretrained., $(notdir ${LM_PRETRAINED_LMS}))
+pretrained.${SRC_LANG}: $(addprefix pretrained., $(notdir ${LM_PRETRAINED_SRC_LMS}))
+pretrained.${TGT_LANG}: $(addprefix pretrained., $(notdir ${LM_PRETRAINED_TGT_LMS}))
 
 fix_path = $(strip $(if $(filter /, $(firstword $(subst /,/ ,$(1)))), $(1), $(addprefix ../../, $(1))))
 
-$(notdir ${LM_PRETRAINED_LMS}): SHELL=${GUARD_SHELL}
-$(notdir ${LM_PRETRAINED_LMS}): %:
-	ln -s "$(call fix_path, $(filter %/$@, ${LM_PRETRAINED_LMS}))" . && [[ -s $@ ]]
-	t="$(subst .binlm.gz,.tplm,$(call fix_path, $(filter %/$@, ${LM_PRETRAINED_LMS})))"; \
-		[[ ! -s "$$t" ]] || ln -s "$$t" .
+pretrained_lm_paths = $(foreach f, ${LM_PRETRAINED_LMS}, $(call fix_path, $f))
 
+$(foreach f, ${pretrained_lm_paths}, \
+	$(eval \
+		pretrained.$(notdir $f):  $f) \
+)
 
+$(addprefix pretrained., $(notdir ${pretrained_lm_paths})): SHELL=${GUARD_SHELL}
+$(addprefix pretrained., $(notdir ${pretrained_lm_paths})): pretrained.%: 
+	[[ ! -e $* ]] || [[ -L $* ]] || ! echo "Error: LM $* already exists as a normal file."
+	$(if $(filter-out %.binlm.gz, $*),! echo "Error: Name of pre-trained LM file must end with .binlm.gz: $<")
+	ln -sf $< .
+	[[ ! -d ${<:.binlm.gz=.tplm} ]] || ln -sf ${<:.binlm.gz=.tplm} .
+
+${pretrained_lm_paths}: SHELL=${GUARD_SHELL}
+${pretrained_lm_paths}: %:
+	! echo "Error: Pre-trained LM file $@ does not exist."
 
 ########################################
 # Adds sentence start and end markers
