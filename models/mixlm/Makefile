@@ -146,25 +146,28 @@ ${MIXLM_SRC_MODELS} ${MIXLM_TGT_MODELS}: %.binlm${GZ}:
 	[[ -s "${LM_DIR}/$@" ]] && ln -s "${LM_DIR}/$@" . \
 	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${LM_LANG} TRAIN_LM=$(*:_${LM_LANG}-kn-${ORDER}g=) $@
 
+$(notdir ${MIXLM_PRETRAINED_LMS}): SHELL=${GUARD_SHELL}
+$(notdir ${MIXLM_PRETRAINED_LMS}): %: | pretrained.${SRC_LANG} pretrained.${TGT_LANG} ;
+
 .PHONY: pretrained.${SRC_LANG} pretrained.${TGT_LANG}
 pretrained.${SRC_LANG} pretrained.${TGT_LANG}: SHELL=${GUARD_SHELL}
 pretrained.${SRC_LANG} pretrained.${TGT_LANG}: pretrained.%:
 	${MAKE} -f ${LM_DIR}/Makefile $@ LM_PRETRAINED_TGT_LMS="${MIXLM_PRETRAINED_TGT_LMS}"
 
 .PHONY: mixlm
-mixlm: pretrained.${SRC_LANG} pretrained.${TGT_LANG} $(addsuffix .mixlm, ${TUNE_SETS})
+mixlm: $(addsuffix .mixlm, ${TUNE_SETS})
 
 # Just in case, we will specify that we need the source side sub language
 # models to be present before calculating the distance.
-$(addsuffix .distances, ${TUNE_SETS}): %.distances: ${MIXLM_SRC_MODELS}
+$(addsuffix .distances, ${TUNE_SETS}): %.distances: ${MIXLM_SRC_MODELS} $(notdir ${MIXLM_PRETRAINED_SRC_LMS})
 
 # Just in case, we will specify that we need the target side sub language
 # models to be present before calculating the final mixlm.
-$(addsuffix .mixlm, ${TUNE_SETS}): %.mixlm: ${MIXLM_TGT_MODELS}
+$(addsuffix .mixlm, ${TUNE_SETS}): %.mixlm: ${MIXLM_TGT_MODELS} $(notdir ${MIXLM_PRETRAINED_TGT_LMS})
 
 # We need the lm to generate the components files.
-components_${SRC_LANG}: ${MIXLM_SRC_MODELS}
-components_${TGT_LANG}: ${MIXLM_TGT_MODELS}
+components_${SRC_LANG}: ${MIXLM_SRC_MODELS} $(notdir ${MIXLM_PRETRAINED_SRC_LMS})
+components_${TGT_LANG}: ${MIXLM_TGT_MODELS} $(notdir ${MIXLM_PRETRAINED_TGT_LMS})
 
 
 ########################################
