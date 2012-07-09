@@ -37,6 +37,9 @@ else
 LOWERCASE ?= lc-utf8.pl
 endif
 
+# Uncomment if you don't want to have the source side of your corpora be lowercased.
+#DONT_LOWERCASE_SRC = 1
+
 UTF8 := $(if $(findstring Darwin, ${OSTYPE}),UTF-8,utf8)
 export LC_ALL = en_CA.${UTF8}
 
@@ -251,9 +254,10 @@ tc: ${TC}
 # LOWERCASING.
 # Define what corpora we need in the entire pipeline.
 .PHONY: lc
-HELDOUT_LC += $(foreach r,${HELDOUT_SET},$(call CREATE_REFERENCES, $r))
-$(info HELDOUT_SET refs: ${HELDOUT_LC})
 HELDOUT_LC += $(addsuffix _${SRC_LANG}${LANGX}, ${HELDOUT_SET})
+HELDOUT_REFS = $(foreach r,${HELDOUT_SET},$(call CREATE_REFERENCES, $r))
+HELDOUT_LC += ${HELDOUT_REFS}
+$(info HELDOUT_SET refs: ${HELDOUT_LC})
 LC += ${HELDOUT_LC}
 # Note that will want to compress the TRAIN_SET for space efficiency.
 TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_TM})
@@ -278,6 +282,15 @@ lc: SHELL=${GUARD_SHELL}
 lc: ${LC}
 
 # Construct a lowercased corpora from its aligned version.
+ifdef DONT_LOWERCASE_SRC
+${HELDOUT_REFS}:  %${LANGX}:  %${ALIGNX}
+	@$(check_utf8)
+	ln -s $< $@
+%_${TGT_LANG}${LANGXZ}:  %_${TGT_LANG}${ALIGNX}${GZ}
+	@$(check_utf8)
+	ln -s $< $@
+endif
+
 %${LANGX}: SHELL=${CORPUS_SHELL}
 %${LANGX}: %${ALIGNX}
 	@$(check_utf8)
