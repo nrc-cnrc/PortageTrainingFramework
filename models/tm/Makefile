@@ -722,7 +722,7 @@ unittest_merged_cpt:  unittest_jpts
 # 1 merge_counts
 # 1 train_tm_mixture
 unittest_mix_cpt:  unittest_jpts
-	[[ "`${MAKE} -Bn mix_cpt | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh merge_counts train_tm_mixture)`" =~ "2 6 2 1 1" ]]
+	mkdir -p mixtm && [[ "`${MAKE} -Bn mix_cpt | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh merge_counts train_tm_mixture)`" =~ "2 6 2 1 1" ]]
 
 # 3 align-words
 # 6 cat.sh
