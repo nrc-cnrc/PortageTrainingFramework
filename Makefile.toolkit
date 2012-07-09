@@ -22,6 +22,11 @@ endif
 ########################################
 
 
+# Helper function to create reference files based on a stem.
+# Usage: $(call CREATE_REFERENCES, ${TUNE_RESCORE}[, EXTENSION])
+CREATE_REFERENCES = $(strip $(addprefix $1_${TGT_LANG},$(or $(addsuffix $(or $(strip $2),${LANGX}),$(strip ${REFERENCE_INDICES})),$(or $(strip $2),${LANGX}))))
+
+
 ########################################
 # List of files that should read-only for safety.  Mainly this list
 # should be composed of final targets from a Makefile.
@@ -63,4 +68,41 @@ resource_summary_sub:
 	| xargs time-mem-tally.pl -no-dir -m ${MODULE_NAME} \
 	| second-to-hms.pl \
 	| expand-auto.pl
+
+
+
+
+
+################################################################################
+# UNITTESTS
+.PHONY:  unittest_create_references
+unittest_create_references: unittest_create_references_multiple_1
+unittest_create_references: unittest_create_references_multiple_2
+unittest_create_references: unittest_create_references_single_1
+unittest_create_references: unittest_create_references_single_2
+
+unittest_create_references%:  TGT_LANG=l
+unittest_create_references%:  LANGX=.lc
+
+unittest_create_references_multiple%:  REFERENCE_INDICES=1 2
+.PHONY: unittest_create_references_multiple_1
+# Create multiple references with the default extension.
+unittest_create_references_multiple_1:
+	@[[ "$(call CREATE_REFERENCES, a)" == "a_l1.lc a_l2.lc" ]]
+
+.PHONY: unittest_create_references_multiple_2
+# Create multiple references with a different extehsion.
+unittest_create_references_multiple_2:
+	@[[ "$(call CREATE_REFERENCES, a, .al)" == "a_l1.al a_l2.al" ]]
+
+unittest_create_references_single%:  REFERENCE_INDICES=
+.PHONY: unittest_create_references_single_1
+# Create a single reference with the default extension.
+unittest_create_references_single_1:
+	@[[ "$(call CREATE_REFERENCES, a)" == "a_l.lc" ]]
+
+.PHONY: unittest_create_references_single_2
+# Create a single reference with a different extehsion.
+unittest_create_references_single_2:
+	@[[ "$(call CREATE_REFERENCES, a, .al)" == "a_l.al" ]]
 

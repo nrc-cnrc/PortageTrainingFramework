@@ -31,7 +31,7 @@ MODULE_NAME ?= decode
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
 SRCX  ?= ${RULEX}
-TGTX  ?= _${TGT_LANG}${LANGX}
+TGTX  ?= ${LANGX}
 
 # Untuned decoding model
 UNTUNED_DECODING_MODEL ?= canoe.ini
@@ -54,7 +54,7 @@ TUNE_DECODE     ?= dev1
 # What source file to use for tuning the decoder.
 TUNE_DECODE_SRC  := ${TUNE_DECODE}${SRCX}
 # What reference files to use for tuning the decoder.
-TUNE_DECODE_TGTS  := $(notdir $(wildcard ${CORPORA_DIR}/${TUNE_DECODE}_${TGT_LANG}*${LANGX}))
+TUNE_DECODE_TGTS  := $(call CREATE_REFERENCES, ${TUNE_DECODE})
 
 # Specific PSUB options
 PSUB_OPTS ?= 
@@ -108,10 +108,10 @@ endif
 .DELETE_ON_ERROR:
 
 # Threre are two differents vpath for heldout because in the chinese case for example the src_ext != tgt_ext
-vpath %${SRCX}  ${CORPORA_DIR}
-vpath %${TGTX}  ${CORPORA_DIR}
+vpath %${SRCX}   ${CORPORA_DIR}
+vpath %${TGTX}   ${CORPORA_DIR}
 vpath %${LANGX}  ${CORPORA_DIR}
-vpath %${RULES} ${CORPORA_DIR}
+vpath %${RULES}  ${CORPORA_DIR}
 vpath ${DECODING_MODEL_TEMPLATE} ${TEMPLATE_DIR}
 
 
@@ -268,7 +268,7 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 		-a lmira \
 		--workdir=foos \
 		${MERT_EXTRAS} \
-		-f $<.FILT $(wordlist 2,3,$+) \
+		-f $<.FILT $(wordlist 2,100,$+) \
 		&> log.$@
 	_LOCAL=1 configtool -p args:"`configtool weights $@.FILT`" $< > $@
 	_LOCAL=1 ${RM} -r foos *.FILT.gz *.FILT.bkoff ${UNTUNED_DECODING_MODEL}.FILT ${UNTUNED_DECODING_MODEL}.cow.FILT

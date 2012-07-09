@@ -23,6 +23,11 @@ endif
 SRC_LANG ?= en
 # This is the to/target language (must be two lowercase letters)
 TGT_LANG ?= fr
+# Uncomment if you have multiple references for your heldout.
+# <stem>_<tgt_language>#.al
+# Where # is some reference identifier.
+# i.e. dev_fr1.al, dev_fr2.al, dev_fr3.al & dev_fr4.al
+#REFERENCE_INDICES ?= 1 2 3 4
 
 # Here we specify the stem of the corpora files.
 # Files should look like this: <PREFIX>_<LANGUAGE>.al
@@ -351,6 +356,9 @@ endif
 ifdef DO_CE
 ifeq (${TUNE_CE},)
 $(error When asking for confidence estimation, you must also define a TUNE_CE!)
+endif
+ifneq (${REFERENCE_INDICES},)
+$(error Multiple references is not supported with confidence estimation!)
 endif
 endif
 

@@ -31,7 +31,7 @@ MODULE_NAME ?= rescore
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
 SRCX  ?= _${SRC_LANG}${LANGX}
-TGTX  ?= _${TGT_LANG}${LANGX}
+TGTX  ?= ${LANGX}
 
 # TODO: This may be obsoliete.
 SRC_GIVEN_TGT  = ${TRAIN_TM}.${SRC_LANG}_given_${TGT_LANG}
@@ -61,7 +61,7 @@ CORPORA_DIR ?= ../../corpora
 # Indicates what prefix/file to use for training a rescoring model
 TUNE_RESCORE      ?= dev2
 TUNE_RESCORE_SRC   = ${TUNE_RESCORE}${SRCX}
-TUNE_RESCORE_TGT   = ${TUNE_RESCORE}${TGTX}
+TUNE_RESCORE_TGTS := $(call CREATE_REFERENCES, ${TUNE_RESCORE})
 TUNE_RESCORE_RULE  = ${TUNE_RESCORE}${RULEX}
 
 # Specific PSUB options
@@ -191,7 +191,7 @@ ${UNTUNED_RESCORING_MODEL}: ${RESCORING_MODEL_TEMPLATE}
 train: ${RESCORING_MODEL}
 
 ${RESCORING_MODEL}:  SHELL=${FRAMEWORK_SHELL}
-${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGT}
+${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGTS}
 	@_LOCAL=1 echo "Tuning the rescoring model."
 	RP_PSUB_OPTS="-4 -N $@" \
 	rat.sh \
@@ -204,7 +204,7 @@ ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UN
 		-K ${NBEST_SIZE} \
 		-o $@ \
 		-msrc $< \
-		-f $(wordlist 2,5,$+) \
+		-f $(wordlist 2,100,$+) \
 	>& log.$@
 	_LOCAL=1 ${RM} -r workdir-${TUNE_RESCORE_RULE}-${NBEST_SIZE}best
 

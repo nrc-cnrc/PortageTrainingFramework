@@ -31,7 +31,7 @@ MODULE_NAME ?= translate
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
 SRCX  ?= _${SRC_LANG}${LANGX}
-TGTX  ?= _${TGT_LANG}${LANGX}
+TGTX  ?= ${LANGX}
 RULEX ?= _${SRC_LANG}.rule
 SRCTCX ?= _${SRC_LANG}${ALIGNX}
 TGTTCX ?= _${TGT_LANG}${ALIGNX}
@@ -123,13 +123,16 @@ endif
 
 .DEFAULT_GOAL := help
 .SECONDARY:
+.SECONDEXPANSION:
 .SUFFIXES:
 .DELETE_ON_ERROR:
 
 # Tells make where to find files that we've made in previous scripts/modules.
+vpath %${LANGX} ${CORPORA_DIR}
 vpath %${SRCX}  ${CORPORA_DIR}
 vpath %${TGTX}  ${CORPORA_DIR}
 vpath %${RULEX} ${CORPORA_DIR}
+vpath %${ALIGNX} ${CORPORA_DIR}
 vpath %${SRCTCX} ${CORPORA_DIR}
 vpath %${TGTTCX} ${CORPORA_DIR}
 
@@ -341,7 +344,7 @@ out.bleu: ${OUT_BLEU_DEP}
 
 # Specifing dependencies for calculating BLEU scores for translation coming out
 # of the deconder.
-${OUT_BLEU_DEP}: %.out.bleu: %.out %${TGTX}
+${OUT_BLEU_DEP}: %.out.bleu:  %.out  $$(call CREATE_REFERENCES, $$*)
 
 TC_BLEU_DEP = $(addsuffix .tc.bleu, ${TEST_SET})
 .PHONY: tc.bleu
@@ -350,7 +353,7 @@ tc.bleu: ${TC_BLEU_DEP}
 	@echo "Truecase BLEU scores for $(notdir ${CURDIR})/:"
 	@egrep Human $+
 
-${TC_BLEU_DEP}: %.tc.bleu: %.out.tc %${TGTTCX}
+${TC_BLEU_DEP}: %.tc.bleu:  %.out.tc  $$(call CREATE_REFERENCES, $$*, ${ALIGNX})
 
 .PHONY: out.detok
 out.detok: $(addsuffix .out.detok, ${TEST_SET})
@@ -408,7 +411,7 @@ rat.bleu: ${RAT_BLEU_DEP}
 	@egrep Human $+
 
 # Specifing dependencies for calculating BLEU scores for rescored translations.
-${RAT_BLEU_DEP}: %.rat.bleu: %.rat %${TGTX}
+${RAT_BLEU_DEP}: %.rat.bleu:  %.rat  $$(call CREATE_REFERENCES, $$*)
 
 .PHONY: rat.detok
 rat.detok: $(addsuffix .rat.detok, ${TEST_SET})
@@ -586,8 +589,8 @@ endif
 bleucompare: $(addsuffix .bleucompare, ${TEST_SET})
 
 COMPARE_TO ?= UNDEFINED/
-%.bleucompare: SHELL = ${GUARD_SHELL}
-%.bleucompare: %.out %${TGTX}
+%.bleucompare:  SHELL = ${GUARD_SHELL}
+%.bleucompare:  %.out  $$(call CREATE_REFERENCES, $$*)
 	@bleucompare $(filter %.out, $+) ${COMPARE_TO}/translate/$(filter %.out, $+) REFS $(filter %${TGTX}, $+)
 
 

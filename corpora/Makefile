@@ -251,8 +251,9 @@ tc: ${TC}
 # LOWERCASING.
 # Define what corpora we need in the entire pipeline.
 .PHONY: lc
+HELDOUT_LC += $(foreach r,${HELDOUT_SET},$(call CREATE_REFERENCES, $r))
+$(info HELDOUT_SET refs: ${HELDOUT_LC})
 HELDOUT_LC += $(addsuffix _${SRC_LANG}${LANGX}, ${HELDOUT_SET})
-HELDOUT_LC += $(addsuffix _${TGT_LANG}${LANGX}, ${HELDOUT_SET})
 LC += ${HELDOUT_LC}
 # Note that will want to compress the TRAIN_SET for space efficiency.
 TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_TM})
