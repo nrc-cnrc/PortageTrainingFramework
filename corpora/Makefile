@@ -136,7 +136,7 @@ list_final_output:
 
 # Arrange to run recipes for processing small files using a local shell;
 # otherwise use the FRAMEWORK_SHELL with one CPU for the job.
-SMALL_SETS := ${HELDOUT_SET}
+SMALL_SETS := ${HELDOUT_SET} ${TUNE_MIXTM}
 IS_SMALL_SET = $(findstring $(basename $@), $(addsuffix _${SRC_LANG}, ${SMALL_SETS}) \
                                             $(addsuffix _${TGT_LANG}, ${SMALL_SETS}))
 
@@ -266,6 +266,8 @@ TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXTM})
 TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXTM})
 TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXTM_TRAIN_MIX})
 TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXTM_TRAIN_MIX})
+TM_LC += $(addsuffix _${SRC_LANG}${LANGX}, ${TUNE_MIXTM})
+TM_LC += $(call CREATE_REFERENCE_NAMES, ${TUNE_MIXTM})
 LC += ${TM_LC}
 MIXLM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXLM})
 MIXLM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXLM})
