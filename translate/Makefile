@@ -344,7 +344,7 @@ out.bleu: ${OUT_BLEU_DEP}
 
 # Specifing dependencies for calculating BLEU scores for translation coming out
 # of the deconder.
-${OUT_BLEU_DEP}: %.out.bleu:  %.out  $$(call CREATE_REFERENCES, $$*)
+${OUT_BLEU_DEP}: %.out.bleu:  %.out  $$(call CREATE_REFERENCE_NAMES, $$*)
 
 TC_BLEU_DEP = $(addsuffix .tc.bleu, ${TEST_SET})
 .PHONY: tc.bleu
@@ -353,7 +353,7 @@ tc.bleu: ${TC_BLEU_DEP}
 	@echo "Truecase BLEU scores for $(notdir ${CURDIR})/:"
 	@egrep Human $+
 
-${TC_BLEU_DEP}: %.tc.bleu:  %.out.tc  $$(call CREATE_REFERENCES, $$*, ${ALIGNX})
+${TC_BLEU_DEP}: %.tc.bleu:  %.out.tc  $$(call CREATE_REFERENCE_NAMES, $$*, ${ALIGNX})
 
 .PHONY: out.detok
 out.detok: $(addsuffix .out.detok, ${TEST_SET})
@@ -411,7 +411,7 @@ rat.bleu: ${RAT_BLEU_DEP}
 	@egrep Human $+
 
 # Specifing dependencies for calculating BLEU scores for rescored translations.
-${RAT_BLEU_DEP}: %.rat.bleu:  %.rat  $$(call CREATE_REFERENCES, $$*)
+${RAT_BLEU_DEP}: %.rat.bleu:  %.rat  $$(call CREATE_REFERENCE_NAMES, $$*)
 
 .PHONY: rat.detok
 rat.detok: $(addsuffix .rat.detok, ${TEST_SET})
@@ -590,7 +590,7 @@ bleucompare: $(addsuffix .bleucompare, ${TEST_SET})
 
 COMPARE_TO ?= UNDEFINED/
 %.bleucompare:  SHELL = ${GUARD_SHELL}
-%.bleucompare:  %.out  $$(call CREATE_REFERENCES, $$*)
+%.bleucompare:  %.out  $$(call CREATE_REFERENCE_NAMES, $$*)
 	@bleucompare $(filter %.out, $+) ${COMPARE_TO}/translate/$(filter %.out, $+) REFS $(filter %${TGTX}, $+)
 
 

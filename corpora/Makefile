@@ -255,7 +255,7 @@ tc: ${TC}
 # Define what corpora we need in the entire pipeline.
 .PHONY: lc
 HELDOUT_LC += $(addsuffix _${SRC_LANG}${LANGX}, ${HELDOUT_SET})
-HELDOUT_REFS = $(foreach r,${HELDOUT_SET},$(call CREATE_REFERENCES, $r))
+HELDOUT_REFS = $(foreach r,${HELDOUT_SET},$(call CREATE_REFERENCE_NAMES, $r))
 HELDOUT_LC += ${HELDOUT_REFS}
 $(info HELDOUT_SET refs: ${HELDOUT_LC})
 LC += ${HELDOUT_LC}

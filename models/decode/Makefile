@@ -54,7 +54,7 @@ TUNE_DECODE     ?= dev1
 # What source file to use for tuning the decoder.
 TUNE_DECODE_SRC  := ${TUNE_DECODE}${SRCX}
 # What reference files to use for tuning the decoder.
-TUNE_DECODE_TGTS  := $(call CREATE_REFERENCES, ${TUNE_DECODE})
+TUNE_DECODE_TGTS  := $(call CREATE_REFERENCE_NAMES, ${TUNE_DECODE})
 
 # Specific PSUB options
 PSUB_OPTS ?= 

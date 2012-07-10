@@ -61,7 +61,7 @@ CORPORA_DIR ?= ../../corpora
 # Indicates what prefix/file to use for training a rescoring model
 TUNE_RESCORE      ?= dev2
 TUNE_RESCORE_SRC   = ${TUNE_RESCORE}${SRCX}
-TUNE_RESCORE_TGTS := $(call CREATE_REFERENCES, ${TUNE_RESCORE})
+TUNE_RESCORE_TGTS := $(call CREATE_REFERENCE_NAMES, ${TUNE_RESCORE})
 TUNE_RESCORE_RULE  = ${TUNE_RESCORE}${RULEX}
 
 # Specific PSUB options
