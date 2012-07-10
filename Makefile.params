@@ -23,11 +23,6 @@ endif
 SRC_LANG ?= en
 # This is the to/target language (must be two lowercase letters)
 TGT_LANG ?= fr
-# Uncomment if you have multiple references for your heldout.
-# <stem>_<tgt_language>#.al
-# Where # is some reference identifier.
-# i.e. dev_fr1.al, dev_fr2.al, dev_fr3.al & dev_fr4.al
-#REFERENCE_INDICES ?= 1 2 3 4
 
 # Here we specify the stem of the corpora files.
 # Files should look like this: <PREFIX>_<LANGUAGE>.al
@@ -132,21 +127,15 @@ TEST_SET      ?= test1 test2
 # Uncomment if you have source text, that doesn't have a reference, to translate.
 #TRANSLATE_SET ?=
 
+# Uncomment if you have multiple references for your heldout.
+# <stem>_<tgt_language>#.al
+# Where # is some reference identifier.
+# i.e. dev_fr1.al, dev_fr2.al, dev_fr3.al & dev_fr4.al
+#REFERENCE_INDICES ?= 1 2 3 4
+
 # Define USE_STATIC_MIXLM to translate using the dev1 mixlm weights instead
 # of computing dynamic weights for each test set; this applies to mixlms only.
 #USE_STATIC_MIXLM ?= 1
-
-# The prefix_root where we can find IRSTLM/bin, which must also be on your
-# PATH.  (Only needed if you are using IRSTLM - see next variable.)
-IRSTLM ?= $(PORTAGE)/pkgs/irstlm
-
-# Change LM_TOOLKIT's value depending on the LM toolkit you have.  If you use
-# SRILM or MITLM, their executable scripts and programs must be on your PATH.
-# LM_TOOLKIT={SRI,IRST,MIT} 
-# where SRI  => SRILM toolkit
-#       IRST => IRSTLM toolkit
-#       MIT  => MITLM toolkit
-LM_TOOLKIT = MIT
 
 # Train and apply rescoring if this variable is defined.
 # Comment out to disable rescoring; uncomment to enable.
@@ -191,6 +180,18 @@ DO_TRUECASING = 1
 #MARK_RULE_en ?= canoe-escapes.pl -add
 #MARK_RULE_fr ?= canoe-escapes.pl -add
 #MARK_RULE_ch ?= { chinese_rule_markup.pl | chinese_rule_create.pl; }
+
+# Change LM_TOOLKIT's value depending on the LM toolkit you have.  If you use
+# SRILM or MITLM, their executable scripts and programs must be on your PATH.
+# LM_TOOLKIT={SRI,IRST,MIT} 
+# where SRI  => SRILM toolkit
+#       IRST => IRSTLM toolkit
+#       MIT  => MITLM toolkit
+LM_TOOLKIT = MIT
+
+# The prefix_root where we can find IRSTLM/bin, which must also be on your
+# PATH.  (Only needed if you are using IRSTLM - see next variable.)
+IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 
 # If you are on a cluster that is run-parallel.sh friendly, define the
 # following to force cluster mode.  You normally don't need to do so, though,
@@ -298,6 +299,7 @@ TRAIN_TC := $(strip ${TRAIN_TC})
 # Define the corpora.
 TRAIN_SET    ?= $(sort ${TRAIN_LM} ${TRAIN_TM} ${TRAIN_TC})
 HELDOUT_SET  ?= $(sort ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET} \
+							  ${TUNE_MIXTM} \
                        $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}))
 CORPORA_SET  ?= $(sort ${TRAIN_SET} ${HELDOUT_SET})
 
