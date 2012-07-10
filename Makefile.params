@@ -127,7 +127,8 @@ TEST_SET      ?= test1 test2
 # Uncomment if you have source text, that doesn't have a reference, to translate.
 #TRANSLATE_SET ?=
 
-# Uncomment if you have multiple references for your heldout.
+# Uncomment if you have multiple references for your heldout sets.
+# Note that all dev and test sets must have the same number of references.
 # <stem>_<tgt_language>#.al
 # Where # is some reference identifier.
 # i.e. dev_fr1.al, dev_fr2.al, dev_fr3.al & dev_fr4.al
