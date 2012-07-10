@@ -436,27 +436,27 @@ $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_TM}) $(addsuffix _${TGT_LANG}, ${
 		$(error For your translation model, you must provide $l)))
 
 # Verify the presence of decoder's tuning corpora files.
-$(foreach l, $(addsuffix _${SRC_LANG}, ${TUNE_DECODE}) $(addsuffix _${TGT_LANG}, ${TUNE_DECODE}), \
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TUNE_DECODE}) $(subst ${LANGX},,$(call CREATE_REFERENCE_NAMES, ${TUNE_DECODE})), \
 	$(if $(call  FILE_EXISTS, $l),, \
 		$(error In order to tune the decoder, you must provide $l)))
 
 # Verify the presence of rescoring's tuning corpora files.
-$(foreach l, $(addsuffix _${SRC_LANG}, ${TUNE_RESCORE}) $(addsuffix _${TGT_LANG}, ${TUNE_RESCORE}), \
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TUNE_RESCORE}) $(subst ${LANGX},,$(call CREATE_REFERENCE_NAMES, ${TUNE_RESCORE})), \
 	$(if $(call  FILE_EXISTS, $l),, \
 		$(error In order to tune the rescoring module, you must provide $l)))
 
 # Verify the presence of confidence estimation's tuning corpora files.
-$(foreach l, $(addsuffix _${SRC_LANG}, ${TUNE_CE}) $(addsuffix _${TGT_LANG}, ${TUNE_CE}), \
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TUNE_CE}) $(subst ${LANGX},,$(call CREATE_REFERENCE_NAMES, ${TUNE_CE})), \
 	$(if $(call  FILE_EXISTS, $l),, \
 		$(error In order to tune the confidence estimation module, you must provide $l)))
 
 # Verify the presence of test set's corpora files.
-$(foreach l, $(addsuffix _${SRC_LANG}, ${TEST_SET}) $(addsuffix _${TGT_LANG}, ${TEST_SET}), \
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TEST_SET}) $(subst ${LANGX},,$(foreach t,${TEST_SET},$(call CREATE_REFERENCE_NAMES, $t))), \
 	$(if $(call  FILE_EXISTS, $l),, \
 		$(error In order to test the quality of your system, you must provide $l)))
 
 # Verify the presence of translation set's corpora files.
-$(foreach l, $(addsuffix _${TGT_LANG}, ${TRANSLATE_SET}), \
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TRANSLATE_SET}), \
 	$(if $(call  FILE_EXISTS, $l),, \
 		$(error You must provide $l)))
 
