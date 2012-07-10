@@ -147,7 +147,8 @@ ${MIXLM_SRC_MODELS} ${MIXLM_TGT_MODELS}: %.binlm${GZ}:
 	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${LM_LANG} TRAIN_LM=$(*:_${LM_LANG}-kn-${ORDER}g=) $@
 
 $(notdir ${MIXLM_PRETRAINED_LMS}): SHELL=${GUARD_SHELL}
-$(notdir ${MIXLM_PRETRAINED_LMS}): %: | pretrained.${SRC_LANG} pretrained.${TGT_LANG} ;
+$(notdir ${MIXLM_PRETRAINED_SRC_LMS}): %: | pretrained.${SRC_LANG} ;
+$(notdir ${MIXLM_PRETRAINED_TGT_LMS}): %: | pretrained.${TGT_LANG} ;
 
 .PHONY: pretrained.${SRC_LANG} pretrained.${TGT_LANG}
 pretrained.${SRC_LANG} pretrained.${TGT_LANG}: SHELL=${GUARD_SHELL}
