@@ -98,9 +98,11 @@ TRAIN_TM      ?= tm-train
 # TUNE_DECODE is used to tune the decoding weights (using tune.py).
 TUNE_DECODE   ?= dev1
 # TUNE_DECODE_VARIANTS is used to tune and test using multiple tuning sets.
-# Typically, each variant is a 90% sample subset of the of the TUNE_DECODE set.
+# Typically, each variant is a 90% sample subset of the TUNE_DECODE set.
 # Ex. If TUNE_DECODE is dev1, include "a b" in TUNE_DECODE_VARIANTS to tune 
 #     with dev1a and dev1b in addition to dev1.
+# If variants are specified, 90% sample variants of the tuning set are created
+# automatically in the corpora directory if the variant files do not already exist.
 #TUNE_DECODE_VARIANTS  ?=
 
 # PLIVE_DECODE_VARIANT is used to select which tuning run (which one of

@@ -146,6 +146,28 @@ RP_SHELL_OPTS = $(if  ${IS_SMALL_SET},,RP_PSUB_OPTS="-1")
 TIME_MEM = $(if ${IS_SMALL_SET},,time-mem)
 LOG_STDERR = $(if ${IS_SMALL_SET},,2> log.$(@:${GZ}=))
 
+########################################
+# Create 90% sample subsets of the TUNE_DECODE set for the TUNE_DECODE_VARIANTS
+
+CORPX := $(strip $(if $(wildcard ${TUNE_DECODE}_${SRC_LANG}${RAWX}), ${RAWX}, ${ALIGNX}))
+
+TUNE_VARIANTS_SRC := $(addsuffix _${SRC_LANG}${CORPX}, $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}))
+TUNE_VARIANTS_TGT := $(addsuffix _${TGT_LANG}${CORPX}, $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}))
+
+ifdef TUNE_DECODE_VARIANTS
+ifneq ($(filter $(lastword ${TUNE_DECODE_VARIANTS}), $(join ${TUNE_DECODE_VARIANTS}, $(addprefix ^,1 2 3 4 5 6 7 8 9 0))),)
+$(warning Warning: Only the first 10 generated 90% sample subsets will be unique.)
+endif
+endif
+
+seed = $(strip $(subst $(strip $1)^,,$(filter $(strip $1)^%, $(join ${TUNE_DECODE_VARIANTS}, $(addprefix ^,1 2 3 4 5 6 7 8 9 0)))))
+
+${TUNE_VARIANTS_SRC}: ${TUNE_DECODE}%_${SRC_LANG}${CORPX}: ${TUNE_DECODE}_${SRC_LANG}${CORPX} ${TUNE_DECODE}_${TGT_LANG}${CORPX}
+	sample_parallel_text -c -p 90 -seed 2012$(call seed, $*) -s .sample.$* $+
+	mv ${TUNE_DECODE}_${SRC_LANG}${CORPX}.sample.$* ${TUNE_DECODE}$*_${SRC_LANG}${CORPX}
+	mv ${TUNE_DECODE}_${TGT_LANG}${CORPX}.sample.$* ${TUNE_DECODE}$*_${TGT_LANG}${CORPX}
+
+${TUNE_VARIANTS_TGT}: ${TUNE_DECODE}%_${TGT_LANG}${CORPX}: ${TUNE_DECODE}%_${SRC_LANG}${CORPX} ;
                    
 ########################################
 # TOKENIZATION.
@@ -155,6 +177,11 @@ LOG_STDERR = $(if ${IS_SMALL_SET},,2> log.$(@:${GZ}=))
 
 ## Tokenize source corpora without sentence splitting.
 SRC_RAW_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${SRC_LANG}${RAWX}))
+ifdef TUNE_DECODE_VARIANTS
+ifeq (${CORPX},${RAWX})
+SRC_RAW_LIST += ${TUNE_VARIANTS_SRC}
+endif
+endif
 SRC_TOK_LIST ?= $(SRC_RAW_LIST:${RAWX}=${ALIGNX})
 TOK += ${SRC_TOK_LIST}
 
@@ -167,6 +194,11 @@ ${SRC_TOK_LIST}: %${ALIGNX}: %${RAWX}
 
 ## Tokenize target corpora without sentence splitting.
 TGT_RAW_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${TGT_LANG}${RAWX}))
+ifdef TUNE_DECODE_VARIANTS
+ifeq (${CORPX},${RAWX})
+TGT_RAW_LIST += ${TUNE_VARIANTS_TGT}
+endif
+endif
 TGT_TOK_LIST ?= $(TGT_RAW_LIST:${RAWX}=${ALIGNX})
 TOK += ${TGT_TOK_LIST}
 
