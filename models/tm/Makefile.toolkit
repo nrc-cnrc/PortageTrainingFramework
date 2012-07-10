@@ -228,7 +228,7 @@ ${IBM1_MODEL_PFX}%${L1_GIVEN_L2X}: IBM1_DIR=-r
 ${IBM1_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
 ${IBM1_MODEL_PFX}.%.gz:
 	_LOCAL=1; if [[ -w $@ ]]; then rm $@; fi
-	_LOCAL=1 [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
+	_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
 	RP_PSUB_OPTS="-${IBM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n $(call IBM1_MODEL_PARALLELISM_LEVEL, $+) -pn $(call IBM1_MODEL_WORKERS, $+) \
 		-v ${IBM1_DIR} \
@@ -247,7 +247,7 @@ ${IBM2_MODEL_PFX}%${L1_GIVEN_L2X}: IBM2_DIR=-r
 ${IBM2_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
 ${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	_LOCAL=1; if [[ -w $@ ]]; then rm $@ ${@:.gz=}.pos.gz; fi
-	_LOCAL=1 [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
+	_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
 	RP_PSUB_OPTS="-${IBM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_WORKERS} \
 		-v ${IBM2_DIR} \
@@ -268,7 +268,7 @@ ${HMM1_MODEL_PFX}%${L1_GIVEN_L2X}: HMM1_DIR=-r
 ${HMM1_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
 ${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	_LOCAL=1; if [[ -w $@ ]]; then rm $@ ${@:.gz=}.dist.gz; fi
-	_LOCAL=1 [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
+	_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
 	RP_PSUB_OPTS="-${HMM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_WORKERS} \
 		-v ${HMM1_DIR} \
@@ -289,7 +289,7 @@ ${HMM2_MODEL_PFX}%${L1_GIVEN_L2X}: HMM2_DIR=-r
 ${HMM2_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
 ${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	_LOCAL=1; if [[ -w $@ ]]; then rm $@ ${@:.gz=}.dist.gz; fi
-	_LOCAL=1 [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
+	_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
 	RP_PSUB_OPTS="-${HMM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_WORKERS} \
 		-v ${HMM2_DIR} \
@@ -312,7 +312,7 @@ ${HMM3_MODEL_PFX}%${L1_GIVEN_L2X}: HMM3_DIR=-r
 ${HMM3_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
 ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 	_LOCAL=1; if [[ -w $@ ]]; then rm $@ ${@:.gz=}.dist.gz; fi
-	_LOCAL=1 [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
+	_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
 	RP_PSUB_OPTS="-${HMM3_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
 	${CAT} -n ${HMM3_MODEL_PARALLELISM_LEVEL} -pn ${HMM3_MODEL_WORKERS} \
 		-v ${HMM3_DIR} \
