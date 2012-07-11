@@ -158,13 +158,15 @@ pretrained.${SRC_LANG} pretrained.${TGT_LANG}: pretrained.%:
 .PHONY: mixlm
 mixlm: $(addsuffix .mixlm, ${TUNE_SETS})
 
-# Just in case, we will specify that we need the source side sub language
-# models to be present before calculating the distance.
+# We will specify that we need the source side sub language models to be
+# present before calculating the distance.
 $(addsuffix .distances, ${TUNE_SETS}): %.distances: ${MIXLM_SRC_MODELS} $(notdir ${MIXLM_PRETRAINED_SRC_LMS})
+$(addsuffix .distances, ${TUNE_SETS}): %.distances: %_${SRC_LANG}${LANGX}
 
-# Just in case, we will specify that we need the target side sub language
-# models to be present before calculating the final mixlm.
+# We will specify that we need the target side sub language models to be
+# present before calculating the final mixlm.
 $(addsuffix .mixlm, ${TUNE_SETS}): %.mixlm: ${MIXLM_TGT_MODELS} $(notdir ${MIXLM_PRETRAINED_TGT_LMS})
+$(addsuffix .mixlm, ${TUNE_SETS}): %.mixlm: %_${SRC_LANG}${LANGX}
 
 # We need the lm to generate the components files.
 components_${SRC_LANG}: ${MIXLM_SRC_MODELS} $(notdir ${MIXLM_PRETRAINED_SRC_LMS})

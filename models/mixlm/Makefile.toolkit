@@ -61,13 +61,15 @@ components_%:
 	mx-dist2weights -v normalize $< > $@
 
 
+# The source dev corpus is provided here since mx-mix-models.sh requires it
+# even though the script doesn't use it.
 %.mixlm: SHELL=${GUARD_SHELL}
-%.mixlm: %.weights components_${TGT_LANG} %_${TGT_LANG}${LANGX}
+%.mixlm: %.weights components_${TGT_LANG} %_${SRC_LANG}${LANGX}
 	mx-mix-models.sh \
 		$(if ${MIXLM_MODELS_DIR}, -d ${MIXLM_MODELS_DIR}/) \
 		mixlm \
 		$(filter %.weights, $+) \
 		$(filter components_${TGT_LANG}, $+) \
-		$(filter %_${TGT_LANG}${LANGX}, $+) \
+		$(filter %_${SRC_LANG}${LANGX}, $+) \
 		> $@
 		
