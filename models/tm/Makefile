@@ -577,7 +577,7 @@ ${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
 ${TUNE_MIXTM_FINAL}.%.align.gz: override L1X = _${SRC_LANG}${LANGX}
 ${TUNE_MIXTM_FINAL}.%.align.gz: override L2X = _${TGT_LANG}${LANGX}
 
-$(foreach j, ${MERGED_CPT_JPT_TYPES}, \
+$(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), \
 	$(eval \
 		${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}) \
 	$(eval \
