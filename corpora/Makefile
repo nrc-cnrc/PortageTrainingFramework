@@ -136,7 +136,7 @@ list_final_output:
 
 # Arrange to run recipes for processing small files using a local shell;
 # otherwise use the FRAMEWORK_SHELL with one CPU for the job.
-SMALL_SETS := ${HELDOUT_SET} ${TUNE_MIXTM}
+SMALL_SETS := ${HELDOUT_SET} ${TUNE_MIXTM} ${TUNE_MIXTM_MULTIPLE_REFERENCES}
 IS_SMALL_SET = $(findstring $(basename $@), $(addsuffix _${SRC_LANG}, ${SMALL_SETS}) \
                                             $(addsuffix _${TGT_LANG}, ${SMALL_SETS}))
 
@@ -283,6 +283,29 @@ tc: ${TC}
 
 
 ########################################
+# TUNING MIXTM WITH MULTIPLE REFERENCES
+ifdef TUNE_MIXTM_MULTIPLE_REFERENCES
+MIXTM_LC := ${TUNE_MIXTM}_${SRC_LANG}${LANGX} ${TUNE_MIXTM}_${TGT_LANG}${LANGX}
+LC += ${MIXTM_LC}
+$(info MIXTM_LC: ${MIXTM_LC})
+$(info LC: ${LC})
+
+${TUNE_MIXTM}_${TGT_LANG}${LANGX}:  ${TUNE_MIXTM}_${SRC_LANG}${LANGX}
+	_LOCAL=1 test -s $@ && sleep 1 && touch $@
+
+${TUNE_MIXTM}_${SRC_LANG}${LANGX}:  $(foreach i, ${REFERENCE_INDICES}, ${TUNE_MIXTM_MULTIPLE_REFERENCES}_${SRC_LANG}${LANGX})
+${TUNE_MIXTM}_${SRC_LANG}${LANGX}:  $(call CREATE_REFERENCE_NAMES, ${TUNE_MIXTM_MULTIPLE_REFERENCES})
+	paste \
+		<(zcat -f $(filter %_${SRC_LANG}${LANGX},$+)) \
+		<(zcat -f $(filter-out %_${SRC_LANG}${LANGX},$+)) \
+	| sort --unique \
+	| tee >(cut -f1 > $@) \
+	| cut -f2 > $(@:_${SRC_LANG}${LANGX}=_${TGT_LANG}${LANGX})
+endif
+
+
+
+########################################
 # LOWERCASING.
 # Define what corpora we need in the entire pipeline.
 .PHONY: lc
@@ -298,8 +321,6 @@ TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXTM})
 TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXTM})
 TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXTM_TRAIN_MIX})
 TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXTM_TRAIN_MIX})
-TM_LC += $(addsuffix _${SRC_LANG}${LANGX}, ${TUNE_MIXTM})
-TM_LC += $(call CREATE_REFERENCE_NAMES, ${TUNE_MIXTM})
 LC += ${TM_LC}
 MIXLM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXLM})
 MIXLM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXLM})
@@ -547,6 +568,7 @@ debug:
 	@echo "LM_TOK: ${LM_TOK}"
 	@echo "TC_TOK: ${TC_TOK}"
 	@echo "MIXLM_TOK: ${MIXLM_TOK}"
+	@echo "HELDOUT_SET: ${HELDOUT_SET}"
 
 
 
