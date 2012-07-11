@@ -290,8 +290,9 @@ LC += ${MIXTM_LC}
 $(info MIXTM_LC: ${MIXTM_LC})
 $(info LC: ${LC})
 
+${TUNE_MIXTM}_${TGT_LANG}${LANGX}:  SHELL=${GUARD_SHELL}
 ${TUNE_MIXTM}_${TGT_LANG}${LANGX}:  ${TUNE_MIXTM}_${SRC_LANG}${LANGX}
-	_LOCAL=1 test -s $@ && sleep 1 && touch $@
+	test -s $@ && sleep 1 && touch $@
 
 ${TUNE_MIXTM}_${SRC_LANG}${LANGX}:  $(foreach i, ${REFERENCE_INDICES}, ${TUNE_MIXTM_MULTIPLE_REFERENCES}_${SRC_LANG}${LANGX})
 ${TUNE_MIXTM}_${SRC_LANG}${LANGX}:  $(call CREATE_REFERENCE_NAMES, ${TUNE_MIXTM_MULTIPLE_REFERENCES})
