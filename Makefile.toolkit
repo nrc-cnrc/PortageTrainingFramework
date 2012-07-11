@@ -24,7 +24,7 @@ endif
 
 # Helper function to create reference files based on a stem.
 # Usage: $(call CREATE_REFERENCE_NAMES, ${TUNE_RESCORE}[, EXTENSION])
-CREATE_REFERENCE_NAMES = $(strip $(addprefix $1_${TGT_LANG},$(or $(addsuffix $(or $(strip $2),${LANGX}),$(strip ${REFERENCE_INDICES})),$(or $(strip $2),${LANGX}))))
+CREATE_REFERENCE_NAMES = $(strip $(foreach c,$1,$(addprefix $c_${TGT_LANG},$(or $(addsuffix $(or $(strip $2),${LANGX}),$(strip ${REFERENCE_INDICES})),$(or $(strip $2),${LANGX})))))
 
 
 ########################################
@@ -80,6 +80,7 @@ unittest_create_references: unittest_create_references_multiple_1
 unittest_create_references: unittest_create_references_multiple_2
 unittest_create_references: unittest_create_references_single_1
 unittest_create_references: unittest_create_references_single_2
+unittest_create_references: unittest_create_references_empty
 
 unittest_create_references%:  TGT_LANG=l
 unittest_create_references%:  LANGX=.lc
@@ -105,4 +106,8 @@ unittest_create_references_single_1:
 # Create a single reference with a different extehsion.
 unittest_create_references_single_2:
 	@[[ "$(call CREATE_REFERENCE_NAMES, a, .al)" == "a_l.al" ]]
+
+.PHONY: unittest_create_references_empty
+unittest_create_references_empty:
+	@[[ "$(call CREATE_REFERENCE_NAMES,)" == "" ]]
 
