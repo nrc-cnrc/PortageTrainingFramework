@@ -167,7 +167,8 @@ ${TUNE_VARIANTS_SRC}: ${TUNE_DECODE}%_${SRC_LANG}${CORPX}: ${TUNE_DECODE}_${SRC_
 	mv ${TUNE_DECODE}_${SRC_LANG}${CORPX}.sample.$* ${TUNE_DECODE}$*_${SRC_LANG}${CORPX}
 	mv ${TUNE_DECODE}_${TGT_LANG}${CORPX}.sample.$* ${TUNE_DECODE}$*_${TGT_LANG}${CORPX}
 
-${TUNE_VARIANTS_TGT}: ${TUNE_DECODE}%_${TGT_LANG}${CORPX}: ${TUNE_DECODE}%_${SRC_LANG}${CORPX} ;
+${TUNE_VARIANTS_TGT}: ${TUNE_DECODE}%_${TGT_LANG}${CORPX}: ${TUNE_DECODE}%_${SRC_LANG}${CORPX}
+	touch @
                    
 ########################################
 # TOKENIZATION.
@@ -179,6 +180,7 @@ ${TUNE_VARIANTS_TGT}: ${TUNE_DECODE}%_${TGT_LANG}${CORPX}: ${TUNE_DECODE}%_${SRC
 SRC_RAW_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${SRC_LANG}${RAWX}))
 ifdef TUNE_DECODE_VARIANTS
 ifeq (${CORPX},${RAWX})
+SRC_RAW_LIST := $(filter-out ${TUNE_VARIANTS_SRC}, ${SRC_RAW_LIST})
 SRC_RAW_LIST += ${TUNE_VARIANTS_SRC}
 endif
 endif
@@ -196,6 +198,7 @@ ${SRC_TOK_LIST}: %${ALIGNX}: %${RAWX}
 TGT_RAW_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${TGT_LANG}${RAWX}))
 ifdef TUNE_DECODE_VARIANTS
 ifeq (${CORPX},${RAWX})
+TGT_RAW_LIST := $(filter-out ${TUNE_VARIANTS_TGT}, ${TGT_RAW_LIST})
 TGT_RAW_LIST += ${TUNE_VARIANTS_TGT}
 endif
 endif
