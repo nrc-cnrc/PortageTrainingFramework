@@ -63,6 +63,7 @@ components_%:
 
 # The source dev corpus is provided here since mx-mix-models.sh requires it
 # even though the script doesn't use it.
+# NOTE: the source corpus is listed twice thus we need $^ to only get one of them.
 %.mixlm: SHELL=${GUARD_SHELL}
 %.mixlm: %.weights components_${TGT_LANG} %_${SRC_LANG}${LANGX}
 	mx-mix-models.sh \
@@ -70,6 +71,6 @@ components_%:
 		mixlm \
 		$(filter %.weights, $+) \
 		$(filter components_${TGT_LANG}, $+) \
-		$(filter %_${SRC_LANG}${LANGX}, $+) \
+		$(filter %_${SRC_LANG}${LANGX}, $^) \
 		> $@
 		
