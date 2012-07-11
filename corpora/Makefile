@@ -285,23 +285,21 @@ tc: ${TC}
 ########################################
 # TUNING MIXTM WITH MULTIPLE REFERENCES
 ifdef TUNE_MIXTM_MULTIPLE_REFERENCES
-MIXTM_LC := ${TUNE_MIXTM}_${SRC_LANG}${LANGX} ${TUNE_MIXTM}_${TGT_LANG}${LANGX}
+MIXTM_LC := ${TUNE_MIXTM_MULTIPLE_REFERENCES}_${SRC_LANG}${LANGX} ${TUNE_MIXTM_MULTIPLE_REFERENCES}_${TGT_LANG}${LANGX}
 LC += ${MIXTM_LC}
-$(info MIXTM_LC: ${MIXTM_LC})
-$(info LC: ${LC})
 
-${TUNE_MIXTM}_${TGT_LANG}${LANGX}:  SHELL=${GUARD_SHELL}
-${TUNE_MIXTM}_${TGT_LANG}${LANGX}:  ${TUNE_MIXTM}_${SRC_LANG}${LANGX}
+${TUNE_MIXTM_MULTIPLE_REFERENCES}_${TGT_LANG}${LANGX}:  SHELL=${GUARD_SHELL}
+${TUNE_MIXTM_MULTIPLE_REFERENCES}_${TGT_LANG}${LANGX}:  ${TUNE_MIXTM_MULTIPLE_REFERENCES}_${SRC_LANG}${LANGX}
 	test -s $@ && sleep 1 && touch $@
 
-${TUNE_MIXTM}_${SRC_LANG}${LANGX}:  $(foreach i, ${REFERENCE_INDICES}, ${TUNE_MIXTM_MULTIPLE_REFERENCES}_${SRC_LANG}${LANGX})
-${TUNE_MIXTM}_${SRC_LANG}${LANGX}:  $(call CREATE_REFERENCE_NAMES, ${TUNE_MIXTM_MULTIPLE_REFERENCES})
-	paste \
+${TUNE_MIXTM_MULTIPLE_REFERENCES}_${SRC_LANG}${LANGX}:  $(foreach i, ${REFERENCE_INDICES}, ${TUNE_MIXTM}_${SRC_LANG}${LANGX})
+${TUNE_MIXTM_MULTIPLE_REFERENCES}_${SRC_LANG}${LANGX}:  $(call CREATE_REFERENCE_NAMES, ${TUNE_MIXTM})
+	paste --delimiters= \
 		<(zcat -f $(filter %_${SRC_LANG}${LANGX},$+)) \
 		<(zcat -f $(filter-out %_${SRC_LANG}${LANGX},$+)) \
 	| sort --unique \
-	| tee >(cut -f1 > $@) \
-	| cut -f2 > $(@:_${SRC_LANG}${LANGX}=_${TGT_LANG}${LANGX})
+	| tee >(cut -f1 --delimiter= > $@) \
+	| cut -f2 --delimiter= > $(@:_${SRC_LANG}${LANGX}=_${TGT_LANG}${LANGX})
 endif
 
 

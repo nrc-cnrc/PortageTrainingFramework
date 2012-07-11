@@ -47,10 +47,16 @@ CORPORA_DIR ?= ${TM_DIR_PFX}../../corpora
 # What parallel corpora is to be used for creating the models.
 TRAIN_TM ?= train
 
+# sort is used to remove duplicate or else dependencies are duplicated.
 ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
+ALL_TMS := $(sort ${ALL_TMS})
 
 # We need a dev set for tuning the mixture weights in a mixtm.
 TUNE_MIXTM ?= ${TUNE_DECODE}
+
+# DON'T change the following variable, we need a new variable to hold the
+# corpora stem for train mixture tm.
+TUNE_MIXTM_FINAL := $(or ${TUNE_MIXTM_MULTIPLE_REFERENCES}, ${TUNE_MIXTM})
 
 # This script might produce directory and we want to easily remove them.
 RM := rm -rf
@@ -557,31 +563,31 @@ mix_cpt:
 # for calculating the weights for the mix.
 ${CPT_MIX_PFX}.${L1_2_L2X}:  $(foreach c, ${MIXTM}, ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X}) \
                              $(foreach c, $(notdir ${MIXTM_PRETRAINED_TMS}), $c)
-${CPT_MIX_PFX}.${L1_2_L2X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM}.${JOINTX}
+${CPT_MIX_PFX}.${L1_2_L2X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
 
 ${CPT_MIX_PFX}.${L2_2_L1X}:  $(foreach c, ${MIXTM}, ${MERGED_CPT_PREFIX}.$c.${L2_2_L1X}) \
                              $(foreach c, $(notdir ${MIXTM_PRETRAINED_TMS}), $c)
-${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM}.${JOINTX}
+${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
 
-%.${TUNE_MIXTM}.${JOINTX}: JPT_PARALLELISM_LEVEL=1
-%.${TUNE_MIXTM}.${JOINTX}: GEN_JPT_PARALLEL_OPTIONS=
-%.${TUNE_MIXTM}.${JOINTX}: JPT_MODEL_TYPE=
-%.${TUNE_MIXTM}.${JOINTX}: override L1X = _${SRC_LANG}${LANGX}
-%.${TUNE_MIXTM}.${JOINTX}: override L2X = _${TGT_LANG}${LANGX}
-${TUNE_MIXTM}.%.align.gz: override L1X = _${SRC_LANG}${LANGX}
-${TUNE_MIXTM}.%.align.gz: override L2X = _${TGT_LANG}${LANGX}
+%.${TUNE_MIXTM_FINAL}.${JOINTX}: JPT_PARALLELISM_LEVEL=1
+%.${TUNE_MIXTM_FINAL}.${JOINTX}: GEN_JPT_PARALLEL_OPTIONS=
+%.${TUNE_MIXTM_FINAL}.${JOINTX}: JPT_MODEL_TYPE=
+%.${TUNE_MIXTM_FINAL}.${JOINTX}: override L1X = _${SRC_LANG}${LANGX}
+%.${TUNE_MIXTM_FINAL}.${JOINTX}: override L2X = _${TGT_LANG}${LANGX}
+${TUNE_MIXTM_FINAL}.%.align.gz: override L1X = _${SRC_LANG}${LANGX}
+${TUNE_MIXTM_FINAL}.%.align.gz: override L2X = _${TGT_LANG}${LANGX}
 
 $(foreach j, ${MERGED_CPT_JPT_TYPES}, \
 	$(eval \
-		${JPT_MERGED_PFX}.${TUNE_MIXTM}.${JOINTX}:  ${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM}.${JOINTX}) \
+		${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}) \
 	$(eval \
-		${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM}.${JOINTX}:  ${TUNE_MIXTM}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz) \
+		${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz) \
 	$(eval \
-		${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM}.${JOINTX}:  ${TUNE_MIXTM}${L1} ${TUNE_MIXTM}${L2}) \
+		${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}${L1} ${TUNE_MIXTM_FINAL}${L2}) \
 	$(eval \
-		${TUNE_MIXTM}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${j}_MODEL_PFX}.${MIXTM_TRAIN_MIX}.${L2_GIVEN_L1X} ${${j}_MODEL_PFX}.${MIXTM_TRAIN_MIX}.${L1_GIVEN_L2X}) \
+		${TUNE_MIXTM_FINAL}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${j}_MODEL_PFX}.${MIXTM_TRAIN_MIX}.${L2_GIVEN_L1X} ${${j}_MODEL_PFX}.${MIXTM_TRAIN_MIX}.${L1_GIVEN_L2X}) \
 	$(eval \
-		${TUNE_MIXTM}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM}${L1} ${TUNE_MIXTM}${L2}) \
+		${TUNE_MIXTM_FINAL}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM_FINAL}${L1} ${TUNE_MIXTM_FINAL}${L2}) \
 )
 
 
