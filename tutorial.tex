@@ -782,9 +782,9 @@ purposes, so it's worth saving them.
 
 \subsubsection*{Training Joint-Count Phrase Tables}
 
-With the alignment saved, extracting the joint-count phrase table from the
-parallel corpus is reasonably quick.  The make command issued above should have
-also launched this:
+With the alignment saved, extracting the joint-count phrase table (or JPT) from
+the parallel corpus is reasonably quick.  The make command issued above should
+have also launched this:
 \begin{small}
 \begin{alltt}
    gen-jpt-parallel.sh -n 4 -nw 4 -o jpt.ibm2.tm-train.fr-en.gz -w 1 \bs
@@ -794,14 +794,14 @@ also launched this:
       tm-train.ibm2.fr2en.align.gz >& log.jpt.ibm2.tm-train.fr-en
 \end{alltt}
 \end{small}
-The joint-count phrase table contains the co-occurrence frequency for
-each phrase pair observed in the parallel corpus.
+The JPT contains the co-occurrence frequency for each phrase pair observed in
+the parallel corpus.
 
 \subsubsection*{Training Conditional Phrase Tables}
 
 We used to train conditional phrase tables separately from the IBM2 and the HMM
-joint-count phrase tables, but now we merge them first, so we'll come back to
-this step after doing the HMM models.
+JPT, but now we merge them first, so we'll come back to this step after doing
+the HMM models.
 
 \subsubsection{Creating a Translation Model Using HMM Alignments} \label{HMM}
 
@@ -861,9 +861,8 @@ settings.)
 
 \subsubsection{Creating a Conditional Phrase Table}
 
-Now that we have joint-count phrase tables from our IBM2 and HMM
-word-alignment models, we merge their counts together in a single joint-count
-phrase table.
+Now that we have JPTs from our IBM2 and HMM
+word-alignment models, we merge their counts together in a single JPT.
 \begin{small}
 \begin{alltt}
    > \textbf{make jpt.merged.tm-train.fr-en.gz}
@@ -872,7 +871,7 @@ phrase table.
 \end{alltt}
 \end{small}
 
-Finally we compute the conditional phrase table, using two different
+Finally we compute the conditional phrase table (or CPT), using two different
 smoo\-thers to calculate the probabilities.\footnote{In general, we obtain
 better translation quality when using phrase probabilities estimated from
 occurrence counts (relative frequency, ``RFSmoother'', or a smoothed variant
@@ -1097,15 +1096,219 @@ line of input.  Run \code{parallelize.pl -h} for more details.\tipend
 
 \subsection{Mixture Models and Domain Adaptation} \label{MIX}
 
-TODO
+In the previous sections, we have always assumed that the training data for
+language and translation models forms one whole corpus that is treated together.
+This is often not realistic: you may have data that come from different domains,
+for example data from web material vs. newswire, or separate specialized
+translation memories.  You might also have a large amount of generic data that
+we want to combine with smaller, in-domain data.  There are several ways to
+combine these corpora into a system that is adapted to a particular domain
+while taking advantage of additional training data.
+
+In this section, we discuss the use of mixture language and translation models.
+Mixture models use a linear combination of their component models, which means
+they will give a reasonably high score to translation hypotheses that at least
+one of their components likes.  In contrast, you could use you different
+corpora to create multiple LMs and TMs that are combined in the log-linear
+model: in that case, the models all have to agree that a hypothesis is good
+before it gets a good score.  The linear combination allows the models to be
+used in a kind of fall-back way: if the in-domain model knows the text and
+likes it, we accept it, but if the in-domain model is faced with unseen
+material, we'll still trust the other models and accept text they find
+acceptable.
+
+We assume that you have three domains or translation memories that you will use
+together to create a system specialized for the first domain.  The first set of
+training files, as well as the dev and test sets, come from the primary domain,
+while the other training sets are from the other two domains.
+
+To simulate this scenario, we've added files to
+\url{$PORTAGE/test-suite/tutorial-data/mix}.
+They don't actually come from different domains here, but we'll pretend they do
+for the sake of our tutorial.  You should copy these files into your
+\code{corpora} directory, adding them to the files already there:
+\begin{small}
+\begin{alltt}
+   > \textbf{cp $PORTAGE/test-suite/tutorial-data/mix/*.al* corpora/}
+   > \textbf{ls corpora/*train?_*}
+   corpora/lm-train1_en.al.gz  corpora/tm-train1_en.al.gz
+   corpora/lm-train1_fr.al.gz  corpora/tm-train1_fr.al.gz
+   corpora/lm-train2_en.al.gz  corpora/tm-train2_en.al.gz
+   corpora/lm-train2_fr.al.gz  corpora/tm-train2_fr.al.gz
+   corpora/lm-train3_en.al.gz  corpora/tm-train3_en.al.gz
+   corpora/lm-train3_fr.al.gz  corpora/tm-train3_fr.al.gz
+   \end{alltt}
+\end{small}
 
 \subsubsection{Mixture Language Models} \label{MIXLM}
 
-TODO
+The first mixture models we will look at are the mixture language models.  To
+tell the framework to use them, you should edit \code{Makefile.params} and
+modify the \code{MIXLM} variable to list the stems of the three training sets
+for LMs: \code{lm-train1 lm-train2 lm-train3}.  For Mixture LMs, it's also
+often useful to include an additional language model trained on the union of
+all the corpora together.  Here, \code{lm-train_*} is in fact the union of the
+three pretend domains, so we'll throw in \code{lm-train} at the end of
+\code{MIXLM}:
+\begin{small}
+\begin{alltt}
+   MIXLM = lm-train1 lm-train2 lm-train3 lm-train
+\end{alltt}
+\end{small}
+
+Having done this, you should also comment out the definition of
+\code{TRAIN_LM}, since we'll use the mixture LM instead of the regular LM.
+Unfortunately, doing so disables the default definition of \code{TRAIN_TC}, so
+we need to set that explicitely: \code{TRAIN_TC = lm-train1}.  Here we are
+using the in-domain corpus for truecasing.
+
+With the variables defined as discussed, training of the MixLM is automatic,
+but we'll break it down again.
+\begin{small}
+\begin{alltt}
+   > \textbf{make corpora}
+   [commands to lowercase lm-train?_*]
+   > \textbf{cd models/mixlm}
+   > \textbf{make all}
+   [commands to create lm-train1_fr-kn-5g.lm.gz and .binlm.gz]
+   [commands to create lm-train2_fr-kn-5g.lm.gz and .binlm.gz]
+   [commands to create lm-train3_fr-kn-5g.lm.gz and .binlm.gz]
+   [commands to create lm-train_fr-kn-5g.lm.gz and .binlm.gz]
+   echo "`basename models/mixlm/lm-train1_fr*.binlm.gz` \bs
+         `basename models/mixlm/lm-train2_fr*.binlm.gz` \bs
+         `basename models/mixlm/lm-train3_fr*.binlm.gz` \bs
+         `basename models/mixlm/lm-train_fr*.binlm.gz`" "" \bs
+      | tr " " "\bs{}n" > components_fr
+   mx-calc-distances.sh -v em components_fr ../../corpora/dev1_fr.lc \bs
+      > dev1.distances 2> log.dev1.mixlm
+   mx-dist2weights -v normalize dev1.distances > dev1.weights
+\end{alltt}
+\end{small}
+
+The first command above, \code{make corpora}, forces the framework to do the
+lowercasing of the new files we just added there.  Then \code{make all} does a
+lot of work.  It creates the three per-domain source-side language models, as
+well as the global one.  The source-side language models are used to tune the
+weights of the component LMs in the MixLM: \code{mx-calc-distances.sh} uses the
+EM algorithm to find the component weights that allow the source-side MixLM to
+best model the source side of our dev set, here \code{dev1_fr.lc}.  Since the
+dev set is in domain, we typically expect the in-domain component to get the
+highest weight.
+
+\begin{small}
+\begin{alltt}
+   [... continued from above]
+   [commands to create lm-train1_en-kn-5g.lm.gz and .binlm.gz]
+   [commands to create lm-train2_en-kn-5g.lm.gz and .binlm.gz]
+   [commands to create lm-train3_en-kn-5g.lm.gz and .binlm.gz]
+   [commands to create lm-train_en-kn-5g.lm.gz and .binlm.gz]
+   echo "`basename models/mixlm/lm-train1_en*.binlm.gz` \bs
+         `basename models/mixlm/lm-train2_en*.binlm.gz` \bs
+         `basename models/mixlm/lm-train3_en*.binlm.gz` \bs
+         `basename models/mixlm/lm-train_en*.binlm.gz`" "" \bs
+      | tr " " "\bs{}n" > components_en
+   mx-mix-models.sh mixlm dev1.weights components_en \bs
+      ../../corpora/dev1_en.lc > dev1.mixlm
+\end{alltt}
+\end{small}
+
+Having tuned the weights on the source-side, the target-side component LMs are
+created and the mixture model is written by combining the weights in
+\code{dev1.weights} with the target-side components in \code{components_en}:
+\begin{small}
+\begin{alltt}
+   > \textbf{cat dev1.mixlm}
+   lm-train1_en-kn-5g.binlm.gz     3.50733e-05
+   lm-train2_en-kn-5g.binlm.gz     0.000873166
+   lm-train3_en-kn-5g.binlm.gz     0.287847
+   lm-train_en-kn-5g.binlm.gz      0.711245
+\end{alltt}
+\end{small}
+
+As mentioned earlier, we would have expected the in-domain component to have
+the highest weight.  This didn't actually happen here because our toy data
+violates our assumptions: the EM algorithm recognized that \code{lm-train} is
+actually the best corpus to model the dev set and gave it the highest weight.
+With real data, you should get more reasonable results.
+
+The file \code{dev1.mixlm} is our mixture language model, adapted for the
+dev set \code{dev1}.  When we tune decoder weights, we'll use it as is.  When
+we use this model on new data, we might use the weights tuned on
+\code{dev1}: we call this using a static mixture model, which works well as
+long as the new data is similar enough to the dev data.  Or we might tune
+mixture weights for the new document or test set: we call this using a dynamic
+mixture model because the weights are dynamically adjusted to new text, which
+works well as long as the new document is large enough, containing scores to
+hundreds of sentences.
 
 \subsubsection{Mixture Translation Models} \label{MIXTM}
 
-TODO
+Just as we linearly combine LMs into a mixture language model, we can linearly
+combine TMs that come from several corpora into a mixture translation model.
+To enable this MixTMs in the framework, edit \code{Makefile.params} and set
+\code{MIXTM} to the three per-domain corpora:
+\begin{small}
+\begin{alltt}
+   MIXTM = tm-train1 tm-train2 tm-train3
+\end{alltt}
+\end{small}
+
+For the MixLM, putting the in-domain corpus first was not actually critical,
+but here it is: the word-alignment model from the first corpus is used in a
+special way and it is assumed to be in domain.
+
+As for MixLMs, remove the definition of \code{TRAIN_TM}, since the MixTM
+replaces the regular TM.
+
+\begin{small}
+\begin{alltt}
+   > \textbf{make corpora}
+   [commands to lowercase tm-train?_*]
+   > \textbf{cd models/tm}
+   > \textbf{make all}
+   [commands to create IBM1, IBM2, HMM, and IBM4 models for each component corpus]
+   [commands to create *.align.gz files for each corpus and alignment method]
+   [commands to create jpt.* files for each corpus and alignment method]
+   [commands to create *.align.gz and jpt.* for the dev1 tuning set, for each alignment method]
+   merge_counts jpt.merged.tm-train1.fr-en.gz \bs
+      jpt.ibm4.tm-train1.fr-en.gz jpt.hmm3.tm-train1.fr-en.gz jpt.ibm2.tm-train1.fr-en.gz
+   [repeat merge_counts for tm-train2, tm-train3 and dev1]
+   joint2cond_phrase_tables -prune1w 100 -v -i -z -hmm -1 fr -2 en \bs
+      -s "KNSmoother 3" -s ZNSmoother -multipr fwd \bs
+      -o cpt.merged.hmm3-kn3-zn.tm-train1 \bs
+      -ibm_l2_given_l1  hmm3.tm-train1.en_given_fr.gz \bs
+      -ibm_l1_given_l2  hmm3.tm-train1.fr_given_en.gz \bs
+      -reduce-mem -no-sort jpt.merged.tm-train1.fr-en.gz
+   [repeat joint2cond_phrase_tables for tm-train2 and tm-train3]
+
+   TODO - complete this once the code is fixed.
+
+
+\end{alltt}
+\end{small}
+
+The MixTM training process can be quite slow, because a lot of models and files
+are created, in particular for the full matrix of alignment methods and
+component corpora.  These are created in the same way as in \S\ref{TM}, so we
+left out most of the details here.  As before, \code{merge_counts} is used to
+combine the counts from the JPTs and \code{joint2cond_phrase_tables} is used to
+produce CPTs with probabilities estimated from each component corpus, separately.
+
+TODO complete this.
+
+\subsubsection{Generic and Pre-trained Models} \label{Generic}
+
+Here we assume that all the models are trained locally, in the current
+instance of the framework.  Sometimes, you might have already trained your
+model(s) in other instances of the framework, or they might come from
+generic models for which you don't have the training corpus.  In that case, you
+can add the name of the target-side pre-trained language models in
+\code{.binlm.gz} format to \code{MIXLM_PRETRAINED_TGT_LMS} and they will be
+included in the mixture model.  The source-side pre-trained language models are
+also required, to tune the mixture weights, and should have the same name
+except for the language code.
+
+TODO pretrained tm
 
 \subsection{Optimizing Decoder Weights} \label{COW}
 
@@ -1161,8 +1364,8 @@ you make it.  These are the template parameters it will replace:
 \begin{itemize}
 \item \code{<SL>}:   source language code, e.g. ``fr'';
 \item \code{<TL>}:   target language code, e.g., ``en'';
-\item \code{<CPTS>}: all conditional phrase tables trained above and found
-                     in the \code{models/tm} directory; and
+\item \code{<CPTS>}: all CPTs trained above and found in the
+                     \code{models/tm} directory; and
 \item \code{<LMS>}:  all language models trained trained above and found in
                      the \code{models/lm} directory);
 \item If \code{USE_HLDM} or \code{USE_LDM} is set in \code{Makefile.params},
