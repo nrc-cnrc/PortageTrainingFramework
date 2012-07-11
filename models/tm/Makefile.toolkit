@@ -574,7 +574,7 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 
 ########################################
 # GIZA SPECIFIC TARGETS.
-$(addsuffix /,${ALL_TMS}):  %:
+$(addsuffix /,$(sort ${ALL_TMS})):  %:
 	_LOCAL=1 mkdir -p $@
 
 
