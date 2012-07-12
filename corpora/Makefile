@@ -310,7 +310,6 @@ endif
 ########################################
 # LOWERCASING.
 # Define what corpora we need in the entire pipeline.
-.PHONY: lc
 HELDOUT_LC += $(addsuffix _${SRC_LANG}${LANGX}, ${HELDOUT_SET})
 HELDOUT_REFS = $(foreach r,${HELDOUT_SET},$(call CREATE_REFERENCE_NAMES, $r))
 HELDOUT_LC += ${HELDOUT_REFS}
@@ -337,6 +336,8 @@ ifdef DO_CE
 LM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_LM})
 endif
 LC += ${LM_LC}
+
+.PHONY: lc
 lc: SHELL=${GUARD_SHELL}
 lc: ${LC}
 
@@ -585,6 +586,8 @@ unittest1:  export TRAIN_LM = lm-train
 unittest1:  export TRAIN_TC = tc-train lm-ce
 unittest1:  export TRAIN_TM = tm-train
 unittest1:  export MIXLM = sublm1 sublm2 sublm3
+unittest1:  export DO_CE = 1
+unittest1:  export TC_USE_SRC_MODELS = 1
 unittest1:
 	${MAKE} all
 
