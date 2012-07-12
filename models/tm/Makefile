@@ -572,10 +572,6 @@ ${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
 %.${TUNE_MIXTM_FINAL}.${JOINTX}: JPT_PARALLELISM_LEVEL=1
 %.${TUNE_MIXTM_FINAL}.${JOINTX}: GEN_JPT_PARALLEL_OPTIONS=
 %.${TUNE_MIXTM_FINAL}.${JOINTX}: JPT_MODEL_TYPE=
-%.${TUNE_MIXTM_FINAL}.${JOINTX}: override L1X = _${SRC_LANG}${LANGX}
-%.${TUNE_MIXTM_FINAL}.${JOINTX}: override L2X = _${TGT_LANG}${LANGX}
-${TUNE_MIXTM_FINAL}.%.align.gz: override L1X = _${SRC_LANG}${LANGX}
-${TUNE_MIXTM_FINAL}.%.align.gz: override L2X = _${TGT_LANG}${LANGX}
 
 $(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), \
 	$(eval \
@@ -721,12 +717,14 @@ unittest0: unittest_indicator_cpt
 # 10 cat.sh
 # 2 mgiza
 # 2 train_ibm
+unittest_word_alignment_models:  export MIXTM=
 unittest_word_alignment_models:
 	[[ "`${MAKE} -Bn word_alignment_models | $(call UNITTEST0_FILTER, cat.sh mgiza train_ibm)`" =~ "10 2 2" ]]
 
 # 6 align-words
 # 10 cat.sh
 # 2 mgiza
+unittest_alignment_files:  export MIXTM=
 unittest_alignment_files:  unittest_word_alignment_models
 	[[ "`${MAKE} -Bn alignment_files | $(call UNITTEST0_FILTER, align-words cat.sh mgiza train_ibm)`" =~ "6 10 2" ]]
 
@@ -734,6 +732,7 @@ unittest_alignment_files:  unittest_word_alignment_models
 # 10 cat.sh
 # 6 gen-jpt-parallel.sh
 # 2 mgiza
+unittest_jpts:  export MIXTM=
 unittest_jpts:  unittest_alignment_files
 	[[ "`${MAKE} -Bn jpts | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh mgiza)`" =~ "6 10 6 2" ]]
 
@@ -742,6 +741,7 @@ unittest_jpts:  unittest_alignment_files
 # 6 gen-jpt-parallel.sh
 # 2 mgiza
 # 6 sigprune.sh
+unittest_sigs:  export MIXTM=
 unittest_sigs:  unittest_jpts
 	[[ "`${MAKE} -Bn sigs | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh mgiza sigprune.sh)`" =~ "6 10 6 2 6" ]]
 
@@ -767,6 +767,7 @@ unittest_merged_cpt:  unittest_jpts
 # 2 gen-jpt-parallel.sh
 # 1 merge_counts
 # 1 train_tm_mixture
+unittest_mix_cpt:  export MIXTM=sublm1 sublm2 sublm3
 unittest_mix_cpt:  unittest_jpts
 	mkdir -p mixtm && [[ "`${MAKE} -Bn mix_cpt | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh merge_counts train_tm_mixture)`" =~ "2 6 2 1 1" ]]
 
