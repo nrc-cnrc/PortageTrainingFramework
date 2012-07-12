@@ -1089,36 +1089,42 @@ line of input.  Run \code{parallelize.pl -h} for more details.\tipend
 \subsection{Mixture Models and Domain Adaptation} \label{MIX}
 
 In the previous sections, we have always assumed that the training data for
-language and translation models forms one whole corpus that is treated together.
-This is often not realistic: you may have data that come from different domains,
-for example data from web material vs. newswire, or separate specialized
-translation memories.  You might also have a large amount of generic data that
-we want to combine with smaller, in-domain data.  There are several ways to
-combine these corpora into a system that is adapted to a particular domain
-while taking advantage of additional training data.
+language and translation models consists of a single corpus.  This is often not
+realistic: you may have data that comes from different domains, for example
+data from web material vs. newswire, or from different translation memories.
+You might also have a large amount of generic data that you want to combine
+with smaller, in-domain data.  There are several ways to combine these corpora
+into a system that is adapted to a particular domain while taking advantage of
+data from other domains.
 
 In this section, we discuss the use of mixture language and translation models.
 Mixture models use a linear combination of their component models, which means
-they will give a reasonably high score to translation hypotheses that at least
-one of their components likes.  In contrast, you could use you different
-corpora to create multiple LMs and TMs that are combined in the log-linear
-model: in that case, the models all have to agree that a hypothesis is good
-before it gets a good score.  The linear combination allows the models to be
-used in a kind of fall-back way: if the in-domain model knows the text and
+they will give a reasonably high scores to translation hypotheses that at least
+one of their components likes.  The simple linear combination allows models to
+be used in a kind of fall-back way: if the in-domain model knows the text and
 likes it, we accept it, but if the in-domain model is faced with unseen
 material, we'll still trust the other models and accept text they find
-acceptable.
+acceptable.  In contrast, you could also combine multiple LMs and TMs in the
+log-linear model: in that case, the models all have to agree that a hypothesis
+is good before it gets an overall good score.  Thus, the log-linear combination
+is more like a system where each model has a veto on all decisions.\footnote{Of
+course, this characterisation is over-simplistic: decoder weight tuning
+(\S\ref{COW}) still adjusts how much the decoder will care about each model's
+opinions.}
 
 We assume that you have three domains or translation memories that you will use
 together to create a system specialized for the first domain.  The first set of
-training files, as well as the dev and test sets, come from the primary domain,
-while the other training sets are from the other two domains.
+training files, as well as the dev and test sets, should come from the primary
+domain (in-domain text), while the other training sets are from the other two
+domains (out-of-domain text).  We assume that new text you plan to submit to
+this system will also be in domain.
 
-To simulate this scenario, we've added files to
+To simulate this scenario, we've added three tiny corpora to
 \url{$PORTAGE/test-suite/tutorial-data/mix}.
 They don't actually come from different domains here, but we'll pretend they do
-for the sake of our tutorial.  You should copy these files into your
-\code{corpora} directory, adding them to the files already there:
+for the sake of our tutorial, and we'll pretend only the first one is in
+domain.  You should copy these files into your \code{corpora} directory, adding
+them to the files already there:
 \begin{small}
 \begin{alltt}
    > \textbf{cp $PORTAGE/test-suite/tutorial-data/mix/*.al* corpora/}
@@ -1137,20 +1143,20 @@ This section in the tutorial is meant to replace instructions in \S\ref{LM} and
 both in the same instance of the framework.  If you create both regular LMs and
 TMs as well as mixture LMs and TMs, things will work anyway, but tuning and
 decoding will pick up and use both sets of models.  Under some circumstances
-that is in fact desirable, but in that case it's best to test it by defining
+that is in fact desirable, but in that case it's best to do so by defining
 variables appropriately in the \code{Makefile.params} file, so that training of
 your system can be reproducible.
 
 \subsubsection{Mixture Language Models} \label{MIXLM}
 
-The first mixture models we will look at are the mixture language models.  To
-tell the framework to use them, you should edit \code{Makefile.params} and
-modify the \code{MIXLM} variable to list the stems of the three training sets
-for LMs: \code{lm-train1 lm-train2 lm-train3}.  For Mixture LMs, it's also
-often useful to include an additional language model trained on the union of
-all the corpora together.  Here, \code{lm-train_*} is in fact the union of the
-three pretend domains, so we'll throw in \code{lm-train} at the end of
-\code{MIXLM}:
+The first mixture models we will look at are the mixture language models
+(MixLMs).  To tell the framework to use them, you should edit
+\code{Makefile.params} and modify the \code{MIXLM} variable to list the stems
+of the three training sets for LMs: \code{lm-train1 lm-train2 lm-train3}.  For
+Mixture LMs, it's also often useful to include an additional language model
+trained on the union of all the corpora together.  Here, \code{lm-train} is
+in fact the union of the three pretend domains, so we'll throw in
+\code{lm-train} at the end of \code{MIXLM}:
 \begin{small}
 \begin{alltt}
    MIXLM = lm-train1 lm-train2 lm-train3 lm-train
@@ -1160,11 +1166,11 @@ three pretend domains, so we'll throw in \code{lm-train} at the end of
 Having done this, you should also comment out the definition of
 \code{TRAIN_LM}, since we'll use the mixture LM instead of the regular LM.
 Unfortunately, doing so disables the default definition of \code{TRAIN_TC}, so
-we need to set that explicitely: \code{TRAIN_TC = lm-train1}.  Here we are
-using the in-domain corpus for truecasing.
+we need to set that explicitely: \code{TRAIN_TC = lm-train1}, thus using the
+in-domain corpus for truecasing.
 
 With the variables defined as discussed, training of the MixLM is automatic,
-but we'll break it down again.
+but we'll break it down a bit.
 \begin{small}
 \begin{alltt}
    > \textbf{make corpora}
@@ -1187,7 +1193,7 @@ but we'll break it down again.
 
 The first command above, \code{make corpora}, forces the framework to do the
 lowercasing of the new files we just added there.  Then \code{make all} does a
-lot of work.  It creates the three per-domain source-side language models, as
+lot of work.  It creates the three source-side per-domain language models, as
 well as the global one.  The source-side language models are used to tune the
 weights of the component LMs in the MixLM: \code{mx-calc-distances.sh} uses the
 EM algorithm to find the component weights that allow the source-side MixLM to
@@ -1213,8 +1219,8 @@ highest weight.
 \end{small}
 
 Having tuned the weights on the source-side, the target-side component LMs are
-created and the mixture model is written by combining the weights in
-\code{dev1.weights} with the target-side components in \code{components_en}:
+created and the mixture model is written by pasting the weights in
+\code{dev1.weights} onto the target-side components in \code{components_en}:
 \begin{small}
 \begin{alltt}
    > \textbf{cat dev1.mixlm}
@@ -1227,26 +1233,26 @@ created and the mixture model is written by combining the weights in
 
 As mentioned earlier, we would have expected the in-domain component to have
 the highest weight.  This didn't actually happen here because our toy data
-violates our assumptions: the EM algorithm recognized that \code{lm-train} is
-actually the best corpus to model the dev set and gave it the highest weight.
-With real data, you should get more reasonable results.
+violates our assumptions: the EM algorithm recognized that \code{lm-train} in
+fact better models the dev set and gave it the highest weight.  With real data,
+you should get more reasonable results.
 
 The file \code{dev1.mixlm} is our mixture language model, adapted for the
 dev set \code{dev1}.  When we tune decoder weights, we'll use it as is.  When
 we use this model on new data, we might use the weights tuned on
 \code{dev1}: we call this using a static mixture model, which works well as
 long as the new data is similar enough to the dev data.  Or we might tune
-mixture weights for the new document or test set: we call this using a dynamic
-mixture model because the weights are dynamically adjusted to new text, which
-works well as long as the new document is large enough, containing scores to
-hundreds of sentences.
+mixture weights specifically for the new document or test set: we call this
+using a dynamic mixture model because the weights are dynamically adjusted to
+new text, which works well as long as the new document is large enough,
+containing scores to hundreds of sentences.
 
 \subsubsection{Mixture Translation Models} \label{MIXTM}
 
 Just as we linearly combine LMs into a mixture language model, we can linearly
-combine TMs that come from several corpora into a mixture translation model.
-To enable this MixTMs in the framework, edit \code{Makefile.params} and set
-\code{MIXTM} to the three per-domain corpora:
+combine TMs that come from several corpora into a mixture translation model
+(MixTM).  To enable MixTMs in the framework, edit \code{Makefile.params} and
+set \code{MIXTM} to the three per-domain corpora:
 \begin{small}
 \begin{alltt}
    MIXTM = tm-train1 tm-train2 tm-train3
@@ -1254,11 +1260,11 @@ To enable this MixTMs in the framework, edit \code{Makefile.params} and set
 \end{small}
 
 For the MixLM, putting the in-domain corpus first was not actually critical,
-but here it is: the word-alignment model from the first corpus is used in a
-special way and it is assumed to be in domain.
+but here it is: the word-alignment model from the first corpus is assumed to be
+in domain.
 
-As for MixLMs, remove the definition of \code{TRAIN_TM}, since the MixTM
-replaces the regular TM.
+As with MixLMs, you should remove the definition of \code{TRAIN_TM}, since the
+MixTM replaces the regular TM.
 
 \begin{small}
 \begin{alltt}
@@ -1283,21 +1289,24 @@ replaces the regular TM.
 \end{alltt}
 \end{small}
 
-The MixTM training process can be quite slow, because a lot of models and files
-are created, in particular for the full matrix of alignment methods and
-component corpora.  These are created in the same way as in \S\ref{TM}, so we
-left out most of the details here: create word-alignment models; use them to
-word-align the corpora; generate JPTs; combine the counts from the JPTs and
-finish with \code{joint2cond_phrase_tables} to produce CPTs with probabilities
-estimated from each component corpus, separately.
+The MixTM training process can take a long time, because a lot of models and
+files are created, in particular, separate alignment and JPT files are created
+for the full matrix of alignment methods and component corpora.  These are
+created in the same way as in \S\ref{TM}, so we left out most of the details
+here: create word-alignment models; use them to word-align the corpora;
+generate JPTs; combine the counts from the JPTs and finish with
+\code{joint2cond_phrase_tables} to produce CPTs with probabilities estimated
+from each component corpus, separately.
 
-Note that make might not run the commands in the order shown here: we've
-reordered them to be help the discussion.
+Note that \code{make} might not run the commands in the order shown here: we've
+reordered them to be simplify the discussion, but the end-result should be the
+same.
 
 \begin{small}
 \begin{alltt}
    [... continued from above]
-   [commands to create *.align.gz and jpt.* for the dev1 tuning set, for each alignment method]
+   [commands to create *.align.gz and jpt.* for the dev1 set, using IBM2 and
+    HMM3 models from tm-train1, assumed to be in domain]
    merge_counts jpt.merged.dev1.fr-en.gz jpt.hmm3.dev1.fr-en.gz jpt.ibm2.dev1.fr-en.gz
    train_tm_mixture -v -o cpt.mix.fr2en.gz \bs
       cpt.merged.hmm3-kn3-zn.tm-train1.fr2en.gz cpt.merged.hmm3-kn3-zn.tm-train2.fr2en.gz \bs
@@ -1308,11 +1317,14 @@ reordered them to be help the discussion.
 
 Now that we have one CPT for each component corpus, we need to determine how to
 weigh them in the linear combination.  We generate another JPT, this one on our
-dev set, and use the EM algorithm (as for MixLMs) to find weights that
-maximize the probability of the phrase pairs in the dev JPT according to the
-mixture model.  The final result should give higher weights to components that
-are in-domain or closely related, while keeping all information from
-out-of-domain or generic components and thus making it available to the decoder.
+dev set, using the word-alignment models from the in-domain
+component.\footnote{We can't use the dev set itself to create these
+word-alignment models, because it is much too small for that purpose.  That's
+why we need to assume the first component is in domain.}  Then we use the EM
+algorithm (as for MixLMs) to find weights that maximize the probability of the
+phrase pairs in the dev JPT according to the mixture model.  The final result
+should give higher weights to components that are in-domain or closely related,
+while keeping all information from out-of-domain or generic components.
 
 The result of this combination is written to \code{cpt.mix.fr2en.gz}, in
 the standard CPT format, so that the decoder does not need to be aware that
@@ -1320,10 +1332,10 @@ this is a MixTM rather than a regular TM.
 
 \subsubsection{Generic and Pre-trained Models} \label{Generic}
 
-Here we assume that all the models are trained locally, in the current instance
-of the framework.  Sometimes, you might have models already trained in other
-instances of the framework, or coming from generic models for which you may not
-have the training corpus.  In that case, you can add the name of the
+So far we assumed that all the models are trained locally, in the current
+instance of the framework.  Sometimes, you might have models already trained in
+other instances of the framework, or coming from generic models for which you
+may not have the training corpus.  In that case, you can add the name of the
 target-side pre-trained language models in \code{.binlm.gz} format to
 \code{MIXLM_PRETRAINED_TGT_LMS} and they will be included in the mixture
 language model.  The source-side pre-trained language models are also required,
@@ -1331,12 +1343,12 @@ to tune the mixture weights, and should have the same name except for the
 language code.
 
 Similarly, generic phrase tables and pre-trained phrase tables from other
-domains or translation memories can be included in your MixTMs by adding the
-names of the of the CPT files to \code{MIXTM_PRETRAINED_TMS}.  In this case all
-the CPTs (the one trained in the framework and the pre-trained ones) have the
-same number of scores, which is four by default in the framework, as discussed
-in \S\ref{TM}.  Also, the in-domain phrase table cannot be pre-trained, its
-corpus must still be the first one listed in \code{MIXTM}.
+domains can be included in your MixTMs by adding the name(s) of the of the CPT
+file(s) to \code{MIXTM_PRETRAINED_TMS}.  In this case all the CPTs (the one
+trained in the framework and the pre-trained ones) must have the same number of
+scores, which is four by default in the framework, as discussed in \S\ref{TM}.
+Also, the in-domain phrase table cannot be pre-trained, its corpus must still
+be the first one listed in \code{MIXTM}.
 
 \subsection{Optimizing Decoder Weights} \label{COW}
 
