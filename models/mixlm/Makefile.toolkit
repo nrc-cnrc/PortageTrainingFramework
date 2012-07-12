@@ -43,6 +43,7 @@ components_%:
 		| tr " " "\n" > $@
 
 
+# NOTE: the source corpus is listed twice thus we need $^ to only get one of them.
 %.distances: SHELL=${FRAMEWORK_SHELL}
 %.distances: components_${SRC_LANG} %_${SRC_LANG}${LANGX}
 	RP_PSUB_OPTS="-${MIXLM_CPUS} -N $@" \
@@ -52,7 +53,7 @@ components_%:
 		$(if ${MIXLM_MODELS_DIR}, -d ${MIXLM_MODELS_DIR}/) \
 		em \
 		$(filter components_${SRC_LANG}, $+) \
-		$(filter %_${SRC_LANG}${LANGX}, $+) \
+		$(filter %_${SRC_LANG}${LANGX}, $^) \
 		> $@ 2> log.$*.mixlm
 
 
