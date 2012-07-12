@@ -398,6 +398,11 @@ For the sake of brevity, when we quote executed commands in this document, we
 only show the command itself, leaving out \code{time-mem} and the control
 variables mentioned above.
 
+Most commands in the framework produce logs called
+\code{log.\emph{output-file-name}}.  If you encounter errors, look for
+explanations in these log files, that's usually where the error messages will
+end up.  Again, for brevity, we don't show these log files in this document.
+
 \subsection{Lowercasing and Adding Escapes} \label{Lowercasing}
 
 To reduce data sparseness, we convert all files to lowercase.\footnote{We show
@@ -477,10 +482,8 @@ model:
    make -C lm all LM_LANG=en
    Creating ARPA text format lm-train_en-kn-5g.lm.gz
    ngram-count -interpolate -kndiscount -order 5 \bs
-      -text ../../corpora/lm-train_en.lc.gz -lm lm-train_en-kn-5g.lm.gz \bs
-      >& log.lm-train_en-kn-5g.lm
-   arpalm2binlm lm-train_en-kn-5g.lm.gz lm-train_en-kn-5g.binlm.gz \bs
-      >& log.lm-train_en-kn-5g.binlm
+      -text ../../corpora/lm-train_en.lc.gz -lm lm-train_en-kn-5g.lm.gz
+   arpalm2binlm lm-train_en-kn-5g.lm.gz lm-train_en-kn-5g.binlm.gz
 \end{alltt}
 \end{small}
 The first command executed, \code{ngram-count}, produces the language model
@@ -503,9 +506,8 @@ model needed for this example, \code{lm-train_en-kn-5g.binlm.gz}:
       | perl -ple 's/^{\bs}s*(.*?){\bs}s*$/$1/; s/{\bs}s+/ /g;' \bs
       | perl -ne 'BEGIN\{$M=4095\} $l=$_; while(length($l)>$M [...]' \bs
       | estimate-ngram -order 5 -smoothing ModKN -text /dev/stdin \bs
-        -write-lm lm-train_en-kn-5g.lm.gz >& log.lm-train_en-kn-5g.lm
-   arpalm2binlm lm-train_en-kn-5g.lm.gz lm-train_en-kn-5g.binlm.gz \bs
-      >& log.lm-train_en-kn-5g.binlm
+        -write-lm lm-train_en-kn-5g.lm.gz
+   arpalm2binlm lm-train_en-kn-5g.lm.gz lm-train_en-kn-5g.binlm.gz
 \end{alltt}
 \end{small}
 The first command executed, \code{estimate-ngram}, produces the language model
@@ -566,7 +568,7 @@ improve readability.
    make -C tc all
    zcat -f ../../corpora/lm-train_en.tc.gz \bs
         | perl -ne 'use encoding "UTF-8"; s/^[^[:lower:]]+$/{\bs}n/; print $_ unless /^$/;' \bs
-        | utokenize.pl -pretok -paraline -ss -p -lang=en 2> log.lm-train_en.tokss \bs
+        | utokenize.pl -pretok -paraline -ss -p -lang=en \bs
         | gzip > lm-train_en.tokss.gz
 \end{alltt}
 \end{small}
@@ -605,7 +607,7 @@ depend on your LM toolkit.
 \begin{small}
 \begin{alltt}
    normc1 -ignore 1 -extended -notitle -loc en_CA.UTF-8 lm-train_en.nc1.binlm.gz \bs
-        lm-train_en.tokss.gz 2> log.lm-train_en.nc1 \bs
+        lm-train_en.tokss.gz \bs
         | perl -pe 's/(.)$/$1 /; s/(.){\bs}n/$1/' | gzip > lm-train_en.nc1.gz
 \end{alltt}
 \end{small}
@@ -616,7 +618,7 @@ Next, \code{normc1} uses the case-normalizing LM to produce
 \begin{small}
 \begin{alltt}
    zcat -f lm-train_en.nc1.gz |  utf8_casemap -c l \bs
-        | compile_truecase_map lm-train_en.nc1.gz - 2> log.lm-train_en.map > lm-train_en.map
+        | compile_truecase_map lm-train_en.nc1.gz - > lm-train_en.map
 \end{alltt}
 \end{small}
 
@@ -640,7 +642,7 @@ the normalized-case corpus.
 \begin{small}
 \begin{alltt}
    zcat -f ../../corpora/lm-train_fr.al.gz \bs
-        | utokenize.pl -pretok -paraline -ss -lang=fr 2> log.lm-train_fr.tokss \bs
+        | utokenize.pl -pretok -paraline -ss -lang=fr \bs
         | perl -pe 'use encoding "UTF-8"; s/^[^[:lower:]]+($|( : ))//;' \bs
         | gzip > lm-train_fr.tokss.gz
    zcat -f lm-train_fr.tokss.gz | filter-nc1.py -enc UTF-8 \bs
@@ -702,20 +704,16 @@ as a prerequisite.  We do this for both directions.
 \begin{alltt}
    > \textbf{cd models/tm}
    > \textbf{make ibm2_model}
-   cat.sh -n 4 -pn 4 -v -n1 5 -n2 0 -bin ibm1.tm-train.en_given_fr.gz
-      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
-      >& log.ibm1.tm-train.en_given_fr
+   cat.sh -n 4 -pn 4 -v -n1 5 -n2 0 -bin ibm1.tm-train.en_given_fr.gz \bs
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz
    cat.sh -n 4 -pn 4 -v -r -n1 5 -n2 0 -bin ibm1.tm-train.fr_given_en.gz \bs
-      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
-      >& log.ibm1.tm-train.fr_given_en
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz
    cat.sh -n 4 -pn 4 -v -n1 0 -n2 5 -slen 20 -tlen 20 -bksize 20 \bs
       -bin -i ibm1.tm-train.en_given_fr.gz ibm2.tm-train.en_given_fr.gz \bs
-      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
-      >& log.ibm2.tm-train.en_given_fr
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz
    cat.sh -n 4 -pn 4 -v -r -n1 0 -n2 5 -slen 20 -tlen 20 -bksize 20 \bs
       -bin -i ibm1.tm-train.fr_given_en.gz ibm2.tm-train.fr_given_en.gz \bs
-      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
-      >& log.ibm2.tm-train.fr_given_en
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz
 \end{alltt}
 \end{small}
 The \code{train_ibm} program could have been used directly, but we use
@@ -754,7 +752,7 @@ summarize at any level just as you can globally:
       log.ibm1.tm-train.fr_given_en:TIME-MEM  WALL TIME: 1m0s   CPU TIME: 28s   VSZ: 0.099G  RSS: 0.013G
       log.ibm2.tm-train.en_given_fr:TIME-MEM  WALL TIME: 57s    CPU TIME: 24s   VSZ: 0.099G  RSS: 0.012G
       log.ibm2.tm-train.fr_given_en:TIME-MEM  WALL TIME: 58s    CPU TIME: 24s   VSZ: 0.099G  RSS: 0.014G
-   tm:TIME-MEM                             WALL TIME: 3m58s  CPU TIME: 1m44s VSZ: 0.102G  RSS: 0.014G
+   tm:TIME-MEM                                WALL TIME: 3m58s  CPU TIME: 1m44s VSZ: 0.102G  RSS: 0.014G
 \end{alltt}
 \end{footnotesize}
 
@@ -775,7 +773,7 @@ purposes, so it's worth saving them.
    > \textbf{make ibm2_jpt}
    align-words -o sri -ibm 2 ibm2.tm-train.en_given_fr.gz  ibm2.tm-train.fr_given_en.gz \bs
       ./../../corpora/tm-train_fr.lc.gz ./../../corpora/tm-train_en.lc.gz \bs
-      2> log.tm-train.ibm2.fr2en.align | gzip > tm-train.ibm2.fr2en.align.gz
+      | gzip > tm-train.ibm2.fr2en.align.gz
    [...]
 \end{alltt}
 \end{small}
@@ -791,7 +789,7 @@ have also launched this:
       GPT -v -m 8 -1 fr -2 en -ext
       ibm2.tm-train.en_given_fr.gz ibm2.tm-train.fr_given_en.gz \bs
       ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
-      tm-train.ibm2.fr2en.align.gz >& log.jpt.ibm2.tm-train.fr-en
+      tm-train.ibm2.fr2en.align.gz
 \end{alltt}
 \end{small}
 The JPT contains the co-occurrence frequency for each phrase pair observed in
@@ -821,21 +819,19 @@ variant instead.
    cat.sh -n 4 -pn 4 -v -n1 0 -n2 5 -hmm -end-dist -anchor \bs
       -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 -bin \bs
       -i ibm1.tm-train.en_given_fr.gz hmm3.tm-train.en_given_fr.gz \bs
-      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
-      >& log.hmm3.tm-train.en_given_fr
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz
    cat.sh -n 4 -pn 4 -v -r -n1 0 -n2 5 -hmm -end-dist -anchor \bs
       -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 -bin \bs
       -i ibm1.tm-train.fr_given_en.gz hmm3.tm-train.fr_given_en.gz \bs
-      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
-      >& log.hmm3.tm-train.fr_given_en
+      ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz
    align-words -o sri -hmm hmm3.tm-train.en_given_fr.gz hmm3.tm-train.fr_given_en.gz \bs
       ./../../corpora/tm-train_fr.lc.gz ./../../corpora/tm-train_en.lc.gz \bs
-      2> log.tm-train.hmm3.fr2en.align | gzip > tm-train.hmm3.fr2en.align.gz
+      | gzip > tm-train.hmm3.fr2en.align.gz
    gen-jpt-parallel.sh -n 4 -nw 4 -o jpt.hmm3.tm-train.fr-en.gz -w 1 \bs
       GPT -v -m 8 -hmm -1 fr -2 en -ext \bs
       hmm3.tm-train.en_given_fr.gz hmm3.tm-train.fr_given_en.gz \bs
       ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
-      tm-train.hmm3.fr2en.align.gz >& log.jpt.hmm3.tm-train.fr-en
+      tm-train.hmm3.fr2en.align.gz
 \end{alltt}
 \end{small}
 
@@ -893,8 +889,7 @@ models, whose relative weights will be tuned during decoder weight optimization
       -s "KNSmoother 3" -s ZNSmoother -multipr fwd -o cpt.merged.hmm3-kn3-zn.tm-train \bs
       -ibm_l2_given_l1 hmm3.tm-train.en_given_fr.gz \bs
       -ibm_l1_given_l2 hmm3.tm-train.fr_given_en.gz \bs
-      -reduce-mem -no-sort jpt.merged.tm-train.fr-en.gz \bs
-      >& log.cpt.merged.hmm3-kn3-zn.tm-train.fr2en
+      -reduce-mem -no-sort jpt.merged.tm-train.fr-en.gz
 \end{alltt}
 \end{small}
 The phrase table \code{cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz} is the main source
@@ -998,7 +993,7 @@ run \code{make indicator_cpt}:
       -dir fwd -o cpt.PI-kn3-zn.hmm3 \bs
       -ibm_l2_given_l1  hmm3.tm-train.en_given_fr.gz \bs
       -ibm_l1_given_l2  hmm3.tm-train.fr_given_en.gz \bs
-      j2m/ibm4 j2m/hmm3 j2m/ibm2 &> log.cpt.PI-kn3-zn.hmm3.fr2en
+      j2m/ibm4 j2m/hmm3 j2m/ibm2
 \end{alltt}
 \end{small}
 
@@ -1051,16 +1046,13 @@ above, the first step is repeated for each phrase table.
       -merge 'merge_multi_column_counts -' \bs
       'dmcount -ext -v -m 8 -hier \bs
          ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
-         ../tm/tm-train.hmm3.fr2en.align.gz > hldm.hmm3.counts.gz' \bs
-      >& log.hldm.hmm3.counts
-   parallelize.pl [...] 'dmcount [...] > hldm.ibm2.counts.gz' \bs
-      >& log.hldm.ibm2.counts
-   parallelize.pl [...] 'dmcount [...] > hldm.ibm4.counts.gz' \bs
-      >& log.hldm.ibm4.counts
+         ../tm/tm-train.hmm3.fr2en.align.gz > hldm.hmm3.counts.gz'
+   parallelize.pl [...] 'dmcount [...] > hldm.ibm2.counts.gz'
+   parallelize.pl [...] 'dmcount [...] > hldm.ibm4.counts.gz'
    merge_multi_column_counts -fillup - \bs
       hldm.ibm4.counts.gz hldm.hmm3.counts.gz hldm.ibm2.counts.gz \bs
       | dmestm -s -g hldm.ibm4+hmm3+ibm2.fr2en.bkoff \bs
-        -wtu 5 -wtg 5 -wt1 5 -wt2 5 2> log.hldm.ibm4+hmm3+ibm2.fr2en \bs
+        -wtu 5 -wtg 5 -wt1 5 -wt2 5 \bs
       | gzip > hldm.ibm4+hmm3+ibm2.fr2en.gz
 \end{alltt}
 \end{small}
@@ -1140,6 +1132,15 @@ for the sake of our tutorial.  You should copy these files into your
    \end{alltt}
 \end{small}
 
+This section in the tutorial is meant to replace instructions in \S\ref{LM} and
+\S\ref{TM}: you should follow the instructions there or here, but ideally not
+both in the same instance of the framework.  If you create both regular LMs and
+TMs as well as mixture LMs and TMs, things will work anyway, but tuning and
+decoding will pick up and use both sets of models.  Under some circumstances
+that is in fact desirable, but in that case it's best to test it by defining
+variables appropriately in the \code{Makefile.params} file, so that training of
+your system can be reproducible.
+
 \subsubsection{Mixture Language Models} \label{MIXLM}
 
 The first mixture models we will look at are the mixture language models.  To
@@ -1179,8 +1180,7 @@ but we'll break it down again.
          `basename models/mixlm/lm-train3_fr*.binlm.gz` \bs
          `basename models/mixlm/lm-train_fr*.binlm.gz`" "" \bs
       | tr " " "\bs{}n" > components_fr
-   mx-calc-distances.sh -v em components_fr ../../corpora/dev1_fr.lc \bs
-      > dev1.distances 2> log.dev1.mixlm
+   mx-calc-distances.sh -v em components_fr ../../corpora/dev1_fr.lc > dev1.distances
    mx-dist2weights -v normalize dev1.distances > dev1.weights
 \end{alltt}
 \end{small}
@@ -1269,10 +1269,10 @@ replaces the regular TM.
    [commands to create IBM1, IBM2, HMM, and IBM4 models for each component corpus]
    [commands to create *.align.gz files for each corpus and alignment method]
    [commands to create jpt.* files for each corpus and alignment method]
-   [commands to create *.align.gz and jpt.* for the dev1 tuning set, for each alignment method]
    merge_counts jpt.merged.tm-train1.fr-en.gz \bs
       jpt.ibm4.tm-train1.fr-en.gz jpt.hmm3.tm-train1.fr-en.gz jpt.ibm2.tm-train1.fr-en.gz
-   [repeat merge_counts for tm-train2, tm-train3 and dev1]
+   [repeat merge_counts for tm-train2, tm-train3]
+
    joint2cond_phrase_tables -prune1w 100 -v -i -z -hmm -1 fr -2 en \bs
       -s "KNSmoother 3" -s ZNSmoother -multipr fwd \bs
       -o cpt.merged.hmm3-kn3-zn.tm-train1 \bs
@@ -1280,35 +1280,63 @@ replaces the regular TM.
       -ibm_l1_given_l2  hmm3.tm-train1.fr_given_en.gz \bs
       -reduce-mem -no-sort jpt.merged.tm-train1.fr-en.gz
    [repeat joint2cond_phrase_tables for tm-train2 and tm-train3]
-
-   TODO - complete this once the code is fixed.
-
-
 \end{alltt}
 \end{small}
 
 The MixTM training process can be quite slow, because a lot of models and files
 are created, in particular for the full matrix of alignment methods and
 component corpora.  These are created in the same way as in \S\ref{TM}, so we
-left out most of the details here.  As before, \code{merge_counts} is used to
-combine the counts from the JPTs and \code{joint2cond_phrase_tables} is used to
-produce CPTs with probabilities estimated from each component corpus, separately.
+left out most of the details here: create word-alignment models; use them to
+word-align the corpora; generate JPTs; combine the counts from the JPTs and
+finish with \code{joint2cond_phrase_tables} to produce CPTs with probabilities
+estimated from each component corpus, separately.
 
-TODO complete this.
+Note that make might not run the commands in the order shown here: we've
+reordered them to be help the discussion.
+
+\begin{small}
+\begin{alltt}
+   [... continued from above]
+   [commands to create *.align.gz and jpt.* for the dev1 tuning set, for each alignment method]
+   merge_counts jpt.merged.dev1.fr-en.gz jpt.hmm3.dev1.fr-en.gz jpt.ibm2.dev1.fr-en.gz
+   train_tm_mixture -v -o cpt.mix.fr2en.gz \bs
+      cpt.merged.hmm3-kn3-zn.tm-train1.fr2en.gz cpt.merged.hmm3-kn3-zn.tm-train2.fr2en.gz \bs
+      cpt.merged.hmm3-kn3-zn.tm-train3.fr2en.gz jpt.merged.dev1.fr-en.gz
+   ln -sf mixtm/cpt.mix.fr2en.gz .
+\end{alltt}
+\end{small}
+
+Now that we have one CPT for each component corpus, we need to determine how to
+weigh them in the linear combination.  We generate another JPT, this one on our
+dev set, and use the EM algorithm (as for MixLMs) to find weights that
+maximize the probability of the phrase pairs in the dev JPT according to the
+mixture model.  The final result should give higher weights to components that
+are in-domain or closely related, while keeping all information from
+out-of-domain or generic components and thus making it available to the decoder.
+
+The result of this combination is written to \code{cpt.mix.fr2en.gz}, in
+the standard CPT format, so that the decoder does not need to be aware that
+this is a MixTM rather than a regular TM.
 
 \subsubsection{Generic and Pre-trained Models} \label{Generic}
 
-Here we assume that all the models are trained locally, in the current
-instance of the framework.  Sometimes, you might have already trained your
-model(s) in other instances of the framework, or they might come from
-generic models for which you don't have the training corpus.  In that case, you
-can add the name of the target-side pre-trained language models in
-\code{.binlm.gz} format to \code{MIXLM_PRETRAINED_TGT_LMS} and they will be
-included in the mixture model.  The source-side pre-trained language models are
-also required, to tune the mixture weights, and should have the same name
-except for the language code.
+Here we assume that all the models are trained locally, in the current instance
+of the framework.  Sometimes, you might have models already trained in other
+instances of the framework, or coming from generic models for which you may not
+have the training corpus.  In that case, you can add the name of the
+target-side pre-trained language models in \code{.binlm.gz} format to
+\code{MIXLM_PRETRAINED_TGT_LMS} and they will be included in the mixture
+language model.  The source-side pre-trained language models are also required,
+to tune the mixture weights, and should have the same name except for the
+language code.
 
-TODO pretrained tm
+Similarly, generic phrase tables and pre-trained phrase tables from other
+domains or translation memories can be included in your MixTMs by adding the
+names of the of the CPT files to \code{MIXTM_PRETRAINED_TMS}.  In this case all
+the CPTs (the one trained in the framework and the pre-trained ones) have the
+same number of scores, which is four by default in the framework, as discussed
+in \S\ref{TM}.  Also, the in-domain phrase table cannot be pre-trained, its
+corpus must still be the first one listed in \code{MIXTM}.
 
 \subsection{Optimizing Decoder Weights} \label{COW}
 
@@ -1475,11 +1503,9 @@ them all.} Here we call the temporary directory \code{foos}, and we use the
 \begin{alltt}
    > \textbf{make all}
    mkdir -p foos
-   filter_models -z -r -tm-soft-limit cpt.dev1 -ldm < ../../corpora/dev1_fr.rule \bs
-      >& log.cpt.dev1.FILT
+   filter_models -z -r -tm-soft-limit cpt.dev1 -ldm < ../../corpora/dev1_fr.rule
    tune.py -v -o canoe.ini.cow.FILT -p 4 -c 1 -m 15 -n 100 -a lmira --workdir=foos \bs
-      -f canoe.ini.FILT ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc \bs
-      &> log.canoe.ini.cow
+      -f canoe.ini.FILT ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc
    configtool -p args:"`configtool weights canoe.ini.cow.FILT`" canoe.ini > canoe.ini.cow
    rm -f -r foos *.FILT.gz *.FILT.bkoff canoe.ini.FILT canoe.ini.FILT.cow
 \end{alltt}
@@ -1719,8 +1745,7 @@ trained CE model.
    > \textbf{make all}
    ce_translate.pl -n=4 -train -src=fr -tgt=en -notok -nolc -nl=s \bs
       -k=5 -desc=ce-notm.ini canoe.ini.cow ce_model \bs
-      ../../corpora/dev3_fr.lc ../../corpora/dev3_en.lc \bs
-      >& log.ce_model.cem
+      ../../corpora/dev3_fr.lc ../../corpora/dev3_en.lc
 \end{alltt}
 \end{small}
 
@@ -1848,7 +1873,7 @@ for details). In this framework, parallelism is controlled via the
    Tuning the rescoring model.
    rat.sh -lb -n 4 train -a mira -v -K 1000 -o rescore-model \bs
       -msrc ../../corpora/dev2_fr.rule -f canoe.ini.cow.dev2 rescore-model.ini \bs
-      ../../corpora/dev2_fr.lc ../../corpora/dev2_en.lc >& log.rescore-model
+      ../../corpora/dev2_fr.lc ../../corpora/dev2_en.lc
    rm -f -r workdir-dev2_fr.rule-1000best
 \end{alltt}
 \end{small}
@@ -1955,7 +1980,7 @@ variable definition on a given call to \code{make}: adding \code{V=} undefines
    ok
    Generating translate/test1.out
    canoe-parallel.sh -n 4 canoe -f canoe.ini.cow.test1 -palign \bs
-      < ../corpora/test1_fr.rule 2> log.test1.out \bs
+      < ../corpora/test1_fr.rule \bs
       | nbest2rescore.pl -canoe -tagoov -palout=test1.out.pal \bs
       | tee test1.out.oov | perl -pe 's/<OOV>(.+?)<\bs/OOV>/\bs1/g;' > test1.out
    [repeat for test2]
@@ -1984,8 +2009,7 @@ then the CE model trained in \S\ref{CE}.  The program
    ln -fs models/confidence/ce_model.cem
    Generating translate/test1.ce
    translate.pl -with-ce -n 4 -notok -nl s -tc -encoding UTF-8 -src fr -tgt en \bs
-      -f canoe.ini.cow.test1 -model ce_model.cem ../corpora/test1_fr.al \bs
-      > test1.ce 2> log.test1.ce
+      -f canoe.ini.cow.test1 -model ce_model.cem ../corpora/test1_fr.al > test1.ce
    [repeat for test2]
 \end{alltt}
 \end{small}
@@ -2018,8 +2042,7 @@ mode, performs both steps for us:
    ok
    Generating test1.rat
    rat.sh -lb -n 4 trans -v -K 1000 -msrc ../corpora/test1_fr.rule \bs
-      -f canoe.ini.cow.test1 models/rescore/rescore-model \bs
-      ../corpora/test1_fr.lc >& log.test1.rat \bs
+      -f canoe.ini.cow.test1 models/rescore/rescore-model ../corpora/test1_fr.lc \bs
       && mv test1_fr.rule.rat test1.rat
    cp workdir-test1_fr.rule-1000best/1best test1.out
    [repeat for test2]
@@ -2054,7 +2077,7 @@ trained previously:
    truecase.pl -text test1.out.oov -bos -encoding UTF-8 \bs
       -lm models/tc/lm-train_en-kn-3g.binlm.gz -map models/tc/lm-train_en.map \bs
       -src ../corpora/test1_fr.al -pal test1.out.pal -srclang fr \bs
-      -srclm models/tc/lm-train_fr.nc1.binlm.gz > test1.out.tc 2> log.test1.out.tc
+      -srclm models/tc/lm-train_fr.nc1.binlm.gz > test1.out.tc
    [repeat for test2]
 \end{alltt}
 \end{small}
