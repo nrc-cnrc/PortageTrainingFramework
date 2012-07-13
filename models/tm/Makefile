@@ -553,7 +553,7 @@ mix_cpt_list = ${CPT_MIX_PFX}.${L1_2_L2X}
 # Meta target to create the mixture conditional phrase table in mixtm/.
 .PHONY: mix_cpt
 mix_cpt: SHELL=${GUARD_SHELL}
-mix_cpt:
+mix_cpt:  | $(filter-out mix_cpt, ${PT_TYPES})
 	mkdir -p mixtm
 	cd mixtm && ${MAKE} -f ../Makefile pretrained_cpt TM_PRETRAINED_TMS="${MIXTM_PRETRAINED_TMS}"
 	cd mixtm && ${MAKE} -f ../Makefile ${mix_cpt_list}
@@ -561,10 +561,13 @@ mix_cpt:
 
 # Let's define which merged cpt files we need to mix and the dev jpt file we need
 # for calculating the weights for the mix.
+MIX_OTHER_CPTS := $(foreach c, $(addsuffix _list, $(filter-out mix_cpt,${PT_TYPES})), ${$c})
+${CPT_MIX_PFX}.${L1_2_L2X}:  | ${MIX_OTHER_CPTS}
 ${CPT_MIX_PFX}.${L1_2_L2X}:  $(foreach c, ${MIXTM}, ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X}) \
                              $(foreach c, $(notdir ${MIXTM_PRETRAINED_TMS}), $c)
 ${CPT_MIX_PFX}.${L1_2_L2X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
 
+${CPT_MIX_PFX}.${L2_2_L1X}:  | ${MIX_OTHER_CPTS}
 ${CPT_MIX_PFX}.${L2_2_L1X}:  $(foreach c, ${MIXTM}, ${MERGED_CPT_PREFIX}.$c.${L2_2_L1X}) \
                              $(foreach c, $(notdir ${MIXTM_PRETRAINED_TMS}), $c)
 ${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
@@ -669,7 +672,7 @@ endif
 ################################################################################
 # Tightly Packed Phrase Tables.
 # We need the full file names to be able to trigger all tppt.
-# PT_TYPE is what the user asked for so we need to change ibm2_cpt =>
+# PT_TYPES is what the user asked for so we need to change ibm2_cpt =>
 # ibm2_cpt_list and evaluate its content which will be the text phrase table
 # file name.  Then we only need to change the text file name to tightly packed
 # file name.
