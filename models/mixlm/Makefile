@@ -42,6 +42,8 @@ export ORDER ?= 5
 
 LM_DIR ?= models/lm
 
+MIXLM_COMPONENTS := $(strip ${MIXLM} $(notdir ${MIXLM_PRETRAINED_TGT_LMS}))
+
 
 ifneq (${MAKECMDGOALS},clean)
 ifneq (${MAKECMDGOALS},clean.content)
@@ -78,7 +80,7 @@ help:
 
 .PHONY: all
 all: SHELL=${GUARD_SHELL}
-ifdef MIXLM
+ifdef MIXLM_COMPONENTS
 all: mixlm
 else
 all:
@@ -193,7 +195,7 @@ clean.tplm:
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/mixlm
 .PHONY: portageLive
 portageLive: SHELL=${GUARD_SHELL}
-ifdef MIXLM
+ifdef MIXLM_COMPONENTS
 portageLive: ${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm}
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*

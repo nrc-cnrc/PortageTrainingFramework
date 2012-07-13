@@ -255,7 +255,7 @@ check_decoding_model:
 # for a particular file.
 # For dynamic mixlm's, we use weights computed specifically for the test set.
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): SHELL=${GUARD_SHELL}
-ifdef MIXLM
+ifneq ($(strip ${MIXLM} ${MIXLM_PRETRAINED_TGT_LMS}),)
 ifndef USE_STATIC_MIXLM
 USE_DYNAMIC_MIXLM = 1
 endif
