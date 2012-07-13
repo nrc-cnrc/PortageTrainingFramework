@@ -202,14 +202,14 @@ $(foreach f, ${pretrained_lm_paths}, \
 
 $(addprefix pretrained., $(notdir ${pretrained_lm_paths})): SHELL=${GUARD_SHELL}
 $(addprefix pretrained., $(notdir ${pretrained_lm_paths})): pretrained.%: 
-	[[ ! -e $* ]] || [[ -L $* ]] || ! echo "Error: LM $* already exists as a normal file."
-	$(if $(filter-out %.binlm.gz, $*),! echo "Error: Name of pre-trained LM file must end with .binlm.gz: $<")
+	@[[ ! -e $* ]] || [[ -L $* ]] || ! echo "ERROR: LM $* already exists as a normal file."
+	@$(if $(filter-out %.binlm.gz, $*),! echo "ERROR: Name of pre-trained LM file must end with .binlm.gz: $<")
 	ln -sf $< .
 	[[ ! -d ${<:.binlm.gz=.tplm} ]] || ln -sf ${<:.binlm.gz=.tplm} .
 
 ${pretrained_lm_paths}: SHELL=${GUARD_SHELL}
 ${pretrained_lm_paths}: %:
-	! echo "Error: Pre-trained LM file $@ does not exist."
+	@! echo "ERROR: Pre-trained LM file $@ does not exist."
 
 ########################################
 # Adds sentence start and end markers

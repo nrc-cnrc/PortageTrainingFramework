@@ -470,13 +470,13 @@ $(foreach f, ${pretrained_cpt_paths}, \
 
 $(addprefix pretrained., ${pretrained_cpt_list}): SHELL=${GUARD_SHELL}
 $(addprefix pretrained., ${pretrained_cpt_list}): pretrained.%: 
-	[[ ! -e $* ]] || [[ -L $* ]] || ! echo "Error: TM $* already exists as a normal file."
-	$(if $(filter-out cpt.%, $*),! echo "Error: Name of pre-trained TM file must start with cpt.: $<")
+	@[[ ! -e $* ]] || [[ -L $* ]] || ! echo "ERROR: TM $* already exists as a normal file."
+	@$(if $(filter-out cpt.%, $*),! echo "ERROR: Name of pre-trained TM file must start with cpt.: $<")
 	ln -sf $< .
 
 ${pretrained_cpt_paths}: SHELL=${GUARD_SHELL}
 ${pretrained_cpt_paths}: %:
-	! echo "Error: Pre-trained TM file $@ does not exist."
+	@! echo "ERROR: Pre-trained TM file $@ does not exist."
 
 
 
