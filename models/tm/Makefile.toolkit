@@ -254,7 +254,7 @@ ${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		-n1 0 -n2 5 \
 		-slen 20 -tlen 20 -bksize 20 \
 		-bin \
-		-i $(filter ${IBM1_MODEL_PFX}.%.gz, $^) \
+		-i $(filter %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $^) \
 		${IBM2_MODEL_EXTRAS} \
 		$@ \
 		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
@@ -275,7 +275,7 @@ ${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		-n1 0 -n2 5 \
 		-mimic he-lex \
 		-bin \
-		-i $(filter ${IBM1_MODEL_PFX}.%.gz, $^) \
+		-i $(filter %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $^) \
 		${HMM1_MODEL_EXTRAS} \
 		$@ \
 		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
@@ -296,7 +296,7 @@ ${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		-n1 0 -n2 5 \
 		-mimic liang \
 		-bin \
-		-i $(filter ${IBM1_MODEL_PFX}.%.gz, $^) \
+		-i $(filter %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $^) \
 		${HMM2_MODEL_EXTRAS} \
 		$@ \
 		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
@@ -319,7 +319,7 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		-n1 0 -n2 5 \
 		-hmm ${NEW_HMM} -end-dist -anchor -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 \
 		-bin \
-		-i $(filter ${IBM1_MODEL_PFX}.%.gz, $^) \
+		-i $(filter %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $^) \
 		${HMM3_MODEL_EXTRAS} \
 		$@ \
 		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
@@ -574,16 +574,18 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 
 ########################################
 # GIZA SPECIFIC TARGETS.
+$(addsuffix /,$(sort ${ALL_TMS})):  SHELL=${GUARD_SHELL}
 $(addsuffix /,$(sort ${ALL_TMS})):  %:
-	_LOCAL=1 mkdir -p $@
+	mkdir -p $@
 
 
 # Clean up the inputs for giza.
 %/${SRC_LANG}.lc:  %_${SRC_LANG}.lc.gz %_${TGT_LANG}.lc.gz  | %/
 	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> log.giza_filter
 
+%/${TGT_LANG}.lc:  SHELL=${GUARD_SHELL}
 %/${TGT_LANG}.lc:  %/${SRC_LANG}.lc
-	_LOCAL=1 test -s $@ && sleep 1 && touch $@
+	test -s $@ && sleep 1 && touch $@
 
 
 # Create the vocabulary files.
@@ -593,11 +595,13 @@ vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_TMS})
 %/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %/
 	plain2snt $+
 
+%/${TGT_LANG}.lc.vcb:  SHELL=${GUARD_SHELL}
 %/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb
-	_LOCAL=1 test -s $@ && sleep 1 && touch $@
+	test -s $@ && sleep 1 && touch $@
 
+%/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  SHELL=${GUARD_SHELL}
 %/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb
-	_LOCAL=1 test -s $@ && sleep 1 && touch $@
+	test -s $@ && sleep 1 && touch $@
 
 
 # Create the vocabulary classes.
@@ -628,14 +632,14 @@ cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
 	time-mem \
 	mgiza \
 		-ncpus 4 \
-		-S $(filter %${SRC_LANG}.lc.vcb,$+) \
-		-T $(filter %${TGT_LANG}.lc.vcb,$+) \
-		-C $*/$(call merge,_,$(notdir $(basename $(filter %.vcb,$+)))).snt \
+		-sourcevocabularyfile $(filter %${SRC_LANG}.lc.vcb,$+) \
+		-targetvocabularyfile $(filter %${TGT_LANG}.lc.vcb,$+) \
+		-corpusfile $*/$(call merge,_,$(notdir $(basename $(filter %.vcb,$+)))).snt \
 		-p0 0.98 \
 		-coocurrencefile $(filter %.cooc,$+) \
 		-outputpath $* \
 		-ml 101 \
-		-o B \
+		-outputfilepreifx B \
 		&> $@.log
 
 %/F.gizacfg:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb.classes %/${SRC_LANG}.lc.vcb.classes  %/${L2_2_L1}.cooc
@@ -643,14 +647,14 @@ cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
 	time-mem \
 	mgiza \
 		-ncpus 4 \
-		-S $(filter %${TGT_LANG}.lc.vcb,$+) \
-		-T $(filter %${SRC_LANG}.lc.vcb,$+) \
-		-C $*/$(call merge,_,$(notdir $(basename $(filter %.vcb,$+)))).snt \
+		-sourcevocabularyfile $(filter %${TGT_LANG}.lc.vcb,$+) \
+		-targetvocabularyfile $(filter %${SRC_LANG}.lc.vcb,$+) \
+		-corpusfile $*/$(call merge,_,$(notdir $(basename $(filter %.vcb,$+)))).snt \
 		-p0 0.98 \
 		-coocurrencefile $(filter %.cooc,$+) \
 		-outputpath $* \
 		-ml 101 \
-		-o F \
+		-outputfilepreifx F \
 		&> $@.log
 
 
