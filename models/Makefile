@@ -56,10 +56,19 @@ endif
 ifneq ($(strip ${MIXLM}),)
 	@echo "   train mixlm: ${MIXLM}"
 endif
+ifneq ($(strip ${TRAIN_TC}),)
+	@echo "   train tc: ${TRAIN_TC}"
+endif
 	@echo "   train tm: ${TRAIN_TM}"
+ifneq ($(strip ${MIXTM}),)
+	@echo "   train mixtm: ${MIXTM}"
+endif
+ifneq ($(strip ${MIXTM_TRAIN_MIX}),)
+	@echo "   tune mixtm mix: ${MIXTM_TRAIN_MIX}"
+endif
 	@echo "   tune decode: ${TUNE_DECODE}"
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
-	@echo "   tune decode variants: (addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})"
+	@echo "   tune decode variants: $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})"
 endif
 	@echo "   tune rescore: ${TUNE_RESCORE}"
 ifneq ($(strip ${TUNE_CE}),)
