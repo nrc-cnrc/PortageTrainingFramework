@@ -431,7 +431,7 @@ ifeq ($(strip ${TRAIN_TM} ${TM_PRETRAINED_TMS} ${MIXTM} ${MIXTM_PRETRAINED_TMS})
 $(error You must always define a training corpus and/or pretrained models for translation models)
 endif
 
-ifdef MIXTM
+ifneq ($(strip ${MIXTM} ${MIXTM_PRETRAINED_TMS}),)
 ifeq (${MIXTM_TRAIN_MIX},)
 $(error With a mixtm, you must always define a training corpus for training the mixture weights)
 endif
