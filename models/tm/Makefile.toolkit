@@ -639,7 +639,7 @@ cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
 		-coocurrencefile $(filter %.cooc,$+) \
 		-outputpath $* \
 		-ml 101 \
-		-outputfilepreifx B \
+		-outputfileprefix B \
 		&> $@.log
 
 %/F.gizacfg:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb.classes %/${SRC_LANG}.lc.vcb.classes  %/${L2_2_L1}.cooc
@@ -654,7 +654,7 @@ cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
 		-coocurrencefile $(filter %.cooc,$+) \
 		-outputpath $* \
 		-ml 101 \
-		-outputfilepreifx F \
+		-outputfileprefix F \
 		&> $@.log
 
 
