@@ -580,8 +580,9 @@ $(addsuffix /,$(sort ${ALL_TMS})):  %:
 
 
 # Clean up the inputs for giza.
+%/${SRC_LANG}.lc:  SHELL=${GUARD_SHELL}
 %/${SRC_LANG}.lc:  %_${SRC_LANG}.lc.gz %_${TGT_LANG}.lc.gz  | %/
-	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> log.giza_filter
+	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> $@.log
 
 %/${TGT_LANG}.lc:  SHELL=${GUARD_SHELL}
 %/${TGT_LANG}.lc:  %/${SRC_LANG}.lc
@@ -592,8 +593,9 @@ $(addsuffix /,$(sort ${ALL_TMS})):  %:
 .PHONY:  vcb
 vcb:  $(addsuffix /${SRC_LANG}.lc.vcb, ${ALL_TMS})
 vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_TMS})
+%/${SRC_LANG}.lc.vcb:  SHELL=${GUARD_SHELL}
 %/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %/
-	plain2snt $+
+	plain2snt $+ 2> $@.log
 
 %/${TGT_LANG}.lc.vcb:  SHELL=${GUARD_SHELL}
 %/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb
@@ -608,6 +610,7 @@ vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_TMS})
 .PHONY: classes
 classes:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${ALL_TMS})
 classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_TMS})
+%.lc.vcb.classes:  SHELL=${FRAMEWORK_SHELL}
 %.lc.vcb.classes:  %.lc
 	time-mem mkcls -m2 -p$< -c50 -V$@ opt &> $@.log
 
@@ -616,20 +619,23 @@ classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_TMS})
 .PHONY: cooc
 cooc:  $(addsuffix /${L1_2_L2}.cooc, ${ALL_TMS})
 cooc:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_TMS})
+%/${L1_2_L2}.cooc:  SHELL=${GUARD_SHELL}
 %/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %/
-	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt
+	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt 2> $@.log
 
+%/${L2_2_L1}.cooc:  SHELL=${GUARD_SHELL}
 %/${L2_2_L1}.cooc:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb | %/
-	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt
+	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt 2> $@.log
 
 
 # Perform word alignment.
 .PHONY: cfg
 cfg:  $(addsuffix /B.gizacfg, ${ALL_TMS})
 cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
+%/B.gizacfg:  SHELL=${FRAMEWORK_SHELL}
 %/B.gizacfg:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes  %/${L1_2_L2}.cooc
 	RP_PSUB_OPTS="-4 -N $@" \
-	time-mem \
+	${TIME_MEM} \
 	mgiza \
 		-ncpus 4 \
 		-sourcevocabularyfile $(filter %${SRC_LANG}.lc.vcb,$+) \
@@ -642,9 +648,10 @@ cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
 		-outputfileprefix B \
 		&> $@.log
 
+%/F.gizacfg:  SHELL=${FRAMEWORK_SHELL}
 %/F.gizacfg:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb.classes %/${SRC_LANG}.lc.vcb.classes  %/${L2_2_L1}.cooc
 	RP_PSUB_OPTS="-4 -N $@" \
-	time-mem \
+	${TIME_MEM} \
 	mgiza \
 		-ncpus 4 \
 		-sourcevocabularyfile $(filter %${TGT_LANG}.lc.vcb,$+) \
@@ -666,6 +673,7 @@ giza_al:  $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS})
 giza_al:  $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS})
 $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/B.gizacfg
 $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/F.gizacfg
+%.${IBM4_MODEL_PFX}.alignment.gz:  SHELL=${GUARD_SHELL}
 %.${IBM4_MODEL_PFX}.alignment.gz:
 	set -o pipefail; \
 	merge_alignment.py ${<:gizacfg=A3.final.part}* \
@@ -673,18 +681,20 @@ $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L2_2_L
 
 
 # Converts Giza's IBM4 ttables in a format that Portage understands.
+${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  SHELL=${FRAMEWORK_SHELL}
 ${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/B.gizacfg
 	set -o pipefail; \
-	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
-	| gzip > tmp.$@
-	train_ibm -tobin tmp.$@ $@
+	${TIME_MEM} giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) 2> log.${@:.gz=}.1 \
+	| gzip > tmp.$@ \
+	&& ${TIME_MEM} train_ibm -tobin tmp.$@ $@ 2> log.${@:.gz=}.2
 	_LOCAL=1 rm -f tmp.$@
 
+${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  SHELL=${FRAMEWORK_SHELL}
 ${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/F.gizacfg
 	set -o pipefail; \
-	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
-	| gzip > tmp.$@
-	train_ibm -tobin tmp.$@ $@
+	${TIME_MEM} giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) 2> log.${@:.gz=}.1 \
+	| gzip > tmp.$@ \
+	&& ${TIME_MEM} train_ibm -tobin tmp.$@ $@ 2> log.${@:.gz=}.2
 	_LOCAL=1 rm -f tmp.$@
 
 
