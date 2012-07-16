@@ -167,8 +167,7 @@ ${TUNE_VARIANTS_SRC}: ${TUNE_DECODE}%_${SRC_LANG}${CORPX}: ${TUNE_DECODE}_${SRC_
 	mv ${TUNE_DECODE}_${SRC_LANG}${CORPX}.sample.$* ${TUNE_DECODE}$*_${SRC_LANG}${CORPX}
 	mv ${TUNE_DECODE}_${TGT_LANG}${CORPX}.sample.$* ${TUNE_DECODE}$*_${TGT_LANG}${CORPX}
 
-${TUNE_VARIANTS_TGT}: ${TUNE_DECODE}%_${TGT_LANG}${CORPX}: ${TUNE_DECODE}%_${SRC_LANG}${CORPX}
-	touch $@
+${TUNE_VARIANTS_TGT}: ${TUNE_DECODE}%_${TGT_LANG}${CORPX}: | ${TUNE_DECODE}%_${SRC_LANG}${CORPX} ;
                    
 ########################################
 # TOKENIZATION.
