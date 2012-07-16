@@ -748,13 +748,13 @@ unittest_sigs:  export MIXTM=
 unittest_sigs:  unittest_jpts
 	[[ "`${MAKE} -Bn sigs | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh mgiza sigprune.sh)`" =~ "6 10 6 2 6" ]]
 
-# 6 align-words
+# 5  align-words
 # 10 cat.sh
-# 6 gen-jpt-parallel.sh
-# 6 joint2cond_phrase_tables
-# 2 mgiza
+# 5  gen-jpt-parallel.sh
+# 5  joint2cond_phrase_tables
+# 2  mgiza
 unittest_cpts:  unittest_jpts
-	[[ "`${MAKE} -Bn cpts | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh joint2cond_phrase_tables mgiza)`" =~ "6 10 6 6 2" ]]
+	[[ "`${MAKE} -Bn ibm2_cpt ibm4_cpt hmm1_cpt hmm2_cpt hmm3_cpt | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh joint2cond_phrase_tables mgiza)`" =~ "5 10 5 5 2" ]]
 
 # 2 align-words
 # 6 cat.sh
