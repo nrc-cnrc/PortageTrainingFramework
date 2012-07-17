@@ -330,6 +330,10 @@ TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXTM})
 TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXTM})
 TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXTM_TRAIN_MIX})
 TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXTM_TRAIN_MIX})
+TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_LDM})
+TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LDM})
+TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_HLDM})
+TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_HLDM})
 LC += ${TM_LC}
 MIXLM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXLM})
 MIXLM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXLM})
@@ -344,6 +348,7 @@ ifdef DO_CE
 LM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_LM})
 endif
 LC += ${LM_LC}
+LC := $(sort ${LC})
 
 .PHONY: lc
 lc: SHELL=${GUARD_SHELL}
@@ -498,6 +503,22 @@ $(foreach l, $(addsuffix _${SRC_LANG}, ${MIXLM}) $(addsuffix _${TGT_LANG}, ${MIX
 $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_TM}) $(addsuffix _${TGT_LANG}, ${TRAIN_TM}), \
 	$(if $(call  FILE_EXISTS, $l),, \
 		$(error For your translation model, you must provide $l)))
+
+# Verify the presence of the mixtm's corpora files.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${MIXTM}) $(addsuffix _${TGT_LANG}, ${MIXTM}) \
+             $(addsuffix _${SRC_LANG}, ${MIXTM_TRAIN_MIX}) $(addsuffix _${TGT_LANG}, ${MIXTM_TRAIN_MIX}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error With mixtm, you must provide $l)))
+
+# Verify the presence of the LDM's corpora files.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_LDM}) $(addsuffix _${TGT_LANG}, ${TRAIN_LDM}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error To train the LDM, you must provide $l)))
+
+# Verify the presence of the HLDM's corpora files.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_HLDM}) $(addsuffix _${TGT_LANG}, ${TRAIN_HLDM}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error To train the HLDM, you must provide $l)))
 
 # Verify the presence of decoder's tuning corpora files.
 $(foreach l, $(addsuffix _${SRC_LANG}, ${TUNE_DECODE}) $(subst ${LANGX},,$(call CREATE_REFERENCE_NAMES, ${TUNE_DECODE})), \

@@ -91,9 +91,24 @@ TRAIN_TM      ?= tm-train
 # MIXTM_TRAIN_MIX is an in-domain corpus used to train the weights for mixing 
 # the component translation models (its word alignment models are needed)
 # By default, we use the first name listed in MIXTM; if you want to use a
-# different corpus, uncomment and define MIXTM_TRAIN_MIX
+# different corpus, uncomment and define MIXTM_TRAIN_MIX.
 # => MIXTM_TRAIN_MIX = first word of MIXTM
 #MIXTM_TRAIN_MIX ?= subtm1
+
+# TRAIN_LDM is used to train a Lexicalized Distortion Model (LDM)
+# (the word alignment models are needed).
+# By default, we use the corpora listed in TRAIN_TM and MIXTM; if you want to
+# use different corpora, uncomment and define TRAIN_LDM.
+# => TRAIN_LDM = TRAIN_TM MIXTM
+#TRAIN_LDM ?= ldm-train
+
+# TRAIN_HLDM is used to train a Hierarchical Lexicalized Distortion Model (HLDM)
+# (the word alignment models are needed).
+# By default, we use the corpora listed in TRAIN_LDM if it is defined, or
+# TRAIN_TM and MIXTM if TRAIN_LDM is not defined; if you want to use different
+# corpora, uncomment and define TRAIN_LDM.
+# => TRAIN_HLDM = TRAIN_LDM or TRAIN_TM MIXTM
+#TRAIN_HLDM ?= hldm-train
 
 # TUNE_DECODE is used to tune the decoding weights (using tune.py).
 TUNE_DECODE   ?= dev1
@@ -103,7 +118,7 @@ TUNE_DECODE   ?= dev1
 #     with dev1a and dev1b in addition to dev1.
 # If variants are specified, 90% sample variants of the tuning set are created
 # automatically in the corpora directory if the variant files do not already exist.
-#TUNE_DECODE_VARIANTS  ?=
+#TUNE_DECODE_VARIANTS  ?= a b c d
 
 # PLIVE_DECODE_VARIANT is used to select which tuning run (which one of
 # TUNE_DECODE_VARIANTS) to use for PortageLive.
@@ -292,26 +307,18 @@ LANGXZ ?= ${LANGX}${GZ}
 # Language pair for this system.
 LANGS ?= ${SRC_LANG} ${TGT_LANG}
 
-# By default we assume that the user wants to use the first corpus to build
-# the truecasing models.
-ifdef DO_TRUECASING
-   TRAIN_TC ?= $(firstword ${TRAIN_LM})
-endif
-TRAIN_TC := $(strip ${TRAIN_TC})
-
+USE_MIXTM := $(if $(strip ${MIXTM} ${MIXTM_PRETRAINED_TMS}),1)
+ifdef USE_MIXTM
 # By default we assume that the user wants to use the first MIXTM corpus (its 
 # word alignment models are needed) to train the weights for mixing the 
 # component translation models.
-ifdef MIXTM
-   MIXTM_TRAIN_MIX ?= $(firstword ${MIXTM})
-endif
+MIXTM_TRAIN_MIX ?= $(firstword ${MIXTM})
 MIXTM_TRAIN_MIX := $(strip ${MIXTM_TRAIN_MIX})
 
 # We need a dev set for tuning the mixture weights in a mixtm.
 TUNE_MIXTM ?= ${TUNE_DECODE}
 TUNE_MIXTM := $(strip ${TUNE_MIXTM})
 
-ifdef MIXTM
 ifdef REFERENCE_INDICES
 TUNE_MIXTM_MULTIPLE_REFERENCES ?= $(strip ${TUNE_MIXTM}).multiple.references
 endif
@@ -338,11 +345,27 @@ MERGED_CPT_USE_ALIGNMENT_INDICATORS ?= 0
 # PT_TYPES ?= ibm2_cpt hmm3_cpt
 ifeq (${MERGED_CPT_USE_ALIGNMENT_INDICATORS},1)
    PT_TYPES ?= $(strip $(if ${TRAIN_TM}, indicator_cpt) \
-                       $(if $(strip ${MIXTM} ${MIXTM_PRETRAINED_TMS}), mix_cpt))
+                       $(if ${USE_MIXTM}, mix_cpt))
 else
    PT_TYPES ?= $(strip $(if $(strip ${TRAIN_TM}), merged_cpt) \
-                       $(if $(strip ${MIXTM} ${MIXTM_PRETRAINED_TMS}), mix_cpt))
+                       $(if ${USE_MIXTM}, mix_cpt))
 endif
+
+# By default, we assume that the user wants to use the corpora listed in 
+# TRAIN_TM and MIXTM to build the Lexicalized Distortion Model (LDM).
+ifdef USE_LDM
+   TRAIN_LDM ?= $(sort ${TRAIN_TM} ${MIXTM})
+endif
+TRAIN_LDM := $(strip ${TRAIN_LDM})
+
+# By default, we assume that the user wants to use the corpora listed in
+# TRAIN_LDM to build the Hierarchical Lexicalized Distortion Model (HLDM)
+# if TRAIN_LDM is defined, or the corpora listed in TRAIN_TM and MIXTM if
+# TRAIN_LDM is not defined.
+ifdef USE_HLDM
+   TRAIN_HLDM ?= $(or ${TRAIN_LDM}, $(sort ${TRAIN_TM} ${MIXTM}))
+endif
+TRAIN_HLDM := $(strip ${TRAIN_HLDM})
 
 # Define what type of language model we want to generate.
 LM_TYPES ?= binlm
@@ -351,6 +374,13 @@ LM_TYPES ?= binlm
 #TEMPLATE_DIR    ?= ${ROOT_DIR}/models/decode
 PREFIX_DEV_COW  ?= ${TUNE_DECODE}
 PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
+
+# By default we assume that the user wants to use the first corpus in TRAIN_LM
+# to build the truecasing models.
+ifdef DO_TRUECASING
+   TRAIN_TC ?= $(firstword ${TRAIN_LM})
+endif
+TRAIN_TC := $(strip ${TRAIN_TC})
 
 # Defines the truecasing model filename.
 TRUECASING_MAP ?= ${TRAIN_TC}_${TGT_LANG}.map
@@ -421,15 +451,30 @@ ifeq ($(strip ${TRAIN_TM} ${TM_PRETRAINED_TMS} ${MIXTM} ${MIXTM_PRETRAINED_TMS})
 $(error You must always define a training corpus and/or pretrained models for translation models)
 endif
 
-ifneq ($(strip ${MIXTM} ${MIXTM_PRETRAINED_TMS}),)
+ifdef USE_MIXTM
 ifeq (${MIXTM_TRAIN_MIX},)
 $(error With a mixtm, you must always define a training corpus for training the mixture weights)
+endif
+ifeq (${TUNE_MIXTM},)
+$(error With a mixtm, you must always define a tuning corpus for tuning the mixture weights)
 endif
 endif
 
 ifdef DO_TRUECASING
 ifeq (${TRAIN_TC},)
 $(error With truecasing, you must always define a training corpus for truecasing models)
+endif
+endif
+
+ifdef USE_LDM
+ifeq (${TRAIN_LDM},)
+$(error With USE_LDM, you must always define a training corpus for training the distortion model)
+endif
+endif
+
+ifdef USE_HLDM
+ifeq (${TRAIN_HLDM},)
+$(error With USE_HLDM, you must always define a training corpus for training the distortion model)
 endif
 endif
 

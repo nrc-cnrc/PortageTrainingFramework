@@ -66,6 +66,12 @@ endif
 ifneq ($(strip ${MIXTM_TRAIN_MIX}),)
 	@echo "   tune mixtm mix: ${MIXTM_TRAIN_MIX}"
 endif
+ifneq ($(strip ${TRAIN_LDM}),)
+	@echo "   train ldm: ${TRAIN_LDM}"
+endif
+ifneq ($(strip ${TRAIN_HLDM}),)
+	@echo "   train hldm: ${TRAIN_HLDM}"
+endif
 	@echo "   tune decode: ${TUNE_DECODE}"
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 	@echo "   tune decode variants: $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})"

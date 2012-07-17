@@ -54,6 +54,9 @@ TGT_2_SRC  ?= ${TGT_LANG}2${SRC_LANG}
 SRC_2_TGTX ?= ${SRC_2_TGT}.gz
 TGT_2_SRCX ?= ${TGT_2_SRC}.gz
 
+IBM1_MODEL_PFX ?= ibm1
+IBM4_MODEL_PFX ?= ibm4
+
 # We want a minimum of 100,000 lines per jobs that parallelize.pl creates.
 MINIMUM_PARALLEL_CHUNK_SIZE ?= 100000
 
@@ -61,7 +64,7 @@ MINIMUM_PARALLEL_CHUNK_SIZE ?= 100000
 CORPORA_DIR ?= ../../corpora
 
 # Where are the word/phrase alignment models?
-MODEL_DIR ?= ../tm
+MODEL_DIRS ?= ../tm ../tm/mixtm
 
 # Resource monitoring.
 TIME_MEM ?= time-mem
@@ -111,14 +114,17 @@ vpath %${SRCXZ} ${CORPORA_DIR}
 vpath %${TGTXZ} ${CORPORA_DIR}
 
 # Where can we find the phrase models.
-vpath %${TGT_GIVEN_SRCX} ${MODEL_DIR}
-vpath %${SRC_GIVEN_TGTX} ${MODEL_DIR}
-vpath %.align.gz  ${MODEL_DIR} 
+vpath %${TGT_GIVEN_SRCX} ${MODEL_DIRS}
+vpath %${SRC_GIVEN_TGTX} ${MODEL_DIRS}
+vpath %.align.gz  ${MODEL_DIRS} 
 
 
 
 # Adds the hierarchical lexicalized distortion model's option.
 ADD_HLDM_OPTS = $(and $(findstring ${HLDM_MODEL_PFX}, $1), -hier)
+
+# Fix the path of the alignment files, if necessary to pick them up from ../tm
+FIX_ALIGN_PATHS = $(foreach f,$1,$(if $(filter-out %.align.gz,$f),$f,$(if $(filter ../%,$f),$f,../tm/$f)))
 
 ########################################
 # How to calculate the lexicalized counts.
@@ -139,11 +145,21 @@ ADD_HLDM_OPTS = $(and $(findstring ${HLDM_MODEL_PFX}, $1), -hier)
 		-n ${PARALLELISM_LEVEL_LDM} \
 		-np ${PARALLELISM_LEVEL_LDM_WORKERS} \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
-		$(addprefix -s ,$+) \
+		$(addprefix -s , $(call FIX_ALIGN_PATHS, $+)) \
 		-merge 'merge_multi_column_counts -' \
 		'dmcount -ext -v -m ${M} $(call ADD_HLDM_OPTS, $@) \
-			$(call interleave3, $(filter %${SRCXZ},$+), $(filter %${TGTXZ},$+), $(filter %.align.gz,$+)) | li-sort.sh > $@' \
+			$(call interleave3, $(filter %${SRCXZ},$+), $(filter %${TGTXZ},$+), $(call FIX_ALIGN_PATHS, $(filter %.align.gz,$+))) \
+			| li-sort.sh > $@' \
 	&> log.$(basename $@)
+
+%.align.gz: SHELL=${GUARD_SHELL}
+%.align.gz:
+	${MAKE} -C ../tm $@
+
+${IBM1_MODEL_PFX}.%.gz: SHELL=${GUARD_SHELL}
+${IBM1_MODEL_PFX}.%.gz:
+	${MAKE} -C ../tm $@
+
 
 
 ########################################
@@ -196,6 +212,8 @@ SAMPLE_SIZE ?= 64
 
 ########################################
 # TUNE
+#
+# WARNING: Below is out-of-date, unmaintained code with lots of stuff hard-coded.
 .PHONY: tune
 tune: log.tune-dms
 	@egrep -o 'ppx = [0-9\.]+' ${TUNE_RESULTS_DIR}/* \

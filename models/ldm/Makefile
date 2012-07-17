@@ -44,8 +44,8 @@ sort_aligners = $(filter $1, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 # Find out what the word alignment models the user asked for are,
 # based on the type of conditional phrase tables that was specified.
-TMP_AVAILABLE_WORD_ALIGNMENT_MODELS := $(filter-out merged indicator, $(PT_TYPES:_cpt=))
-ifneq ($(filter merged indicator, $(PT_TYPES:_cpt=)),)
+TMP_AVAILABLE_WORD_ALIGNMENT_MODELS := $(filter-out merged indicator mix, $(PT_TYPES:_cpt=))
+ifneq ($(filter merged indicator mix, $(PT_TYPES:_cpt=)),)
 TMP_AVAILABLE_WORD_ALIGNMENT_MODELS += $(call lc, ${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES})
 endif
 AVAILABLE_WORD_ALIGNMENT_MODELS := $(call sort_aligners,${TMP_AVAILABLE_WORD_ALIGNMENT_MODELS})
@@ -91,23 +91,30 @@ hldm.counts:  ${HLDM_COUNT_FILES}
 # To generate (h)ldm count files we need word alignment models in both directions.
 $(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
    $(eval \
-	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix .$m.${SRC_2_TGT}.align.gz,${TRAIN_TM})) \
+	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix .$m.${SRC_2_TGT}.align.gz,${TRAIN_LDM})) \
    $(eval \
-	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix .$m.${SRC_2_TGT}.align.gz,${TRAIN_TM})) \
+	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix .$m.${SRC_2_TGT}.align.gz,${TRAIN_HLDM})) \
+)
+# We need to make sure the ibm1 models are built first (for make -j to work correctly)
+$(foreach m, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+   $(foreach c, $(sort ${TRAIN_LDM} ${TRAIN_HLDM}), \
+      $(eval \
+	   $c.$m.${SRC_2_TGT}.align.gz: ${IBM1_MODEL_PFX}.$c.${TGT_GIVEN_SRCX} ${IBM1_MODEL_PFX}.$c.${SRC_GIVEN_TGTX}) \
+   ) \
 )
 # To generate (h)ldm count files we need the source corpus and the target corpus
 # NOTE: IBM4 models require filtered corpora thus we need to write a separate rule.
 $(foreach m, $(filter-out ibm4, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
    $(eval \
-	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix ${SRCXZ},${TRAIN_TM}) $(addsuffix ${TGTXZ},${TRAIN_TM})) \
+	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix ${SRCXZ},${TRAIN_LDM}) $(addsuffix ${TGTXZ},${TRAIN_LDM})) \
    $(eval \
-	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix ${SRCXZ},${TRAIN_TM}) $(addsuffix ${TGTXZ},${TRAIN_TM})) \
+	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix ${SRCXZ},${TRAIN_HLDM}) $(addsuffix ${TGTXZ},${TRAIN_HLDM})) \
 )
 # Pick up filtered corpora for (h)ldm models based on IBM4.
 %.ibm4${COUNTSX}:  SRCXZ=${SRC_LANG}.lc
 %.ibm4${COUNTSX}:  TGTXZ=${TGT_LANG}.lc
-${LDM_MODEL_PFX}.ibm4${COUNTSX}:   $(foreach c,${TRAIN_TM}, ../tm/$c/${SRC_LANG}.lc ../tm/$c/${TGT_LANG}.lc)
-${HLDM_MODEL_PFX}.ibm4${COUNTSX}:  $(foreach c,${TRAIN_TM}, ../tm/$c/${SRC_LANG}.lc ../tm/$c/${TGT_LANG}.lc)
+${LDM_MODEL_PFX}.ibm4${COUNTSX}:   $(foreach c,${TRAIN_LDM}, ../tm/$c/${SRC_LANG}.lc ../tm/$c/${TGT_LANG}.lc)
+${HLDM_MODEL_PFX}.ibm4${COUNTSX}:  $(foreach c,${TRAIN_HLDM}, ../tm/$c/${SRC_LANG}.lc ../tm/$c/${TGT_LANG}.lc)
 
 
 
@@ -158,7 +165,7 @@ endif
 
 
 ########################################
-# TIGHTLY PACKED LEXICAZILED DISTORTION MODEL.
+# TIGHTLY PACKED LEXICALIZED DISTORTION MODEL.
 .PHONY:  tpldm
 tpldm:  ${LDM_FILE:.gz=.tpldm}
 tpldm:  ${HLDM_FILE:.gz=.tpldm}
@@ -266,7 +273,7 @@ endif
 unittest1: export PT_TYPES=ibm4_cpt
 unittest1: export USE_LDM=1
 unittest1: export AVAILABLE_WORD_ALIGNMENT_MODELS=ibm4
-unittest1: export TRAIN_TM=tm-train sublm1
+unittest1: export TRAIN_LDM=tm-train sublm1
 unittest1:
 	${MAKE} -C ../../corpora all
 	${MAKE} -C ../tm ibm4_model ibm4_alignment

@@ -44,6 +44,12 @@ MODULE_NAME ?= tm
 # Where we can find the parallel corpora.
 CORPORA_DIR ?= ${TM_DIR_PFX}../../corpora
 
+# sort is used to remove duplicate or else dependencies are duplicated.
+ALL_IBM4_WAMS ?= $(strip ${ALL_TMS} ${TRAIN_LDM} ${TRAIN_HLDM})
+ALL_IBM4_WAMS := $(sort ${ALL_IBM4_WAMS})
+ALL_WAMS ?= $(strip ${ALL_IBM4_WAMS} ${MIXTM_TRAIN_MIX})
+ALL_WAMS := $(sort ${ALL_WAMS})
+
 # We need a dev set for tuning the mixture weights in a mixtm.
 TUNE_MIXTM ?= ${TUNE_DECODE}
 
@@ -158,7 +164,7 @@ $(foreach m, $(filter-out ${IBM1_MODEL_PFX} ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_A
 # the meta target for word alignment model depends on word alignment model files.
 # both forward and backward word alignment models require source and target corpora.
 $(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
-	$(foreach c, $(sort ${ALL_TMS} ${MIXTM_TRAIN_MIX}), \
+	$(foreach c, ${ALL_WAMS}, \
 		$(eval \
 			$(call lc, ${m})_model:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 		$(eval \
@@ -171,7 +177,7 @@ $(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMEN
 	$(eval \
 	   ${${m}_MODEL_PFX}.${L2_GIVEN_L1X}: $(foreach c, ${ALL_TMS}, $c${L1X} $c${L2X})) \
 )
-${IBM4_MODEL_PFX}_model:  $(foreach c, ${ALL_TMS}, ${IBM4_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${IBM4_MODEL_PFX}.$c.${L1_GIVEN_L2X})
+${IBM4_MODEL_PFX}_model:  $(foreach c, ${ALL_IBM4_WAMS}, ${IBM4_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${IBM4_MODEL_PFX}.$c.${L1_GIVEN_L2X})
 
 ########################################
 # EXAMPLE of the resulting code generated previously:
@@ -197,7 +203,7 @@ clean.alignment_files:
 alignment_files:  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 
-$(foreach c, $(sort ${ALL_TMS} ${MIXTM_TRAIN_MIX}), \
+$(foreach c, ${ALL_WAMS}, \
 	$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
 		$(eval \
 			$(call lc, $m)_alignment:  $c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
@@ -206,6 +212,8 @@ $(foreach c, $(sort ${ALL_TMS} ${MIXTM_TRAIN_MIX}), \
 		$(eval \
 			$c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 	) \
+)
+$(foreach c, ${ALL_IBM4_WAMS}, \
 	$(eval \
 		ibm4_alignment:  $c.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz) \
 	$(eval \
