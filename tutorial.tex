@@ -455,20 +455,28 @@ and training a confidence estimation (CE) model (\S\ref{CE}).
 \PS does not come with programs for language model training. However, it
 accepts models in the widely-used ``ARPA'' format which is produced by most
 language modelling toolkits.  The following sections describe the training
-process for SRILM and MITLM.\footnote{In this toy example, we manually added a
-few sentences to the target language part of the parallel training corpus to
-illustrate using more text to train the language model than the translation
-model.  If you have access to some additional monolingual text, adding it to
-your main LM training corpus (\code{TRAIN\us{}LM})
-is the simplest option.  If you have access to large amounts of
-monolingual text in your target language, you can use them to train additional
-language models, or mixture language models.  TODO REWORK THIS FOOTNOTE ONCE
-MIXLM STUFF IS WRITTEN.  The framework does not support training multiple
-language models TODO CHECK IF THIS IS STILL TRUE, but you can train them
-externally and add them to the \code{canoe.ini.template} file (see
-\S\ref{COW}).} Commands are assumed to be issued from the \code{toy.experiment}
-directory (so run \code{cd ..} from the corpora directory if you have not
-already done so).
+process for SRILM and MITLM.
+
+By default, we train language models of order five.  We have found this is a
+good compromise between translation quality and size of the models.  Higher
+order language models might sometimes be useful, but only for very large
+corpora, and at a cost in space and decoding speed.
+
+In this toy example, we manually added a few sentences to the target language
+part of the parallel training corpus to illustrate using more text to train the
+language model than the translation model.  If you have access to relatively
+small amounts of additional monolingual text, adding it to your main LM
+training corpus is the simplest option.  If you have access to large amounts of
+monolingual text in your target language, you can use it to train additional
+language models, or mixture language models.  To train separate language
+models, drop the corpora into \code{corpora} and list all the corpus stems in
+\code{TRAIN\us{}LM}; if the LM is trained externally, add its name to
+\code{LM\us{}PRETRAINED\us{}TGT\us{}LMS} instead.  For mixture language models,
+see \S\ref{MIXLM}.
+
+Commands below are assumed to be issued from the \code{toy.experiment}
+directory, so run \code{cd ..} from the corpora directory if you have not
+already done so.
 
 \subsubsection{SRILM}
 
@@ -676,11 +684,11 @@ You can do all this by typing \code{make tm} in your \code{toy.experiment}
 directory, but we will break it down into several steps here.
 
 By default, \code{make tm} will only include IBM2 (\S\ref{IBM2}) and HMM
-(\S\ref{HMM}) word-alignment models.  In \S\ref{IBM4}, we'll see how you can
+(\S\ref{HMM}) word-alignment models.  In \S\ref{IBM4}, we'll show how you can
 include a IBM4 word-alignment model and tally its counts along with the other
 two methods.
 
-In \S\ref{PI}, we'll see how you can also produce alignment indicator features
+In \S\ref{PI}, we'll show how you can also produce alignment indicator features
 telling the system which aligner produced which phrase pairs.  The alignment
 indicator features are helpful because the different alignments make different
 kinds of error in the phrase pairs they produce; the high diversity of phrase
