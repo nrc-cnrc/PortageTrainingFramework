@@ -671,8 +671,8 @@ cfg:  $(addsuffix /F.gizacfg, ${ALL_TMS})
 .PHONY:  giza_al
 giza_al:  $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS})
 giza_al:  $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS})
-$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/F.gizacfg
-$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/B.gizacfg
+$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/B.gizacfg
+$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/F.gizacfg
 %.${IBM4_MODEL_PFX}.alignment.gz:  SHELL=${GUARD_SHELL}
 %.${IBM4_MODEL_PFX}.alignment.gz:
 	set -o pipefail; \
