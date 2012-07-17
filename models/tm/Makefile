@@ -44,13 +44,6 @@ MODULE_NAME ?= tm
 # Where we can find the parallel corpora.
 CORPORA_DIR ?= ${TM_DIR_PFX}../../corpora
 
-# What parallel corpora is to be used for creating the models.
-TRAIN_TM ?= train
-
-# sort is used to remove duplicate or else dependencies are duplicated.
-ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
-ALL_TMS := $(sort ${ALL_TMS})
-
 # We need a dev set for tuning the mixture weights in a mixtm.
 TUNE_MIXTM ?= ${TUNE_DECODE}
 
