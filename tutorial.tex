@@ -265,23 +265,23 @@ experiments. Distinct, non-overlapping sub-corpora are required for model
 training (see \S\ref{Training}), for tuning decoder weights (\S\ref{COW}) and
 rescoring weights (\S\ref{RAT}), for confidence estimation (if you use it;
 \S\ref{CE}), and for testing (\S\ref{Testing}).\footnote{In this example, we
-use separate corpora for tuning decoder and rescoring weights, but this is not
+use separate dev sets for tuning decoder and rescoring weights, but this is not
 necessary.  However, confidence estimation must absolutely have its own
 separate tuning set, which can be reused as a test set, but not as a decoder or
-rescoring tuning set.} Typically, the tuning and testing corpora are 1000 to
-2000 segments each.  If the corpus is chronological, then it is a good idea to
-choose these corpora from the most recent material, which is likely to resemble
-future text more closely.
+rescoring tuning set.} Typically, the tuning (or ``dev'', for development) and
+testing sets are 1000 to 2000 segments each.  If the corpus is chronological,
+then it is a good idea to choose these sets from the most recent material,
+which is likely to resemble future text more closely.
 
 Since proper splitting of a corpus must take into account its structure
 and nature, these steps are not handled by the experimental framework. For the
 toy experiment, we provide small data sets that can be found here:
 \url{$PORTAGE/test-suite/tutorial-data}. These sets
 are very small, to minimize running time, so the resulting translations are of
-poor quality. In this toy experiment, the tuning and testing corpora contain
+poor quality. In this toy experiment, the tuning and testing sets contain
 just 100 segments each.
 
-To drop these sets into the framework, simply copy them (or make symbolic
+To drop these sets into the framework, copy them (or make symbolic
 links) into your copy's corpora directory:
 \begin{small}
 \begin{alltt}
@@ -1082,7 +1082,7 @@ of splitting the input(s) into chunks, running the chunks in parallel, and
 concatenating (or otherwise merging) the outputs.  In this example the output
 from all instances of \code{dmcount} are merged using
 \code{merge_multi_column_counts}, a tool that adds counts together when it sees
-the same key in two files.  The default is to simply concatenate the parts
+the same key in two files.  The default is to concatenate the parts
 together, which is appropriate for programs that produce one line of output per
 line of input.  Run \code{parallelize.pl -h} for more details.\tipend
 
@@ -1683,7 +1683,7 @@ here.\footnote{A note of warning about the LM weight: following Doug Paul's
 ``ARPA'' LM format, all LM formats we know use base-10 log probs (including our
 own binary LM and TPLM formats), but canoe interprets them as natural logs:
 throughout \PS, logs are natural by default, not base 10.  This known bug has
-minimal impact; correcting it simply requires multiplying the desired
+minimal impact; correcting for it simply requires multiplying the desired
 \code{weight-l} values by log(10), which \code{tune.py} and \code{rat.sh} do
 implicitly. We chose not to fix it to avoid having to adjust all previously
 tuned sets of weights.}
