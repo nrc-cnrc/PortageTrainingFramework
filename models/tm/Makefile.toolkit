@@ -687,21 +687,24 @@ $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L2_2_L
 
 
 # Converts Giza's IBM4 ttables in a format that Portage understands.
-${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  SHELL=${FRAMEWORK_SHELL}
+# No need to time-mem or submit to the cluster since both giza_convert_ttable &
+# train_ibm on large data sets take only a couple of seconds and use little
+# memory.
+${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  SHELL=${GUARD_SHELL}
 ${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${L2_GIVEN_L1}.gizacfg
 	set -o pipefail; \
-	${TIME_MEM} giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) 2> log.${@:.gz=}.1 \
-	| gzip > tmp.$@ \
-	&& ${TIME_MEM} train_ibm -tobin tmp.$@ $@ 2> log.${@:.gz=}.2
-	_LOCAL=1 rm -f tmp.$@
+	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
+	| gzip > tmp.$@
+	train_ibm -tobin tmp.$@ $@ 2> log.${@:.gz=}
+	rm -f tmp.$@
 
-${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  SHELL=${FRAMEWORK_SHELL}
+${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  SHELL=${GUARD_SHELL}
 ${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${L1_GIVEN_L2}.gizacfg
 	set -o pipefail; \
-	${TIME_MEM} giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) 2> log.${@:.gz=}.1 \
-	| gzip > tmp.$@ \
-	&& ${TIME_MEM} train_ibm -tobin tmp.$@ $@ 2> log.${@:.gz=}.2
-	_LOCAL=1 rm -f tmp.$@
+	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
+	| gzip > tmp.$@
+	train_ibm -tobin tmp.$@ $@ 2> log.${@:.gz=}
+	rm -f tmp.$@
 
 
 
