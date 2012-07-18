@@ -23,7 +23,7 @@ include Makefile.toolkit
 .SUFFIXES:
 
 .PHONY: all
-all: SHELL=${GUARD_SHELL}
+all: SHELL=${LOCAL_SHELL}
 all: tune_main
 ifneq ($(strip ${TEST_SET}),)
 all: eval
@@ -33,7 +33,7 @@ all:
 
 
 .PHONY: help
-help: SHELL=${GUARD_SHELL}
+help: SHELL=${LOCAL_SHELL}
 help:
 ifeq (${LM_TOOLKIT},IRST)
 	@echo "Please run the following in order for this framework to run properly:"
@@ -83,10 +83,10 @@ endif
 
 
 .PHONY: doc
-doc: SHELL=${GUARD_SHELL}
+doc: SHELL=${LOCAL_SHELL}
 doc: tutorial.pdf
 
-%.pdf: SHELL=${GUARD_SHELL}
+%.pdf: SHELL=${LOCAL_SHELL}
 %.pdf: %.tex
 # latex actually needs to be run three times for the table of contents to be
 # generated correctly (a trivial change on one line has a significant ripple
@@ -100,13 +100,13 @@ doc: tutorial.pdf
 # Clean up
 .PHONY: clean clean.content clean.doc clean.logs hide.logs
 # Thorough cleaning of everything, including their old names
-clean: SHELL=${GUARD_SHELL}
+clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs clean.doc
 	${RM} tutorial.pdf framework-toy.pdf
 	${RM} log.INSTALL_SUMMARY
 
 # hide.logs hides logs from user's view into .logs
-clean.content clean.logs hide.logs: SHELL=${GUARD_SHELL}
+clean.content clean.logs hide.logs: SHELL=${LOCAL_SHELL}
 clean.content clean.logs hide.logs: %:
 	${MAKE} -C corpora $@
 	${MAKE} -C models $@
@@ -116,7 +116,7 @@ ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 endif
 
 # Clean auxiliary files from make doc, but not the .pdf itself.
-clean.doc: SHELL=${GUARD_SHELL}
+clean.doc: SHELL=${LOCAL_SHELL}
 clean.doc:
 	${RM} tutorial.{aux,log,toc} framework-toy.{aux,log,toc}
 
@@ -125,7 +125,7 @@ clean.doc:
 ########################################
 # Prepare the corpora.
 .PHONY: corpora
-corpora: SHELL=${GUARD_SHELL}
+corpora: SHELL=${LOCAL_SHELL}
 corpora: check_setup
 	${MAKE} -C corpora all
 
@@ -135,14 +135,14 @@ corpora: check_setup
 # Create models for truecasing (TC).
 # Create the Translation Model (TM).
 .PHONY: models lm mixlm ldm tc tm
-models lm mixlm ldm tc tm: SHELL=${GUARD_SHELL}
+models lm mixlm ldm tc tm: SHELL=${LOCAL_SHELL}
 models lm mixlm ldm tc tm: %: corpora
 	${MAKE} -C models $@
 
 
 
 .PHONY: tune_main
-tune_main: SHELL=${GUARD_SHELL}
+tune_main: SHELL=${LOCAL_SHELL}
 tune_main: tune_variant		# tune_variant tunes the main variant
 
 
@@ -167,7 +167,7 @@ TUNE_LIST := tune ${TUNE_VARIANT_LIST} ${DECODE_LIST} ${COW_LIST} rescore rat ${
 
 .PHONY: ${TUNE_LIST}
 # Tune weights
-${TUNE_LIST}: SHELL=${GUARD_SHELL}
+${TUNE_LIST}: SHELL=${LOCAL_SHELL}
 ${TUNE_LIST}: %: models
 	${MAKE} -C models $@
 
@@ -175,7 +175,7 @@ ${TUNE_LIST}: %: models
 
 .PHONY: translate $(addprefix translate., ${TUNE_DECODE_VARIANTS})
 # Apply tuned weights to the test sets
-translate $(addprefix translate., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
+translate $(addprefix translate., ${TUNE_DECODE_VARIANTS}): SHELL=${LOCAL_SHELL}
 translate $(addprefix translate., ${TUNE_DECODE_VARIANTS}): translate%: tune_variant%
 	if [ ! -e $@ ]; then \
 	   mkdir $@; \
@@ -187,14 +187,14 @@ translate $(addprefix translate., ${TUNE_DECODE_VARIANTS}): translate%: tune_var
 
 .PHONY: eval $(addprefix eval., ${TUNE_DECODE_VARIANTS})
 # Get BLEU scores for the test set(s)
-eval $(addprefix eval., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
+eval $(addprefix eval., ${TUNE_DECODE_VARIANTS}): SHELL=${LOCAL_SHELL}
 eval $(addprefix eval., ${TUNE_DECODE_VARIANTS}): eval%: translate%
 	${MAKE} -C translate$* bleu TUNE_VARIANT_TAG=$*
 
 
 
 .PHONY: check_setup
-check_setup: SHELL=${GUARD_SHELL}
+check_setup: SHELL=${LOCAL_SHELL}
 check_setup:
 	${MAKE} -C models/lm check_setup
 
@@ -205,7 +205,7 @@ ifneq ($(wildcard $(dir $(shell which train_ibm))/INSTALL_SUMMARY),)
 check_setup: log.INSTALL_SUMMARY
 endif
 
-log.INSTALL_SUMMARY: SHELL=${GUARD_SHELL}
+log.INSTALL_SUMMARY: SHELL=${LOCAL_SHELL}
 log.INSTALL_SUMMARY:
 	cat `dirname $$(which train_ibm)`/INSTALL_SUMMARY >log.INSTALL_SUMMARY
 
@@ -216,7 +216,7 @@ log.INSTALL_SUMMARY:
 # NOTE: In order to able to execute portageLive we should at the very least
 # have tuned the system.  To do so, we will rely on the all target.
 .PHONY: portageLive
-portageLive: SHELL=${GUARD_SHELL}
+portageLive: SHELL=${LOCAL_SHELL}
 portageLive: all
 	${MAKE} -C corpora portageLive
 	${MAKE} -C models portageLive
@@ -243,7 +243,7 @@ PortageLive: portageLive
 # The end result should be .al files .
 PREPARE_CORPORA_MAKEFILE ?= Makefile.prepare.corpora
 .PHONY: prepare.corpora
-prepare.corpora: SHELL=${GUARD_SHELL}
+prepare.corpora: SHELL=${LOCAL_SHELL}
 prepare.corpora:
 	${MAKE} -C corpora -f ${PREPARE_CORPORA_MAKEFILE} all
 
@@ -252,14 +252,14 @@ prepare.corpora:
 ########################################
 # Resource Summary
 .PHONY: resource_summary
-resource_summary: SHELL=${GUARD_SHELL}
+resource_summary: SHELL=${LOCAL_SHELL}
 resource_summary: export PORTAGE_INTERNAL_CALL=1
 resource_summary:
 	@${MAKE} --no-print-directory -s -C models time-mem
 	@${MAKE} --no-print-directory -s -C translate time-mem
 
 .PHONY: time-mem
-time-mem: SHELL=${GUARD_SHELL}
+time-mem: SHELL=${LOCAL_SHELL}
 time-mem: export PORTAGE_INTERNAL_CALL=1
 time-mem:
 	@echo "Resource summary for `pwd`:"
@@ -282,7 +282,7 @@ endif
 
 
 .PHONY: summary
-summary: SHELL=${GUARD_SHELL}
+summary: SHELL=${LOCAL_SHELL}
 summary: export PORTAGE_INTERNAL_CALL=1
 summary: time-mem
 	@echo

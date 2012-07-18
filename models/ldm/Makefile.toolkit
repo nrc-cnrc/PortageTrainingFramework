@@ -136,7 +136,7 @@ FIX_ALIGN_PATHS = $(foreach f,$1,$(if $(filter-out %.align.gz,$f),$f,$(if $(filt
 # - a target corpus with the TGTXZ suffix;
 # - a forward word alignment model aka target given source model with the TGT_GIVEN_SRCX suffix;
 # - a backward word alignment model aka source given target model with the SRC_GIVEN_TGTX suffix.
-%${COUNTSX}: SHELL=${GUARD_SHELL}
+%${COUNTSX}: SHELL=${LOCAL_SHELL}
 %${COUNTSX}:
 	@_LOCAL=1; [[ `expr $(words $+) % 3` -eq 0 ]] || ! echo "ERROR: You must provide triplets of corpora/alignment to create $@." >&2
 	parallelize.pl \
@@ -152,11 +152,11 @@ FIX_ALIGN_PATHS = $(foreach f,$1,$(if $(filter-out %.align.gz,$f),$f,$(if $(filt
 			| li-sort.sh > $@' \
 	&> log.$(basename $@)
 
-%.align.gz: SHELL=${GUARD_SHELL}
+%.align.gz: SHELL=${LOCAL_SHELL}
 %.align.gz:
 	${MAKE} -C ../tm $@
 
-${IBM1_MODEL_PFX}.%.gz: SHELL=${GUARD_SHELL}
+${IBM1_MODEL_PFX}.%.gz: SHELL=${LOCAL_SHELL}
 ${IBM1_MODEL_PFX}.%.gz:
 	${MAKE} -C ../tm $@
 

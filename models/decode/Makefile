@@ -122,7 +122,7 @@ all: train
 
 
 .PHONY: help
-help: SHELL=${GUARD_SHELL}
+help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Tune a system."
 	@echo
@@ -135,7 +135,7 @@ help:
 
 # What the user can expect from this module.
 .PHONY: list_final_output
-list_final_output: SHELL=${GUARD_SHELL}
+list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output:"
 	@echo "${DECODING_MODEL}"
@@ -145,20 +145,20 @@ list_final_output:
 ########################################
 # Clean up
 .PHONY: clean clean.content clean.logs hide.logs
-clean: SHELL=${GUARD_SHELL}
+clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs
 
-clean.content: SHELL=${GUARD_SHELL}
+clean.content: SHELL=${LOCAL_SHELL}
 clean.content:
 	${RM} models
 
-clean.logs: SHELL=${GUARD_SHELL}
+clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	${RM} log.* run-parallel-logs*
 	${RM} -r logs/
 
 # Hide logs from user's view into .logs
-hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
@@ -166,7 +166,7 @@ hide.logs: hide_logs_sub
 ########################################
 # Resources Summary
 .PHONY: time-mem
-time-mem: SHELL=${GUARD_SHELL}
+time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
 
@@ -174,7 +174,7 @@ time-mem: resource_summary_sub
 ########################################
 # Is the template present?
 .PHONY: check_template
-check_template: SHELL=${GUARD_SHELL}
+check_template: SHELL=${LOCAL_SHELL}
 check_template:
 	@[[ -f ${TEMPLATE_DIR}/${DECODING_MODEL_TEMPLATE} ]] \
 	|| ! echo "ERROR: Cannot find this template: ${DECODING_MODEL_TEMPLATE}" >&2
@@ -222,7 +222,7 @@ $(warning No LMs available. Have you trained at least one language model?)
 endif
 $(info LMs: ${LMS})
 
-${UNTUNED_DECODING_MODEL}: SHELL=${GUARD_SHELL}
+${UNTUNED_DECODING_MODEL}: SHELL=${LOCAL_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	@ls ${CPT_SEARCH} &> /dev/null \
 	|| ! echo "ERROR: No CPTs available. Please train the translation model(s) first!" >&2
@@ -241,7 +241,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 clean.content: clean.canoe.ini
 
 .PHONY: clean.canoe.ini
-clean.canoe.ini: SHELL=${GUARD_SHELL}
+clean.canoe.ini: SHELL=${LOCAL_SHELL}
 clean.canoe.ini:
 	${RM} ${DECODING_MODEL} tmp.${UNTUNED_DECODING_MODEL}
 
@@ -276,7 +276,7 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 clean.content: clean.tune
 
 .PHONY: clean.tune
-clean.tune: SHELL=${GUARD_SHELL}
+clean.tune: SHELL=${LOCAL_SHELL}
 clean.tune:
 	${RM} -r foos canoe-parallel.* run-p.*
 	${RM} ${DECODING_MODEL}
@@ -295,17 +295,17 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive
 CANOE_LIVE            ?= ${PORTAGE_LIVE_DEST_DIR}/${DECODING_MODEL}
 
 .PHONY: portageLive
-portageLive: SHELL=${GUARD_SHELL}
+portageLive: SHELL=${LOCAL_SHELL}
 portageLive: ${CANOE_LIVE}
 
 
 .PHONY: portageLive_models
-portageLive_models_%: SHELL=${GUARD_SHELL}
+portageLive_models_%: SHELL=${LOCAL_SHELL}
 portageLive_models_%:
 	${MAKE} -C ../$* portageLive
 
 
-${CANOE_LIVE}: SHELL=${GUARD_SHELL}
+${CANOE_LIVE}: SHELL=${LOCAL_SHELL}
 ${CANOE_LIVE}: portageLive_models_lm portageLive_models_tm portageLive_models_ldm
 ${CANOE_LIVE}: ${DECODING_MODEL}
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
@@ -315,7 +315,7 @@ ${CANOE_LIVE}: ${DECODING_MODEL}
 
 clean.content: clean.portageLive
 .PHONY: clean.portageLive
-clean.portageLive: SHELL=${GUARD_SHELL}
+clean.portageLive: SHELL=${LOCAL_SHELL}
 clean.portageLive:
 	${RM} ${CANOE_LIVE}
 

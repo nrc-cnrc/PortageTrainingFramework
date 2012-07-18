@@ -36,7 +36,7 @@ MIXLM_PRETRAINED_${TGT_LANG}_LMS := ${MIXLM_PRETRAINED_TGT_LMS}
 
 # The dependency list cannot be relied on for the source lm filenames because
 # they are not available when this tookkit is used by translate/Makefile.
-components_%: SHELL=${GUARD_SHELL}
+components_%: SHELL=${LOCAL_SHELL}
 components_%:
 	echo "$(foreach lm,${MIXLM},`basename models/mixlm/${lm}_$**.binlm.gz`)" \
 	     "$(notdir ${MIXLM_PRETRAINED_$*_LMS})" \
@@ -57,7 +57,7 @@ components_%:
 		> $@ 2> log.$*.mixlm
 
 
-%.weights: SHELL=${GUARD_SHELL}
+%.weights: SHELL=${LOCAL_SHELL}
 %.weights: %.distances
 	mx-dist2weights -v normalize $< > $@
 
@@ -65,7 +65,7 @@ components_%:
 # The source dev corpus is provided here since mx-mix-models.sh requires it
 # even though the script doesn't use it.
 # NOTE: the source corpus is listed twice thus we need $^ to only get one of them.
-%.mixlm: SHELL=${GUARD_SHELL}
+%.mixlm: SHELL=${LOCAL_SHELL}
 %.mixlm: %.weights components_${TGT_LANG} %_${SRC_LANG}${LANGX}
 	mx-mix-models.sh \
 		$(if ${MIXLM_MODELS_DIR}, -d ${MIXLM_MODELS_DIR}/) \

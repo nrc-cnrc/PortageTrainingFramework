@@ -109,7 +109,7 @@ all: train
 
 
 .PHONY: help
-help: SHELL=${GUARD_SHELL}
+help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Train a rescoring model."
 	@echo
@@ -122,7 +122,7 @@ help:
 
 # What the user can expect from this module.
 .PHONY: list_final_output
-list_final_output: SHELL=${GUARD_SHELL}
+list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
 	@echo "${RESCORING_MODEL}"
@@ -132,20 +132,20 @@ list_final_output:
 ########################################
 # Clean up
 .PHONY: clean clean.content clean.logs hide.logs
-clean: SHELL=${GUARD_SHELL}
+clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs
 
-clean.content: SHELL=${GUARD_SHELL}
+clean.content: SHELL=${LOCAL_SHELL}
 clean.content:
 	${RM} -r canoe-parallel.* run-p.*
 	${RM} models
 
-clean.logs: SHELL=${GUARD_SHELL}
+clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	${RM} log.* run-parallel-logs*
 
 # Hide logs from user's view into .logs
-hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
@@ -153,7 +153,7 @@ hide.logs: hide_logs_sub
 ########################################
 # Resources Summary
 .PHONY: time-mem
-time-mem: SHELL=${GUARD_SHELL}
+time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
 
@@ -161,7 +161,7 @@ time-mem: resource_summary_sub
 ########################################
 # Check if there is a trained decoding model available
 # Cannot be phony or it will always trigger remaking all targets.
-check_decoding_model: SHELL=${GUARD_SHELL}
+check_decoding_model: SHELL=${LOCAL_SHELL}
 check_decoding_model:
 	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] \
 	|| ! echo "ERROR: No decoding model (${DECODING_MODEL}) available. Please train ${DECODING_MODEL_DIR} first!" >&2
@@ -172,7 +172,7 @@ check_decoding_model:
 # CREATE A DEFAULT RESCORE MODEL
 # requires: a trained decoding model.
 # This provides the default rescore-model.ini.
-${UNTUNED_RESCORING_MODEL}: SHELL=${GUARD_SHELL}
+${UNTUNED_RESCORING_MODEL}: SHELL=${LOCAL_SHELL}
 ${UNTUNED_RESCORING_MODEL}: ${RESCORING_MODEL_TEMPLATE}
 	set -o pipefail; configtool rescore-model:ffvals ${DECODING_MODEL_DIR}/${DECODING_MODEL} | cut -f 1 -d ' ' > $@
 	cat $< \
@@ -211,7 +211,7 @@ ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UN
 clean.content: clean.rescore_train
 
 .PHONY: clean.rescore_train
-clean.rescore_train: SHELL=${GUARD_SHELL}
+clean.rescore_train: SHELL=${LOCAL_SHELL}
 clean.rescore_train:
 	${RM} ${RESCORING_MODEL} ${RESCORING_MODEL}.ini
 	${RM} -r gen-features-parallel-output.* workdir-${TUNE_RESCORE_RULE}-${NBEST_SIZE}best
@@ -222,7 +222,7 @@ clean.rescore_train:
 # Create a specific canoe.ini per test set.
 # You could add some specific target if you need to customize a decoding model
 # for a particular testset.
-${DECODING_MODEL}.%: SHELL=${GUARD_SHELL}
+${DECODING_MODEL}.%: SHELL=${LOCAL_SHELL}
 ${DECODING_MODEL}.%: check_decoding_model
 	sed -e 's#${TUNE_DECODE}.mixlm#$*.mixlm#g' ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
@@ -234,7 +234,7 @@ ${DECODING_MODEL}.%: check_decoding_model
 clean.content: clean.decoding.model
 
 .PHONY: clean.decoding.model
-clean.decoding.model: SHELL=${GUARD_SHELL}
+clean.decoding.model: SHELL=${LOCAL_SHELL}
 clean.decoding.model:
 	${RM} ${DECODING_MODEL}.*
 
@@ -246,7 +246,7 @@ clean.decoding.model:
 #######################################
 # Check the decoding model config file.
 .PHONY: configtool
-configtool: SHELL=${GUARD_SHELL}
+configtool: SHELL=${LOCAL_SHELL}
 configtool: ${DECODING_MODEL_DIR}/${DECODING_MODEL}
 	configtool check $<
 
@@ -254,6 +254,6 @@ configtool: ${DECODING_MODEL_DIR}/${DECODING_MODEL}
 
 ########################################
 # DEBUGGING
-debug: SHELL=${GUARD_SHELL}
+debug: SHELL=${LOCAL_SHELL}
 debug:
 	echo "<${PARALLELISM_LEVEL_TUNE_RESCORE}>"

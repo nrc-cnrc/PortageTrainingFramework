@@ -403,7 +403,7 @@ endif
 
 # Some commands shouldn't be run with the cluster shell, will use this one
 # instead.
-GUARD_SHELL = /bin/bash
+LOCAL_SHELL = /bin/bash
 
 
 # Auto-detecting if Portage was compiled with ICU.

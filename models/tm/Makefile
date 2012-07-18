@@ -86,7 +86,7 @@ vpath %.gz ${TM_DIR_PFX} ${TM_DIR_PFX}mixtm
 # ALL
 # Define all the work to be done.
 .PHONY: all
-all: SHELL=${GUARD_SHELL}
+all: SHELL=${LOCAL_SHELL}
 all: pretrained_cpt ${PT_TYPES}
 
 
@@ -94,7 +94,7 @@ all: pretrained_cpt ${PT_TYPES}
 ########################################
 # HELP OPTIONS
 .PHONY: help
-help: SHELL=${GUARD_SHELL}
+help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Train translation models."
 	@echo
@@ -107,7 +107,7 @@ help:
 
 # What the user can expect from this module.
 .PHONY: list_final_output
-list_final_output: SHELL=${GUARD_SHELL}
+list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output: $(addsuffix _list,${PT_TYPES})
 	@echo "are the expected final outputs."
 
@@ -116,18 +116,18 @@ list_final_output: $(addsuffix _list,${PT_TYPES})
 ########################################
 # Clean up
 .PHONY: clean clean.content clean.logs hide.logs
-clean: SHELL=${GUARD_SHELL}
+clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs
 
-clean.content: SHELL=${GUARD_SHELL}
+clean.content: SHELL=${LOCAL_SHELL}
 
-clean.logs: SHELL=${GUARD_SHELL}
+clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	${RM} run-parallel-log* log.* run-p.*
 	${RM} -r .logs
 
 # Hide logs from user's view into .logs
-hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
@@ -135,7 +135,7 @@ hide.logs: hide_logs_sub
 ########################################
 # Resources Summary
 .PHONY: time-mem
-time-mem: SHELL=${GUARD_SHELL}
+time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
 
@@ -146,7 +146,7 @@ time-mem: resource_summary_sub
 clean.content: clean.word_alignment_models
 
 .PHONY: clean.word_alignment_models
-clean.word_alignment_models:  SHELL=${GUARD_SHELL}
+clean.word_alignment_models:  SHELL=${LOCAL_SHELL}
 clean.word_alignment_models:
 	${RM} $(addsuffix .*, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
@@ -195,7 +195,7 @@ ${IBM4_MODEL_PFX}_model:  $(foreach c, ${ALL_IBM4_WAMS}, ${IBM4_MODEL_PFX}.$c.${
 clean.content: clean.alignment_files
 
 .PHONY: clean.alignment_files
-clean.alignment_files:  SHELL=${GUARD_SHELL}
+clean.alignment_files:  SHELL=${LOCAL_SHELL}
 clean.alignment_files:
 	${RM} *.${L1_2_L2}.align.gz  *.${L2_2_L1}.align.gz
 
@@ -233,13 +233,13 @@ $(foreach c, ${ALL_IBM4_WAMS}, \
 clean.content: clean.jpts
 
 .PHONY: clean.jpts
-clean.jpts: SHELL=${GUARD_SHELL}
+clean.jpts: SHELL=${LOCAL_SHELL}
 clean.jpts:
 	$(RM) ${JPT_MODEL_PFX}.*
 	${RM} -r JPTPAR*
 
 .PHONY: jpts  $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
-jpts: SHELL=${GUARD_SHELL}
+jpts: SHELL=${LOCAL_SHELL}
 jpts: $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 # Definition of the generated makefile rules/targets:
@@ -293,14 +293,14 @@ $(foreach c, ${ALL_TMS}, \
 clean.content: clean.sig
 
 .PHONY: clean.sig
-clean.sig: SHELL=${GUARD_SHELL}
+clean.sig: SHELL=${LOCAL_SHELL}
 clean.sig:
 	$(RM) ${SIG_MODEL_PFX}.*  sig.cnts.${JPT_MODEL_PFX}.*
 	${RM} -r JPTPAR*
 	${RM} -r work_directory
 
 .PHONY: sigs  $(addsuffix _sig, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
-sigs: SHELL=${GUARD_SHELL}
+sigs: SHELL=${LOCAL_SHELL}
 sigs: $(addsuffix _sig, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 # To create a sigpruned jpt we need an original jpt.
@@ -349,12 +349,12 @@ $(foreach c, ${ALL_TMS}, \
 clean.content: clean.cpts
 
 .PHONY: clean.cpts
-clean.cpts: SHELL=${GUARD_SHELL}
+clean.cpts: SHELL=${LOCAL_SHELL}
 clean.cpts:
 	$(RM) ${CPT_MODEL_PFX}.*
 
 .PHONY: cpts  $(addsuffix _cpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
-cpts: SHELL=${GUARD_SHELL}
+cpts: SHELL=${LOCAL_SHELL}
 cpts: jpts
 cpts: ibm2_cpt
 cpts: hmm1_cpt
@@ -400,7 +400,7 @@ $(foreach c, ${ALL_TMS}, \
 )
 
 # Let's have a target to print out the variables that contain the conditional phrase table file's name.
-%_cpt_list: SHELL=${GUARD_SHELL}
+%_cpt_list: SHELL=${LOCAL_SHELL}
 %_cpt_list: ; @echo ${$@}
 
 # Creates dependencies for reversed Conditional Phrase Tables.
@@ -430,7 +430,7 @@ $(foreach c, ${ALL_TMS}, \
 
 # EXAMPLE of the resulting code generated previously:
 #hmm2_cpt_list = ${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}
-#hmm2_cpt_list: SHELL=${GUARD_SHELL}
+#hmm2_cpt_list: SHELL=${LOCAL_SHELL}
 #hmm2_cpt_list: ; @echo ${hmm2_cpt_list}
 #
 #.PHONY:  hmm2_cpt
@@ -450,7 +450,7 @@ $(foreach c, ${ALL_TMS}, \
 clean.content: clean.pretrained
 
 .PHONY: clean.pretrained
-clean.pretrained: SHELL=${GUARD_SHELL}
+clean.pretrained: SHELL=${LOCAL_SHELL}
 clean.pretrained:
 	${RM} ${pretrained_cpt_list}
 
@@ -469,13 +469,13 @@ $(foreach f, ${pretrained_cpt_paths}, \
 		pretrained.$(notdir $f):  $f) \
 )
 
-$(addprefix pretrained., ${pretrained_cpt_list}): SHELL=${GUARD_SHELL}
+$(addprefix pretrained., ${pretrained_cpt_list}): SHELL=${LOCAL_SHELL}
 $(addprefix pretrained., ${pretrained_cpt_list}): pretrained.%: 
 	@[[ ! -e $* ]] || [[ -L $* ]] || ! echo "ERROR: TM $* already exists as a normal file."
 	@$(if $(filter-out cpt.%, $*),! echo "ERROR: Name of pre-trained TM file must start with cpt.: $<")
 	ln -sf $< .
 
-${pretrained_cpt_paths}: SHELL=${GUARD_SHELL}
+${pretrained_cpt_paths}: SHELL=${LOCAL_SHELL}
 ${pretrained_cpt_paths}: %:
 	@! echo "ERROR: Pre-trained TM file $@ does not exist."
 
@@ -544,7 +544,7 @@ $(foreach c, ${ALL_TMS}, \
 clean.content: clean.mix
 
 .PHONY: clean.mix
-clean.mix: SHELL=${GUARD_SHELL}
+clean.mix: SHELL=${LOCAL_SHELL}
 clean.mix:
 	$(RM) ${CPT_MIX_PFX}.*
 	${RM} -r mixtm
@@ -553,7 +553,7 @@ mix_cpt_list = ${CPT_MIX_PFX}.${L1_2_L2X}
 
 # Meta target to create the mixture conditional phrase table in mixtm/.
 .PHONY: mix_cpt
-mix_cpt: SHELL=${GUARD_SHELL}
+mix_cpt: SHELL=${LOCAL_SHELL}
 mix_cpt:  | $(filter-out mix_cpt, ${PT_TYPES})
 	mkdir -p mixtm
 	cd mixtm && ${MAKE} -f ../Makefile pretrained_cpt TM_PRETRAINED_TMS="${MIXTM_PRETRAINED_TMS}"
@@ -595,7 +595,7 @@ $(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), \
 clean.content: clean.ibm4
 
 .PHONY: clean.ibm4
-clean.ibm4: SHELL=${GUARD_SHELL}
+clean.ibm4: SHELL=${LOCAL_SHELL}
 clean.ibm4:
 	${RM} ${IBM4_MODEL_PFX}.*
 	${RM} ${TRAIN_TM}
@@ -605,12 +605,12 @@ clean.ibm4:
 ########################################
 # INDICATOR FEATURE CONDITIONAL PHRASE TABLE
 # Create JPT groups based on their word alignment type.
-j2m/%: SHELL=${GUARD_SHELL}
+j2m/%: SHELL=${LOCAL_SHELL}
 j2m/%:  $(foreach c, ${ALL_TMS}, ${${CPT_DEP_TAG}_MODEL_PFX}.%.$c.${JOINTX})
 	mkdir -p $@
 	cd $@ && for f in $+; do ln -fs ../../$$f ${JPT_MODEL_PFX}.$${f##${${CPT_DEP_TAG}_MODEL_PFX}.}; done
 
-j2mr/%: SHELL=${GUARD_SHELL}
+j2mr/%: SHELL=${LOCAL_SHELL}
 j2mr/%:  $(foreach c, ${ALL_TMS}, ${${CPT_DEP_TAG}_MODEL_PFX}.%.$c.${RJOINTX})
 	mkdir -p $@
 	cd $@ && for f in $+; do ln -fs ../../$$f ${JPT_MODEL_PFX}.$${f##${${CPT_DEP_TAG}_MODEL_PFX}.}; done
@@ -643,7 +643,7 @@ indicator_cpt:  ${indicator_cpt_list}
 clean.content: clean.indicator
 
 .PHONY: clean.indicator
-clean.indicator: SHELL=${GUARD_SHELL}
+clean.indicator: SHELL=${LOCAL_SHELL}
 clean.indicator:
 	${RM} -r j2m j2mr
 
@@ -680,7 +680,7 @@ endif
 tppt_list := $(addsuffix .tppt, $(basename $(foreach a, $(PT_TYPES:=_list), ${$a})))
 
 .PHONY: tppt
-tppt portageLive: SHELL=${GUARD_SHELL}
+tppt portageLive: SHELL=${LOCAL_SHELL}
 tppt portageLive: ${tppt_list}
 
 
@@ -789,19 +789,19 @@ unittest_indicator_cpt:  unittest_jpts
 
 # Verify that make is capable of generating all required targets for merged_cpt and some other cpt.
 .PHONY: unittest1
-unittest1: SHELL=${GUARD_SHELL}
+unittest1: SHELL=${LOCAL_SHELL}
 unittest1:
 	make -Bnj1 tppt PT_TYPES='ibm2_cpt hmm3_cpt merged_cpt' MERGED_CPT_JPT_TYPES='IBM2 HMM1 HMM3 HMM2 IBM1' MERGED_CPT_ZN_MODEL=IBM1
 
 # Verify that make is capable of generating all required target for one cpt that has been significance pruned.
 .PHONY: unittest2
-unittest2: SHELL=${GUARD_SHELL}
+unittest2: SHELL=${LOCAL_SHELL}
 unittest2:
 	make -Bnj1 USE_SIGPRUNING=1 SIG_OPTS="-keep -sigopts '-par-driver fork'" ibm2_cpt
 
 # Verify that make is capable of generating all required target for a merged cpt that has been significance pruned.
 .PHONY: unittest3
-unittest3: SHELL=${GUARD_SHELL}
+unittest3: SHELL=${LOCAL_SHELL}
 unittest3:
 	make -Bnj1 USE_SIGPRUNING=1 SIG_OPTS="-keep -sigopts '-par-driver fork'" merged_cpt
 

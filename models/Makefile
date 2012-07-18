@@ -35,7 +35,7 @@ _PLIVE_DECODE_VARIANT := $(strip $(if ${PLIVE_DECODE_VARIANT}, .${PLIVE_DECODE_V
 .SUFFIXES:
 
 .PHONY: all
-all: SHELL=${GUARD_SHELL}
+all: SHELL=${LOCAL_SHELL}
 all: tune
 
 
@@ -43,7 +43,7 @@ all: tune
 ########################################
 # HELP MESSAGE.
 .PHONY: help
-help: SHELL=${GUARD_SHELL}
+help: SHELL=${LOCAL_SHELL}
 help:
 ifeq (${LM_TOOLKIT},IRST)
 	@echo "Please run the following in order for this framework to run properly:"
@@ -90,12 +90,12 @@ endif
 ########################################
 # Clean up
 .PHONY: clean clean.content clean.logs hide.logs
-clean: SHELL=${GUARD_SHELL}
+clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs
 
 # Thorough cleaning of everything
 # hide.logs hides logs from user's view into .logs
-clean.content clean.logs hide.logs: SHELL=${GUARD_SHELL}
+clean.content clean.logs hide.logs: SHELL=${LOCAL_SHELL}
 clean.content clean.logs hide.logs: %:
 	${MAKE} -C ldm $@
 	${MAKE} -C lm $@
@@ -115,7 +115,7 @@ endif
 ########################################
 # Resource Summary
 .PHONY: time-mem
-time-mem: SHELL=${GUARD_SHELL}
+time-mem: SHELL=${LOCAL_SHELL}
 time-mem:
 	@time-mem-tally.pl `find ldm lm mixlm tm tc decode* rescore confidence* -type f -name log.\* -o -name \*.log` \
 	| second-to-hms.pl \
@@ -126,16 +126,16 @@ time-mem:
 ################################################################################
 # MINIMUM MANDATORY TARGETS.
 .PHONY: models
-models: SHELL=${GUARD_SHELL}
+models: SHELL=${LOCAL_SHELL}
 models: lm mixlm tm
 
 
 
 .PHONY: lm
 # Create the Language Model (LM).
-lm: SHELL=${GUARD_SHELL}
+lm: SHELL=${LOCAL_SHELL}
 lm: lm.${TGT_LANG}
-lm.%: SHELL=${GUARD_SHELL}
+lm.%: SHELL=${LOCAL_SHELL}
 lm.%:
 	${MAKE} -C lm all LM_LANG=$*
 
@@ -145,7 +145,7 @@ lm.%:
 # Create mixture language model.
 # NOTE: we make mixlm dependent on lm in case the lms inside the mixlm repeat
 # some lms built in lm/.
-mixlm: SHELL=${GUARD_SHELL}
+mixlm: SHELL=${LOCAL_SHELL}
 mixlm: lm
 	${MAKE} -C $@ all
 
@@ -153,7 +153,7 @@ mixlm: lm
 
 .PHONY: tm
 # Create the Translation Model (TM).
-tm: SHELL=${GUARD_SHELL}
+tm: SHELL=${LOCAL_SHELL}
 tm:
 	${MAKE} -C $@ all
 
@@ -169,21 +169,21 @@ TUNE_VARIANTS := tune_variant $(addprefix tune_variant., ${TUNE_DECODE_VARIANTS}
 
 .PHONY: tune
 # Tune all the required models.
-tune: SHELL=${GUARD_SHELL}
+tune: SHELL=${LOCAL_SHELL}
 tune: ${TUNE_VARIANTS}
 
 
 
 .PHONY: ${TUNE_VARIANTS}
 # Tune models for a variant (the main one (i.e. decode) or an alternate (e.g. decode.a).
-${TUNE_VARIANTS}: SHELL=${GUARD_SHELL}
+${TUNE_VARIANTS}: SHELL=${LOCAL_SHELL}
 ${TUNE_VARIANTS}: tune_variant%: decode%
 
 
 
 .PHONY: cow decode
 # Run COW to tune the decoding model.
-cow decode: SHELL=${GUARD_SHELL}
+cow decode: SHELL=${LOCAL_SHELL}
 cow: decode
 decode: ${MODELS_DEPENDENCY}
 	${MAKE} -C $@ all
@@ -191,11 +191,11 @@ decode: ${MODELS_DEPENDENCY}
 # Tune multiple decoding variants, if necessary.
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 .PHONY: $(addprefix cow., ${TUNE_DECODE_VARIANTS})
-$(addprefix cow., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
+$(addprefix cow., ${TUNE_DECODE_VARIANTS}): SHELL=${LOCAL_SHELL}
 $(addprefix cow., ${TUNE_DECODE_VARIANTS}): cow.% : decode.%
 
 .PHONY: $(addprefix decode., ${TUNE_DECODE_VARIANTS})
-$(addprefix decode., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
+$(addprefix decode., ${TUNE_DECODE_VARIANTS}): SHELL=${LOCAL_SHELL}
 $(addprefix decode., ${TUNE_DECODE_VARIANTS}): decode.%: ${MODELS_DEPENDENCY}
 	if [ ! -e $@ ]; then \
 	   mkdir $@; \
@@ -207,7 +207,7 @@ endif
 
 .PHONY: rat rescore
 # Run RAT to tune the rescoring model.
-rat rescore: SHELL=${GUARD_SHELL}
+rat rescore: SHELL=${LOCAL_SHELL}
 rat: rescore
 rescore: decode
 	${MAKE} -C $@ all
@@ -217,7 +217,7 @@ rescore: decode
 ################################################################################
 # Targets based on master Makefile.params
 .PHONY: ldm
-ldm: SHELL=${GUARD_SHELL}
+ldm: SHELL=${LOCAL_SHELL}
 ifneq ("","${USE_LDM}${USE_HLDM}")
 models: ldm
 
@@ -234,7 +234,7 @@ endif
 
 
 .PHONY: confidence
-confidence: SHELL=${GUARD_SHELL}
+confidence: SHELL=${LOCAL_SHELL}
 ifdef DO_CE
 ${TUNE_VARIANTS}: tune_variant%: confidence%
 #tune: confidence $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
@@ -247,7 +247,7 @@ portageLive: portageLive_models_confidence${_PLIVE_DECODE_VARIANT}
 portageLive_models_confidence${_PLIVE_DECODE_VARIANT}: portageLive_models_lm_src
 portageLive_models_confidence${_PLIVE_DECODE_VARIANT}: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 
-portageLive_models_lm_src: SHELL=${GUARD_SHELL}
+portageLive_models_lm_src: SHELL=${LOCAL_SHELL}
 portageLive_models_lm_src:
 	${MAKE} -C lm portageLive LM_LANG=${SRC_LANG}
 
@@ -257,7 +257,7 @@ confidence: lm.${SRC_LANG} decode
 # Tune multiple confidence variants, if necessary.
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 .PHONY: $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
-$(addprefix confidence., ${TUNE_DECODE_VARIANTS}): SHELL=${GUARD_SHELL}
+$(addprefix confidence., ${TUNE_DECODE_VARIANTS}): SHELL=${LOCAL_SHELL}
 $(addprefix confidence., ${TUNE_DECODE_VARIANTS}): confidence.%: lm.${SRC_LANG} decode.%
 	if [ ! -e $@ ]; then \
 	   mkdir $@; \
@@ -274,7 +274,7 @@ endif
 
 .PHONY: tc
 # Create models for truecasing (TC).
-tc: SHELL=${GUARD_SHELL}
+tc: SHELL=${LOCAL_SHELL}
 ifdef DO_TRUECASING
 models: tc
 
@@ -302,14 +302,14 @@ portageLive: portageLive_models_lm
 portageLive: portageLive_models_mixlm
 portageLive: portageLive_models_tm
 portageLive: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
-portageLive: SHELL=${GUARD_SHELL}
+portageLive: SHELL=${LOCAL_SHELL}
 portageLive:
 	ln -sf ../prime.sh $@
 	pwd > $@/README
 	portage_info >> $@/README
 
 portageLive: portageLive/soap-translate.sh
-portageLive/soap-translate.sh: SHELL=${GUARD_SHELL}
+portageLive/soap-translate.sh: SHELL=${LOCAL_SHELL}
 portageLive/soap-translate.sh: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 	mkdir -p $(dir $@)
 	echo "#!/bin/bash" > $@
@@ -319,19 +319,19 @@ portageLive/soap-translate.sh: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 # We need this dependency since decode will copy the tplms for portageLive.
 portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_lm portageLive_models_tm
 
-portageLive_models_%: SHELL=${GUARD_SHELL}
+portageLive_models_%: SHELL=${LOCAL_SHELL}
 portageLive_models_%:
 	${MAKE} -C $* portageLive
 
 ifneq ("$(wildcard ../plugins)","")
 portageLive: portageLive/plugins
-portageLive/plugins: SHELL=${GUARD_SHELL}
+portageLive/plugins: SHELL=${LOCAL_SHELL}
 portageLive/plugins:
 	ln -fs ../../plugins $@
 endif
 
 .PHONY: clean.portageLive
 clean clean.content: clean.portageLive
-clean.portageLive: SHELL=${GUARD_SHELL}
+clean.portageLive: SHELL=${LOCAL_SHELL}
 clean.portageLive:
 	${RM} -r portageLive

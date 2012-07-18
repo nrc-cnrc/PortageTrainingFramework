@@ -143,7 +143,7 @@ vpath ${TRUECASING_MAP}  ${TRUECASING_DIR} models/tc
 
 
 .PHONY: all
-all:  SHELL=${GUARD_SHELL}
+all:  SHELL=${LOCAL_SHELL}
 all: final_result
 	@echo "Your translations are available in $(notdir ${CURDIR})/" >&2
 
@@ -168,7 +168,7 @@ endif
 
 # The final translation depends if we are doing rescoring and/or truecasing.
 .PHONY: final_result
-final_result: SHELL=${GUARD_SHELL}
+final_result: SHELL=${LOCAL_SHELL}
 
 FINAL_RESULT += $(addsuffix .translation, ${TEST_SET})
 ifdef TRANSLATE_SET
@@ -178,14 +178,14 @@ endif
 final_result: ${FINAL_RESULT}
 
 # The final outputs will be named *.translation.
-%.translation:  SHELL=${GUARD_SHELL}
+%.translation:  SHELL=${LOCAL_SHELL}
 %.translation: %${FINALX}
 	${POST_PROCESSING} < $< > $@
 
 
 # What the user can expect from this module.
 .PHONY: list_final_output
-list_final_output: SHELL=${GUARD_SHELL}
+list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
 	@echo "${FINAL_RESULT}"
@@ -202,7 +202,7 @@ rescore: rat
 
 # This is where we would document this module's help.
 .PHONY: help
-help: SHELL=${GUARD_SHELL}
+help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Translate the following test sets: $(addsuffix _${SRC_LANG}, ${TEST_SET})"
 	@echo
@@ -216,26 +216,26 @@ help:
 ########################################
 # Clean up
 .PHONY: clean clean.content clean.logs hide.logs
-clean: SHELL=${GUARD_SHELL}
+clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs
 
-clean.content: SHELL=${GUARD_SHELL}
+clean.content: SHELL=${LOCAL_SHELL}
 clean.content:
 	${RM} *.translation models canoe.ini.cow
 
-clean.logs: SHELL=${GUARD_SHELL}
+clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	${RM} log.* run-parallel-logs*
 
 # Hide logs from user's view into .logs
-hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
 ########################################
 # Resources Summary
 .PHONY: time-mem
-time-mem: SHELL=${GUARD_SHELL}
+time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
 
@@ -243,7 +243,7 @@ time-mem: resource_summary_sub
 # If there is no decoding model available, warn the user since we do not know
 # how to make the decoding model in this module.
 # Cannot be phony or else it will trigger always remaking targets.
-check_decoding_model: SHELL=${GUARD_SHELL}
+check_decoding_model: SHELL=${LOCAL_SHELL}
 check_decoding_model:
 	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] \
 	|| ! echo "ERROR: No decoding model (${DECODING_MODEL}) available. Please train ${DECODING_MODEL_DIR} first!" >&2
@@ -254,7 +254,7 @@ check_decoding_model:
 # You could add a specific target if you need to customize a canoe.ini.cow
 # for a particular file.
 # For dynamic mixlm's, we use weights computed specifically for the test set.
-$(addprefix ${DECODING_MODEL}., ${TEST_SET}): SHELL=${GUARD_SHELL}
+$(addprefix ${DECODING_MODEL}., ${TEST_SET}): SHELL=${LOCAL_SHELL}
 ifneq ($(strip ${MIXLM} ${MIXLM_PRETRAINED_TGT_LMS}),)
 ifndef USE_STATIC_MIXLM
 USE_DYNAMIC_MIXLM = 1
@@ -274,7 +274,7 @@ include ../models/mixlm/Makefile.toolkit
 clean.content: clean.mixlm
 
 .PHONY: clean.mixlm
-clean.mixlm: SHELL=${GUARD_SHELL}
+clean.mixlm: SHELL=${LOCAL_SHELL}
 clean.mixlm:
 	${RM} components_* *.distances *.weights *.mixlm
 
@@ -296,11 +296,11 @@ endif
 clean.content: clean.decoding.models
 
 .PHONY: clean.decoding.models
-clean.decoding.models: SHELL=${GUARD_SHELL}
+clean.decoding.models: SHELL=${LOCAL_SHELL}
 clean.decoding.models: $(addprefix clean.decoding.models., ${TEST_SET} ${TRANSLATE_SET})
 
 .PHONY: $(addprefix clean.decoding.models., ${TEST_SET} ${TRANSLATE_SET})
-$(addprefix clean.decoding.models., ${TEST_SET} ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+$(addprefix clean.decoding.models., ${TEST_SET} ${TRANSLATE_SET}): SHELL=${LOCAL_SHELL}
 $(addprefix clean.decoding.models., ${TEST_SET} ${TRANSLATE_SET}): clean.decoding.models.%:
 	${RM} ${DECODING_MODEL}.$*
 
@@ -312,7 +312,7 @@ out: $(addsuffix .out, ${TEST_SET})
 ifdef DO_RESCORING
 # if we are doing rescoring, we can save us some work by going straight to
 # rescoring and extracting the 1 best instead of calculating it twice.
-%.out: SHELL=${GUARD_SHELL}
+%.out: SHELL=${LOCAL_SHELL}
 %.out: %.rat
 	cp workdir-$*${RULEX}-${NBEST_SIZE}best/1best $@
 else
@@ -337,7 +337,7 @@ endif
 
 OUT_BLEU_DEP = $(addsuffix .out.bleu, ${TEST_SET})
 .PHONY: out.bleu
-out.bleu: SHELL=${GUARD_SHELL}
+out.bleu: SHELL=${LOCAL_SHELL}
 out.bleu: ${OUT_BLEU_DEP}
 	@echo "Lowercase BLEU scores for $(notdir ${CURDIR})/:"
 	@egrep Human $+
@@ -348,7 +348,7 @@ ${OUT_BLEU_DEP}: %.out.bleu:  %.out  $$(call CREATE_REFERENCE_NAMES, $$*)
 
 TC_BLEU_DEP = $(addsuffix .tc.bleu, ${TEST_SET})
 .PHONY: tc.bleu
-tc.bleu: SHELL=${GUARD_SHELL}
+tc.bleu: SHELL=${LOCAL_SHELL}
 tc.bleu: ${TC_BLEU_DEP}
 	@echo "Truecase BLEU scores for $(notdir ${CURDIR})/:"
 	@egrep Human $+
@@ -357,26 +357,26 @@ ${TC_BLEU_DEP}: %.tc.bleu:  %.out.tc  $$(call CREATE_REFERENCE_NAMES, $$*, ${ALI
 
 .PHONY: out.detok
 out.detok: $(addsuffix .out.detok, ${TEST_SET})
-%.out.detok: SHELL=${GUARD_SHELL}
+%.out.detok: SHELL=${LOCAL_SHELL}
 
 
 clean.content: clean.translate
 
 .PHONY: clean.translate
-clean.translate: SHELL=${GUARD_SHELL}
+clean.translate: SHELL=${LOCAL_SHELL}
 clean.translate: $(addprefix clean.translate., ${TEST_SET})
 	${RM} -r canoe-parallel.* run-p.*
 	${RM} tc_tmp_*
 
 .PHONY: $(addprefix clean.translate., ${TEST_SET})
-$(addprefix clean.translate., ${TEST_SET}): SHELL=${GUARD_SHELL}
+$(addprefix clean.translate., ${TEST_SET}): SHELL=${LOCAL_SHELL}
 $(addprefix clean.translate., ${TEST_SET}): clean.translate.%:
 	${RM} $*.out $*.out.oov $*.out.pal $*.out.bleu $*.tc.bleu
 	${RM} $*.out.detok $*.out.detok.bleu
 
 
 # Cannot be phony or else it will trigger always remaking targets.
-check_rescoring_model: SHELL=${GUARD_SHELL}
+check_rescoring_model: SHELL=${LOCAL_SHELL}
 check_rescoring_model:
 	@[[ -e ${RESCORING_MODEL_DIR}/${RESCORING_MODEL} ]] \
 	|| ! echo "ERROR: No rescoring model (${RESCORING_MODEL}) available. Please train ${RESCORING_MODEL_DIR} first!" >&2
@@ -405,7 +405,7 @@ rat: $(addsuffix .rat, ${TEST_SET})
 
 RAT_BLEU_DEP = $(addsuffix .rat.bleu, ${TEST_SET})
 .PHONY: rat.bleu
-rat.bleu: SHELL=${GUARD_SHELL}
+rat.bleu: SHELL=${LOCAL_SHELL}
 rat.bleu: ${RAT_BLEU_DEP}
 	@echo "Rescoring BLEU scores for $(notdir ${CURDIR})/:"
 	@egrep Human $+
@@ -415,18 +415,18 @@ ${RAT_BLEU_DEP}: %.rat.bleu:  %.rat  $$(call CREATE_REFERENCE_NAMES, $$*)
 
 .PHONY: rat.detok
 rat.detok: $(addsuffix .rat.detok, ${TEST_SET})
-%.rat.detok: SHELL=${GUARD_SHELL}
+%.rat.detok: SHELL=${LOCAL_SHELL}
 
 
 clean.content: clean.rescore
 
 .PHONY: clean.rescore_trans
-clean.rescore: SHELL=${GUARD_SHELL}
+clean.rescore: SHELL=${LOCAL_SHELL}
 clean.rescore: $(addprefix clean.rescore., ${TEST_SET} ${TRANSLATE_SET})
 	${RM} -r canoe-parallel.* run-p.*
 
 .PHONY: $(addprefix clean.rescore., ${TEST_SET} ${TRANSLATE_SET})
-$(addprefix clean.rescore., ${TEST_SET} ${TRANSLATE_SET}): SHELL=${GUARD_SHELL}
+$(addprefix clean.rescore., ${TEST_SET} ${TRANSLATE_SET}): SHELL=${LOCAL_SHELL}
 $(addprefix clean.rescore., ${TEST_SET} ${TRANSLATE_SET}): clean.rescore.%:
 	${RM} $*.rat $*.rat.bleu
 	${RM} $*.rat.detok $*.rat.detok.bleu
@@ -461,14 +461,14 @@ endif
 		$(filter %${SRCTCX}, $+) \
 	> $@ 2> log.$@
 
-${CONFIDENCE_MODEL}: SHELL=${GUARD_SHELL}
+${CONFIDENCE_MODEL}: SHELL=${LOCAL_SHELL}
 ${CONFIDENCE_MODEL}:
 	ln -fs ${CONFIDENCE_MODEL_DIR}/$@
 
 clean.content: clean.ce
 
 .PHONY: clean.ce
-clean.ce: SHELL=${GUARD_SHELL}
+clean.ce: SHELL=${LOCAL_SHELL}
 clean.ce:
 	${RM} -r ce-workdir-* ce_work_*
 	${RM} ${CONFIDENCE_MODEL}
@@ -510,18 +510,18 @@ tc.detok: $(addsuffix .out.tc.detok, ${TEST_SET})
 ifdef DO_RESCORING
 tc.detok: $(addsuffix .rat.tc.detok, ${TEST_SET})
 endif
-$(addsuffix .tc.detok, ${TEST_SET}): SHELL=${GUARD_SHELL}
+$(addsuffix .tc.detok, ${TEST_SET}): SHELL=${LOCAL_SHELL}
 
 clean.content: clean.truecasing
 
 .PHONY: clean.truecasing
 CLEAN_TC_LIST := $(addprefix clean.truecasing., $(addsuffix .out.guard, ${TEST_SET} ${TRANSLATE_SET}) \
                                                 $(addsuffix .rat.guard, ${TEST_SET} ${TRANSLATE_SET}))
-clean.truecasing: SHELL=${GUARD_SHELL}
+clean.truecasing: SHELL=${LOCAL_SHELL}
 clean.truecasing: ${CLEAN_TC_LIST}
 
 .PHONY: ${CLEAN_TC_LIST}
-${CLEAN_TC_LIST}: SHELL=${GUARD_SHELL}
+${CLEAN_TC_LIST}: SHELL=${LOCAL_SHELL}
 ${CLEAN_TC_LIST}: clean.truecasing.%.guard:
 	${RM} $*.tc
 	${RM} $*.tc.detok
@@ -533,7 +533,7 @@ ${CLEAN_TC_LIST}: clean.truecasing.%.guard:
 
 ########################################
 # General detokenizeer.
-%.detok: SHELL=${GUARD_SHELL}
+%.detok: SHELL=${LOCAL_SHELL}
 %.detok: %
 	@echo "Detokenizing $(notdir ${CURDIR})/$<"
 	${DETOKENIZER} < $< > $@
@@ -542,7 +542,7 @@ ${CLEAN_TC_LIST}: clean.truecasing.%.guard:
 ########################################
 # Check the canoe.ini config file.
 .PHONY: configtool
-configtool: SHELL=${GUARD_SHELL}
+configtool: SHELL=${LOCAL_SHELL}
 configtool: ${DECODING_MODEL_TEMPLATE}
 	configtool check $<
 
@@ -550,7 +550,7 @@ configtool: ${DECODING_MODEL_TEMPLATE}
 ########################################
 # Hook to get BLEU scores
 .PHONY: bleu
-bleu: SHELL=${GUARD_SHELL}
+bleu: SHELL=${LOCAL_SHELL}
 bleu: ${OUT_BLEU_DEP}
 ifdef DO_RESCORING
 bleu: ${RAT_BLEU_DEP}
@@ -577,7 +577,7 @@ endif
 # This target expect two files:
 #  - a translation file;
 #  - a reference file with TGTX as it extension.
-%.bleu: SHELL=${GUARD_SHELL}
+%.bleu: SHELL=${LOCAL_SHELL}
 %.bleu:
 	@echo "Calculating BLEU for $(notdir ${CURDIR})/$@"
 	bleumain -c $(filter-out %${TGTX}, $+) $(filter %${TGTX}, $+) > $@
@@ -589,7 +589,7 @@ endif
 bleucompare: $(addsuffix .bleucompare, ${TEST_SET})
 
 COMPARE_TO ?= UNDEFINED/
-%.bleucompare:  SHELL = ${GUARD_SHELL}
+%.bleucompare:  SHELL = ${LOCAL_SHELL}
 %.bleucompare:  %.out  $$(call CREATE_REFERENCE_NAMES, $$*)
 	@bleucompare $(filter %.out, $+) ${COMPARE_TO}/translate/$(filter %.out, $+) REFS $(filter %${TGTX}, $+)
 
@@ -611,7 +611,7 @@ oov: $(addsuffix .woov, ${TEST_SET})
 # side effect of %.out.bleu which requires %.out which also silently generate
 # %.out.oov.
 # word out-of-vocabulary
-%.woov: SHELL=${GUARD_SHELL}
+%.woov: SHELL=${LOCAL_SHELL}
 %.woov:  %${RULEX} %.out.bleu
 	@echo -e -n "$*\t`egrep Human $(filter %.bleu, $+)`"
 	@perl -e 'printf "\tOOV: %6.6f%%\n", 100 * `egrep -o  "<OOV>[^<]+</OOV>" < $*.out.oov | \wc -l` / `\wc -w < $<`'

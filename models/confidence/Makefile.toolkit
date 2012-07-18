@@ -47,7 +47,7 @@ LM_TGT ?= $(subst /,\/,$(wildcard ${LM_DIR}/*${TGT_LANG}*.binlm.gz))
 
 # Requires:
 # - a template model <%${TEMPLATEX}>
-%${INIX}: SHELL=${GUARD_SHELL}
+%${INIX}: SHELL=${LOCAL_SHELL}
 %${INIX}:
 	cat $(filter %$(TEMPLATEX), $+) \
 	| sed -e "s#IBM\\(.\\)FWD#${IBM_DIR}/ibm\\1.${TGT_GIVEN_SRCX}#" \

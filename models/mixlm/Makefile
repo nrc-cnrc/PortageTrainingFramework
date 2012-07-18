@@ -71,7 +71,7 @@ vpath %_${TGT_LANG}${LANGX} ../../corpora
 
 
 .PHONY: help
-help: SHELL=${GUARD_SHELL}
+help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "To train your mix language models, type: make all"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
@@ -79,7 +79,7 @@ help:
 
 
 .PHONY: all
-all: SHELL=${GUARD_SHELL}
+all: SHELL=${LOCAL_SHELL}
 ifdef MIXLM_COMPONENTS
 all: mixlm
 else
@@ -92,30 +92,30 @@ endif
 ########################################
 # Clean up
 .PHONY: clean clean.content clean.logs hide.logs
-clean: SHELL=${GUARD_SHELL}
+clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs
 
-clean.content: SHELL=${GUARD_SHELL}
+clean.content: SHELL=${LOCAL_SHELL}
 clean.content:
 	${RM} models
 	${RM} components_* models
 	${RM} *.distances *.weights *.mixlm 
 	${RM} *.lm.gz *.binlm.gz
 
-clean.logs: SHELL=${GUARD_SHELL}
+clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	${RM} log.*
 	${RM} run-parallel-logs-*
 	${RM} -r .logs
 
 # Hide logs from user's view into .logs
-hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 ########################################
 # Resources Summary
 .PHONY: time-mem
-time-mem: SHELL=${GUARD_SHELL}
+time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
 ########################################
@@ -141,19 +141,19 @@ sublm.${TGT_LANG}: ${MIXLM_TGT_MODELS}
 # If for some reason one of the sublm was already created in models/lm, don't
 # recreate it, just link to it; otherwise build it here in the mixlm directory
 # (which requires using make -f, not make -C).
-${MIXLM_SRC_MODELS} ${MIXLM_TGT_MODELS}: SHELL=${GUARD_SHELL}
+${MIXLM_SRC_MODELS} ${MIXLM_TGT_MODELS}: SHELL=${LOCAL_SHELL}
 ${MIXLM_SRC_MODELS}: LM_LANG=${SRC_LANG}
 ${MIXLM_TGT_MODELS}: LM_LANG=${TGT_LANG}
 ${MIXLM_SRC_MODELS} ${MIXLM_TGT_MODELS}: %.binlm${GZ}:
 	[[ -s "${LM_DIR}/$@" ]] && ln -s "${LM_DIR}/$@" . \
 	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${LM_LANG} TRAIN_LM=$(*:_${LM_LANG}-kn-${ORDER}g=) $@
 
-$(notdir ${MIXLM_PRETRAINED_LMS}): SHELL=${GUARD_SHELL}
+$(notdir ${MIXLM_PRETRAINED_LMS}): SHELL=${LOCAL_SHELL}
 $(notdir ${MIXLM_PRETRAINED_SRC_LMS}): %: | pretrained.${SRC_LANG} ;
 $(notdir ${MIXLM_PRETRAINED_TGT_LMS}): %: | pretrained.${TGT_LANG} ;
 
 .PHONY: pretrained.${SRC_LANG} pretrained.${TGT_LANG}
-pretrained.${SRC_LANG} pretrained.${TGT_LANG}: SHELL=${GUARD_SHELL}
+pretrained.${SRC_LANG} pretrained.${TGT_LANG}: SHELL=${LOCAL_SHELL}
 pretrained.${SRC_LANG} pretrained.${TGT_LANG}: pretrained.%:
 	${MAKE} -f ${LM_DIR}/Makefile $@ LM_PRETRAINED_TGT_LMS="${MIXLM_PRETRAINED_TGT_LMS}"
 
@@ -178,14 +178,14 @@ components_${TGT_LANG}: ${MIXLM_TGT_MODELS} $(notdir ${MIXLM_PRETRAINED_TGT_LMS}
 ########################################
 # Create Tightly Packed Language Models.
 
-${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm}: SHELL=${GUARD_SHELL}
+${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm}: SHELL=${LOCAL_SHELL}
 ${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm}: %.tplm:
 	[[ -s "${LM_DIR}/$@" ]] && ln -s ${LM_DIR}/$@ || ${MAKE} -f ${LM_DIR}/Makefile $@
 
 clean.content: clean.tplm
 
 .PHONY: clean.tplm
-clean.tplm: SHELL=${GUARD_SHELL}
+clean.tplm: SHELL=${LOCAL_SHELL}
 clean.tplm:
 	${RM} -r *.tplm
 
@@ -194,7 +194,7 @@ clean.tplm:
 # Transform model for PortageLive
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/mixlm
 .PHONY: portageLive
-portageLive: SHELL=${GUARD_SHELL}
+portageLive: SHELL=${LOCAL_SHELL}
 ifdef MIXLM_COMPONENTS
 portageLive: ${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm}
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}

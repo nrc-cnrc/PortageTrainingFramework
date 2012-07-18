@@ -200,7 +200,7 @@ ${HLDM_FILE:.gz=.tpldm}:  %.tpldm:  %.gz
 ########################################
 # HELP OPTIONS
 .PHONY:  help
-help: SHELL=${GUARD_SHELL}
+help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Train a lexicalized distortion model."
 	@echo
@@ -216,20 +216,20 @@ help:
 ########################################
 # Clean up
 .PHONY:  clean clean.content clean.logs hide.logs
-clean: SHELL=${GUARD_SHELL}
+clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs
 
-clean.content: SHELL=${GUARD_SHELL}
+clean.content: SHELL=${LOCAL_SHELL}
 clean.content:
 	${RM} *${COUNTSX} *${SRC_2_TGTX} *.bkoff
 	${RM} -r parallelize.pl.*
 
-clean.logs: SHELL=${GUARD_SHELL}
+clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	$(RM) run-parallel-log* log.* run-p.*
 
 # Hide logs from user's view into .logs
-hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
@@ -237,7 +237,7 @@ hide.logs: hide_logs_sub
 ########################################
 # Resources Summary
 .PHONY:  time-mem
-time-mem: SHELL=${GUARD_SHELL}
+time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
 

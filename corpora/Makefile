@@ -96,7 +96,7 @@ vpath %${RAWX}   ${RAW_CORPORA_DIR}
 
 # Help message
 .PHONY: help
-help: SHELL=${GUARD_SHELL}
+help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Tokenize and lowercase all corpora listed in CORPORA_SET."
 	@echo "CORPORA_SET: ${CORPORA_SET}"
@@ -121,7 +121,7 @@ FILES_TO_BE_LOCKED = ${LIST_FINAL_OUTPUT}
 
 # Defines all that needs to be done by this makefile.
 .PHONY: all
-all: SHELL=${GUARD_SHELL}
+all: SHELL=${LOCAL_SHELL}
 all: lc
 all: rule
 ifdef DO_TRUECASING
@@ -135,7 +135,7 @@ endif
 
 # What the user can expect from this module.
 .PHONY: list_final_output
-list_final_output: SHELL=${GUARD_SHELL}
+list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output are:"
 	@echo ${LC}
@@ -149,7 +149,7 @@ SMALL_SETS := ${HELDOUT_SET} ${TUNE_MIXTM} ${TUNE_MIXTM_MULTIPLE_REFERENCES}
 IS_SMALL_SET = $(findstring $(basename $@), $(addsuffix _${SRC_LANG}, ${SMALL_SETS}) \
                                             $(addsuffix _${TGT_LANG}, ${SMALL_SETS}))
 
-CORPUS_SHELL = $(if ${IS_SMALL_SET},${GUARD_SHELL},${FRAMEWORK_SHELL})
+CORPUS_SHELL = $(if ${IS_SMALL_SET},${LOCAL_SHELL},${FRAMEWORK_SHELL})
 RP_SHELL_OPTS = $(if  ${IS_SMALL_SET},,RP_PSUB_OPTS="-1")
 # Don't run time-mem when processing small files.
 TIME_MEM = $(if ${IS_SMALL_SET},,time-mem)
@@ -233,7 +233,7 @@ SRC_RAWZ_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${SRC_LANG}${RAWX}${GZ
 SRC_TOKZ_LIST ?= $(SRC_RAWZ_LIST:${RAWX}${GZ}=${ALIGNX}${GZ})
 TOK += ${SRC_TOKZ_LIST}
 
-${SRC_TOKZ_LIST}: SHELL=${GUARD_SHELL}
+${SRC_TOKZ_LIST}: SHELL=${LOCAL_SHELL}
 ${SRC_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
 	RP_PSUB_OPTS="-1" \
 	parallelize.pl \
@@ -249,7 +249,7 @@ TGT_RAWZ_LIST ?= $(notdir $(wildcard ${RAW_CORPORA_DIR}/*_${TGT_LANG}${RAWX}${GZ
 TGT_TOKZ_LIST ?= $(TGT_RAWZ_LIST:${RAWX}${GZ}=${ALIGNX}${GZ})
 TOK += ${TGT_TOKZ_LIST}
 
-${TGT_TOKZ_LIST}: SHELL=${GUARD_SHELL}
+${TGT_TOKZ_LIST}: SHELL=${LOCAL_SHELL}
 ${TGT_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
 	RP_PSUB_OPTS="-1" \
 	parallelize.pl \
@@ -267,7 +267,7 @@ MIXLM_TOK ?= $(filter $(addsuffix %, ${MIXLM}), ${TOK})
 
 
 .PHONY: tok
-tok: SHELL=${GUARD_SHELL}
+tok: SHELL=${LOCAL_SHELL}
 tok: ${TOK}
 
 
@@ -277,16 +277,16 @@ tok: ${TOK}
 # Define what corpora we need truecased/tokenized for the truecase model.
 .PHONY: tc
 TC := $(addsuffix _${TGT_LANG}${TCX}${GZ}, ${TRAIN_TC})
-tc: SHELL=${GUARD_SHELL}
+tc: SHELL=${LOCAL_SHELL}
 tc: ${TC}
 
 # Prepare truecased file.
-%${TCX}: SHELL=${GUARD_SHELL}
+%${TCX}: SHELL=${LOCAL_SHELL}
 %${TCX}: %${ALIGNX}
 	@${check_utf8}
 	ln -fs $< $@
 
-%${TCX}${GZ}: SHELL=${GUARD_SHELL}
+%${TCX}${GZ}: SHELL=${LOCAL_SHELL}
 %${TCX}${GZ}: %${ALIGNX}${GZ}
 	@${check_utf8}
 	ln -fs $< $@
@@ -299,7 +299,7 @@ ifdef TUNE_MIXTM_MULTIPLE_REFERENCES
 MIXTM_LC := ${TUNE_MIXTM_MULTIPLE_REFERENCES}_${SRC_LANG}${LANGX} ${TUNE_MIXTM_MULTIPLE_REFERENCES}_${TGT_LANG}${LANGX}
 LC += ${MIXTM_LC}
 
-${TUNE_MIXTM_MULTIPLE_REFERENCES}_${TGT_LANG}${LANGX}:  SHELL=${GUARD_SHELL}
+${TUNE_MIXTM_MULTIPLE_REFERENCES}_${TGT_LANG}${LANGX}:  SHELL=${LOCAL_SHELL}
 ${TUNE_MIXTM_MULTIPLE_REFERENCES}_${TGT_LANG}${LANGX}:  ${TUNE_MIXTM_MULTIPLE_REFERENCES}_${SRC_LANG}${LANGX}
 	test -s $@ && sleep 1 && touch $@
 
@@ -351,7 +351,7 @@ LC += ${LM_LC}
 LC := $(sort ${LC})
 
 .PHONY: lc
-lc: SHELL=${GUARD_SHELL}
+lc: SHELL=${LOCAL_SHELL}
 lc: ${LC}
 
 # Construct a lowercased corpora from its aligned version.
@@ -382,7 +382,7 @@ endif
 ########################################
 # Shortcut to only create final translation models' corpora.
 .PHONY: tm
-tm: SHELL=${GUARD_SHELL}
+tm: SHELL=${LOCAL_SHELL}
 tm: ${TM_LC}
 
 
@@ -393,7 +393,7 @@ tm: ${TM_LC}
 # If you have special markup, this is where you would write your code.
 .PHONY: rule
 RULE = $(addsuffix ${RULEX}, ${HELDOUT_SET})
-rule: SHELL=${GUARD_SHELL}
+rule: SHELL=${LOCAL_SHELL}
 rule: ${RULE}
 
 %${RULEX}: SHELL=${CORPUS_SHELL}
@@ -408,13 +408,13 @@ rule: ${RULE}
 # Special target to prepare a new translation set.
 TRANSLATE_SET_LIST = $(foreach t,${TRANSLATE_SET}, $t${RULEX} $t_${SRC_LANG}${LANGX})
 .PHONY: translate
-translate: SHELL=${GUARD_SHELL}
+translate: SHELL=${LOCAL_SHELL}
 translate: ${TRANSLATE_SET_LIST}
 
 
 # Special target to prepare the reference.
 .PHONY: reference
-reference: SHELL=${GUARD_SHELL}
+reference: SHELL=${LOCAL_SHELL}
 reference: $(foreach t,${TRANSLATE_SET},  $t_${TGT_LANG}${LANGX})
 
 
@@ -449,22 +449,22 @@ portageLive:
 ########################################
 # Clean up
 .PHONY: clean clean.content clean.logs hide.logs
-clean: SHELL=${GUARD_SHELL}
+clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs
 
-clean.content: SHELL=${GUARD_SHELL}
+clean.content: SHELL=${LOCAL_SHELL}
 clean.content:
 	${RM} ${TOK}
 	${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
 
-clean.logs: SHELL=${GUARD_SHELL}
+clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	${RM} run-parallel-logs-*
 	${RM} log.*
 	${RM} .logs
 
 # Hide logs from user's view into .logs
-hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
@@ -581,7 +581,7 @@ endif
 
 
 .PHONY: debug
-debug: SHELL=${GUARD_SHELL}
+debug: SHELL=${LOCAL_SHELL}
 debug:
 	@echo "LIST_FINAL_OUTPUT: ${LIST_FINAL_OUTPUT}"
 	@echo "LC: ${LC}"

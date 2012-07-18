@@ -141,11 +141,11 @@ CPT_LIST = ${CPT_MODEL_PFX}.zn-adapt.${L1_2_L2X}
 
 
 .PHONY: all
-all: SHELL=${GUARD_SHELL}
+all: SHELL=${LOCAL_SHELL}
 all: zn-adapt
 
 .PHONY: zn-adapt
-zn-adapt: SHELL=${GUARD_SHELL}
+zn-adapt: SHELL=${LOCAL_SHELL}
 zn-adapt: ${CPT_LIST}
 
 
@@ -231,14 +231,14 @@ ${CPT_MODEL_PFX}.zn-adapt.${L2_2_L1X}:  ${JPT_MODEL_PFX}.merged.${RJOINTX}
 tppt_list = ${CPT_LIST:gz=tppt}
 
 .PHONY: tppt
-tppt portageLive: SHELL=${GUARD_SHELL}
+tppt portageLive: SHELL=${LOCAL_SHELL}
 tppt portageLive: ${tppt_list}
 
 
 ########################################
 # HELP.
 .PHONY: help
-help: SHELL=${GUARD_SHELL}
+help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Special Makefile to produce a single phrase table using George's ZN-adaptation."
 	@echo
@@ -252,18 +252,18 @@ help:
 ########################################
 # Clean up
 .PHONY: clean clean.content clean.logs hide.logs
-clean: SHELL=${GUARD_SHELL}
+clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs
 
-clean.content: SHELL=${GUARD_SHELL}
+clean.content: SHELL=${LOCAL_SHELL}
 
-clean.logs: SHELL=${GUARD_SHELL}
+clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	${RM} run-parallel-log* log.* run-p.*
 	${RM} -r .logs
 
 # Hide logs from user's view into .logs
-hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
@@ -273,14 +273,14 @@ WA_MODEL_PREFIXES = ${IBM1_MODEL_PFX} ${IBM2_MODEL_PFX} ${HMM3_MODEL_PFX}
 clean.content: clean.word_alignment_models
 
 .PHONY: clean.word_alignment_models
-clean.word_alignment_models: SHELL=${GUARD_SHELL}
+clean.word_alignment_models: SHELL=${LOCAL_SHELL}
 clean.word_alignment_models:
 	$(RM) $(addsuffix .*, ${WA_MODEL_PREFIXES})
 
 clean.content: clean.jpts
 
 .PHONY: clean.jpts
-clean.jpts: SHELL=${GUARD_SHELL}
+clean.jpts: SHELL=${LOCAL_SHELL}
 clean.jpts:
 	$(RM) jpt.*
 	${RM} -r JPTPAR*
@@ -288,7 +288,7 @@ clean.jpts:
 clean.content: clean.cpts
 
 .PHONY: clean.cpts
-clean.cpts: SHELL=${GUARD_SHELL}
+clean.cpts: SHELL=${LOCAL_SHELL}
 clean.cpts:
 	$(RM) cpt.*
 
@@ -297,7 +297,7 @@ clean.cpts:
 ########################################
 # Resources Summary
 .PHONY: time-mem
-time-mem: SHELL=${GUARD_SHELL}
+time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
 
@@ -305,7 +305,7 @@ time-mem: resource_summary_sub
 ########################################
 # UNITTESTS
 .PHONY: unittest1
-unittest1: SHELL=${GUARD_SHELL}
+unittest1: SHELL=${LOCAL_SHELL}
 unittest1:
 	make -Bnj1 all
 
@@ -313,7 +313,7 @@ unittest1:
 
 ################################################################################
 # HELPERS
-debug: SHELL=${GUARD_SHELL}
+debug: SHELL=${LOCAL_SHELL}
 debug:
 	@echo "CORPORA_DIR: ${CORPORA_DIR}"
 	@echo "TRAIN_TM: ${TRAIN_TM}"

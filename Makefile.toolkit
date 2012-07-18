@@ -34,13 +34,13 @@ FILES_TO_BE_LOCKED ?=
 
 # Change to read-only aka "Locks" precious files.
 .PHONY: lock
-lock: SHELL=${GUARD_SHELL}
+lock: SHELL=${LOCAL_SHELL}
 lock:
 	-chmod u-w ${FILES_TO_BE_LOCKED}
 
 # Change to read-write aka "Unlocks" precious files.
 .PHONY: unlock
-unlock: SHELL=${GUARD_SHELL}
+unlock: SHELL=${LOCAL_SHELL}
 unlock:
 	-chmod u+w ${FILES_TO_BE_LOCKED}
 
@@ -49,7 +49,7 @@ unlock:
 ########################################
 # Hide logs.
 .PHONY: hide_logs_sub
-hide_logs_sub: SHELL=${GUARD_SHELL}
+hide_logs_sub: SHELL=${LOCAL_SHELL}
 hide_logs_sub:
 	mkdir -p .logs
 	-mv log.* run-parallel-logs-* .logs
@@ -60,7 +60,7 @@ hide_logs_sub:
 ########################################
 # Summarize resources usage for this system.
 .PHONY: resource_summary_sub
-resource_summary_sub: SHELL=${GUARD_SHELL}
+resource_summary_sub: SHELL=${LOCAL_SHELL}
 resource_summary_sub:
 	@find -type f -name log.\* -o -name \*.log \
 	| sort \

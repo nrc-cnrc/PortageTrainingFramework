@@ -362,7 +362,7 @@ ALIGN_MODEL_TYPE := -hmm
 	| gzip > $@
 
 
-%.${L2_2_L1}.align.gz:  SHELL=${GUARD_SHELL}
+%.${L2_2_L1}.align.gz:  SHELL=${LOCAL_SHELL}
 %.${L2_2_L1}.align.gz:  %.${L1_2_L2}.align.gz
 	set -o pipefail; \
 	zcat $< \
@@ -579,17 +579,17 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 
 ########################################
 # GIZA SPECIFIC TARGETS.
-$(addsuffix /,$(sort ${ALL_TMS})):  SHELL=${GUARD_SHELL}
+$(addsuffix /,$(sort ${ALL_TMS})):  SHELL=${LOCAL_SHELL}
 $(addsuffix /,$(sort ${ALL_TMS})):  %:
 	mkdir -p $@
 
 
 # Clean up the inputs for giza.
-%/${SRC_LANG}.lc:  SHELL=${GUARD_SHELL}
+%/${SRC_LANG}.lc:  SHELL=${LOCAL_SHELL}
 %/${SRC_LANG}.lc:  %_${SRC_LANG}.lc.gz %_${TGT_LANG}.lc.gz  | %/
 	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> $@.log
 
-%/${TGT_LANG}.lc:  SHELL=${GUARD_SHELL}
+%/${TGT_LANG}.lc:  SHELL=${LOCAL_SHELL}
 %/${TGT_LANG}.lc:  %/${SRC_LANG}.lc
 	test -s $@ && sleep 1 && touch $@
 
@@ -598,15 +598,15 @@ $(addsuffix /,$(sort ${ALL_TMS})):  %:
 .PHONY:  vcb
 vcb:  $(addsuffix /${SRC_LANG}.lc.vcb, ${ALL_TMS})
 vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_TMS})
-%/${SRC_LANG}.lc.vcb:  SHELL=${GUARD_SHELL}
+%/${SRC_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
 %/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %/
 	plain2snt $+ 2> $@.log
 
-%/${TGT_LANG}.lc.vcb:  SHELL=${GUARD_SHELL}
+%/${TGT_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
 %/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb
 	test -s $@ && sleep 1 && touch $@
 
-%/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  SHELL=${GUARD_SHELL}
+%/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  SHELL=${LOCAL_SHELL}
 %/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb
 	test -s $@ && sleep 1 && touch $@
 
@@ -624,11 +624,11 @@ classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_TMS})
 .PHONY: cooc
 cooc:  $(addsuffix /${L1_2_L2}.cooc, ${ALL_TMS})
 cooc:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_TMS})
-%/${L1_2_L2}.cooc:  SHELL=${GUARD_SHELL}
+%/${L1_2_L2}.cooc:  SHELL=${LOCAL_SHELL}
 %/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %/
 	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt 2> $@.log
 
-%/${L2_2_L1}.cooc:  SHELL=${GUARD_SHELL}
+%/${L2_2_L1}.cooc:  SHELL=${LOCAL_SHELL}
 %/${L2_2_L1}.cooc:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb | %/
 	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt 2> $@.log
 
@@ -679,7 +679,7 @@ giza_al:  $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS})
 giza_al:  $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS})
 $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L2_GIVEN_L1}.gizacfg
 $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.gizacfg
-%.${IBM4_MODEL_PFX}.alignment.gz:  SHELL=${GUARD_SHELL}
+%.${IBM4_MODEL_PFX}.alignment.gz:  SHELL=${LOCAL_SHELL}
 %.${IBM4_MODEL_PFX}.alignment.gz:
 	set -o pipefail; \
 	merge_alignment.py ${<:gizacfg=A3.final.part}* \
@@ -690,7 +690,7 @@ $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L2_2_L
 # No need to time-mem or submit to the cluster since both giza_convert_ttable &
 # train_ibm on large data sets take only a couple of seconds and use little
 # memory.
-${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  SHELL=${GUARD_SHELL}
+${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  SHELL=${LOCAL_SHELL}
 ${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${L2_GIVEN_L1}.gizacfg
 	set -o pipefail; \
 	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
@@ -698,7 +698,7 @@ ${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb 
 	train_ibm -tobin tmp.$@ $@ 2> log.${@:.gz=}
 	rm -f tmp.$@
 
-${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  SHELL=${GUARD_SHELL}
+${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  SHELL=${LOCAL_SHELL}
 ${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${L1_GIVEN_L2}.gizacfg
 	set -o pipefail; \
 	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
@@ -724,7 +724,7 @@ ${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb 
 # Note: portageLive dependencies are defined in Makefile (or Makefile.zn-adapt)
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/tm
 .PHONY: portageLive
-portageLive: SHELL=${GUARD_SHELL}
+portageLive: SHELL=${LOCAL_SHELL}
 portageLive:
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*

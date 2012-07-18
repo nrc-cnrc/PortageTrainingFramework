@@ -93,7 +93,7 @@ vpath %.marked.gz    ${CORPORA_DIR}
 
 ########################################
 .PHONY: help
-help: SHELL=${GUARD_SHELL}
+help: SHELL=${LOCAL_SHELL}
 help:
 ifeq (${LM_TOOLKIT},IRST)
 	@echo "Please run the following in order for this framework to run properly:"
@@ -115,7 +115,7 @@ endif
 
 ########################################
 .PHONY: all
-all: SHELL=${GUARD_SHELL}
+all: SHELL=${LOCAL_SHELL}
 all: ${LM_TYPES} pretrained.${LM_LANG}
 
 
@@ -123,7 +123,7 @@ all: ${LM_TYPES} pretrained.${LM_LANG}
 ########################################
 # What the user can expect from this module.
 .PHONY: list_final_output
-list_final_output: SHELL=${GUARD_SHELL}
+list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
 	@echo "$(addsuffix .binlm.gz, ${LM_NAMES})"
@@ -133,19 +133,19 @@ list_final_output:
 ########################################
 # Clean up
 .PHONY: clean clean.content clean.logs hide.logs
-clean: SHELL=${GUARD_SHELL}
+clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs
 
-clean.content: SHELL=${GUARD_SHELL}
+clean.content: SHELL=${LOCAL_SHELL}
 
-clean.logs: SHELL=${GUARD_SHELL}
+clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	${RM} log.*
 	${RM} run-parallel-logs-*
 	${RM} -r .logs
 
 # Hide logs from user's view into .logs
-hide.logs: SHELL=${GUARD_SHELL}
+hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
@@ -153,7 +153,7 @@ hide.logs: hide_logs_sub
 ########################################
 # Resources Summary
 .PHONY: time-mem
-time-mem: SHELL=${GUARD_SHELL}
+time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
 
@@ -162,7 +162,7 @@ time-mem: resource_summary_sub
 # Transform model for PortageLive
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/lm
 .PHONY: portageLive
-portageLive: SHELL=${GUARD_SHELL}
+portageLive: SHELL=${LOCAL_SHELL}
 ifdef TRAIN_LM
 portageLive: $(addsuffix .tplm, ${LM_NAMES})
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
@@ -200,21 +200,21 @@ $(foreach f, ${pretrained_lm_paths}, \
 		pretrained.$(notdir $f):  $f) \
 )
 
-$(addprefix pretrained., $(notdir ${pretrained_lm_paths})): SHELL=${GUARD_SHELL}
+$(addprefix pretrained., $(notdir ${pretrained_lm_paths})): SHELL=${LOCAL_SHELL}
 $(addprefix pretrained., $(notdir ${pretrained_lm_paths})): pretrained.%: 
 	@[[ ! -e $* ]] || [[ -L $* ]] || ! echo "ERROR: LM $* already exists as a normal file."
 	@$(if $(filter-out %.binlm.gz, $*),! echo "ERROR: Name of pre-trained LM file must end with .binlm.gz: $<")
 	ln -sf $< .
 	[[ ! -d ${<:.binlm.gz=.tplm} ]] || ln -sf ${<:.binlm.gz=.tplm} .
 
-${pretrained_lm_paths}: SHELL=${GUARD_SHELL}
+${pretrained_lm_paths}: SHELL=${LOCAL_SHELL}
 ${pretrained_lm_paths}: %:
 	@! echo "ERROR: Pre-trained LM file $@ does not exist."
 
 ########################################
 # Adds sentence start and end markers
 .PHONY: mark
-mark: SHELL=${GUARD_SHELL}
+mark: SHELL=${LOCAL_SHELL}
 mark: $(addsuffix .marked.gz, ${CORPORA_NAMES})
 
 #.SECONDARY: $(addsuffix .marked.gz, ${CORPORA_NAMES}
@@ -231,7 +231,7 @@ mark: $(addsuffix .marked.gz, ${CORPORA_NAMES})
 clean.content: clean.mark
 
 .PHONY: clean.mark
-clean.mark: SHELL=${GUARD_SHELL}
+clean.mark: SHELL=${LOCAL_SHELL}
 clean.mark:
 	${RM} *.marked.gz
 
@@ -241,7 +241,7 @@ clean.mark:
 # iARPA
 # Compressed irstlm format
 .PHONY: irstlm
-irstlm: SHELL=${GUARD_SHELL}
+irstlm: SHELL=${LOCAL_SHELL}
 irstlm: $(addsuffix .ilm.gz, ${LM_NAMES})
 
 # Here we've added LM_DESC to strip it out from the marked corpus file name.
@@ -264,7 +264,7 @@ irstlm: $(addsuffix .ilm.gz, ${LM_NAMES})
 clean.content: clean.irstlm
 
 .PHONY: clean.irstlm
-clean.irstlm: SHELL=${GUARD_SHELL}
+clean.irstlm: SHELL=${LOCAL_SHELL}
 clean.irstlm:
 	${RM} *.ilm.gz
 	${RM} -r stat*
@@ -274,7 +274,7 @@ clean.irstlm:
 ########################################
 # arpa text compressed format
 .PHONY: arpa
-arpa: SHELL=${GUARD_SHELL}
+arpa: SHELL=${LOCAL_SHELL}
 arpa: $(addsuffix .lm.gz, ${LM_NAMES})
 
 # Here we've added LM_DESC to strip it out from the corpus file name.
@@ -350,7 +350,7 @@ endif
 clean.content: clean.arpa
 
 .PHONY: clean.arpa
-clean.arpa: SHELL=${GUARD_SHELL}
+clean.arpa: SHELL=${LOCAL_SHELL}
 clean.arpa:
 	${RM} *.lm.gz
 
@@ -360,7 +360,7 @@ clean.arpa:
 # BINARY FORMAT
 # arpa bin compressed format
 .PHONY: blmt
-blmt: SHELL=${GUARD_SHELL}
+blmt: SHELL=${LOCAL_SHELL}
 blmt: $(addsuffix .blmt, ${LM_NAMES})
 
 #.SECONDARY: $(addsuffix .blmt, ${LM_NAMES})
@@ -377,7 +377,7 @@ blmt: $(addsuffix .blmt, ${LM_NAMES})
 clean.content: clean.blmt
 
 .PHONY: clean.blmt
-clean.blmt: SHELL=${GUARD_SHELL}
+clean.blmt: SHELL=${LOCAL_SHELL}
 clean.blmt:
 	${RM} *.blmt
 
@@ -386,7 +386,7 @@ clean.blmt:
 ########################################
 # qARPA format
 .PHONY: quantize
-quantize: SHELL=${GUARD_SHELL}
+quantize: SHELL=${LOCAL_SHELL}
 quantize: $(addsuffix .qlm.gz, ${LM_NAMES})
 
 #.SECONDARY: $(addsuffix .qlm.gz, ${LM_NAMES})
@@ -403,7 +403,7 @@ quantize: $(addsuffix .qlm.gz, ${LM_NAMES})
 clean.content: clean.quantize
 
 .PHONY: clean.quantize
-clean.quantize: SHELL=${GUARD_SHELL}
+clean.quantize: SHELL=${LOCAL_SHELL}
 clean.quantize:
 	${RM} *.qlm.gz
 
@@ -412,7 +412,7 @@ clean.quantize:
 ########################################
 # Quantize binary
 .PHONY: Qblmt
-Qblmt: SHELL=${GUARD_SHELL}
+Qblmt: SHELL=${LOCAL_SHELL}
 Qblmt: $(addsuffix .Qblmt, ${LM_NAMES})
 
 #.SECONDARY: $(addsuffix .Qblmt, ${LM_NAMES})
@@ -429,7 +429,7 @@ Qblmt: $(addsuffix .Qblmt, ${LM_NAMES})
 clean.content: clean.Qblmt
 
 .PHONY: clean.Qblmt
-clean.Qblmt: SHELL=${GUARD_SHELL}
+clean.Qblmt: SHELL=${LOCAL_SHELL}
 clean.Qblmt:
 	${RM} *.Qblmt
 
@@ -438,7 +438,7 @@ clean.Qblmt:
 ########################################
 # Sort the arpa format
 .PHONY: sort_arpa
-sort_arpa: SHELL=${GUARD_SHELL}
+sort_arpa: SHELL=${LOCAL_SHELL}
 sort_arpa: $(addsuffix .lm.sorted.gz, ${LM_NAMES})
 
 #.SECONDARY: $(addsuffix .lm.sorted.gz, ${LM_NAMES})
@@ -450,7 +450,7 @@ sort_arpa: $(addsuffix .lm.sorted.gz, ${LM_NAMES})
 clean.content: clean.sort_arpa
 
 .PHONY: clean.sort_arpa
-clean.sort_arpa: SHELL=${GUARD_SHELL}
+clean.sort_arpa: SHELL=${LOCAL_SHELL}
 clean.sort_arpa:
 	${RM} *.lm.sorted.gz
 
@@ -459,7 +459,7 @@ clean.sort_arpa:
 ########################################
 # Portage's bin lm format
 .PHONY: binlm
-binlm: SHELL=${GUARD_SHELL}
+binlm: SHELL=${LOCAL_SHELL}
 binlm: $(addsuffix .binlm.gz, ${LM_NAMES})
 
 #.SECONDARY: $(addsuffix .binlm.gz, ${LM_NAMES})
@@ -472,7 +472,7 @@ binlm: $(addsuffix .binlm.gz, ${LM_NAMES})
 clean.content: clean.binlm
 
 .PHONY: clean.binlm
-clean.binlm: SHELL=${GUARD_SHELL}
+clean.binlm: SHELL=${LOCAL_SHELL}
 clean.binlm:
 	${RM} *.binlm.gz
 
@@ -481,7 +481,7 @@ clean.binlm:
 ########################################
 # Pruning ARPA format => ARPA format
 .PHONY: prune
-prune: SHELL=${GUARD_SHELL}
+prune: SHELL=${LOCAL_SHELL}
 prune: $(addsuffix .plm.gz, ${LM_NAMES})
 
 #.SECONDARY: $(addsuffix .plm.gz, ${LM_NAMES})
@@ -497,7 +497,7 @@ prune: $(addsuffix .plm.gz, ${LM_NAMES})
 ########################################
 # Create Tightly Packed Language Model.
 .PHONY: tplm
-tplm: SHELL=${GUARD_SHELL}
+tplm: SHELL=${LOCAL_SHELL}
 tplm: $(addsuffix .tplm, ${LM_NAMES})
 
 %.tplm: SHELL=${FRAMEWORK_SHELL}
@@ -509,7 +509,7 @@ tplm: $(addsuffix .tplm, ${LM_NAMES})
 clean.content: clean.tplm
 
 .PHONY: clean.tplm
-clean.tplm: SHELL=${GUARD_SHELL}
+clean.tplm: SHELL=${LOCAL_SHELL}
 clean.tplm:
 	${RM} -r *.tplm
 
@@ -520,7 +520,7 @@ clean.tplm:
 ########################################
 # All valid/possible LMs
 .PHONY: all_lm
-all_lm: SHELL=${GUARD_SHELL}
+all_lm: SHELL=${LOCAL_SHELL}
 all_lm: arpa
 all_lm: blmt
 all_lm: quantize
@@ -532,7 +532,7 @@ all_lm: binlm
 ########################################
 # Check if the environment is set
 .PHONY: test
-test: SHELL=${GUARD_SHELL}
+test: SHELL=${LOCAL_SHELL}
 test:
 	env | grep IRSTLM
 
@@ -541,7 +541,7 @@ test:
 ########################################
 # For debugging purpose
 .PHONY: check_setup
-check_setup: SHELL=${GUARD_SHELL}
+check_setup: SHELL=${LOCAL_SHELL}
 check_setup:
 ifeq (${LM_TOOLKIT}, SRI)
 	which ngram-count
@@ -561,14 +561,14 @@ endif
 ########################################
 # PERPLEXITY
 .PHONY: ppx
-ppx: SHELL=${GUARD_SHELL}
+ppx: SHELL=${LOCAL_SHELL}
 ppx: $(addprefix ppx., ${LM_NAMES})
 ppx.%: SHELL=${FRAMEWORK_SHELL}
 ppx.%: %.binlm.gz ${PPX_TEST_SET}
 	lm_eval -v -limit $+
 
 .PHONY: ppx.irstlm
-ppx.irstlm: SHELL=${GUARD_SHELL}
+ppx.irstlm: SHELL=${LOCAL_SHELL}
 ppx.irstlm: $(foreach lm_name, ${LM_NAMES}, $(addprefix ppx.irstlm.${lm_name}, .lm.gz .blmt .qlm.gz .Qblmt))
 ppx.irstlm.%: SHELL=${FRAMEWORK_SHELL}
 ppx.irstlm.%: ${PPX_TEST_SET} %
