@@ -47,6 +47,10 @@ sort_aligners = $(filter $1, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 TMP_AVAILABLE_WORD_ALIGNMENT_MODELS := $(filter-out merged indicator mix, $(PT_TYPES:_cpt=))
 ifneq ($(filter merged indicator mix, $(PT_TYPES:_cpt=)),)
 TMP_AVAILABLE_WORD_ALIGNMENT_MODELS += $(call lc, ${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES})
+else
+ifeq (${PT_TYPES},)
+TMP_AVAILABLE_WORD_ALIGNMENT_MODELS += $(call lc, ${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES})
+endif
 endif
 AVAILABLE_WORD_ALIGNMENT_MODELS := $(call sort_aligners,${TMP_AVAILABLE_WORD_ALIGNMENT_MODELS})
 
