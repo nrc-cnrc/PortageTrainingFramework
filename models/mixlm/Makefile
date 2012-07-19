@@ -196,7 +196,7 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/mixlm
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}
 ifdef MIXLM_COMPONENTS
-portageLive: ${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm}
+portageLive: ${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm} $(notdir ${MIXLM_PRETRAINED_TGT_LMS:.binlm${GZ}=.tplm})
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../mixlm/, $+) .
