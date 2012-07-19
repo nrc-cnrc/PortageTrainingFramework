@@ -39,7 +39,7 @@ TRAIN_LM      ?= lm-train
 # These file names should end with the extension .binlm.gz and must include
 # the string _${TGT_LANG}, where ${TGT_LANG} is the target language, e.g. _fr .
 # Paths may be absolute or relative to the location of this Makefile.params file.
-#LM_PRETRAINED_TGT_LMS ?= /path/to/generic/lm/generic_fr-kn-5g.binlm.gz
+#LM_PRETRAINED_TGT_LMS ?= ${PORTAGE}/generic-model/lm/generic1.0_fr.binlm.gz
 
 # MIXLM is used to create a mixture language model which itself is composed of
 # several other language models.
@@ -54,7 +54,7 @@ TRAIN_LM      ?= lm-train
 # Note: The corresponding source language LMs are also required, should have
 # the same name except for the language code, and should be located in the same
 # directory.
-#MIXLM_PRETRAINED_TGT_LMS ?= /path/to/generic/lm/generic_fr-kn-5g.binlm.gz
+#MIXLM_PRETRAINED_TGT_LMS ?= ${PORTAGE}/generic-model/lm/generic1.0_fr.binlm.gz
 
 # TRAIN_TC is used to create a truecasing model.
 # By default, we use the first name listed in TRAIN_LM, thus if you do not, 
@@ -72,7 +72,7 @@ TRAIN_TM      ?= tm-train
 # where ${SRC_LANG} is the source language and ${TGT_LANG} is the target
 # language, e.g. .en2fr.gz .
 # Paths may be absolute or relative to the location of this Makefile.params file.
-#TM_PRETRAINED_TMS ?= /path/to/generic/tm/cpt.merged.hmm3-kn3-zn.generic.en2fr.gz
+#TM_PRETRAINED_TMS ?= ${PORTAGE}/generic-model/tm/cpt.generic1.0.en2fr.gz
 
 # MIXTM is used to create a mixture translation model from several other
 # translation models.
@@ -86,7 +86,7 @@ TRAIN_TM      ?= tm-train
 # model TM.
 # These file names should start with cpt.
 # Paths may be absolute or relative to the location of this Makefile.params file.
-#MIXTM_PRETRAINED_TMS ?= /path/to/generic/tm/cpt.merged.hmm3-kn3-zn.generic.en2fr.gz
+#MIXTM_PRETRAINED_TMS ?= ${PORTAGE}/generic-model/tm/cpt.generic1.0.en2fr.gz
 
 # MIXTM_TRAIN_MIX is an in-domain corpus used to train the weights for mixing 
 # the component translation models (its word alignment models are needed)
