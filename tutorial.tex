@@ -68,7 +68,7 @@
 \title{\PS Tutorial: \\
        A toy experiment using the \\
        experimental framework}
-\date{Last updated June 2012}
+\date{Last updated July 2012}
 \author{Eric Joanis, Darlene Stewart, Samuel Larkin, George Foster}
 
 \begin{document}
@@ -1014,7 +1014,7 @@ setting that has been proved to be effective empirically.
 Important warning: if you've created both the \code{cpt.merge...} and
 \code{cpt.PI...} files in the same instance of the framework, the tuning step
 will use the both, which is not a good idea.  You should remove one or the
-other before proceding:
+other before proceeding:
 \begin{small}
 \begin{alltt}
    > \textbf{rm cpt.merged.*}
@@ -1174,7 +1174,7 @@ in fact the union of the three pretend domains, so we'll throw in
 Having done this, you should also comment out the definition of
 \code{TRAIN_LM}, since we'll use the mixture LM instead of the regular LM.
 Unfortunately, doing so disables the default definition of \code{TRAIN_TC}, so
-we need to set that explicitely: \code{TRAIN_TC = lm-train1}, thus using the
+we need to set that explicity: \code{TRAIN_TC = lm-train1}, thus using the
 in-domain corpus for truecasing.
 
 With the variables defined as discussed, training of the MixLM is automatic,
@@ -1577,7 +1577,7 @@ more iterations, by setting the \code{-m} option to a higher value (which is
 controlled by the \code{MERT_MAX_ITER} variable in the framework.
 
 It's hard to make sense of the contents of \code{summary.wts} here: it shows
-the weigth of each feature at each iteration.  A more verbose version of the
+the weight of each feature at each iteration.  A more verbose version of the
 same information is shown in \code{logs/log.decode}, along with lots of logging
 information about decoding.  Here is an excerpt from the end of that log file:
 \begin{small}
@@ -1607,7 +1607,7 @@ is easy to read, whereas in the \code{summary.wts} file you can see how the
 weights evolved to get to the final weights we see here.
 You will notice that there are two ``TranslationModel''
 weights and features: one for each of the backward probability estimates in the
-merged phrase table.  Similary, there are two ``ForwardTranslationModel''
+merged phrase table.  Similarly, there are two ``ForwardTranslationModel''
 weights and features.  The three ``AdirectionalModel'' are the alignment
 indicator features we generated.  Since we are using HLDMs, there are seven
 ``DistortionModel'' weights and features.  Finally, we have our language model
@@ -1711,7 +1711,7 @@ the confidence estimates produced will not be useful.
 At this stage we have to return to one previous step. We did not train all
 the models we need for CE: specifically, we need an LM for the source language.
 Edit \code{Makefile.params} in the main \code{toy.experiment} directory and set
-\code{DO_CE} to \code{1} (by uncommenting the approriate line). If you run
+\code{DO_CE} to \code{1} (by uncommenting the appropriate line). If you run
 \code{make confidence} in the main directory, all necessary steps will be done
 automatically.  As usual, we'll break it down a bit.
 \begin{small}
@@ -2079,12 +2079,12 @@ Before continuing, comment \code{DO_RESCORING = 1} back out and set
 the values assumed below.  Also, run \code{make clean} to remove files
 incompatible with the new truecasing workflow.
 
-\subsubsection{Truecasing and Detokenizing} \label{Truecasing}
+\subsubsection{Truecasing and Detokenization} \label{Truecasing}
 
 If you inspect the \code{test.out}, and/or code{test.rat} output files, you will
 notice that they contain lowercase, tokenized text.  Two postprocessing steps
 are required to restore normal case and normally spaced text: truecasing and
-detokenizing.  The \code{test.ce} output file, on the other hand, already
+detokenization.  The \code{test.ce} output file, on the other hand, already
 contains truecased, detokenized text, because \code{translate.pl} itself
 performs the steps we're about to do.
 
@@ -2110,8 +2110,8 @@ will not get the benefits of the new workflow.
 If you are using rescoring, \code{make tc} will also truecase the rescoring
 output, generating \code{test1.rat.tc}.
 
-Detokenizing is done by the script \code{udetokenize.pl}, a rule-based
-detokenizez for French, English or Spanish text encoded in UTF-8. Other
+Detokenization is done by the script \code{udetokenize.pl}, a rule-based
+detokenizer for French, English or Spanish text encoded in UTF-8. Other
 languages are not supported at this point but may already be handled partly
 correctly by this script. As for other encodings, latin1 and cp-1252 are
 supported by \code{detokenize.pl}.
@@ -2127,7 +2127,7 @@ supported by \code{detokenize.pl}.
 \end{alltt}
 \end{small}
 
-Detokenizing is not performed here on the \code{test*.ce} files because
+Detokenization is not performed here on the \code{test*.ce} files because
 it was already done by \code{translate.pl} along with truecasing.
 
 If you are using rescoring, \code{make detok} will also detokenize the
@@ -2200,7 +2200,7 @@ running \code{summarize-canoe-results.py *} in the parent directory of your
 experiments again, it will show more interesting output.  \tipend
 
 Once again, if you produced BLEU scores for the rescoring output, as shown
-here, run \code{make clean} here before proceding to \S\ref{PLive}.
+here, run \code{make clean} here before proceeding to \S\ref{PLive}.
 
 \section{Translating New Text} \label{NewText}
 
