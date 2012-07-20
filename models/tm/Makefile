@@ -766,14 +766,17 @@ unittest_merged_cpt:  export MERGED_CPT_JPT_TYPES = IBM2 HMM3
 unittest_merged_cpt:  unittest_jpts
 	[[ "`${MAKE} -Bn merged_cpt | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh joint2cond_phrase_tables)`" =~ "2 6 2 1" ]]
 
-# 2 align-words
-# 6 cat.sh
-# 2 gen-jpt-parallel.sh
-# 1 merge_counts
-# 1 train_tm_mixture
+# 8  align-words
+# 18 cat.sh
+# 8  gen-jpt-parallel.sh
+# 4  merge_counts
+# 1  train_tm_mixture
 unittest_mix_cpt:  export MIXTM=sublm1 sublm2 sublm3
+unittest_mix_cpt:  export PT_TYPES=mix_cpt
+unittest_mix_cpt:  export MERGED_CPT_ZN_MODEL = HMM3
+unittest_mix_cpt:  export MERGED_CPT_JPT_TYPES = IBM2 HMM3
 unittest_mix_cpt:  unittest_jpts
-	mkdir -p mixtm && [[ "`${MAKE} -Bn mix_cpt | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh merge_counts train_tm_mixture)`" =~ "2 6 2 1 1" ]]
+	mkdir -p mixtm && [[ "`${MAKE} -Bn all | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh merge_counts train_tm_mixture)`" =~ "8 18 8 4 1" ]]
 
 # 3 align-words
 # 6 cat.sh
