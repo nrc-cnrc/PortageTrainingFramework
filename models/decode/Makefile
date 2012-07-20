@@ -186,7 +186,7 @@ check_template:
 ifdef USE_LDM
 LDM ?= $(wildcard models/ldm/ldm.*.${SRC_LANG}2${TGT_LANG}.gz)
 ifeq ("","$(or $(strip ${LDM}),$(findstring clean,${MAKECMDGOALS}))")
-$(warning "No LDMs available. Have you trained at least a distortion model?")
+$(warning No LDMs available. Have you trained at least a distortion model?)
 endif
 $(info LDM: ${LDM})
 LDM := $(and ${USE_LDM},${LDM}\#L)
@@ -198,7 +198,7 @@ endif
 ifdef USE_HLDM
 HLDM ?= $(wildcard models/ldm/hldm.*.${SRC_LANG}2${TGT_LANG}.gz)
 ifeq ("","$(or $(strip ${HLDM}),$(findstring clean,${MAKECMDGOALS}))")
-$(warning "No HLDMs available. Have you trained at least a distortion model?")
+$(warning No HLDMs available. Have you trained at least a distortion model?)
 endif
 $(info HLDM: ${HLDM})
 HLDM := $(and ${USE_HLDM},${HLDM}\#H)
