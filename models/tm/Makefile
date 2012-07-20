@@ -44,12 +44,6 @@ MODULE_NAME ?= tm
 # Where we can find the parallel corpora.
 CORPORA_DIR ?= ${TM_DIR_PFX}../../corpora
 
-# sort is used to remove duplicate or else dependencies are duplicated.
-ALL_IBM4_WAMS ?= $(strip ${ALL_TMS} ${TRAIN_LDM} ${TRAIN_HLDM})
-ALL_IBM4_WAMS := $(sort ${ALL_IBM4_WAMS})
-ALL_WAMS ?= $(strip ${ALL_IBM4_WAMS} ${MIXTM_TRAIN_MIX})
-ALL_WAMS := $(sort ${ALL_WAMS})
-
 # We need a dev set for tuning the mixture weights in a mixtm.
 TUNE_MIXTM ?= ${TUNE_DECODE}
 

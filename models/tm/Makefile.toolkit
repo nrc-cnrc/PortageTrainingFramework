@@ -26,6 +26,12 @@ export LC_ALL = en_CA.${UTF8}
 ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
 ALL_TMS := $(sort ${ALL_TMS})
 
+# sort is used to remove duplicate or else dependencies are duplicated.
+ALL_IBM4_WAMS ?= $(strip ${ALL_TMS} ${TRAIN_LDM} ${TRAIN_HLDM})
+ALL_IBM4_WAMS := $(sort ${ALL_IBM4_WAMS})
+ALL_WAMS ?= $(strip ${ALL_IBM4_WAMS} ${MIXTM_TRAIN_MIX})
+ALL_WAMS := $(sort ${ALL_WAMS})
+
 # Default language corpora extension.
 LANGX ?= .lc
 LANGXZ ?= ${LANGX}.gz
@@ -579,8 +585,8 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 
 ########################################
 # GIZA SPECIFIC TARGETS.
-$(addsuffix /,$(sort ${ALL_TMS})):  SHELL=${LOCAL_SHELL}
-$(addsuffix /,$(sort ${ALL_TMS})):  %:
+$(addsuffix /,$(sort ${ALL_IBM4_WAMS})):  SHELL=${LOCAL_SHELL}
+$(addsuffix /,$(sort ${ALL_IBM4_WAMS})):  %:
 	mkdir -p $@
 
 
@@ -596,8 +602,8 @@ $(addsuffix /,$(sort ${ALL_TMS})):  %:
 
 # Create the vocabulary files.
 .PHONY:  vcb
-vcb:  $(addsuffix /${SRC_LANG}.lc.vcb, ${ALL_TMS})
-vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_TMS})
+vcb:  $(addsuffix /${SRC_LANG}.lc.vcb, ${ALL_IBM4_WAMS})
+vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_IBM4_WAMS})
 %/${SRC_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
 %/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %/
 	plain2snt $+ 2> $@.log
@@ -613,8 +619,8 @@ vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_TMS})
 
 # Create the vocabulary classes.
 .PHONY: classes
-classes:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${ALL_TMS})
-classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_TMS})
+classes:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${ALL_IBM4_WAMS})
+classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_IBM4_WAMS})
 %.lc.vcb.classes:  SHELL=${FRAMEWORK_SHELL}
 %.lc.vcb.classes:  %.lc
 	time-mem mkcls -m2 -p$< -c50 -V$@ opt &> $@.log
@@ -622,8 +628,8 @@ classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_TMS})
 
 # Create the cooccurrence counts.
 .PHONY: cooc
-cooc:  $(addsuffix /${L1_2_L2}.cooc, ${ALL_TMS})
-cooc:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_TMS})
+cooc:  $(addsuffix /${L1_2_L2}.cooc, ${ALL_IBM4_WAMS})
+cooc:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_IBM4_WAMS})
 %/${L1_2_L2}.cooc:  SHELL=${LOCAL_SHELL}
 %/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %/
 	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt 2> $@.log
@@ -635,8 +641,8 @@ cooc:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_TMS})
 
 # Perform word alignment.
 .PHONY: cfg
-cfg:  $(addsuffix /${L2_GIVEN_L1}.gizacfg, ${ALL_TMS})
-cfg:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${ALL_TMS})
+cfg:  $(addsuffix /${L2_GIVEN_L1}.gizacfg, ${ALL_IBM4_WAMS})
+cfg:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${ALL_IBM4_WAMS})
 %/${L2_GIVEN_L1}.gizacfg:  SHELL=${FRAMEWORK_SHELL}
 %/${L2_GIVEN_L1}.gizacfg:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes  %/${L1_2_L2}.cooc
 	RP_PSUB_OPTS="-4 -N $@" \
@@ -675,10 +681,10 @@ cfg:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${ALL_TMS})
 #      - Portage's src to tgt model is giza's tgt given src files;
 #      - Portage's tgt to src model is giza's src given tgt files.
 .PHONY:  giza_al
-giza_al:  $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS})
-giza_al:  $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS})
-$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L2_GIVEN_L1}.gizacfg
-$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_TMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.gizacfg
+giza_al:  $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS})
+giza_al:  $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS})
+$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L2_GIVEN_L1}.gizacfg
+$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.gizacfg
 %.${IBM4_MODEL_PFX}.alignment.gz:  SHELL=${LOCAL_SHELL}
 %.${IBM4_MODEL_PFX}.alignment.gz:
 	set -o pipefail; \
