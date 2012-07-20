@@ -93,8 +93,7 @@ DONT_USE_FILLUP ?=
 ########################################
 # FUNCTIONS.
 # Joins two parallel lists of words.
-interleave = $(strip $(subst \, , $(join ${1}, $(addprefix \, ${2}))))
-interleave3 = $(strip $(subst \, , $(join ${1}, $(addprefix \, $(join $2, $(addprefix \, $3))))))
+interleave = $(strip $(subst \, , $(join ${1}, $(addprefix \, $(join $2, $(addprefix \, $3))))))
 
 
 
@@ -116,8 +115,7 @@ vpath %.align.gz  ${MODEL_DIRS}
 ADD_HLDM_OPTS = $(and $(findstring ${HLDM_MODEL_PFX}, $1), -hier)
 
 # Fix the path of the alignment files, if necessary to pick them up from ../tm
-FIX_ALIGN_PATHS = $(foreach f,$1,$(if $(filter-out %.align.gz,$f),$f,$(if $(filter ../%,$f),$f,../tm/$f)))
-#FIX_PATHS = $(foreach f,$(filter $1,$2),$(if $(filter-out $1,$f),$f,$(if $(filter ../%,$f),$f,../tm/$f)))
+FIX_PATHS = $(foreach f,$(filter $1,$2),$(if $(filter-out $1,$f),$f,$(if $(filter ../%,$f),$f,../tm/$f)))
 
 ########################################
 # How to calculate the lexicalized counts.
@@ -137,21 +135,27 @@ FIX_ALIGN_PATHS = $(foreach f,$1,$(if $(filter-out %.align.gz,$f),$f,$(if $(filt
 		-n ${PARALLELISM_LEVEL_LDM} \
 		-np ${PARALLELISM_LEVEL_LDM_WORKERS} \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
-		$(addprefix -s , $(call FIX_ALIGN_PATHS, $+)) \
+		$(addprefix -s , \
+			$(call FIX_PATHS, %${SRCXZ}, $+) \
+			$(call FIX_PATHS, %${TGTXZ}, $+) \
+			$(call FIX_PATHS, %align.gz, $+)) \
 		-merge 'merge_multi_column_counts -' \
 		'dmcount -ext -v -m ${M} $(call ADD_HLDM_OPTS, $@) \
-			$(call interleave3, $(filter %${SRCXZ},$+), $(filter %${TGTXZ},$+), $(call FIX_ALIGN_PATHS, $(filter %.align.gz,$+))) \
+			$(call interleave, \
+				$(call FIX_PATHS, %${SRCXZ}, $+), \
+				$(call FIX_PATHS, %${TGTXZ}, $+), \
+				$(call FIX_PATHS, %.align.gz, $+)) \
 			| li-sort.sh > $@' \
 	&> log.$(basename $@)
 
 # This is a special rule to handle ibm4 since we need a filter corpora for IBM4.
 %.lc:  SHELL=${LOCAL_SHELL}
 %.lc:  
-	${MAKE} -C ../tm $(subst ../tm/,,$@) TRAIN_TM='${TRAIN_LDM} ${TRAIN_HLDM}'
+	${MAKE} -C ../tm $(subst ../tm/,,$@)
 
 %.align.gz: SHELL=${LOCAL_SHELL}
 %.align.gz:
-	${MAKE} -C ../tm $@ TRAIN_TM='${TRAIN_LDM} ${TRAIN_HLDM}'
+	${MAKE} -C ../tm $@
 
 ${IBM1_MODEL_PFX}.%.gz: SHELL=${LOCAL_SHELL}
 ${IBM1_MODEL_PFX}.%.gz:

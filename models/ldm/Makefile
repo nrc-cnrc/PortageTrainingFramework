@@ -124,8 +124,8 @@ $(foreach m, $(filter-out ibm4, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
 # Pick up filtered corpora for (h)ldm models based on IBM4.
 %.ibm4${COUNTSX}:  SRCXZ=${SRC_LANG}.lc
 %.ibm4${COUNTSX}:  TGTXZ=${TGT_LANG}.lc
-${LDM_MODEL_PFX}.ibm4${COUNTSX}:   $(foreach c,${TRAIN_LDM}, ../tm/$c/${SRC_LANG}.lc ../tm/$c/${TGT_LANG}.lc)
-${HLDM_MODEL_PFX}.ibm4${COUNTSX}:  $(foreach c,${TRAIN_HLDM}, ../tm/$c/${SRC_LANG}.lc ../tm/$c/${TGT_LANG}.lc)
+${LDM_MODEL_PFX}.ibm4${COUNTSX}:   $(foreach c,${TRAIN_LDM}, $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc)
+${HLDM_MODEL_PFX}.ibm4${COUNTSX}:  $(foreach c,${TRAIN_HLDM}, $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc)
 $(foreach c, $(sort ${TRAIN_LDM} ${TRAIN_HLDM}), \
 	$(eval \
 		$c.ibm4.${SRC_2_TGT}.align.gz:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
