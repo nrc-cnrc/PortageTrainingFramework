@@ -163,8 +163,8 @@ time-mem: resource_summary_sub
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/lm
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}
-ifdef TRAIN_LM
-portageLive: $(addsuffix .tplm, ${LM_NAMES})
+ifneq ($(strip ${TRAIN_LM} $(notdir ${LM_PRETRAINED_TGT_LMS})),)
+portageLive: $(addsuffix .tplm, ${LM_NAMES}) $(notdir ${LM_PRETRAINED_TGT_LMS:.binlm${GZ}=.tplm})
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../lm/, $+) .

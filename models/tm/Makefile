@@ -468,6 +468,7 @@ $(addprefix pretrained., ${pretrained_cpt_list}): pretrained.%:
 	@[[ ! -e $* ]] || [[ -L $* ]] || ! echo "ERROR: TM $* already exists as a normal file."
 	@$(if $(filter-out cpt.%, $*),! echo "ERROR: Name of pre-trained TM file must start with cpt.: $<")
 	ln -sf $< .
+	[[ ! -d ${<:.gz=.tppt} ]] || ln -sf ${<:.gz=.tppt} .
 
 ${pretrained_cpt_paths}: SHELL=${LOCAL_SHELL}
 ${pretrained_cpt_paths}: %:
@@ -671,7 +672,7 @@ endif
 # ibm2_cpt_list and evaluate its content which will be the text phrase table
 # file name.  Then we only need to change the text file name to tightly packed
 # file name.
-tppt_list := $(addsuffix .tppt, $(basename $(foreach a, $(PT_TYPES:=_list), ${$a})))
+tppt_list := $(addsuffix .tppt, $(basename $(foreach a, $(PT_TYPES:=_list) pretrained_cpt_list, ${$a})))
 
 .PHONY: tppt
 tppt portageLive: SHELL=${LOCAL_SHELL}
