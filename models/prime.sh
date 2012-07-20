@@ -50,7 +50,7 @@ elif [[ "$PrimeMode" == "partial" ]]; then
       done
    done
    # LMs
-   for d in `find $CONTEXT/models/lm -name \*.tplm`; do
+   for d in `find $CONTEXT/models/*lm -name \*.tplm`; do
       for f in $d/*; do
          cat $f &> /dev/null
       done
