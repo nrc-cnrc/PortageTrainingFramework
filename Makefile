@@ -102,7 +102,7 @@ doc: tutorial.pdf
 # Thorough cleaning of everything, including their old names
 clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs clean.doc
-	${RM} tutorial.pdf framework-toy.pdf
+	${RM} tutorial.pdf
 	${RM} log.INSTALL_SUMMARY
 
 # hide.logs hides logs from user's view into .logs
@@ -118,7 +118,7 @@ endif
 # Clean auxiliary files from make doc, but not the .pdf itself.
 clean.doc: SHELL=${LOCAL_SHELL}
 clean.doc:
-	${RM} tutorial.{aux,log,toc} framework-toy.{aux,log,toc}
+	${RM} tutorial.{aux,log,toc,out}
 
 
 
