@@ -34,6 +34,10 @@ include ../../gmsl/gmsl
 # What is this module's name.
 MODULE_NAME ?= ldm
 
+# Sorts the corpora in order to create dependencies in the proper order.
+TRAIN_LDM := $(sort ${TRAIN_LDM})
+TRAIN_HLDM := $(sort ${TRAIN_HLDM})
+
 # List of all possible word alignment models in the framework.
 # These must be ordered from most reliable to least reliable, because of the
 # fill-up procedure.
@@ -92,7 +96,7 @@ hldm.counts:  ${HLDM_COUNT_FILES}
 
 ########################################
 # Auto-generate all dependencies for all possible word alignment models
-# To generate (h)ldm count files we need word alignment models in both directions.
+# To generate (h)ldm count files we need alignment files.
 $(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
    $(eval \
 	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix .$m.${SRC_2_TGT}.align.gz,${TRAIN_LDM})) \
@@ -100,10 +104,13 @@ $(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
 	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix .$m.${SRC_2_TGT}.align.gz,${TRAIN_HLDM})) \
 )
 # We need to make sure the ibm1 models are built first (for make -j to work correctly)
-$(foreach m, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
+# This is to prevent a race condition where an IBM2 model that require an IBM1
+# model would be incompetition with an HMM3 model which also depends on an IBM1
+# model.  Who will trigger first the recursive call to make the IBM1 model?
+$(foreach m, $(filter-out ibm4, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
    $(foreach c, $(sort ${TRAIN_LDM} ${TRAIN_HLDM}), \
       $(eval \
-	   $c.$m.${SRC_2_TGT}.align.gz: ${IBM1_MODEL_PFX}.$c.${TGT_GIVEN_SRCX} ${IBM1_MODEL_PFX}.$c.${SRC_GIVEN_TGTX}) \
+			$c.$m.${SRC_2_TGT}.align.gz: ${IBM1_MODEL_PFX}.$c.${TGT_GIVEN_SRCX} ${IBM1_MODEL_PFX}.$c.${SRC_GIVEN_TGTX}) \
    ) \
 )
 # To generate (h)ldm count files we need the source corpus and the target corpus
@@ -119,7 +126,10 @@ $(foreach m, $(filter-out ibm4, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
 %.ibm4${COUNTSX}:  TGTXZ=${TGT_LANG}.lc
 ${LDM_MODEL_PFX}.ibm4${COUNTSX}:   $(foreach c,${TRAIN_LDM}, ../tm/$c/${SRC_LANG}.lc ../tm/$c/${TGT_LANG}.lc)
 ${HLDM_MODEL_PFX}.ibm4${COUNTSX}:  $(foreach c,${TRAIN_HLDM}, ../tm/$c/${SRC_LANG}.lc ../tm/$c/${TGT_LANG}.lc)
-
+$(foreach c, $(sort ${TRAIN_LDM} ${TRAIN_HLDM}), \
+	$(eval \
+		$c.ibm4.${SRC_2_TGT}.align.gz:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
+)
 
 
 ########################################
@@ -274,15 +284,14 @@ endif
 # attention to which corpora get picked up.  Make sure we pick up the proper
 # filtered corpora and that the count file is properly created.
 .PHONY: unittest1
-unittest1: export PT_TYPES=ibm4_cpt
+unittest1: export PT_TYPES=ibm4_cpt hmm3_cpt
 unittest1: export USE_LDM=1
-unittest1: export AVAILABLE_WORD_ALIGNMENT_MODELS=ibm4
+unittest1: export AVAILABLE_WORD_ALIGNMENT_MODELS=ibm4 hmm3
 unittest1: export TRAIN_LDM=tm-train sublm1
 unittest1:
 	${MAKE} -C ../../corpora all
-	${MAKE} -C ../tm ibm4_model ibm4_alignment
 	${MAKE} all
-	@ [[ `find -name ${LDM_MODEL_PFX}.${LDM_NAME}${COUNTSX} -size +21c` ]] \
+	@ [[ `find -name ${LDM_MODEL_PFX}.\*${COUNTSX} -size +21c | \wc -l` -eq 2 ]] \
 	|| ! echo "ERROR: failed to generate count file." >&2
 	@ [[ `find -name ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX} -size +21c` ]] \
 	|| ! echo "ERROR: failed to generate lexicalized distortion model file." >&2
