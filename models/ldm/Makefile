@@ -291,8 +291,10 @@ unittest1: export TRAIN_LDM=tm-train sublm1
 unittest1:
 	${MAKE} -C ../../corpora all
 	${MAKE} all
-	@ [[ `find -name ${LDM_MODEL_PFX}.\*${COUNTSX} -size +21c | \wc -l` -eq 2 ]] \
-	|| ! echo "ERROR: failed to generate count file." >&2
+	@ [[ `find -name ${LDM_MODEL_PFX}.hmm3${COUNTSX} -size +21c | \wc -l` -eq 1 ]] \
+	|| ! echo "ERROR: failed to generate hmm3 count file." >&2
+	@ [[ `find -name ${LDM_MODEL_PFX}.ibm4${COUNTSX} -size +21c | \wc -l` -eq 1 ]] \
+	|| ! echo "ERROR: failed to generate ibm4 count file." >&2
 	@ [[ `find -name ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX} -size +21c` ]] \
 	|| ! echo "ERROR: failed to generate lexicalized distortion model file." >&2
 
