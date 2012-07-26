@@ -592,12 +592,12 @@ $(addsuffix /,$(sort ${ALL_IBM4_WAMS})):  %:
 
 # Clean up the inputs for giza.
 %/${SRC_LANG}.lc:  SHELL=${LOCAL_SHELL}
-%/${SRC_LANG}.lc:  %_${SRC_LANG}.lc.gz %_${TGT_LANG}.lc.gz  | %/
+%/${SRC_LANG}.lc:  %${L1X} %${L2X}  | %/
 	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> $@.log
 
 %/${TGT_LANG}.lc:  SHELL=${LOCAL_SHELL}
 %/${TGT_LANG}.lc:  %/${SRC_LANG}.lc
-	test -s $@ && sleep 1 && touch $@
+	test -s $@ && sleep 1 && touch --reference=$< $@
 
 
 # Create the vocabulary files.
@@ -610,11 +610,11 @@ vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_IBM4_WAMS})
 
 %/${TGT_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
 %/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb
-	test -s $@ && sleep 1 && touch $@
+	test -s $@ && sleep 1 && touch --reference=$< $@
 
 %/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  SHELL=${LOCAL_SHELL}
 %/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb
-	test -s $@ && sleep 1 && touch $@
+	test -s $@ && sleep 1 && touch --reference=$< $@
 
 
 # Create the vocabulary classes.
