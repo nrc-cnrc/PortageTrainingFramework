@@ -189,7 +189,7 @@ DO_TRUECASING = 1
 #TOKENIZER_ch ?= { set -o pipefail; iconv -c -f UTF-8 -t CN-GB | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl | iconv -c -f CN-GB -t UTF-8; }
 # Defining what detokenizers we want to use:
 #DETOKENIZER_en ?= opennlp DetokenizerME /modeldir/en-model.bin
-#DETOKENIZER_fr ?= udetokenizer.pl -lang=fr
+#DETOKENIZER_fr ?= udetokenize.pl -lang=fr
 
 # If you have ictclas installed and want to use it, uncomment to enable ictclas.
 # USE_ICTCLAS ?= 1
