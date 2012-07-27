@@ -22,10 +22,25 @@ MODULE_NAME ?= confidence
 SRCX  ?= _${SRC_LANG}${LANGX}
 TGTX  ?= _${TGT_LANG}${LANGX}
 
-SRC_GIVEN_TGT  ?= ${TRAIN_TM}.${SRC_LANG}_given_${TGT_LANG}
-TGT_GIVEN_SRC  ?= ${TRAIN_TM}.${TGT_LANG}_given_${SRC_LANG}
+# Determine the word alignment model names
+SRC_GIVEN_TGT  ?= $(firstword ${TRAIN_TM} ${MIXTM_TRAIN_MIX}).${SRC_LANG}_given_${TGT_LANG}
+TGT_GIVEN_SRC  ?= $(firstword ${TRAIN_TM} ${MIXTM_TRAIN_MIX}).${TGT_LANG}_given_${SRC_LANG}
 SRC_GIVEN_TGTX ?= ${SRC_GIVEN_TGT}.gz
 TGT_GIVEN_SRCX ?= ${TGT_GIVEN_SRC}.gz
+
+# Determine the file names of the source and target language models.
+LM_SRC ?= $(subst /,\/,$(firstword \
+            $(if ${TRAIN_LM},$(wildcard ${LM_DIR}/$(firstword ${TRAIN_LM})_${SRC_LANG}*.binlm.gz)) \
+            $(if ${LM_PRETRAINED_TGT_LMS},$(wildcard ${LM_DIR}/$(notdir $(firstword $(subst _${TGT_LANG},_${SRC_LANG},${LM_PRETRAINED_TGT_LMS}))))) \
+            $(if ${MIXLM},$(wildcard ${MIXLM_DIR}/$(firstword ${MIXLM})_${SRC_LANG}*.binlm.gz)) \
+            $(if ${MIXLM_PRETRAINED_TGT_LMS},$(wildcard ${MIXLM_DIR}/$(notdir $(firstword $(subst _${TGT_LANG},_${SRC_LANG},${MIXLM_PRETRAINED_TGT_LMS}))))) \
+           ))
+LM_TGT ?= $(subst /,\/,$(firstword \
+            $(if ${TRAIN_LM},$(wildcard ${LM_DIR}/$(firstword ${TRAIN_LM})_${TGT_LANG}*.binlm.gz)) \
+            $(if ${LM_PRETRAINED_TGT_LMS},$(wildcard ${LM_DIR}/$(notdir $(firstword ${LM_PRETRAINED_TGT_LMS})))) \
+            $(if ${MIXLM},$(wildcard ${MIXLM_DIR}/$(firstword ${MIXLM})_${TGT_LANG}*.binlm.gz)) \
+            $(if ${MIXLM_PRETRAINED_TGT_LMS},$(wildcard ${MIXLM_DIR}/$(notdir $(firstword ${MIXLM_PRETRAINED_TGT_LMS})))) \
+           ))
 
 # Defining the extension for a Confidence Estimation Model.
 CEMX ?= .cem
@@ -48,6 +63,7 @@ IBM_DIR ?= models/tm
 
 # Indicates where to find the language models.
 LM_DIR ?= models/lm
+MIXLM_DIR ?= models/mixlm
 
 # What is the train canoe file name.
 DECODING_MODEL_DIR ?= models/decode
