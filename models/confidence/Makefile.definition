@@ -59,7 +59,7 @@ MODEL_DIR ?= ../../models
 CORPORA_DIR ?= ../../corpora
 
 # Indicates where to find the IBM models.
-IBM_DIR ?= models/tm
+IBM_DIR ?= $(if $(or ${TRAIN_TM},$(wildcard ../tm/*${TGT_GIVEN_SRCX})),models/tm,models/tm/mixtm)
 
 # Indicates where to find the language models.
 LM_DIR ?= models/lm
