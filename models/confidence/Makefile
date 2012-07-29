@@ -99,11 +99,14 @@ time-mem: resource_summary_sub
 
 ########################################
 # DECODING MODEL.
+VARIANT ?= $(suffix ${DECODING_MODEL_DIR})
+
 ${CANOE_MODEL}: SHELL=${LOCAL_SHELL}
 ${CANOE_MODEL}:
 	@[[ -f "${DECODING_MODEL_DIR}/${CANOE_MODEL}" ]] \
 	|| ! echo "ERROR: No decoding model (${CANOE_MODEL}) available. Please train ${DECODING_MODEL_DIR} first!" >&2
-	sed -e 's#${TUNE_DECODE}.mixlm#${TUNE_CE}.mixlm#g' ${DECODING_MODEL_DIR}/${CANOE_MODEL} > $@
+	#sed -e 's#${TUNE_DECODE}${VARIANT}.mixlm#${TUNE_CE}.mixlm#g' ${DECODING_MODEL_DIR}/${CANOE_MODEL} > $@
+	sed -e 's#${TUNE_DECODE}${VARIANT}.mixlm#${TUNE_DECODE}${VARIANT}.mixlm#g' ${DECODING_MODEL_DIR}/${CANOE_MODEL} > $@
 	configtool check $@
 
 
@@ -127,31 +130,33 @@ ${CE_MODEL_NAME}${CEMX}: ce-notm${INIX} ${TUNE_CE_SRC} ${TUNE_CE_TGT}
 # Prepare what is needed for portageLive
 .PHONY: portageLive
 ifdef DO_CE
+LM_DIR_NAME ?= $(if $(strip ${TRAIN_LM} ${LM_PRETRAINED_TGT_LMS}),lm,mixlm)
 portageLive: SHELL=${LOCAL_SHELL}
 portageLive: ${CE_MODEL_NAME}${CEMX}
 	mkdir -p ../portageLive
 	mkdir -p tmp.live && tar -C tmp.live -zxvf $<
 	sed -i -e 's/binlm.gz/tplm/' tmp.live/model
-	cd tmp.live && tar zcf ../../portageLive/$< *
-	rm -r tmp.live
-	MODELS=(`test -e ../portageLive/ce_model.cem && tar zxOf ../portageLive/$< model | egrep -o '[^/]+\.tplm' | tr "\n" " "`); \
+	MODELS=(`egrep -o '[^/]+\.tplm' tmp.live/model | tr "\n" " "`); \
 	if [[ $$MODELS ]]; then \
-		${MAKE} -C ../lm $${MODELS[@]}; \
-		mkdir -p ../portageLive/models/lm; \
-		MODELS=($${MODELS[@]/#/..\/..\/..\/lm\/}); \
-		echo $${MODELS[@]} >&2; \
-		cd ../portageLive/models/lm && ln -fs $${MODELS[@]} .; \
+		${MAKE} -C ../${LM_DIR_NAME} $${MODELS[@]}; \
+		mkdir -p ../portageLive/models/${LM_DIR_NAME}; \
+		MODELS=($${MODELS[@]/#/..\/..\/..\/${LM_DIR_NAME}\/}); \
+		echo "LM files:" $${MODELS[@]} >&2; \
+		cd ../portageLive/models/${LM_DIR_NAME} && ln -fs $${MODELS[@]} .; \
 	fi
-	MODELS=(`test -e ../portageLive/ce_model.cem && tar zxOf ../portageLive/$< model | egrep -o '[^/]+.(${TGT_LANG}_given_${SRC_LANG}|${SRC_LANG}_given_${TGT_LANG}).gz' | tr "\n" " "`); \
+	MODELS=(`egrep -o '[^/]+.(${TGT_LANG}_given_${SRC_LANG}|${SRC_LANG}_given_${TGT_LANG}).gz' tmp.live/model | tr "\n" " "`); \
 	if [[ $$MODELS ]]; then \
 		MODELS=($${MODELS[@]/%.gz/*}); \
-		MODELS=($${MODELS[@]/#/..\/..\/..\/tm\/}); \
-		echo $${MODELS[@]} >&2; \
+		MODELS=($${MODELS[@]/#/..\/..\/..\/..\/$(subst /,\/,${IBM_DIR})\/}); \
+		echo "TM files:" $${MODELS[@]} >&2; \
 		mkdir -p ../portageLive/models/tm; \
 		cd ../portageLive/models/tm && ln -fs $${MODELS[@]} .; \
 	fi
+	sed -i -e 's/tm\/mixtm/tm/' tmp.live/model
+	cd tmp.live && tar zcf ../../portageLive/$< *
+	rm -r tmp.live
 else
 portageLive:
-	$(error Exception this target shouldn't be called.)
+	$(error ERROR: the portageLive target should not be called when DO_CE is not set.)
 endif
 
