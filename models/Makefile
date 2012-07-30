@@ -247,18 +247,24 @@ portageLive: portageLive_models_confidence${_PLIVE_DECODE_VARIANT}
 portageLive_models_confidence${_PLIVE_DECODE_VARIANT}: portageLive_models_lm_src
 portageLive_models_confidence${_PLIVE_DECODE_VARIANT}: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 
+# Note: The portageLive target in confidence/Makefile makes sure all TPLM files
+# needed for confidence estimation are built and linked to the appropriate
+# locations in portageLive/models, including the source TPLM.
+# Thus, the portageLive_models_lm_src is redundant.
 portageLive_models_lm_src: SHELL=${LOCAL_SHELL}
 portageLive_models_lm_src:
 	${MAKE} -C lm portageLive LM_LANG=${SRC_LANG}
 
-confidence: lm.${SRC_LANG} decode
+# Note: The LM models can be in either of the lm or mixlm directories, so
+# confidence must depend on both lm.${SRC_LANG} and mixlm.
+confidence: lm.${SRC_LANG} mixlm decode
 	${MAKE} -C $@ all
 
 # Tune multiple confidence variants, if necessary.
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 .PHONY: $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
 $(addprefix confidence., ${TUNE_DECODE_VARIANTS}): SHELL=${LOCAL_SHELL}
-$(addprefix confidence., ${TUNE_DECODE_VARIANTS}): confidence.%: lm.${SRC_LANG} decode.%
+$(addprefix confidence., ${TUNE_DECODE_VARIANTS}): confidence.%: lm.${SRC_LANG} mixlm decode.%
 	if [ ! -e $@ ]; then \
 	   mkdir $@; \
 	   cp -p confidence/Makefile* confidence/ce-notm.template $@; \
@@ -317,7 +323,7 @@ portageLive/soap-translate.sh: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 	chmod 755 $@
 
 # We need this dependency since decode will copy the tplms for portageLive.
-portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_lm portageLive_models_tm
+portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_lm portageLive_models_mixlm portageLive_models_tm
 
 portageLive_models_%: SHELL=${LOCAL_SHELL}
 portageLive_models_%:
