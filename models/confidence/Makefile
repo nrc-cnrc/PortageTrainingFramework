@@ -138,7 +138,7 @@ portageLive: ${CE_MODEL_NAME}${CEMX}
 	sed -i -e 's/binlm.gz/tplm/' tmp.live/model
 	MODELS=(`egrep -o '[^/]+\.tplm' tmp.live/model | tr "\n" " "`); \
 	if [[ $$MODELS ]]; then \
-		${MAKE} -C ../${LM_DIR_NAME} $${MODELS[@]}; \
+		${MAKE} -C ../${LM_DIR_NAME} -f ../lm/Makefile $${MODELS[@]}; \
 		mkdir -p ../portageLive/models/${LM_DIR_NAME}; \
 		MODELS=($${MODELS[@]/#/..\/..\/..\/${LM_DIR_NAME}\/}); \
 		echo "LM files:" $${MODELS[@]} >&2; \
