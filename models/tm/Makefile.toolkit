@@ -130,6 +130,8 @@ NEW_HMM := $(addprefix(-, $(strip $(shell train_ibm -h 2>&1 | grep -om1 newhmm))
 ########################################
 # IBM4 MODELS
 IBM4_MODEL_PFX ?= ibm4
+IBM4_MODEL_CPUS ?= 4
+IBM4_MODEL_PARALLELISM_LEVEL ?= ${IBM4_MODEL_CPUS}
 
 ########################################
 # List of all possible word alignment models in the framework.
@@ -645,10 +647,10 @@ cfg:  $(addsuffix /${L2_GIVEN_L1}.gizacfg, ${ALL_IBM4_WAMS})
 cfg:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${ALL_IBM4_WAMS})
 %/${L2_GIVEN_L1}.gizacfg:  SHELL=${FRAMEWORK_SHELL}
 %/${L2_GIVEN_L1}.gizacfg:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes  %/${L1_2_L2}.cooc
-	RP_PSUB_OPTS="-4 -N $@" \
+	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
 	${TIME_MEM} \
 	mgiza \
-		-ncpus 4 \
+		-ncpus ${IBM4_MODEL_PARALLELISM_LEVEL} \
 		-sourcevocabularyfile $(filter %${SRC_LANG}.lc.vcb,$+) \
 		-targetvocabularyfile $(filter %${TGT_LANG}.lc.vcb,$+) \
 		-corpusfile $*/$(call merge,_,$(notdir $(basename $(filter %.vcb,$+)))).snt \
@@ -661,10 +663,10 @@ cfg:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${ALL_IBM4_WAMS})
 
 %/${L1_GIVEN_L2}.gizacfg:  SHELL=${FRAMEWORK_SHELL}
 %/${L1_GIVEN_L2}.gizacfg:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb.classes %/${SRC_LANG}.lc.vcb.classes  %/${L2_2_L1}.cooc
-	RP_PSUB_OPTS="-4 -N $@" \
+	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
 	${TIME_MEM} \
 	mgiza \
-		-ncpus 4 \
+		-ncpus ${IBM4_MODEL_PARALLELISM_LEVEL} \
 		-sourcevocabularyfile $(filter %${TGT_LANG}.lc.vcb,$+) \
 		-targetvocabularyfile $(filter %${SRC_LANG}.lc.vcb,$+) \
 		-corpusfile $*/$(call merge,_,$(notdir $(basename $(filter %.vcb,$+)))).snt \
