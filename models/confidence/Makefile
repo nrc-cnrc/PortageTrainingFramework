@@ -130,7 +130,6 @@ ${CE_MODEL_NAME}${CEMX}: ce-notm${INIX} ${TUNE_CE_SRC} ${TUNE_CE_TGT}
 # Prepare what is needed for portageLive
 .PHONY: portageLive
 ifdef DO_CE
-LM_DIR_NAME ?= $(if $(strip ${TRAIN_LM} ${LM_PRETRAINED_TGT_LMS}),lm,mixlm)
 portageLive: SHELL=${LOCAL_SHELL}
 portageLive: ${CE_MODEL_NAME}${CEMX}
 	mkdir -p ../portageLive
@@ -138,16 +137,16 @@ portageLive: ${CE_MODEL_NAME}${CEMX}
 	sed -i -e 's/binlm.gz/tplm/' tmp.live/model
 	MODELS=(`egrep -o '[^/]+\.tplm' tmp.live/model | tr "\n" " "`); \
 	if [[ $$MODELS ]]; then \
-		${MAKE} -C ../${LM_DIR_NAME} -f ../lm/Makefile $${MODELS[@]}; \
-		mkdir -p ../portageLive/models/${LM_DIR_NAME}; \
-		MODELS=($${MODELS[@]/#/..\/..\/..\/${LM_DIR_NAME}\/}); \
+		${MAKE} -C ../../${LM_DIR} -f ../lm/Makefile $${MODELS[@]}; \
+		mkdir -p ../portageLive/${LM_DIR}; \
+		MODELS=($${MODELS[@]/#/$(subst /,\/,../../../../${LM_DIR}/)}); \
 		echo "LM files:" $${MODELS[@]} >&2; \
-		cd ../portageLive/models/${LM_DIR_NAME} && ln -fs $${MODELS[@]} .; \
+		cd ../portageLive/${LM_DIR} && ln -fs $${MODELS[@]} .; \
 	fi
 	MODELS=(`egrep -o '[^/]+.(${TGT_LANG}_given_${SRC_LANG}|${SRC_LANG}_given_${TGT_LANG}).gz' tmp.live/model | tr "\n" " "`); \
 	if [[ $$MODELS ]]; then \
 		MODELS=($${MODELS[@]/%.gz/*}); \
-		MODELS=($${MODELS[@]/#/..\/..\/..\/..\/$(subst /,\/,${IBM_DIR})\/}); \
+		MODELS=($${MODELS[@]/#/$(subst /,\/,../../../../${IBM_DIR}/)}); \
 		echo "TM files:" $${MODELS[@]} >&2; \
 		mkdir -p ../portageLive/models/tm; \
 		cd ../portageLive/models/tm && ln -fs $${MODELS[@]} .; \

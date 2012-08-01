@@ -43,11 +43,11 @@
 
 # NOTE: The confidence model is limited to using just one LM and
 #       word alignment models for a single training corpus.
-#       We use the first one in the list.
+#       We use the first one in the list (see Makefile.definition).
 
-## Find out about the name of the source & target language model file names.
-#LM_SRC ?= $(subst /,\/,$(wildcard ${LM_DIR}/*${SRC_LANG}*.binlm.gz))
-#LM_TGT ?= $(subst /,\/,$(wildcard ${LM_DIR}/*${TGT_LANG}*.binlm.gz))
+# Determine the source and target language model file names.
+LM_SRC ?= $(subst /,\/,$(wildcard ${LM_DIR}/${LM_CORP}_${SRC_LANG}*.binlm.gz))
+LM_TGT ?= $(subst /,\/,$(wildcard ${LM_DIR}/${LM_CORP}_${TGT_LANG}*.binlm.gz))
 
 # Requires:
 # - a template model <%${TEMPLATEX}>

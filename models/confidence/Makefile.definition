@@ -28,27 +28,24 @@ TGT_GIVEN_SRC  ?= $(firstword ${TRAIN_TM} ${MIXTM_TRAIN_MIX}).${TGT_LANG}_given_
 SRC_GIVEN_TGTX ?= ${SRC_GIVEN_TGT}.gz
 TGT_GIVEN_SRCX ?= ${TGT_GIVEN_SRC}.gz
 
-# Determine the file names of the source and target language models.
-LM_SRC ?= $(subst /,\/,$(firstword \
-            $(if ${TRAIN_LM},$(wildcard ${LM_DIR}/$(firstword ${TRAIN_LM})_${SRC_LANG}*.binlm.gz)) \
-            $(if ${LM_PRETRAINED_TGT_LMS},$(wildcard ${LM_DIR}/$(notdir $(firstword $(subst _${TGT_LANG},_${SRC_LANG},${LM_PRETRAINED_TGT_LMS}))))) \
-            $(if ${MIXLM},$(wildcard ${MIXLM_DIR}/$(firstword ${MIXLM})_${SRC_LANG}*.binlm.gz)) \
-            $(if ${MIXLM_PRETRAINED_TGT_LMS},$(wildcard ${MIXLM_DIR}/$(notdir $(firstword $(subst _${TGT_LANG},_${SRC_LANG},${MIXLM_PRETRAINED_TGT_LMS}))))) \
-           ))
-LM_TGT ?= $(subst /,\/,$(firstword \
-            $(if ${TRAIN_LM},$(wildcard ${LM_DIR}/$(firstword ${TRAIN_LM})_${TGT_LANG}*.binlm.gz)) \
-            $(if ${LM_PRETRAINED_TGT_LMS},$(wildcard ${LM_DIR}/$(notdir $(firstword ${LM_PRETRAINED_TGT_LMS})))) \
-            $(if ${MIXLM},$(wildcard ${MIXLM_DIR}/$(firstword ${MIXLM})_${TGT_LANG}*.binlm.gz)) \
-            $(if ${MIXLM_PRETRAINED_TGT_LMS},$(wildcard ${MIXLM_DIR}/$(notdir $(firstword ${MIXLM_PRETRAINED_TGT_LMS})))) \
-           ))
+# Determine the LM corpus name (stem) of the source and target language models.
+# The confidence estimation model can be trained on just one LM.
+# We deduce the LM corpus stem from the first LM specified in the LM parameters
+# searched in the following order: 
+# TRAIN_LM, MIXLM, LM_PRETRAINED_TGT_LMS, MIXLM_PRETRAINED_TGT_LMS
+# Priority is given to LMs being trained because these likely correspond to
+# in-domain data. We assume the most in-domain corpus was specified first.
+LM_CORP ?= $(firstword ${TRAIN_LM} ${MIXLM} \
+                       $(shell echo $(notdir $(firstword ${LM_PRETRAINED_TGT_LMS} ${MIXLM_PRETRAINED_TGT_LMS})) \
+                               | sed -e "s/\\(.*\\)_${TGT_LANG}.*/\\1/"))
 
-# Defining the extension for a Confidence Estimation Model.
+# Define the extension for a Confidence Estimation Model.
 CEMX ?= .cem
 
-# Defining the extension for a ini file.
+# Define the extension for an ini file.
 INIX ?= .ini
 
-# Defining the extension for a template file.
+# Define the extension for a template file.
 TEMPLATEX ?= .template
 
 # Indicates where to find all models.
@@ -62,8 +59,7 @@ CORPORA_DIR ?= ../../corpora
 IBM_DIR ?= $(if $(or ${TRAIN_TM},$(wildcard ../tm/*${TGT_GIVEN_SRCX})),models/tm,models/tm/mixtm)
 
 # Indicates where to find the language models.
-LM_DIR ?= models/lm
-MIXLM_DIR ?= models/mixlm
+LM_DIR ?= $(if $(or ${TRAIN_LM},$(wildcard ../lm/${LM_CORP}_${TGT_LANG}*.binlm.gz)),models/lm,models/mixlm)
 
 # What is the train canoe file name.
 DECODING_MODEL_DIR ?= models/decode
