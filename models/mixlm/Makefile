@@ -146,7 +146,7 @@ ${MIXLM_SRC_MODELS}: LM_LANG=${SRC_LANG}
 ${MIXLM_TGT_MODELS}: LM_LANG=${TGT_LANG}
 ${MIXLM_SRC_MODELS} ${MIXLM_TGT_MODELS}: %.binlm${GZ}: | models
 	[[ -s "${LM_DIR}/$@" ]] && ln -s "${LM_DIR}/$@" . \
-	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${LM_LANG} TRAIN_LM=$(*:_${LM_LANG}-kn-${ORDER}g=) $@
+	|| ${MAKE} -f ../../${LM_DIR}/Makefile LM_LANG=${LM_LANG} TRAIN_LM=$(*:_${LM_LANG}-kn-${ORDER}g=) $@
 
 $(notdir ${MIXLM_PRETRAINED_LMS}): SHELL=${LOCAL_SHELL}
 $(notdir ${MIXLM_PRETRAINED_SRC_LMS}): %: | pretrained.${SRC_LANG} ;
