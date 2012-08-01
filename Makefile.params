@@ -496,7 +496,7 @@ endif
 
 # Warn the user that the IBM4 feature is not available to him since he doesn't have mgiza.
 ifneq ($(or $(filter IBM4, ${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES}), $(filter ibm4_cpt, ${PT_TYPES})),)
-ifneq ($(strip $(shell which-test.sh mgizaZ && echo "true")),true)
+ifneq ($(strip $(shell which-test.sh mgiza && echo "true")),true)
 $(error You cannot use the IBM4 feature since you don't have mgiza installed.)
 endif
 endif
