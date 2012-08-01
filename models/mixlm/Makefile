@@ -155,7 +155,7 @@ $(notdir ${MIXLM_PRETRAINED_TGT_LMS}): %: | pretrained.${TGT_LANG} ;
 .PHONY: pretrained.${SRC_LANG} pretrained.${TGT_LANG}
 pretrained.${SRC_LANG} pretrained.${TGT_LANG}: SHELL=${LOCAL_SHELL}
 pretrained.${SRC_LANG} pretrained.${TGT_LANG}: pretrained.%: | models
-	${MAKE} -f ${LM_DIR}/Makefile $@ LM_PRETRAINED_TGT_LMS="${MIXLM_PRETRAINED_TGT_LMS}"
+	${MAKE} -f ../../${LM_DIR}/Makefile $@ LM_PRETRAINED_TGT_LMS="${MIXLM_PRETRAINED_TGT_LMS}"
 
 .PHONY: mixlm
 mixlm: $(addsuffix .mixlm, ${TUNE_SETS})
