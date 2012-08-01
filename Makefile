@@ -131,13 +131,14 @@ corpora: check_setup
 
 
 
-# Create the Language Model (LM).
+# Create the Language Models (LM, MIXLM).
+# Create the Lexicalized Distortion Models (LDM).
 # Create models for truecasing (TC).
 # Create the Translation Model (TM).
 .PHONY: models lm mixlm ldm tc tm
 models lm mixlm ldm tc tm: SHELL=${LOCAL_SHELL}
 models lm mixlm ldm tc tm: %: corpora
-	${MAKE} -C models $@
+	${MAKE} -C models $@ DO_UPDATE_PRETRAINED_LINKS=1
 
 
 

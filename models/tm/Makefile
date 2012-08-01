@@ -446,13 +446,20 @@ clean.content: clean.pretrained
 .PHONY: clean.pretrained
 clean.pretrained: SHELL=${LOCAL_SHELL}
 clean.pretrained:
-	${RM} ${pretrained_cpt_list}
+	${RM} ${pretrained_cpt_list} .*.tstamp mixtm/.*.tstamp
+
+# Trigger updating of the symbolic links to pre-trained models by deleting
+# the hidden .tstamp files.
+.PHONY: trigger.update.pretrained.links
+trigger.update.pretrained.links: SHELL=${LOCAL_SHELL}
+trigger.update.pretrained.links:
+	${RM} .*.tstamp mixtm/.*.tstamp
 
 pretrained_cpt_list = $(notdir ${TM_PRETRAINED_TMS})
 
 # Target to create symbolic links to pre-trained conditional phrase tables.
-.PHONY: pretrained_cpt $(addprefix pretrained., ${pretrained_cpt_list})
-pretrained_cpt: $(addprefix pretrained., ${pretrained_cpt_list}) 
+.PHONY: pretrained_cpt
+pretrained_cpt: $(foreach p, ${pretrained_cpt_list}, .$p.tstamp)
 
 fix_path = $(strip $(if $(filter /, $(firstword $(subst /,/ ,$(1)))), $(1), $(addprefix ${TM_DIR_PFX}../../, $(1))))
 
@@ -460,15 +467,18 @@ pretrained_cpt_paths = $(foreach f, ${TM_PRETRAINED_TMS}, $(call fix_path, $f))
 
 $(foreach f, ${pretrained_cpt_paths}, \
 	$(eval \
-		pretrained.$(notdir $f):  $f) \
+		.$(notdir $f).tstamp:  $f) \
 )
 
-$(addprefix pretrained., ${pretrained_cpt_list}): SHELL=${LOCAL_SHELL}
-$(addprefix pretrained., ${pretrained_cpt_list}): pretrained.%: 
+# The hidden .tstamp files exist to allow us to ensure that symbolic links
+# to pre-trained models are recreated once and only once during the build.
+$(foreach p, ${pretrained_cpt_list}, .$p.tstamp): SHELL=${LOCAL_SHELL}
+$(foreach p, ${pretrained_cpt_list}, .$p.tstamp): .%.tstamp:
 	@[[ ! -e $* ]] || [[ -L $* ]] || ! echo "ERROR: TM $* already exists as a normal file."
 	@$(if $(filter-out cpt.%, $*),! echo "ERROR: Name of pre-trained TM file must start with cpt.: $<")
 	ln -sf $< .
 	[[ ! -d ${<:.gz=.tppt} ]] || ln -sf ${<:.gz=.tppt} .
+	touch $@
 
 ${pretrained_cpt_paths}: SHELL=${LOCAL_SHELL}
 ${pretrained_cpt_paths}: %:

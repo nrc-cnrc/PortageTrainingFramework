@@ -178,6 +178,13 @@ endif
 ########################################
 # Create symbolic links to pre-trained models
 
+clean.content: clean.pretrained
+
+.PHONY: clean.pretrained
+clean.pretrained: SHELL=${LOCAL_SHELL}
+clean.pretrained:
+	${RM} $(foreach p, $(notdir ${LM_PRETRAINED_LMS}), $p ${p:.binlm.gz=.tplm}) .*.tstamp
+
 LM_PRETRAINED_SRC_LMS ?= $(subst _${TGT_LANG},_${SRC_LANG}, ${LM_PRETRAINED_TGT_LMS})
 LM_PRETRAINED_LMS ?= ${LM_PRETRAINED_SRC_LMS} ${LM_PRETRAINED_TGT_LMS}
 
@@ -186,10 +193,22 @@ $(error Target language specification _${TGT_LANG} missing in pre-trained LM fil
         $(filter ${LM_PRETRAINED_TGT_LMS}, ${LM_PRETRAINED_SRC_LMS}))
 endif
 
+# Trigger updating of the symbolic links to pre-trained models by deleting
+# the hidden .tstamp files.
+.PHONY: trigger.update.pretrained.links
+trigger.update.pretrained.links: SHELL=${LOCAL_SHELL}
+trigger.update.pretrained.links:
+ifdef LM_PRETRAINED_LMS
+ifeq (${LM_LANG},${TGT_LANG})
+	${RM} $(foreach p, $(notdir ${LM_PRETRAINED_TGT_LMS}), .$p.tstamp)
+else
+	${RM} $(foreach p, $(notdir ${LM_PRETRAINED_SRC_LMS}), .$p.tstamp)
+endif
+endif
+
 .PHONY: pretrained.${SRC_LANG} pretrained.${TGT_LANG}
-.PHONY: $(addprefix pretrained., $(notdir ${LM_PRETRAINED_LMS}))
-pretrained.${SRC_LANG}: $(addprefix pretrained., $(notdir ${LM_PRETRAINED_SRC_LMS}))
-pretrained.${TGT_LANG}: $(addprefix pretrained., $(notdir ${LM_PRETRAINED_TGT_LMS}))
+pretrained.${SRC_LANG}: $(foreach p, $(notdir ${LM_PRETRAINED_SRC_LMS}), .$p.tstamp)
+pretrained.${TGT_LANG}: $(foreach p, $(notdir ${LM_PRETRAINED_TGT_LMS}), .$p.tstamp)
 
 fix_path = $(strip $(if $(filter /, $(firstword $(subst /,/ ,$(1)))), $(1), $(addprefix ../../, $(1))))
 
@@ -197,15 +216,18 @@ pretrained_lm_paths = $(foreach f, ${LM_PRETRAINED_LMS}, $(call fix_path, $f))
 
 $(foreach f, ${pretrained_lm_paths}, \
 	$(eval \
-		pretrained.$(notdir $f):  $f) \
+		.$(notdir $f).tstamp:  $f) \
 )
 
-$(addprefix pretrained., $(notdir ${pretrained_lm_paths})): SHELL=${LOCAL_SHELL}
-$(addprefix pretrained., $(notdir ${pretrained_lm_paths})): pretrained.%: 
+# The hidden .tstamp files exist to allow us to ensure that symbolic links
+# to pre-trained models are recreated once and only once during the build.
+$(foreach p, $(notdir ${pretrained_lm_paths}), .$p.tstamp): SHELL=${LOCAL_SHELL}
+$(foreach p, $(notdir ${pretrained_lm_paths}), .$p.tstamp): .%.tstamp:
 	@[[ ! -e $* ]] || [[ -L $* ]] || ! echo "ERROR: LM $* already exists as a normal file."
 	@$(if $(filter-out %.binlm.gz, $*),! echo "ERROR: Name of pre-trained LM file must end with .binlm.gz: $<")
 	ln -sf $< .
 	[[ ! -d ${<:.binlm.gz=.tplm} ]] || ln -sf ${<:.binlm.gz=.tplm} .
+	touch $@
 
 ${pretrained_lm_paths}: SHELL=${LOCAL_SHELL}
 ${pretrained_lm_paths}: %:

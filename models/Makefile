@@ -130,6 +130,15 @@ models: SHELL=${LOCAL_SHELL}
 models: lm mixlm tm
 
 
+# NOTE: For lm, mixlm, tm, we first trigger an update of the symbolic links to 
+# pre-trained models, if using pre-trained models. This is done before
+# invoking the all target, so that make -j doesn't try to invoke these
+# targets in parallel.
+
+ifeq (${MAKELEVEL},0)
+DO_UPDATE_PRETRAINED_LINKS ?= 1
+endif
+
 
 .PHONY: lm
 # Create the Language Model (LM).
@@ -137,24 +146,38 @@ lm: SHELL=${LOCAL_SHELL}
 lm: lm.${TGT_LANG}
 lm.%: SHELL=${LOCAL_SHELL}
 lm.%:
+ifdef DO_UPDATE_PRETRAINED_LINKS
+ifdef LM_PRETRAINED_TGT_LMS
+	${MAKE} -C lm trigger.update.pretrained.links LM_LANG=$*
+endif
+endif
 	${MAKE} -C lm all LM_LANG=$*
 
 
 
 .PHONY: mixlm
-# Create mixture language model.
+# Create a mixture language model.
 # NOTE: we make mixlm dependent on lm in case the lms inside the mixlm repeat
 # some lms built in lm/.
 mixlm: SHELL=${LOCAL_SHELL}
 mixlm: lm
+ifdef DO_UPDATE_PRETRAINED_LINKS
+ifdef MIXLM_PRETRAINED_TGT_LMS
+	${MAKE} -C $@ trigger.update.pretrained.links
+endif
+endif
 	${MAKE} -C $@ all
-
 
 
 .PHONY: tm
 # Create the Translation Model (TM).
 tm: SHELL=${LOCAL_SHELL}
 tm:
+ifdef DO_UPDATE_PRETRAINED_LINKS
+ifneq ($(strip ${TM_PRETRAINED_TMS} ${MIXTM_PRETRAINED_TMS}),)
+	${MAKE} -C $@ trigger.update.pretrained.links
+endif
+endif
 	${MAKE} -C $@ all
 
 
@@ -255,16 +278,18 @@ portageLive_models_lm_src: SHELL=${LOCAL_SHELL}
 portageLive_models_lm_src:
 	${MAKE} -C lm portageLive LM_LANG=${SRC_LANG}
 
-# Note: The LM models can be in either of the lm or mixlm directories, so
-# confidence must depend on both lm.${SRC_LANG} and mixlm.
-confidence: lm.${SRC_LANG} mixlm decode
+# Note: decode depends on models (or models has been pre-built by the main
+# makefile), and models depends on lm.${SRC_LANG} if DO_CE is set in addition
+# to mixlm and lm.${TGT_LANG}, so confidence doesn't need to depend on
+# any lm targets. It's good enough to depend on just decode.
+confidence: decode
 	${MAKE} -C $@ all
 
 # Tune multiple confidence variants, if necessary.
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 .PHONY: $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
 $(addprefix confidence., ${TUNE_DECODE_VARIANTS}): SHELL=${LOCAL_SHELL}
-$(addprefix confidence., ${TUNE_DECODE_VARIANTS}): confidence.%: lm.${SRC_LANG} mixlm decode.%
+$(addprefix confidence., ${TUNE_DECODE_VARIANTS}): confidence.%: decode.%
 	if [ ! -e $@ ]; then \
 	   mkdir $@; \
 	   cp -p confidence/Makefile* confidence/ce-notm.template $@; \

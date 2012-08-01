@@ -44,16 +44,6 @@ LM_DIR ?= models/lm
 
 MIXLM_COMPONENTS := $(strip ${MIXLM} $(notdir ${MIXLM_PRETRAINED_TGT_LMS}))
 
-
-ifneq (${MAKECMDGOALS},clean)
-ifneq (${MAKECMDGOALS},clean.content)
-ifneq (${MAKECMDGOALS},clean.logs)
-$(info ln -fs ../../models)
-$(shell ln -fs ../../models)
-endif
-endif
-endif
-
 TUNE_SETS = ${TUNE_DECODE} $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})
 
 .DEFAULT_GOAL := help
@@ -97,10 +87,9 @@ clean: clean.content clean.logs
 
 clean.content: SHELL=${LOCAL_SHELL}
 clean.content:
-	${RM} models
 	${RM} components_* models
 	${RM} *.distances *.weights *.mixlm 
-	${RM} *.lm.gz *.binlm.gz
+	${RM} *.lm.gz *.binlm.gz .*.tstamp
 
 clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
@@ -120,6 +109,17 @@ time-mem: resource_summary_sub
 
 ########################################
 
+
+# The model files have an order-only dependancy on the models directory.
+models:
+	ln -fs ../../models
+
+# Trigger updating of the symbolic links to pre-trained models by deleting
+# the hidden .tstamp files.
+.PHONY: trigger.update.pretrained.links
+trigger.update.pretrained.links: SHELL=${LOCAL_SHELL}
+trigger.update.pretrained.links:
+	${RM} .*.tstamp
 
 MIXLM_SRC_MODELS := $(foreach lm, ${MIXLM}, $(or $(notdir $(wildcard ${lm}_${SRC_LANG}*.binlm${GZ})), \
                                                  $(notdir $(wildcard ${LM_DIR}/${lm}_${SRC_LANG}*.binlm${GZ})), \
@@ -144,7 +144,7 @@ sublm.${TGT_LANG}: ${MIXLM_TGT_MODELS}
 ${MIXLM_SRC_MODELS} ${MIXLM_TGT_MODELS}: SHELL=${LOCAL_SHELL}
 ${MIXLM_SRC_MODELS}: LM_LANG=${SRC_LANG}
 ${MIXLM_TGT_MODELS}: LM_LANG=${TGT_LANG}
-${MIXLM_SRC_MODELS} ${MIXLM_TGT_MODELS}: %.binlm${GZ}:
+${MIXLM_SRC_MODELS} ${MIXLM_TGT_MODELS}: %.binlm${GZ}: | models
 	[[ -s "${LM_DIR}/$@" ]] && ln -s "${LM_DIR}/$@" . \
 	|| ${MAKE} -f ${LM_DIR}/Makefile LM_LANG=${LM_LANG} TRAIN_LM=$(*:_${LM_LANG}-kn-${ORDER}g=) $@
 
@@ -154,7 +154,7 @@ $(notdir ${MIXLM_PRETRAINED_TGT_LMS}): %: | pretrained.${TGT_LANG} ;
 
 .PHONY: pretrained.${SRC_LANG} pretrained.${TGT_LANG}
 pretrained.${SRC_LANG} pretrained.${TGT_LANG}: SHELL=${LOCAL_SHELL}
-pretrained.${SRC_LANG} pretrained.${TGT_LANG}: pretrained.%:
+pretrained.${SRC_LANG} pretrained.${TGT_LANG}: pretrained.%: | models
 	${MAKE} -f ${LM_DIR}/Makefile $@ LM_PRETRAINED_TGT_LMS="${MIXLM_PRETRAINED_TGT_LMS}"
 
 .PHONY: mixlm
