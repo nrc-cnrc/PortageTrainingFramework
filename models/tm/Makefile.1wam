@@ -626,6 +626,7 @@ mix_cpt_list = ${CPT_MIX_PFX}.${L1_2_L2X}
 # Meta target to create the mixture conditional phrase table in mixtm/.
 .PHONY: mix_cpt
 mix_cpt: SHELL=${LOCAL_SHELL}
+ifdef USE_MIXTM
 mix_cpt:  | $(filter-out mix_cpt, ${PT_TYPES})
 	mkdir -p mixtm
 	cd mixtm && ${MAKE} -f ../${MYSELF} pretrained_cpt TM_PRETRAINED_TMS="${MIXTM_PRETRAINED_TMS}"
@@ -661,6 +662,8 @@ $(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), \
 	$(eval \
 		${TUNE_MIXTM_FINAL}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM_FINAL}${L1} ${TUNE_MIXTM_FINAL}${L2}) \
 )
+endif
+
 
 
 ########################################
