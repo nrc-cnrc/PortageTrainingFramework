@@ -54,3 +54,10 @@
 # If you know that creating hmm3 conditional phrase tables require a lot of
 # memory, you can boost the number of cpus only for cpt.hmm3.
 #${CPT_MODEL_PFX}.${HMM3_MODEL_PFX}%: CPT_CPUS=16
+
+# Override the alignment symmetrization strategy:
+# IBMOchAligner 3 gives denser alignments and smaller phrase tables
+#ALIGNMENT_SYMMETRIZATION_OPTIONS = -a "IBMOchAligner 3"
+# IBMOchAligner 4 gives sparser, higher confidence alignments, and larger
+# phrase tables.  And better BLEU scores, at least in some situations.
+#ALIGNMENT_SYMMETRIZATION_OPTIONS = -a "IBMOchAligner 4"

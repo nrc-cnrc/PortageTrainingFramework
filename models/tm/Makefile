@@ -57,6 +57,8 @@ RM := rm -rf
 # After this Makefile, the following targets/files are precious.
 FILES_TO_BE_LOCKED = ibm* hmm* jpt* cpt*
 
+# Global alignment symmetrization options.
+ALIGNMENT_SYMMETRIZATION_OPTIONS ?= -a "IBMOchAligner 3"
 
 
 # Allows to search for alignment files in corpus.

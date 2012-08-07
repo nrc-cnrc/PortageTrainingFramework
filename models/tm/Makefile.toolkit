@@ -350,6 +350,7 @@ ALIGN_MODEL_TYPE := -hmm
 	set -o pipefail; \
 	time-mem \
 	align-words \
+		${ALIGNMENT_SYMMETRIZATION_OPTIONS} \
 		-o sri \
 		-ibm 0 -giza2 \
 		$(call interleave4, $(filter %${SRC_LANG}.lc,$+), $(filter %${TGT_LANG}.lc,$+), $(filter %${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz,$+), $(filter %${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz,$+)) \
@@ -362,6 +363,7 @@ ALIGN_MODEL_TYPE := -hmm
 	set -o pipefail; \
 	time-mem \
 	align-words \
+		${ALIGNMENT_SYMMETRIZATION_OPTIONS} \
 		-o sri \
 		${ALIGN_MODEL_TYPE} \
 		$(filter %${L2_GIVEN_L1X}, $+)  $(filter %${L1_GIVEN_L2X}, $+) \
