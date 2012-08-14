@@ -393,6 +393,12 @@ ifdef TC_USE_SRC_MODELS
 TRUECASING_NC1_SRC_LM  ?= ${TRAIN_TC}_${SRC_LANG}.nc1.binlm${GZ}
 endif
 
+# When working with TMX files, we assume the language code in the TMX is the
+# upper case of $SRC_LANG/$TGT_LANG followed by -CA.  When that's not true,
+# uncomment the following and declare the correct strings here.
+#TMX_SRC = EN-CA
+#TMX_TGT = FR-CA
+
 # If we are lucky enough to have a cluster, we'll change the shell for certain
 # commands and allow them to run on nodes.
 ifdef USING_CLUSTER
