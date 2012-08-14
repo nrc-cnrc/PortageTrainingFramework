@@ -109,11 +109,25 @@ fi
 
 # Determine the source language.
 TEXT=`grep -E '^( *|export +)SRC_LANG *\??=' ${MAKEFILE_PARAMS}`
-[[ ${TEXT} =~ '= *([^ ]*)' ]] && SRC_OPT="-src=${BASH_REMATCH[1]}"
+[[ ${TEXT} =~ '= *([^ ]*)' ]] && SRC_LANG="${BASH_REMATCH[1]}" && SRC_OPT="-src=$SRC_LANG"
 
 # Determine the target language.
 TEXT=`grep -E '^( *|export +)TGT_LANG *\??=' ${MAKEFILE_PARAMS}`
-[[ ${TEXT} =~ '= *([^ ]*)' ]] && TGT_OPT="-tgt=${BASH_REMATCH[1]}"
+[[ ${TEXT} =~ '= *([^ ]*)' ]] && TGT_LANG="${BASH_REMATCH[1]}" && TGT_OPT="-tgt=$TGT_LANG"
+
+# Determine the TMX source language code
+TEXT=`grep -E '^( *|export +)TMX_SRC *\??=' ${MAKEFILE_PARAMS}`
+[[ ${TEXT} =~ '= *([^ ]*)' ]] && TMX_SRC_OPT="-xsrc=${BASH_REMATCH[1]}"
+if [[ ! $TMX_SRC_OPT && $SRC_LANG ]]; then
+   TMX_SRC_OPT="-xsrc=`echo -n $SRC_LANG | tr 'a-z' 'A-Z'`-CA"
+fi
+
+# Determine the TMX target language code
+TEXT=`grep -E '^( *|export +)TMX_TGT *\??=' ${MAKEFILE_PARAMS}`
+[[ ${TEXT} =~ '= *([^ ]*)' ]] && TMX_TGT_OPT="-xtgt=${BASH_REMATCH[1]}"
+if [[ ! $TMX_TGT_OPT && $TGT_LANG ]]; then
+   TMX_TGT_OPT="-xtgt=`echo -n $TGT_LANG | tr 'a-z' 'A-Z'`-CA"
+fi
 
 # Locate the canoe.ini.cow file.
 # We assume that this translate.sh script is at the root of the framework.
@@ -155,6 +169,6 @@ done
 # Make sure plugins in the plugins directory in the framework will be used by translate.pl.
 export PATH="${ROOTDIR}/plugins:$PATH"
 
-run_cmd "translate.pl ${MODE} ${SRC_OPT} ${TGT_OPT} ${TC_OPT} ${CANOE_INI_OPT} ${V_OPT} ${Q_OPT} ${SOURCE_FILE}"
+run_cmd "translate.pl $MODE $SRC_OPT $TGT_OPT $TMX_SRC_OPT $TMX_TGT_OPT $TC_OPT $CANOE_INI_OPT $V_OPT $Q_OPT $SOURCE_FILE"
 
 exit
