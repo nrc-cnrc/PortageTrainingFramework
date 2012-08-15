@@ -107,7 +107,11 @@ vpath %${TGTXZ} ${CORPORA_DIR}
 # Where can we find the phrase models.
 vpath %${TGT_GIVEN_SRCX} ${MODEL_DIRS}
 vpath %${SRC_GIVEN_TGTX} ${MODEL_DIRS}
-vpath %.align.gz  ${MODEL_DIRS} 
+vpath %.align.gz  ${MODEL_DIRS}
+
+# Where to find the filtered corpora for IBM4
+vpath %/${SRC_LANG}.lc ${MODEL_DIRS}
+vpath %/${TGT_LANG}.lc ${MODEL_DIRS}
 
 
 
@@ -151,7 +155,7 @@ FIX_PATHS = $(foreach f,$(filter $1,$2),$(if $(filter-out $1,$f),$f,$(if $(filte
 # This is a special rule to handle ibm4 since we need a filter corpora for IBM4.
 %.lc:  SHELL=${LOCAL_SHELL}
 %.lc:  
-	${MAKE} -C ../tm $(subst ../tm/,,$@)
+	${MAKE} -C ../tm $@
 
 %.align.gz: SHELL=${LOCAL_SHELL}
 %.align.gz:
