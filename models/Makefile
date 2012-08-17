@@ -344,7 +344,7 @@ portageLive/soap-translate.sh: SHELL=${LOCAL_SHELL}
 portageLive/soap-translate.sh: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 	mkdir -p $(dir $@)
 	echo "#!/bin/bash" > $@
-	cd $(dir $@) && echo "`../../translate.sh -n $(and ${DO_RESCORING}, -with-rescoring)` -f=\`dirname \$$0\`/canoe.ini.cow" >> $(notdir $@)
+	cd $(dir $@) && echo "`../../translate.sh -n -nomode` -f=\`dirname \$$0\`/canoe.ini.cow" '"$$@"' >> $(notdir $@)
 	chmod 755 $@
 
 # We need this dependency since decode will copy the tplms for portageLive.

@@ -64,6 +64,7 @@ while [ $# -gt 0 ]; do
    -do|-decode-only)	DECODE_ONLY=1;;
    -wr|-with-rescoring) WITH_RESCORING=1;;
    -wc|-with-ce)        WITH_CE=1;;
+   -nomode)             NOMODE=1;;
    -v|-verbose)         VERBOSE=$(( $VERBOSE + 1 ));;
    -q|-quiet)           QUIET=1;;
    -d|-debug)           DEBUG=1;;
@@ -90,8 +91,9 @@ fi
 [[ "${DECODE_ONLY}${WITH_RESCORING}${WITH_CE}" -gt "1" ]] \
    && error_exit "Specify only one of -decode-only, -with-rescoring, -with-ce."
 MODE="-decode-only"
-[[ ${WITH_RESCORING} ]] && MODE="-with-rescoring"
-[[ ${WITH_CE} ]] && MODE="-with-ce"
+[[ $WITH_RESCORING ]] && MODE="-with-rescoring"
+[[ $WITH_CE ]] && MODE="-with-ce"
+[[ $NOMODE ]] && MODE=""
 
 if [[ ${WITH_RESCORING} ]]; then
    # Check if the rescoring model was set to build.
