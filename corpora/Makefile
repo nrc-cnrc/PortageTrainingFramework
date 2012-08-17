@@ -448,7 +448,7 @@ clean: clean.content clean.logs
 
 clean.content: SHELL=${LOCAL_SHELL}
 clean.content:
-	${RM} ${TOK}
+	${RM} ${TOK:=*}
 	${RM} *.tc *.tc${GZ} *${RULEX} *${LANGX} *${LANGXZ}
 
 clean.logs: SHELL=${LOCAL_SHELL}
