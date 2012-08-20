@@ -172,7 +172,7 @@ TEST_SET      ?= test1 test2
 # Train and use a Hierarchical Lexicalized Distortion Model (HLDM).
 # Comment out to disable using an HLDM; uncomment to enable.
 # Expensive!  Use only if you know it's worthwhile.
-#USE_HLDM = 1
+USE_HLDM = 1
 
 # Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
@@ -334,6 +334,18 @@ MERGED_CPT_ZN_MODEL ?= HMM3
 MERGED_CPT_JPT_TYPES ?= IBM2 HMM3
 # Are we using alignment indicator features?
 MERGED_CPT_USE_ALIGNMENT_INDICATORS ?= 0
+
+# Specify the alignment symmetrization strategy:
+# The former default, IBMOchAligner 3, gives denser alignments and smaller phrase
+# tables It works best for very large corpora.  This is equivalent to "diag" in
+# Koehn, Och and Marcu (2003), and is often referred to as "grow-diag-final".
+#ALIGNMENT_SYMMETRIZATION_OPTIONS = -a "IBMOchAligner 3"
+# IBMOchAligner 4 gives sparser, higher confidence alignments, and larger
+# phrase tables.  It works best for small to large corpora: at hundreds of
+# thousands of sentence pairs, this is known to still be the better option.
+# This is equivalent to "diag-and" in Koehn, Och and Marcu (2003), and is often
+# referred to as "grow-diag-final-and".
+ALIGNMENT_SYMMETRIZATION_OPTIONS = -a "IBMOchAligner 4"
 
 # Define what type of phrase table we want to generate.
 # Can be one or more: ibm2_cpt, hmm1_cpt, hmm2_cpt, hmm3_cpt, ibm4_cpt,
