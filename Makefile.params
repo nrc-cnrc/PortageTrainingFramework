@@ -319,6 +319,10 @@ MIXTM_TRAIN_MIX := $(strip ${MIXTM_TRAIN_MIX})
 TUNE_MIXTM ?= ${TUNE_DECODE}
 TUNE_MIXTM := $(strip ${TUNE_MIXTM})
 
+# It may be beneficial to use a global Word Alignment Model for training a
+# MIXTM. To do so, define MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL (uncomment):
+#MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL ?= 1
+
 ifdef REFERENCE_INDICES
 TUNE_MIXTM_MULTIPLE_REFERENCES ?= $(strip ${TUNE_MIXTM}).multiple.references
 endif

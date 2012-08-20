@@ -149,6 +149,11 @@ clean.word_alignment_models:
 .PHONY: word_alignment_models  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 word_alignment_models:  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
+# $(call which_wam,<wam-stem>)
+# Returns 1wam or <wam-stem> depending on whether 1wam is appropriate.
+# We only use 1wam for MIXTM corpora
+which_wam = $(strip $(if ${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL},\
+                         $(if $(filter $1, ${MIXTM} {MIXTM_TRAIN_MIX}),1wam,$1),$1))
 
 # All word alignment models depend on ibm1 word alignment models except, of
 # course, for ibm1 word alignment models, and also ibm4 since we use external
@@ -175,6 +180,17 @@ $(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMEN
 )
 ${IBM4_MODEL_PFX}_model:  $(foreach c, ${ALL_IBM4_WAMS}, ${IBM4_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${IBM4_MODEL_PFX}.$c.${L1_GIVEN_L2X})
 
+# For 1wam we want only the MIXTM corpora.  We also deliberately exclude ibm4 models.
+ifdef MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
+$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
+	$(foreach c, ${MIXTM}, \
+		$(eval \
+			${${m}_MODEL_PFX}.1wam.${L1_GIVEN_L2X}: $c${L1X} $c${L2X}) \
+		$(eval \
+			${${m}_MODEL_PFX}.1wam.${L2_GIVEN_L1X}: $c${L1X} $c${L2X}) \
+))
+endif
+
 ########################################
 # EXAMPLE of the resulting code generated previously:
 #ibm1_model: ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
@@ -199,16 +215,16 @@ clean.alignment_files:
 alignment_files:  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 
-$(foreach c, ${ALL_WAMS}, \
+$(foreach c, ${ALL_WAMS}, $(foreach w, $(call which_wam, $c), \
 	$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
 		$(eval \
 			$(call lc, $m)_alignment:  $c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
 		$(eval \
 			$c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  $c${L1X} $c${L2X}) \
 		$(eval \
-			$c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+			$c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${m}_MODEL_PFX}.$w.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
 	) \
-)
+))
 $(foreach c, ${ALL_IBM4_WAMS}, \
 	$(eval \
 		ibm4_alignment:  $c.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz) \
@@ -244,20 +260,20 @@ jpts: $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 # Defining a variable to hold the jpt file's prefix.
 # jpts requires the word alignment models in both directions.
 # jpts requires the source and target corpora.
-$(foreach c, ${ALL_TMS}, \
+$(foreach c, ${ALL_TMS}, $(foreach w, $(call which_wam, $c), \
 	$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
 		$(eval \
 			$(call lc, ${m})_jpt:  $(call lc, ${m})_model) \
 		$(eval \
 			$(call lc, ${m})_jpt:  ${JPT_${m}_MODEL_PFX}.$c.${JOINTX}) \
 		$(eval \
-			${JPT_${m}_MODEL_PFX}.$c.${JOINTX}:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+			${JPT_${m}_MODEL_PFX}.$c.${JOINTX}:  ${${m}_MODEL_PFX}.$w.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
 		$(eval \
 			${JPT_${m}_MODEL_PFX}.$c.${JOINTX}:  $c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
 		$(eval \
 			${JPT_${m}_MODEL_PFX}.$c.${JOINTX}:  $c${L1X} $c${L2X}) \
 	) \
-)
+))
 
 ${JPT_IBM4_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
 ${JPT_IBM4_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
@@ -515,16 +531,16 @@ JPT_MERGED_PFX := ${JPT_MODEL_PFX}.merged
 
 # Merged conditional phrase tables depends on a word model alignment for Zens-Ney's smoother.
 # Merged conditional phrase tables depends on either a merged jpt (normal scenario) or a merged sig (when using significance pruning).
-$(foreach c, ${ALL_TMS}, \
+$(foreach c, ${ALL_TMS}, $(foreach w, $(call which_wam, $c), \
 	$(eval \
-		${MERGED_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+		${MERGED_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$w.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
 	$(eval \
 		${MERGED_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${CPT_DEP_TAG}_MERGED_PFX}.$c.${RJOINTX}) \
 	$(eval \
-		${MERGED_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+		${MERGED_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$w.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
 	$(eval \
 		${MERGED_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${CPT_DEP_TAG}_MERGED_PFX}.$c.${JOINTX}) \
-)
+))
 
 
 # A merged jpt depends on user define type of joint frequency count file.
@@ -585,7 +601,7 @@ ${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
 %.${TUNE_MIXTM_FINAL}.${JOINTX}: GEN_JPT_PARALLEL_OPTIONS=
 %.${TUNE_MIXTM_FINAL}.${JOINTX}: JPT_MODEL_TYPE=
 
-$(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), \
+$(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), $(foreach w, $(call which_wam, ${MIXTM_TRAIN_MIX}), \
 	$(eval \
 		${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}) \
 	$(eval \
@@ -593,10 +609,10 @@ $(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), \
 	$(eval \
 		${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}${L1} ${TUNE_MIXTM_FINAL}${L2}) \
 	$(eval \
-		${TUNE_MIXTM_FINAL}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${j}_MODEL_PFX}.${MIXTM_TRAIN_MIX}.${L2_GIVEN_L1X} ${${j}_MODEL_PFX}.${MIXTM_TRAIN_MIX}.${L1_GIVEN_L2X}) \
+		${TUNE_MIXTM_FINAL}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${j}_MODEL_PFX}.$w.${L2_GIVEN_L1X} ${${j}_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
 	$(eval \
 		${TUNE_MIXTM_FINAL}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM_FINAL}${L1} ${TUNE_MIXTM_FINAL}${L2}) \
-)
+))
 endif
 
 
