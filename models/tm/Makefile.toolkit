@@ -22,10 +22,6 @@ export LANG   = en_CA.${UTF8}
 export LC_ALL = en_CA.${UTF8}
 
 
-ifneq ($(words ${MIXTM_TRAIN_MIX}),1)
-$(error You cannot provide more than one corpora in MIXTM_TRAIN_MIX)
-endif
-
 # sort is used to remove duplicate or else dependencies are duplicated.
 ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
 ALL_TMS := $(sort ${ALL_TMS})
