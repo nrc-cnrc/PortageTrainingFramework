@@ -45,11 +45,7 @@ MODULE_NAME ?= tm
 CORPORA_DIR ?= ${TM_DIR_PFX}../../corpora
 
 # We need a dev set for tuning the mixture weights in a mixtm.
-TUNE_MIXTM ?= ${TUNE_DECODE}
-
-# DON'T change the following variable, we need a new variable to hold the
-# corpora stem for train mixture tm.
-TUNE_MIXTM_FINAL := $(or ${TUNE_MIXTM_MULTIPLE_REFERENCES}, ${TUNE_MIXTM})
+#TUNE_MIXTM ?= ${TUNE_DECODE}
 
 # This script might produce directory and we want to easily remove them.
 RM := rm -rf
@@ -613,6 +609,11 @@ $(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), $(foreach w, $(call wh
 	$(eval \
 		${TUNE_MIXTM_FINAL}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM_FINAL}${L1} ${TUNE_MIXTM_FINAL}${L2}) \
 ))
+
+# FORCED ALIGNING tune mixtm with IBM4 models.
+${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${JPT_IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
+${JPT_IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz
+${JPT_IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc
 endif
 
 

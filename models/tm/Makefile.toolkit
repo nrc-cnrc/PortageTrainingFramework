@@ -22,6 +22,10 @@ export LANG   = en_CA.${UTF8}
 export LC_ALL = en_CA.${UTF8}
 
 
+ifneq ($(words ${MIXTM_TRAIN_MIX}),1)
+$(error You cannot provide more than one corpora in MIXTM_TRAIN_MIX)
+endif
+
 # sort is used to remove duplicate or else dependencies are duplicated.
 ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
 ALL_TMS := $(sort ${ALL_TMS})
@@ -180,7 +184,14 @@ CPT_INDICATOR_PFX ?= ${CPT_MODEL_PFX}.PI
 CPT_PI_SMOOTHERS ?= -s '0:KNSmoother 3' -s ZNSmoother -a '1-100:PureIndicator'
 PI_SMOOTHERS_DESCRIPTION ?= -kn3-zn
 
+
+# MIXTURE TRANSLATION MODEL
 MIX_CPUS ?= 1
+
+# DON'T change the following variable, we need a new variable to hold the
+# corpora stem for train mixture tm.
+TUNE_MIXTM_FINAL := $(or ${TUNE_MIXTM_MULTIPLE_REFERENCES}, ${TUNE_MIXTM})
+
 
 ########################################
 # TPPT MODELS.
@@ -587,12 +598,17 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 
 
 
-########################################
+################################################################################
 # GIZA SPECIFIC TARGETS.
 $(addsuffix /,$(sort ${ALL_IBM4_WAMS})):  SHELL=${LOCAL_SHELL}
 $(addsuffix /,$(sort ${ALL_IBM4_WAMS})):  %:
 	mkdir -p $@
 
+
+.PHONY:  debug_giza
+
+debug_giza:  $(addsuffix /${SRC_LANG}.lc, ${ALL_IBM4_WAMS})
+debug_giza:  $(addsuffix /${TGT_LANG}.lc, ${ALL_IBM4_WAMS})
 
 # Clean up the inputs for giza.
 %/${SRC_LANG}.lc:  SHELL=${LOCAL_SHELL}
@@ -604,10 +620,10 @@ $(addsuffix /,$(sort ${ALL_IBM4_WAMS})):  %:
 	test -s $@ && sleep 1 && touch --reference=$< $@
 
 
+debug_giza:  $(addsuffix /${SRC_LANG}.lc.vcb, ${ALL_IBM4_WAMS})
+debug_giza:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_IBM4_WAMS})
+
 # Create the vocabulary files.
-.PHONY:  vcb
-vcb:  $(addsuffix /${SRC_LANG}.lc.vcb, ${ALL_IBM4_WAMS})
-vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_IBM4_WAMS})
 %/${SRC_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
 %/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %/
 	plain2snt $+ 2> $@.log
@@ -621,19 +637,19 @@ vcb:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_IBM4_WAMS})
 	test -s $@ && sleep 1 && touch --reference=$< $@
 
 
+debug_giza:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${ALL_IBM4_WAMS})
+debug_giza:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_IBM4_WAMS})
+
 # Create the vocabulary classes.
-.PHONY: classes
-classes:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${ALL_IBM4_WAMS})
-classes:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_IBM4_WAMS})
 %.lc.vcb.classes:  SHELL=${FRAMEWORK_SHELL}
 %.lc.vcb.classes:  %.lc
 	time-mem mkcls -m2 -p$< -c50 -V$@ opt &> $@.log
 
 
+debug_giza:  $(addsuffix /${L1_2_L2}.cooc, ${ALL_IBM4_WAMS})
+debug_giza:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_IBM4_WAMS})
+
 # Create the cooccurrence counts.
-.PHONY: cooc
-cooc:  $(addsuffix /${L1_2_L2}.cooc, ${ALL_IBM4_WAMS})
-cooc:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_IBM4_WAMS})
 %/${L1_2_L2}.cooc:  SHELL=${LOCAL_SHELL}
 %/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %/
 	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt 2> $@.log
@@ -643,10 +659,10 @@ cooc:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_IBM4_WAMS})
 	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt 2> $@.log
 
 
+debug_giza:  $(addsuffix /${L2_GIVEN_L1}.gizacfg, ${ALL_IBM4_WAMS})
+debug_giza:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${ALL_IBM4_WAMS})
+
 # Perform word alignment.
-.PHONY: cfg
-cfg:  $(addsuffix /${L2_GIVEN_L1}.gizacfg, ${ALL_IBM4_WAMS})
-cfg:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${ALL_IBM4_WAMS})
 %/${L2_GIVEN_L1}.gizacfg:  SHELL=${FRAMEWORK_SHELL}
 %/${L2_GIVEN_L1}.gizacfg:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes  %/${L1_2_L2}.cooc
 	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
@@ -680,13 +696,13 @@ cfg:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${ALL_IBM4_WAMS})
 		&> $@.log
 
 
+debug_giza:  $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS})
+debug_giza:  $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS})
+
 # NOTE/WARNING: 
 #   In order to properly bridge giza's output with Portage, the correct dependency for:
 #      - Portage's src to tgt model is giza's tgt given src files;
 #      - Portage's tgt to src model is giza's src given tgt files.
-.PHONY:  giza_al
-giza_al:  $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS})
-giza_al:  $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS})
 $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L2_GIVEN_L1}.gizacfg
 $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.gizacfg
 %.${IBM4_MODEL_PFX}.alignment.gz:  SHELL=${LOCAL_SHELL}
@@ -718,8 +734,171 @@ ${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb 
 
 
 
+################################################################################
+# FORCE ALIGN
+FORCE_ALIGN_SET := $(sort ${TUNE_MIXTM_FINAL})
+ifdef MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
+FORCE_ALIGN_SET += $(sort ${MIXTM})
+endif
 
-########################################
+${TUNE_MIXTM_FINAL}:  SHELL=${LOCAL_SHELL}
+${TUNE_MIXTM_FINAL}:  %:
+	mkdir -p $@
+
+vpath %lc.vcb ../
+
+PLAIN2SNT_HASCVB := /home/portage/pkgs/mgiza/mgizapp-0.7.2/scripts/plain2snt-hasvcb.py
+
+# debug_forceAlign is used to debug the force aligned targets for mixture tm.
+.PHONY:  debug_forceAlign
+
+debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc
+debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc
+
+$(addsuffix /${SRC_LANG}.lc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
+$(addsuffix /${SRC_LANG}.lc, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}.lc:  %${L1} %${L2} | %
+	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> $@.log
+
+$(addsuffix /${TGT_LANG}.lc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
+$(addsuffix /${TGT_LANG}.lc, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}.lc:  %/${SRC_LANG}.lc | %
+	test -s $@ && sleep 1 && touch --reference=$< $@
+
+
+$(addsuffix /${SRC_LANG}-${TGT_LANG}.snt, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
+$(addsuffix /${SRC_LANG}-${TGT_LANG}.snt, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}-${TGT_LANG}.snt:  %/${SRC_LANG}.lc.vcb | %
+	@test -s $@ && sleep 1 && touch --reference=$< $@
+
+$(addsuffix /${TGT_LANG}-${SRC_LANG}.snt, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
+$(addsuffix /${TGT_LANG}-${SRC_LANG}.snt, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}-${SRC_LANG}.snt:  %/${SRC_LANG}.lc.vcb | %
+	@test -s $@ && sleep 1 && touch --reference=$< $@
+
+
+$(addsuffix /${TGT_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
+$(addsuffix /${TGT_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb | %
+	@test -s $@ && sleep 1 && touch --reference=$< $@
+
+
+debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc.vcb
+
+# NOTE the lc.vcb is an extension of tm-train/${SRC_LANG}.lc.vcb with the dev vocab.
+$(addsuffix /${SRC_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
+$(addsuffix /${SRC_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}.lc.vcb:  ${MIXTM_TRAIN_MIX}/${SRC_LANG}.lc.vcb ${MIXTM_TRAIN_MIX}/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %
+	${PLAIN2SNT_HASCVB} \
+		$+ \
+		$*/${TGT_LANG}-${SRC_LANG}.snt $*/${SRC_LANG}-${TGT_LANG}.snt \
+		$*/${SRC_LANG}.lc.vcb $*/${TGT_LANG}.lc.vcb
+
+
+debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc.vcb.classes
+debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc.vcb.classes
+
+$(addsuffix /${SRC_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
+$(addsuffix /${SRC_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}.lc.vcb.classes:  ${MIXTM_TRAIN_MIX}/${SRC_LANG}.lc.vcb.classes | %
+	ln -fs ../$< $@
+
+$(addsuffix /${TGT_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
+$(addsuffix /${TGT_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}.lc.vcb.classes:  ${MIXTM_TRAIN_MIX}/${TGT_LANG}.lc.vcb.classes | %
+	ln -fs ../$< $@
+
+
+debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L1_2_L2}.cooc
+debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L2_2_L1}.cooc
+
+$(addsuffix /${L1_2_L2}.cooc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
+$(addsuffix /${L1_2_L2}.cooc, ${FORCE_ALIGN_SET}):  %/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb %/${TGT_LANG}-${SRC_LANG}.snt | %
+	snt2cooc $@  $+
+
+$(addsuffix /${L2_2_L1}.cooc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
+$(addsuffix /${L2_2_L1}.cooc, ${FORCE_ALIGN_SET}):  %/${L2_2_L1}.cooc:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb %/${SRC_LANG}-${TGT_LANG}.snt | %
+	snt2cooc $@  $+
+
+
+debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L2_GIVEN_L1}.gizacfg
+debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L1_GIVEN_L2}.gizacfg
+
+$(addsuffix /${L2_GIVEN_L1}.gizacfg, ${FORCE_ALIGN_SET}):  SHELL=${FRAMEWORK_SHELL}
+$(addsuffix /${L2_GIVEN_L1}.gizacfg, ${FORCE_ALIGN_SET}):  %/${L2_GIVEN_L1}.gizacfg:  \
+				%/${TGT_LANG}.lc.vcb  \
+				%/${SRC_LANG}.lc.vcb  \
+				%/${SRC_LANG}.lc.vcb.classes \
+				%/${TGT_LANG}.lc.vcb.classes \
+				%/${TGT_LANG}-${SRC_LANG}.snt  \
+				%/${L1_2_L2}.cooc \
+				${MIXTM_TRAIN_MIX}/${L2_GIVEN_L1}.gizacfg  \
+				| %
+	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
+	${TIME_MEM} \
+	mgiza \
+		$(filter %.gizacfg, $+) \
+		-sourcevocabularyfile $(filter %${SRC_LANG}.lc.vcb, $+) \
+		-targetvocabularyfile $(filter %${TGT_LANG}.lc.vcb, $+) \
+		-corpusfile $(filter %.snt, $+) \
+		-coocurrencefile $(filter %.cooc, $+) \
+		-outputpath $* \
+		-outputfileprefix $(notdir ${@:.gizacfg=}) \
+		-m1 0 -m2 0 -mh 0 -m3 0 -m4 1 \
+		-restart 11 \
+		-previoust   $(patsubst %.gizacfg,%.t3.final, $(filter %.gizacfg, $+)) \
+		-previousa   $(patsubst %.gizacfg,%.a3.final, $(filter %.gizacfg, $+)) \
+		-previousd   $(patsubst %.gizacfg,%.d3.final, $(filter %.gizacfg, $+)) \
+		-previousn   $(patsubst %.gizacfg,%.n3.final, $(filter %.gizacfg, $+)) \
+		-previousd4  $(patsubst %.gizacfg,%.d4.final, $(filter %.gizacfg, $+)) \
+		-previousd42 $(patsubst %.gizacfg,%.D4.final, $(filter %.gizacfg, $+)) \
+		&> $@.log
+
+$(addsuffix /${L1_GIVEN_L2}.gizacfg, ${FORCE_ALIGN_SET}):  SHELL=${FRAMEWORK_SHELL}
+$(addsuffix /${L1_GIVEN_L2}.gizacfg, ${FORCE_ALIGN_SET}):  %/${L1_GIVEN_L2}.gizacfg:  \
+				%/${TGT_LANG}.lc.vcb  \
+				%/${SRC_LANG}.lc.vcb  \
+				%/${SRC_LANG}.lc.vcb.classes \
+				%/${TGT_LANG}.lc.vcb.classes \
+				%/${SRC_LANG}-${TGT_LANG}.snt  \
+				%/${L2_2_L1}.cooc \
+				${MIXTM_TRAIN_MIX}/${L1_GIVEN_L2}.gizacfg  \
+				| %
+	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
+	${TIME_MEM} \
+	mgiza \
+		$(filter %.gizacfg, $+) \
+		-sourcevocabularyfile $(filter %${TGT_LANG}.lc.vcb, $+) \
+		-targetvocabularyfile $(filter %${SRC_LANG}.lc.vcb, $+) \
+		-corpusfile $(filter %.snt, $+) \
+		-coocurrencefile $(filter %.cooc, $+) \
+		-outputpath $* \
+		-outputfileprefix $(notdir ${@:.gizacfg=}) \
+		-m1 0 -m2 0 -mh 0 -m3 0 -m4 1 \
+		-restart 11 \
+		-previoust   $(patsubst %.gizacfg,%.t3.final, $(filter %.gizacfg, $+)) \
+		-previousa   $(patsubst %.gizacfg,%.a3.final, $(filter %.gizacfg, $+)) \
+		-previousd   $(patsubst %.gizacfg,%.d3.final, $(filter %.gizacfg, $+)) \
+		-previousn   $(patsubst %.gizacfg,%.n3.final, $(filter %.gizacfg, $+)) \
+		-previousd4  $(patsubst %.gizacfg,%.d4.final, $(filter %.gizacfg, $+)) \
+		-previousd42 $(patsubst %.gizacfg,%.D4.final, $(filter %.gizacfg, $+)) \
+		&> $@.log
+
+
+
+debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz
+debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz
+
+$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${FORCE_ALIGN_SET}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L2_GIVEN_L1}.gizacfg | %
+$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${FORCE_ALIGN_SET}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.gizacfg | %
+
+
+debug_forceAlign:  ${TUNE_MIXTM_FINAL}.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz
+
+$(addsuffix .${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz, ${FORCE_ALIGN_SET}):  %.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc
+$(addsuffix .${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz, ${FORCE_ALIGN_SET}):  %.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz
+
+
+debug_forceAlign:  ${IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${L2_GIVEN_L1X}
+debug_forceAlign:  ${IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${L1_GIVEN_L2X}
+
+
+
+
+
+################################################################################
 # Create tightly packed conditional phrase table.
 %.tppt: SHELL=${FRAMEWORK_SHELL}
 %.tppt: %.gz
