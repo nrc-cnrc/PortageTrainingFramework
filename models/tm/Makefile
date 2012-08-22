@@ -597,11 +597,14 @@ ${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
 %.${TUNE_MIXTM_FINAL}.${JOINTX}: GEN_JPT_PARALLEL_OPTIONS=
 %.${TUNE_MIXTM_FINAL}.${JOINTX}: JPT_MODEL_TYPE=
 
-$(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), $(foreach w, $(call which_wam, ${MIXTM_TRAIN_MIX}), \
+$(foreach j, ${MERGED_CPT_JPT_TYPES}, $(foreach w, $(call which_wam, ${MIXTM_TRAIN_MIX}), \
 	$(eval \
 		${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}) \
 	$(eval \
 		${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz) \
+))
+
+$(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), $(foreach w, $(call which_wam, ${MIXTM_TRAIN_MIX}), \
 	$(eval \
 		${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}${L1} ${TUNE_MIXTM_FINAL}${L2}) \
 	$(eval \
@@ -611,10 +614,9 @@ $(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), $(foreach w, $(call wh
 ))
 
 # FORCED ALIGNING tune mixtm with IBM4 models.
-${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${JPT_IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
-${JPT_IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz
 ${JPT_IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc
-endif
+
+endif  # ifdef USE_MIXTM
 
 
 
