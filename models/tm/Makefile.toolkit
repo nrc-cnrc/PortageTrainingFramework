@@ -742,6 +742,7 @@ ${TUNE_MIXTM_FINAL}:  %:
 	mkdir -p $@
 
 vpath %lc.vcb ../
+vpath ${MIXTM_TRAIN_MIX}/% ${TM_DIR_PFX} ${TM_DIR_PFX}mixtm
 
 PLAIN2SNT_HASCVB := /home/portage/pkgs/mgiza/mgizapp-0.7.2/scripts/plain2snt-hasvcb.py
 
@@ -802,11 +803,11 @@ debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L2_2_L1}.cooc
 
 $(addsuffix /${L1_2_L2}.cooc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
 $(addsuffix /${L1_2_L2}.cooc, ${FORCE_ALIGN_SET}):  %/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb %/${TGT_LANG}-${SRC_LANG}.snt | %
-	snt2cooc $@  $+
+	snt2cooc $@  $+ 2> $@.log
 
 $(addsuffix /${L2_2_L1}.cooc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
 $(addsuffix /${L2_2_L1}.cooc, ${FORCE_ALIGN_SET}):  %/${L2_2_L1}.cooc:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb %/${SRC_LANG}-${TGT_LANG}.snt | %
-	snt2cooc $@  $+
+	snt2cooc $@  $+ 2> $@.log
 
 
 debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L2_GIVEN_L1}.gizacfg
