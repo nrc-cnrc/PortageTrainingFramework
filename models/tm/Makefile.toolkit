@@ -608,11 +608,11 @@ debug_giza:  $(addsuffix /${TGT_LANG}.lc, ${ALL_IBM4_WAMS})
 
 # Clean up the inputs for giza.
 %/${SRC_LANG}.lc:  SHELL=${LOCAL_SHELL}
-%/${SRC_LANG}.lc:  %${L1X} %${L2X}  | %/
+%/${SRC_LANG}.lc:  %${L1X} %${L2X}  | %
 	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> $@.log
 
 %/${TGT_LANG}.lc:  SHELL=${LOCAL_SHELL}
-%/${TGT_LANG}.lc:  %/${SRC_LANG}.lc
+%/${TGT_LANG}.lc:  %/${SRC_LANG}.lc | %
 	test -s $@ && sleep 1 && touch --reference=$< $@
 
 
@@ -621,15 +621,15 @@ debug_giza:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_IBM4_WAMS})
 
 # Create the vocabulary files.
 %/${SRC_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
-%/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %/
+%/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %
 	plain2snt $+ 2> $@.log
 
 %/${TGT_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
-%/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb
+%/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb | %
 	test -s $@ && sleep 1 && touch --reference=$< $@
 
 %/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  SHELL=${LOCAL_SHELL}
-%/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb
+%/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %
 	test -s $@ && sleep 1 && touch --reference=$< $@
 
 
@@ -647,11 +647,11 @@ debug_giza:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_IBM4_WAMS})
 
 # Create the cooccurrence counts.
 %/${L1_2_L2}.cooc:  SHELL=${LOCAL_SHELL}
-%/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %/
+%/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %
 	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt 2> $@.log
 
 %/${L2_2_L1}.cooc:  SHELL=${LOCAL_SHELL}
-%/${L2_2_L1}.cooc:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb | %/
+%/${L2_2_L1}.cooc:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb | %
 	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt 2> $@.log
 
 
@@ -660,7 +660,7 @@ debug_giza:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${ALL_IBM4_WAMS})
 
 # Perform word alignment.
 %/${L2_GIVEN_L1}.gizacfg:  SHELL=${FRAMEWORK_SHELL}
-%/${L2_GIVEN_L1}.gizacfg:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes  %/${L1_2_L2}.cooc
+%/${L2_GIVEN_L1}.gizacfg:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes  %/${L1_2_L2}.cooc | %
 	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
 	${TIME_MEM} \
 	mgiza \
@@ -676,7 +676,7 @@ debug_giza:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${ALL_IBM4_WAMS})
 		&> $@.log
 
 %/${L1_GIVEN_L2}.gizacfg:  SHELL=${FRAMEWORK_SHELL}
-%/${L1_GIVEN_L2}.gizacfg:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb.classes %/${SRC_LANG}.lc.vcb.classes  %/${L2_2_L1}.cooc
+%/${L1_GIVEN_L2}.gizacfg:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb.classes %/${SRC_LANG}.lc.vcb.classes  %/${L2_2_L1}.cooc | %
 	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
 	${TIME_MEM} \
 	mgiza \
@@ -699,8 +699,8 @@ debug_giza:  $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_
 #   In order to properly bridge giza's output with Portage, the correct dependency for:
 #      - Portage's src to tgt model is giza's tgt given src files;
 #      - Portage's tgt to src model is giza's src given tgt files.
-$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L2_GIVEN_L1}.gizacfg
-$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.gizacfg
+$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L2_GIVEN_L1}.gizacfg | %
+$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_IBM4_WAMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.gizacfg | %
 %.${IBM4_MODEL_PFX}.alignment.gz:  SHELL=${LOCAL_SHELL}
 %.${IBM4_MODEL_PFX}.alignment.gz:
 	set -o pipefail; \
@@ -741,7 +741,6 @@ ${TUNE_MIXTM_FINAL}:  SHELL=${LOCAL_SHELL}
 ${TUNE_MIXTM_FINAL}:  %:
 	mkdir -p $@
 
-vpath %lc.vcb ../
 vpath ${MIXTM_TRAIN_MIX}/% ${TM_DIR_PFX} ${TM_DIR_PFX}mixtm
 
 PLAIN2SNT_HASCVB := /home/portage/pkgs/mgiza/mgizapp-0.7.2/scripts/plain2snt-hasvcb.py
