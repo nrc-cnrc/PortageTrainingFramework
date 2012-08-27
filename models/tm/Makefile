@@ -161,7 +161,7 @@ $(foreach m, $(filter-out ${IBM1_MODEL_PFX} ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_A
 # the meta target for word alignment model depends on word alignment model files.
 # both forward and backward word alignment models require source and target corpora.
 $(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
-	$(foreach c, ${ALL_WAMS}, \
+	$(foreach c, $(filter-out 1wam, ${ALL_WAMS}), \
 		$(eval \
 			$(call lc, ${m})_model:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
 		$(eval \
@@ -174,7 +174,7 @@ $(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMEN
 	$(eval \
 	   ${${m}_MODEL_PFX}.${L2_GIVEN_L1X}: $(foreach c, ${ALL_TMS}, $c${L1X} $c${L2X})) \
 )
-${IBM4_MODEL_PFX}_model:  $(foreach c, ${ALL_IBM4_WAMS}, ${IBM4_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${IBM4_MODEL_PFX}.$c.${L1_GIVEN_L2X})
+${IBM4_MODEL_PFX}_model:  $(foreach c, ${ALL_WAMS}, ${IBM4_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${IBM4_MODEL_PFX}.$c.${L1_GIVEN_L2X})
 
 # For 1wam we want only the MIXTM corpora.  We also deliberately exclude ibm4 models.
 ifdef MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
@@ -221,7 +221,8 @@ $(foreach c, ${ALL_WAMS}, $(foreach w, $(call which_wam, $c), \
 			$c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${m}_MODEL_PFX}.$w.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
 	) \
 ))
-$(foreach c, ${ALL_IBM4_WAMS}, \
+
+$(foreach c, ${ALL_WAMS}, \
 	$(eval \
 		ibm4_alignment:  $c.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz) \
 	$(eval \
@@ -273,16 +274,16 @@ $(foreach c, ${ALL_TMS}, $(foreach w, $(call which_wam, $c), \
 
 ${JPT_IBM4_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
 ${JPT_IBM4_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
-$(foreach c, ${ALL_TMS}, \
+$(foreach c, ${ALL_TMS}, $(foreach w, $(call which_wam, $c), \
 	$(eval \
 		ibm4_jpt:  ${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}) \
 	$(eval \
-		${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}:  ${IBM4_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${IBM4_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
+		${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}:  ${IBM4_MODEL_PFX}.$w.${L2_GIVEN_L1X}  ${IBM4_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
 	$(eval \
 		${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}:  $c.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz) \
 	$(eval \
 		${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
-)
+))
 
 # EXAMPLE of the resulting code generated previously:
 #JPT_HMM3_MODEL_PFX ?= ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}
@@ -615,6 +616,8 @@ $(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), $(foreach w, $(call wh
 
 # FORCED ALIGNING tune mixtm with IBM4 models.
 ${JPT_IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc
+${TUNE_MIXTM_FINAL}.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc
+${TUNE_MIXTM_FINAL}.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM_FINAL}/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz ${TUNE_MIXTM_FINAL}/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz
 
 endif  # ifdef USE_MIXTM
 
@@ -715,223 +718,6 @@ tppt portageLive: ${tppt_list}
 
 
 
-################################################################################
-# The test target is designed to be a unittest.  Its purpose is not to run
-# commands but rather validate that all variables are properly expanded and
-# that the resulting dependencies are all correct.
-.PHONY: testsuite
-testsuite:  unittest1
-testsuite:  unittest2
-testsuite:  unittest3
-testsuite:  unittest4
-testsuite:  unittest5
-testsuite:  unittest6
-testsuite:  unittest7
-testsuite:  unittest8
-testsuite:  unittest9
-testsuite:  unittest10
-testsuite:  unittest11
-
-
-# These unittests look for clues that make was able to generate all
-# dependencies.  Does not execute commands nor build models.
-UNITTEST0_EXPECTED_NUM := $(words ${POSSIBLE_WORD_ALIGNMENT_MODELS})
-UNITTEST0_FILTER = egrep -o '($(call merge,|,$1))\b' | sort | uniq -c | sed -e 's/^ *//' | cut -f 1 -d ' ' | tr '\n' ' '
-.PHONY: unittest0
-unittest0: unittest_word_alignment_models
-unittest0: unittest_alignment_files
-unittest0: unittest_jpts
-unittest0: unittest_sigs
-unittest0: unittest_cpts
-unittest0: unittest_merged_cpt
-unittest0: unittest_mix_cpt
-unittest0: unittest_indicator_cpt
-
-# 10 cat.sh
-# 2 mgiza
-# 2 train_ibm
-unittest_word_alignment_models:  export MIXTM=
-unittest_word_alignment_models:
-	[[ "`${MAKE} -Bn word_alignment_models | $(call UNITTEST0_FILTER, cat.sh mgiza train_ibm)`" =~ "10 2 2" ]]
-
-# 6 align-words
-# 10 cat.sh
-# 2 mgiza
-unittest_alignment_files:  export MIXTM=
-unittest_alignment_files:  unittest_word_alignment_models
-	[[ "`${MAKE} -Bn alignment_files | $(call UNITTEST0_FILTER, align-words cat.sh mgiza train_ibm)`" =~ "6 10 2" ]]
-
-# 6 align-words
-# 10 cat.sh
-# 6 gen-jpt-parallel.sh
-# 2 mgiza
-unittest_jpts:  export MIXTM=
-unittest_jpts:  unittest_alignment_files
-	[[ "`${MAKE} -Bn jpts | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh mgiza)`" =~ "6 10 6 2" ]]
-
-# 6 align-words
-# 10 cat.sh
-# 6 gen-jpt-parallel.sh
-# 2 mgiza
-# 6 sigprune.sh
-unittest_sigs:  export MIXTM=
-unittest_sigs:  unittest_jpts
-	[[ "`${MAKE} -Bn sigs | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh mgiza sigprune.sh)`" =~ "6 10 6 2 6" ]]
-
-# 5  align-words
-# 10 cat.sh
-# 5  gen-jpt-parallel.sh
-# 5  joint2cond_phrase_tables
-# 2  mgiza
-unittest_cpts:  unittest_jpts
-	[[ "`${MAKE} -Bn ibm2_cpt ibm4_cpt hmm1_cpt hmm2_cpt hmm3_cpt | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh joint2cond_phrase_tables mgiza)`" =~ "5 10 5 5 2" ]]
-
-# 2 align-words
-# 6 cat.sh
-# 2 gen-jpt-parallel.sh
-# 1 joint2cond_phrase_tables
-unittest_merged_cpt:  export MERGED_CPT_ZN_MODEL = HMM3
-unittest_merged_cpt:  export MERGED_CPT_JPT_TYPES = IBM2 HMM3
-unittest_merged_cpt:  unittest_jpts
-	[[ "`${MAKE} -Bn merged_cpt | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh joint2cond_phrase_tables)`" =~ "2 6 2 1" ]]
-
-# 8  align-words
-# 18 cat.sh
-# 8  gen-jpt-parallel.sh
-# 4  merge_counts
-# 1  train_tm_mixture
-unittest_mix_cpt:  export MIXTM=sublm1 sublm2 sublm3
-unittest_mix_cpt:  export PT_TYPES=mix_cpt
-unittest_mix_cpt:  export MERGED_CPT_ZN_MODEL = HMM3
-unittest_mix_cpt:  export MERGED_CPT_JPT_TYPES = IBM2 HMM3
-unittest_mix_cpt:  unittest_jpts
-	mkdir -p mixtm && [[ "`${MAKE} -Bn all | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh merge_counts train_tm_mixture)`" =~ "8 18 8 4 1" ]]
-
-# 3 align-words
-# 6 cat.sh
-# 3 gen-jpt-parallel.sh
-# 1 joint2multi_cpt
-# 3 ln
-# 2 mgiza
-unittest_indicator_cpt:  export INDICATOR_WORD_ALIGNMENT_MODELS = ${IBM4_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX}
-unittest_indicator_cpt:  unittest_jpts
-	[[ "`${MAKE} -Bn indicator_cpt | $(call UNITTEST0_FILTER, gen-jpt-parallel.sh joint2multi_cpt cat.sh align-words mgiza ln)`" =~ "3 6 3 1 3 2" ]]
-
-
-
-# Verify that make is capable of generating all required targets for merged_cpt and some other cpt.
-.PHONY: unittest1
-unittest1: SHELL=${LOCAL_SHELL}
-unittest1:
-	make -Bnj1 tppt PT_TYPES='ibm2_cpt hmm3_cpt merged_cpt' MERGED_CPT_JPT_TYPES='IBM2 HMM1 HMM3 HMM2 IBM1' MERGED_CPT_ZN_MODEL=IBM1
-
-# Verify that make is capable of generating all required target for one cpt that has been significance pruned.
-.PHONY: unittest2
-unittest2: SHELL=${LOCAL_SHELL}
-unittest2:
-	make -Bnj1 USE_SIGPRUNING=1 SIG_OPTS="-keep -sigopts '-par-driver fork'" ibm2_cpt
-
-# Verify that make is capable of generating all required target for a merged cpt that has been significance pruned.
-.PHONY: unittest3
-unittest3: SHELL=${LOCAL_SHELL}
-unittest3:
-	make -Bnj1 USE_SIGPRUNING=1 SIG_OPTS="-keep -sigopts '-par-driver fork'" merged_cpt
-
-
-$(foreach a, a b, $(eval %.$a: ;echo $$@ $$*))
-
-
-# UNITTEST for ZN-ADAPT.
-.PHONY: unittest4 zn-adapt
-unittest4:  zn-adapt
-zn-adapt: export domain_files = tm-train_en.lc.gz tm-train_fr.lc.gz
-zn-adapt: export other_files = sublm1_en.lc.gz sublm1_fr.lc.gz sublm2_en.lc.gz sublm2_fr.lc.gz sublm3_en.lc.gz sublm3_fr.lc.gz
-zn-adapt:
-	${MAKE} -f Makefile.zn-adapt all
-
-
-# UNITTEST for Significance Pruning.
-.PHONY: unittest5 sigprune
-unittest5:  sigprune
-sigprune:  export USE_SIGPRUNING = 1
-sigprune:
-	${MAKE} clean.cpts
-	${MAKE} all
-	[[ "`find -name sig.\*.merged.tm-train.\*.gz -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: Seems that no sig counts were produced." >&2
-
-
-# Create a significance pruned conditional phrase table from IBM4 joint
-# counts.
-.PHONY: unittest6
-unittest6:  export USE_SIGPRUNING = 1
-unittest6:
-	${MAKE} ibm4_cpt
-	@[[ "`find -name ibm4.tm-train.\*_given_\*.gz -size +21c | \wc -l`" -eq 2 ]] \
-	|| ! echo "ERROR: Can't find word alignment files for ibm4." >&2
-	@[[ "`find -name jpt.ibm4.tm-train.en-fr.gz -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: can't find a jpt for ibm4." >&2
-	@[[ "`find -name cpt.ibm4-kn3-zn.tm-train.en2fr.gz -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: can't find a jpt for ibm4." >&2
-
-
-# Create a significance pruned conditional phrase table built with a lexical
-# smoother based on ibm4 with joint frequency counts tallied from IBM2, HMM3 &
-# IBM4.
-.PHONY: unittest7
-unittest7:  export USE_SIGPRUNING = 1
-unittest7:  export MERGED_CPT_ZN_MODEL = IBM4
-unittest7:  export MERGED_CPT_JPT_TYPES = IBM2 HMM3 IBM4
-unittest7:
-	${MAKE} clean.cpts  clean.sig
-	${RM} ${JPT_MERGED_PFX}*
-	${MAKE} merged_cpt
-	@[[ "`find -name cpt.merged.ibm4-kn3-zn.tm-train.en2fr.gz -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: can't find conditional phrase table for ibm4." >&2
-
-
-# Create multiple TMs.
-.PHONY: unittest8 multiple_TMs
-unittest8:  multiple_TMs
-multiple_TMs:  export TRAIN_TM = sublm1 sublm2 sublm3
-multiple_TMs:
-	${MAKE} all
-
-
-# Indicator Feature from one corpus.
-.PHONY: unittest9 indicator1
-unittest9:  indicator1
-indicator1:  export INDICATOR_WORD_ALIGNMENT_MODELS = ${IBM4_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX}
-indicator1:
-	${RM} ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
-	${MAKE} indicator_cpt
-	@[[ "`find -name ${INDICATOR_MODEL_PFX}.${L1_2_L2X} -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: can't find cpt with indicator_cpt" >&2
-	@zcat ${INDICATOR_MODEL_PFX}.${L1_2_L2X} | grep -Em1 '( (1|0\.3)){3}$$' --quiet \
-	|| ! echo "ERROR: Looks like there are no indicator_cpt feature in your cpt." >&2
-
-# Inidcator Feature using several corpora.
-.PHONY: unittest10 indicator2
-unittest10:  indicator2
-indicator2:  export TRAIN_TM=tm-train sublm1 sublm2 sublm3
-indicator2:  export INDICATOR_WORD_ALIGNMENT_MODELS = ${IBM4_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM2_MODEL_PFX}
-indicator2:
-	${RM} ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
-	${MAKE} indicator_cpt
-	@[[ "`find -name ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GIVEN_L1X} -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: Can't find global word alignment model." >&2
-	@[[ "`find -name ${INDICATOR_MODEL_PFX}.${L1_2_L2X} -size +21c | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: can't find cpt with indicator_cpt" >&2
-	@zcat ${INDICATOR_MODEL_PFX}.${L1_2_L2X} | grep -Em1 '( (1|0\.3)){3}$$' --quiet \
-	|| ! echo "ERROR: Looks like there are no indicator_cpt feature in your cpt." >&2
-
-
-# MIXTURE TRANSLATION MODEL
-.PHONY: unittest11 mixture
-unittest11:  mixture
-mixture:  export MIXTM = sublm1 sublm2 sublm3
-mixture:
-	${MAKE} mix_cpt
-	@[[ "`find -name cpt.mix.en2fr.gz -size +21c -type l | \wc -l`" -eq 1 ]] \
-	|| ! echo "ERROR: Can't find the mixture translation model." >&2
+# Add the unittest targets.
+-include Makefile.unittests
 
