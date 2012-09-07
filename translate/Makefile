@@ -92,7 +92,10 @@ NBEST_SIZE ?= 1000
 # Number of parallel chunks to process. Be careful not to over-parallelize.
 PARALLELISM_LEVEL_TRANSLATE ?= 1
 
-# Some ad-hoc post procssing.
+# Some ad-hoc post decoding processing.
+POST_DECODING ?= cat
+
+# Some ad-hoc post procssing done has the very last step.
 POST_PROCESSING ?= cat
 
 # How many cpus to use when translating.
@@ -332,6 +335,7 @@ else
 	| nbest2rescore.pl -canoe -tagoov -palout=$@.pal \
 	| tee  $@.oov \
 	| perl -pe 's/<OOV>(.+?)<\/OOV>/\1/g;' \
+	| ${POST_DECODING} \
 	> $@
 endif
 
