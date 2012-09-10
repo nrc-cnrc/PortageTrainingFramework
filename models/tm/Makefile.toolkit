@@ -770,7 +770,7 @@ ${TUNE_MIXTM_FINAL}:  %:
 
 vpath ${MIXTM_TRAIN_MIX}/% ${TM_DIR_PFX} ${TM_DIR_PFX}mixtm
 
-PLAIN2SNT_HASCVB := /home/portage/pkgs/mgiza/mgizapp-0.7.2/scripts/plain2snt-hasvcb.py
+PLAIN2SNT_HASCVB := plain2snt-hasvcb.py
 
 # debug_forceAlign is used to debug the force aligned targets for mixture tm.
 .PHONY:  debug_forceAlign
