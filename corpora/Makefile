@@ -477,6 +477,20 @@ ifneq (${MAKECMDGOALS},clean)
 ifneq (${MAKECMDGOALS},clean.content)
 ifneq (${MAKECMDGOALS},clean.logs)
 
+# Let's make sure the tokenizers are defined if we need to tokenize.
+ifneq (${SRC_TOK_LIST}${SRC_TOKZ_LIST},)
+ifndef TOKENIZER_${SRC_LANG}
+$(error You must define TOKENIZER_${SRC_LANG})
+endif
+endif
+
+ifneq (${TGT_TOK_LIST}${TGT_TOKZ_LIST},)
+ifndef TOKENIZER_${TGT_LANG}
+$(error You must define TOKENIZER_${TGT_LANG})
+endif
+endif
+
+
 # Verify the presence of the truecasing language model's corpus file.
 $(foreach l, $(addsuffix _${TGT_LANG}, ${TRAIN_TC}), \
 	$(if $(strip $(call  BASE_FILE_EXISTS, $l) $(wildcard $l${TCX}) $(wildcard $l${TCX}${GZ})),, \
