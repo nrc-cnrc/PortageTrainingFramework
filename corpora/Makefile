@@ -270,6 +270,14 @@ MIXLM_TOK ?= $(filter $(addsuffix %, ${MIXLM}), ${TOK})
 tok: SHELL=${LOCAL_SHELL}
 tok: ${TOK}
 
+.PHONY:  tok.src tok.${SRC_LANG}
+tok.src:  tok.${SRC_LANG}
+tok.${SRC_LANG}:  $(filter %_${SRC_LANG}${ALIGNX}${GZ} %_${SRC_LANG}${ALIGNX}, ${TOK})
+
+.PHONY:  tok.tgt tok.${TGT_LANG}
+tok.tgt:  tok.${TGT_LANG}
+tok.${TGT_LANG}:  $(filter %_${TGT_LANG}${ALIGNX}${GZ} %_${TGT_LANG}${ALIGNX}, ${TOK})
+
 
 
 ########################################
