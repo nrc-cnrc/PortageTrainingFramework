@@ -109,7 +109,8 @@ help:
 
 .DELETE_ON_ERROR:
 .SUFFIXES:
-#.SECONDARY:
+# .SECONDARY is required when train_??.al is not gzipped
+.SECONDARY:
 
 
 
