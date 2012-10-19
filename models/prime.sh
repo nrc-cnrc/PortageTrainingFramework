@@ -60,6 +60,10 @@ else
 fi
 
 #Prime the software.
-echo "" | $CONTEXT/soap-translate.sh >& /dev/null
+if [[ -e $CONTEXT/ce_model.cem ]]; then
+   echo "" | $CONTEXT/soap-translate.sh -with-ce >& /dev/null
+else
+   echo "" | $CONTEXT/soap-translate.sh -decode-only >& /dev/null
+fi
 
 exit
