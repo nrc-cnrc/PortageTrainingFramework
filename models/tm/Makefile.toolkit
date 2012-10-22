@@ -366,13 +366,16 @@ ALIGN_MODEL_TYPE := -hmm
 %.${L1_2_L2}.align.gz:
 	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
 	set -o pipefail; \
-	time-mem \
-	align-words \
-		${ALIGNMENT_SYMMETRIZATION_OPTIONS} \
-		-o sri \
-		${ALIGN_MODEL_TYPE} \
-		$(filter %${L2_GIVEN_L1X}, $+)  $(filter %${L1_GIVEN_L2X}, $+) \
-		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $+) \
+	parallelize.pl \
+		-stripe \
+		-n ${PARALLELISM_LEVEL_TM} \
+		$(addprefix -s , $(filter %${L1} %${L1X} %${L2} %${L2X}, $+)) \
+		'align-words \
+			${ALIGNMENT_SYMMETRIZATION_OPTIONS} \
+			-o sri \
+			${ALIGN_MODEL_TYPE} \
+			$(filter %${L2_GIVEN_L1X}, $+)  $(filter %${L1_GIVEN_L2X}, $+) \
+			$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $+)' \
 		2> log.${@:.gz=} \
 	| gzip > $@
 
@@ -950,6 +953,9 @@ portageLive:
 
 ########################################
 # INVERT ANY JOINT PHRASE TABLE
+# WARNING: Using tmtext_sort.sh produces a valid jpt for joint2cond but
+# produces an INVALID jpt for merge_counts.  Prefer the version using LC_ALL=C
+# sort rather than tmtext_sort.
 %.${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
 %.${RJOINTX}: %.${JOINTX}
 	@_LOCAL=1; echo "Generating $@" >&2
