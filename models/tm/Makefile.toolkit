@@ -953,9 +953,6 @@ portageLive:
 
 ########################################
 # INVERT ANY JOINT PHRASE TABLE
-# WARNING: Using tmtext_sort.sh produces a valid jpt for joint2cond but
-# produces an INVALID jpt for merge_counts.  Prefer the version using LC_ALL=C
-# sort rather than tmtext_sort.
 %.${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
 %.${RJOINTX}: %.${JOINTX}
 	@_LOCAL=1; echo "Generating $@" >&2
