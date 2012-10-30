@@ -78,10 +78,22 @@ CAT ?= cat.sh
 # the case in the framework.
 JOINT2COND_PHRASE_TABLE_OPTION ?= -reduce-mem -no-sort
 
+# Options for joint2multi_cpt
+JOINT2MULTI_CPT_OPTIONS ?=
+
+# Options for merge_multi_column_counts
+MERGE_COUNT_OPTIONS ?=
+
+# Set all the flags needed to generate the a= field in phrase tables, if requested.
+ifdef TMS_WITH_ALIGNMENT_FIELD
+   JOINT2COND_PHRASE_TABLE_OPTION += -write-al top
+   JOINT2MULTI_CPT_OPTIONS += -write-al top
+   MERGE_COUNT_OPTIONS += -a
+   # JPT_EXTRAS is also modified - see later in this file
+endif
 
 # Track memory usage.
 TIME_MEM ?= time-mem
-
 
 ########################################
 # IBM1 MODELS.
@@ -148,6 +160,10 @@ $(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${IBM4_MODEL_PFX}), \
    $(eval \
 	   JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
 )
+
+ifdef TMS_WITH_ALIGNMENT_FIELD
+   JPT_EXTRAS += -write-al all
+endif
 
 ########################################
 # SIG MODELS.
@@ -397,11 +413,11 @@ ALIGN_MODEL_TYPE := -hmm
 # WARNING: % is purposefully not surrounded by dots for zn-adapt.
 ${JPT_MODEL_PFX}.merged%${JOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${JPT_MODEL_PFX}.merged%${JOINTX}:
-	time-mem merge_counts $@ $(filter %.${JOINTX}, $+) &> log.${@:.gz=}
+	time-mem merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${JOINTX}, $+) &> log.${@:.gz=}
 
 ${JPT_MODEL_PFX}.merged%${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${JPT_MODEL_PFX}.merged%${RJOINTX}:
-	time-mem merge_counts $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
+	time-mem merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
 
 
 
@@ -429,11 +445,11 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 # SIGNIFICANCE PRUNING
 ${SIG_MODEL_PFX}.merged%${JOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${SIG_MODEL_PFX}.merged%${JOINTX}:
-	time-mem merge_counts $@ $(filter %.${JOINTX}, $+) &> log.${@:.gz=}
+	time-mem merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${JOINTX}, $+) &> log.${@:.gz=}
 
 ${SIG_MODEL_PFX}.merged%${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${SIG_MODEL_PFX}.merged%${RJOINTX}:
-	time-mem merge_counts $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
+	time-mem merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
 
 
 
@@ -455,7 +471,7 @@ ${SIG_MODEL_PFX}.%.${JOINTX}:
 
 
 # According to Howard: generating a sig for L1 to L2 and then using
-# reverse_joint_phr_tab.py to produce a sig for L2 to L1 is valide.
+# reverse_joint_phr_tab.py to produce a sig for L2 to L1 is valid.
 ${SIG_MODEL_PFX}.%.${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${SIG_MODEL_PFX}.%.${RJOINTX}:
 	RP_PSUB_OPTS="-${SIG_CPUS} -N $@ ${PSUB_OPTS}" \
@@ -511,6 +527,7 @@ ${CPT_INDICATOR_PFX}%${L1_2_L2X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
 	joint2multi_cpt \
+                ${JOINT2MULTI_CPT_OPTIONS} \
 		${CPT_PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
@@ -529,6 +546,7 @@ ${CPT_INDICATOR_PFX}%${L2_2_L1X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
 	joint2multi_cpt \
+                ${JOINT2MULTI_CPT_OPTIONS} \
 		${CPT_PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \

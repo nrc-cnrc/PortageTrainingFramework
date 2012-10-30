@@ -179,6 +179,13 @@ USE_HLDM = 1
 # Comment out to disable truecasing; uncomment to enable.
 DO_TRUECASING = 1
 
+# If USE_SIGPRUNING is set, phrase tables will be filtered using significance
+# pruning before they are used.  Significance pruning removes phrase pairs that
+# are statistically well attested in the training corpus.  Sig-pruning results
+# in much smaller phrase tables, usually without loss in BLEU, sometimes in
+# fact with a gain in BLEU.
+#USE_SIGPRUNING = 1
+
 # If you have your own (de)tokenizer and you want to use it, then define the
 # following variables to your pgm and its arguments.  Note that the variable
 # names contain the source or target language two-letter identifier.  For,
@@ -412,6 +419,11 @@ TC_USE_SRC_MODELS = 1
 ifdef TC_USE_SRC_MODELS
 TRUECASING_NC1_SRC_LM  ?= ${TRAIN_TC}_${SRC_LANG}.nc1.binlm${GZ}
 endif
+
+# Determines whether TMs will include the alignment (a=) field or not.
+# This field will be needed for the next generation of truecasing models, as well
+# as tag transfers, when that's completed.
+TMS_WITH_ALIGNMENT_FIELD ?= 1
 
 # When working with TMX files, we assume the language code in the TMX is the
 # upper case of $SRC_LANG/$TGT_LANG followed by -CA.  When that's not true,
