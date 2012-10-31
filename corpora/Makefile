@@ -570,6 +570,7 @@ $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_LM}), \
 
 endif
 
+ifdef DO_TRUECASING
 ifdef TC_USE_SRC_MODELS
 # Verify the presence of the source language model's corpus file.
 $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_TC}), \
@@ -580,6 +581,7 @@ $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_TC}), \
 $(foreach t, $(addsuffix _${SRC_LANG}, ${TEST_SET} ${TRANSLATE_SET}), \
 	$(if $(call  BASE_FILE_EXISTS, $t),, \
 		$(error In order to truecase your test set, you must provide the aligned corpus for $t)))
+endif
 endif
 
 endif	# MAKECMDGOALS check
