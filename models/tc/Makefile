@@ -1,7 +1,6 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
 #
-# $Id$
 # @author Samuel Larkin with modifications by Darlene Stewart
 # @file Makefile
 # @brief Trains a truecasing model.
@@ -38,7 +37,12 @@ export LM_TOOLKIT
 # Typical lms for truecasing are 3g.
 export ORDER = 3
 
+# File encoding.
 ENCODING ?= UTF-8
+
+# Target language locale.
+TGT_LOCALE ?= ${TGT_LANG}_CA.${ENCODING}
+
 # What commands to use for sentence splitting (using tokenize) and lowercasing.
 ifneq ($(findstring ${ENCODING}, UTF-8 UTF8 utf-8 utf8),)
    TOKENIZE ?= utokenize.pl
@@ -241,7 +245,7 @@ UN_SS_P := perl -pe 's/(.)$$/$$1 /; s/(.)\n/$$1/'
 	RP_PSUB_OPTS="-1" \
 	set -o pipefail; \
 	${TIME_MEM} \
-	normc1 ${NORMC1_OPTS} -loc ${TGT_LANG}_CA.${ENCODING} $+ 2> log.$(basename $@) \
+	normc1 ${NORMC1_OPTS} -loc ${TGT_LOCALE} $+ 2> log.$(basename $@) \
 	| ${UN_SS_P} \
 	| gzip \
 	> $@

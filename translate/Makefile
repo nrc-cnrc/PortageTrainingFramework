@@ -1,7 +1,6 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
 #
-# $Id$
 # @author Samuel Larkin
 # @file Makefile
 # @brief Translates, rescores, truecases and detokenizes documents.
@@ -41,8 +40,11 @@ TGTTCX ?= _${TGT_LANG}${ALIGNX}
 # power :D.
 #DO_RESCORING = 1
 
-# File encoding
+# File encoding.
 ENCODING ?= UTF-8
+
+# Source language locale.
+SRC_LOCALE ?= ${SRC_LANG}_CA.${ENCODING}
 
 # What program to use to detokenize.
 ifdef DETOKENIZER_${TGT_LANG}
@@ -485,7 +487,7 @@ endif
 ifdef TC_USE_SRC_MODELS
 TC_SRC_OPTS = -src ${CORPORA_DIR}/$(*:.out=${SRCTCX}) \
               -pal $*.pal \
-              -srclang ${SRC_LANG} \
+              -locale ${SRC_LOCALE} \
               -srclm ${TRUECASING_DIR}/${TRUECASING_NC1_SRC_LM}
 endif
 %.tc: SHELL=${FRAMEWORK_SHELL}
@@ -498,8 +500,8 @@ endif
 	@_LOCAL=1 echo "Truecasing $(notdir ${CURDIR})/$@"
 	${TIME_MEM} \
 	truecase.pl \
-		-text $<$(if ${TC_SRC_OPTS},.oov,) \
-		-bos -encoding ${ENCODING} \
+		-text $<$(if ${TC_SRC_OPTS},.oov, -encoding ${ENCODING}) \
+		-bos \
 		-lm ${TRUECASING_DIR}/${TRUECASING_LM} \
 		-map ${TRUECASING_DIR}/${TRUECASING_MAP} \
 		${TC_SRC_OPTS} \

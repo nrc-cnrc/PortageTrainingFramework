@@ -179,6 +179,13 @@ USE_HLDM = 1
 # Comment out to disable truecasing; uncomment to enable.
 DO_TRUECASING = 1
 
+# Source language locale used during truecasing.
+#SRC_LOCALE ?= ${SRC_LANG}_CA.utf8
+#SRC_LOCALE ?= da_DK.utf8
+
+# Target language locale used during truecasing.
+#TGT_LOCALE ?= ${TGT_LANG}_CA.utf8
+
 # If you have your own (de)tokenizer and you want to use it, then define the
 # following variables to your pgm and its arguments.  Note that the variable
 # names contain the source or target language two-letter identifier.  For,
