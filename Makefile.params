@@ -179,6 +179,13 @@ USE_HLDM = 1
 # Comment out to disable truecasing; uncomment to enable.
 DO_TRUECASING = 1
 
+# Source language locale used during truecasing.
+#SRC_LOCALE ?= ${SRC_LANG}_CA.utf8
+#SRC_LOCALE ?= da_DK.utf8
+
+# Target language locale used during truecasing.
+#TGT_LOCALE ?= ${TGT_LANG}_CA.utf8
+
 # If USE_SIGPRUNING is set, phrase tables will be filtered using significance
 # pruning before they are used.  Significance pruning removes phrase pairs that
 # are statistically well attested in the training corpus.  Sig-pruning results
