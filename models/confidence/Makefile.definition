@@ -1,5 +1,4 @@
 # vim:noet:ts=3:nowrap
-# $Id$
 
 # @file Makefile.definition
 # @brief Variables' definition for confidence estimation tuning.

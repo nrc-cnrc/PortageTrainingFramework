@@ -1,5 +1,4 @@
 # vim:noet:ts=3:nowrap
-# $Id$
 
 # @file Makefile.params
 # @brief Where users define specific parameters.

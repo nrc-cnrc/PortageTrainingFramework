@@ -1,5 +1,4 @@
 #!/bin/bash
-# $Id$
 # @file translate.sh
 # @brief Simple end-to-end translation.
 #

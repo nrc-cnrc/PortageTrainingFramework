@@ -1,7 +1,6 @@
 #!/usr/bin/make -rf
 # vim:noet:ts=3:nowrap
 #
-# $Id$
 # @author Samuel Larkin
 # @file Makefile
 # @brief Master makefile for the framework, handles dependencies between modules.

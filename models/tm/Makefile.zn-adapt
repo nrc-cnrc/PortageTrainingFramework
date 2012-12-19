@@ -1,6 +1,5 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap:encoding=utf-8
-# $Id$
 
 # @file Makefile
 # @brief What are the dependencies to train a zn-adapted conditional phrase table.

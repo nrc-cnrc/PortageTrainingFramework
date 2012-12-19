@@ -1,6 +1,5 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
-# $Id$
 
 # @file Makefile
 # @brief Logic/dependencies needed to tune a confidence estimation model.

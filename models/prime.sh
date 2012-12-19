@@ -1,5 +1,4 @@
 #!/bin/bash
-# $Id$
 
 # @file prime.sh
 # @brief Load memory map models and software into memory.

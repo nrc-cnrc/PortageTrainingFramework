@@ -1,5 +1,4 @@
 # vim:noet:ts=3:nowrap:filetype=make
-# $Id$
 
 # @file Makefile.toolkit
 # @brief Targets required to build a .mixlm

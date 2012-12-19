@@ -1,6 +1,5 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
-# $Id$
 
 # @file Controls making all models.
 # @brief A focal point to train all models.
