@@ -133,7 +133,7 @@ HMM3_MODEL_CPUS ?= 1
 HMM3_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 HMM3_MODEL_WORKERS ?= ${HMM3_MODEL_PARALLELISM_LEVEL}
 HMM3_MODEL_EXTRAS ?=
-# Autodetect whether -newhmm is supported (i.e., it's not in PORTAGEshared).
+# Autodetect whether -newhmm is supported (i.e., it's not in PortageII).
 NEW_HMM := $(addprefix(-, $(strip $(shell train_ibm -h 2>&1 | grep -om1 newhmm)))
 
 ########################################
@@ -339,7 +339,7 @@ ${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 ########################################
 # HMM3 MODELS
 #Note: We use "-end-dist" instead of "-start-dist -final-dist -anchor" because
-#      PORTAGEshared lacks "-start-dist"
+#      PortageII lacks "-start-dist"
 ${HMM3_MODEL_PFX}%${L1_GIVEN_L2X}: HMM3_DIR=-r
 ${HMM3_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
 ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz

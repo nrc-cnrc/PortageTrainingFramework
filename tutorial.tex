@@ -16,8 +16,8 @@
 \renewcommand{\ttdefault}{txtt}
 \newcommand{\bs}{\textbackslash{}}
 
-% Official typesetting of PORTAGEshared, now called Portage 1.x
-\newcommand{\PS}{Portage 1.5\xspace}
+% Official typesetting of PORTAGEshared, now called Portage II
+\newcommand{\PS}{PortageII\xspace}
 
 % Try generating a PDF with coloured hyperlinks.
 \newif\ifcolourlinks
@@ -30,7 +30,7 @@
                pdftex,
                linktocpage,
                backref=page,
-               pdftitle={Portage 1.5 Tutorial},
+               pdftitle={PortageII 2.0 Tutorial},
                pdfauthor={Joanis, Stewart, Larkin and Foster}
               ]{hyperref}
 \else
@@ -68,7 +68,7 @@
 \title{\PS Tutorial: \\
        A toy experiment using the \\
        experimental framework}
-\date{Last updated July 2012}
+\date{Last updated February 2013}
 \author{Eric Joanis, Darlene Stewart, Samuel Larkin, George Foster}
 
 \begin{document}
@@ -83,7 +83,7 @@
 An adaptation of George Foster's \emph{Running Portage: A Toy Example} \\
 to Samuel Larkin's experimental framework,\\
 %updated to reflect recommended usage of \PS.
-updated to reflect recommended usage of Portage 1.5.0.
+updated to reflect recommended usage of PortageII 2.0
 \end{center}
 
 \vfill
@@ -97,8 +97,8 @@ updated to reflect recommended usage of Portage 1.5.0.
       Information and Communications Technologies \\
    Conseil national de recherches Canada /
       National Research Council Canada \\
-   Copyright \copyright\ 2008--2012, Sa Majest{\'e} la Reine du Chef du Canada
-   \\ Copyright \copyright\ 2008--2012, Her Majesty in Right of Canada
+   Copyright \copyright\ 2008--2013, Sa Majest{\'e} la Reine du Chef du Canada
+   \\ Copyright \copyright\ 2008--2013, Her Majesty in Right of Canada
 \end{center}
 
 \vfill
@@ -541,28 +541,27 @@ which maps each lower case word to its possible truecase variants, as observed
 in the training corpus, and a standard language model trained on the truecase
 corpus.
 
-Since version 1.4.3, we use a variant of truecasing which carries casing
-information from the source sentence to the target sentence, including the
-casing for the first word in the sentence, the casing of out-of-vocabulary
-words (OOVs), and unusual casing for sequences of several words (such as all
-caps).
+An improved version of truecasing carries casing information from the source
+sentence to the target sentence, including the casing for the first word in the
+sentence, the casing of out-of-vocabulary words (OOVs), and unusual casing for
+sequences of several words (such as all caps).
 
 Truecasing with source information is the default.\footnote{If you want to
-use basic truecasing, as in versions of Portage before 1.4.3, comment out the
-line \code{TC\_USE\_SRC\_MODELS=1} in the advanced configuration section of
-\code{Makefile.params}.}  It requires three language models: source-side and
-target-side case-normalizing\footnote{``Normalized case'' means that the first
-character of the sentence is in lowercase unless the word inherently requires
-the upper case.  E.g., ``his flat in is London.'' and ``London is on the
-Thames.'' are in normalized case.  The acronym ``nc1'', used in some file
-names, stands for ``normalized-cased first word'', i.e., normalized case.}
-language models, as well as the main truecasing LM.  The target-side
-case-normalizing LM is used only for generating a normalized-case target-side
-training corpus; it is not used in translation.  The main truecasing LM and the
-``casemap'' are trained on the normalized-case target-side training corpus.
-Together, they are used to determine the case for the output of the decoder.
-Then additional case information from the source sentence, including the first
-word, is transfered to that truecased output of the decoder.
+use basic truecasing, comment out the line \code{TC\_USE\_SRC\_MODELS=1} in the
+advanced configuration section of \code{Makefile.params}.}  It requires three
+language models: source-side and target-side
+case-normalizing\footnote{``Normalized case'' means that the first character of
+the sentence is in lowercase unless the word inherently requires the upper
+case.  E.g., ``his flat in is London.'' and ``London is on the Thames.'' are in
+normalized case.  The acronym ``nc1'', used in some file names, stands for
+``normalized-cased first word'', i.e., normalized case.} language models, as
+well as the main truecasing LM.  The target-side case-normalizing LM is used
+only for generating a normalized-case target-side training corpus; it is not
+used in translation.  The main truecasing LM and the ``casemap'' are trained on
+the normalized-case target-side training corpus.  Together, they are used to
+determine the case for the output of the decoder.  Then additional case
+information from the source sentence, including the first word, is transfered
+to that truecased output of the decoder.
 
 Running \code{make tc} at the root of the framework will build all necessary
 files and models.  Breaking with the convention in rest of this document, we'll

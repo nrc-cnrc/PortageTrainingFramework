@@ -8,7 +8,7 @@
 # Copyright 2008, 2012, Sa Majeste la Reine du Chef du Canada
 # Copyright 2008, 2012, Her Majesty in Right of Canada
 
-# Print the Portage Copyright no matter where we start from -- but only once.
+# Print the PortageII Copyright no matter where we start from -- but only once.
 ifeq (${MAKELEVEL},0)
    $(shell portage_info)
    # subprograms launched by the framework don't need to bleet all the time either...
@@ -277,7 +277,7 @@ PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= ${NCPUS}
 # Be careful not to over-parallelize for translation if models take long to load, especially if translating many test files.
 # One can run canoe-timing-stats.pl on the resulting logs to help assess.
 PARALLELISM_LEVEL_TRANSLATE    ?= 1
-# Disable CLUSTER mode in all of Portage's software.
+# Disable CLUSTER mode in all of PortageII's software.
 export PORTAGE_NOCLUSTER=1
 ifeq (${MAKELEVEL},0)
    $(info Running in local mode.)
@@ -450,15 +450,15 @@ endif
 LOCAL_SHELL = /bin/bash
 
 
-# Auto-detecting if Portage was compiled with ICU.
+# Auto-detecting if PortageII was compiled with ICU.
 ifeq ($(strip $(shell portage_info -with-icu > /dev/null && echo "true")),true)
    ICU = 1
    ifeq (${MAKELEVEL},0)
-      $(info Portage was compiled with ICU)
+      $(info PortageII was compiled with ICU)
    endif
 else
    ifeq (${MAKELEVEL},0)
-      $(info Portage was compiled without ICU)
+      $(info PortageII was compiled without ICU)
    endif
 endif
 
