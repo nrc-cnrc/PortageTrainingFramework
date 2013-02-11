@@ -620,7 +620,7 @@ depend on your LM toolkit.
 \end{small}
 
 Next, \code{normc1} uses the case-normalizing LM to produce
-\code{lm-train_en.nc1.gz}, the normalized-case target-side training corpus.
+\code{lm-train_en.nc1.gz}, the nor\-malized-case target-side training corpus.
 
 \begin{small}
 \begin{alltt}
@@ -793,7 +793,7 @@ have also launched this:
 \begin{small}
 \begin{alltt}
    gen-jpt-parallel.sh -n 4 -nw 4 -o jpt.ibm2.tm-train.fr-en.gz -w 1 \bs
-      GPT -v -m 8 -1 fr -2 en -ext
+      GPT -v -m 8 -1 fr -2 en -ext -write-al all \bs
       ibm2.tm-train.en_given_fr.gz ibm2.tm-train.fr_given_en.gz \bs
       ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
       tm-train.ibm2.fr2en.align.gz
@@ -835,7 +835,7 @@ variant instead.
       ./../../corpora/tm-train_fr.lc.gz ./../../corpora/tm-train_en.lc.gz \bs
       | gzip > tm-train.hmm3.fr2en.align.gz
    gen-jpt-parallel.sh -n 4 -nw 4 -o jpt.hmm3.tm-train.fr-en.gz -w 1 \bs
-      GPT -v -m 8 -hmm -1 fr -2 en -ext \bs
+      GPT -v -m 8 -hmm -1 fr -2 en -ext -write-al all \bs
       hmm3.tm-train.en_given_fr.gz hmm3.tm-train.fr_given_en.gz \bs
       ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
       tm-train.hmm3.fr2en.align.gz
@@ -869,7 +869,7 @@ word-alignment models, we merge their counts together in a single JPT.
 \begin{small}
 \begin{alltt}
    > \textbf{make jpt.merged.tm-train.fr-en.gz}
-   merge_counts jpt.merged.tm-train.fr-en.gz \bs
+   merge_multi_column_counts -a jpt.merged.tm-train.fr-en.gz \bs
       jpt.ibm2.tm-train.fr-en.gz jpt.hmm3.tm-train.fr-en.gz
 \end{alltt}
 \end{small}
@@ -892,26 +892,27 @@ models, whose relative weights will be tuned during decoder weight optimization
 \begin{small}
 \begin{alltt}
    > \textbf{make merged_cpt}
-   joint2cond_phrase_tables -prune1 100 -v -i -z -hmm -1 fr -2 en \bs
+   joint2cond_phrase_tables -prune1w 100 -v -i -z -hmm -1 fr -2 en \bs
       -s "KNSmoother 3" -s ZNSmoother -multipr fwd -o cpt.merged.hmm3-kn3-zn.tm-train \bs
       -ibm_l2_given_l1 hmm3.tm-train.en_given_fr.gz \bs
       -ibm_l1_given_l2 hmm3.tm-train.fr_given_en.gz \bs
-      -reduce-mem -no-sort jpt.merged.tm-train.fr-en.gz
+      -reduce-mem -no-sort -write-al top jpt.merged.tm-train.fr-en.gz
 \end{alltt}
 \end{small}
 The phrase table \code{cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz} is the main source
 of information for French to English translation. Each of its lines is of the
 form:
 \begin{alltt}
-   \emph{fr} ||| \emph{en} ||| p1(\emph{fr}|\emph{en}) p2(\emph{fr}|\emph{en}) p1(\emph{en}|\emph{fr}) p2(\emph{en}|\emph{fr})
+   \emph{fr} ||| \emph{en} ||| p1(\emph{fr}|\emph{en}) p2(\emph{fr}|\emph{en}) p1(\emph{en}|\emph{fr}) p2(\emph{en}|\emph{fr}) a=\emph{a}
 \end{alltt}
 %
 where \code{\emph{fr}} is a French source phrase, \code{\emph{en}} is an
 English target phrase, \code{p(\emph{fr}|\emph{en})} is the probability that
 \code{\emph{fr}} is the translation of \code{\emph{en}} (the ``backward''
-probability), and \code{p(\emph{en}|\emph{fr})} is the probability that
+probability), \code{p(\emph{en}|\emph{fr})} is the probability that
 \code{\emph{en}} is the translation of \code{\emph{fr}} (the ``forward''
-probability). In our example here, \code{p1} is the relative-frequency estimate
+probability), and \code{\emph{a}} is the word alignment within the phrase pair.
+In our example here, \code{p1} is the relative-frequency estimate
 of this probability, while \code{p2} is the Zens-Ney lexical smoothing based
 estimate: those are the smoothers we recommend using. There can be any number
 of backward and forward probability estimates, reflecting the number of
@@ -921,8 +922,8 @@ Here are two sample lines from this file:
 \begin{small}
 \begin{alltt}
    > \textbf{zgrep '| proposed regulations |' cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz}
-   projets de règlement ||| proposed regulations ||| 0.55 0.0016 0.82 0.026
-   règlements proposés ||| proposed regulations ||| 0.33 0.018 1 0.42
+   projets de règlement ||| proposed regulations ||| 0.55 0.0016 0.84 0.026 a=0_-_1
+   règlements proposés ||| proposed regulations ||| 0.017 0.018 0.05 0.42 a=1_0
 \end{alltt}
 \end{small}
 Note that this example is carefully chosen; because of the small size of the
@@ -931,7 +932,7 @@ translations.
 
 \subsubsection{Creating a Translation Model Using IBM4 Alignments} \label{IBM4}
 
-Recent experiments have shown that is it beneficial to combine the JPTs
+Recent experiments have shown that it can be beneficial to combine the JPTs
 obtained from IBM2 and HMM models with an additional one obtained from IBM4
 models.  \PS does not include software to train or use IBM4 models, however, so
 if you wish to use this option, you must independently obtain Giza (or,
@@ -995,7 +996,7 @@ run \code{make indicator_cpt}:
    cd j2m/hmm3 && ln -s -f ../../jpt.hmm3*fr-en.gz .
    mkdir -p j2m/ibm2
    cd j2m/ibm2 && ln -s -f ../../jpt.ibm2*fr-en.gz .
-   joint2multi_cpt -prune1w 100 -v -i -z -1 fr -2 en \bs
+   joint2multi_cpt -write-al top -prune1w 100 -v -i -z -1 fr -2 en \bs
       -s '0:KNSmoother 3' -s ZNSmoother -a '1-100:PureIndicator' \bs
       -dir fwd -o cpt.PI-kn3-zn.hmm3 \bs
       -ibm_l2_given_l1  hmm3.tm-train.en_given_fr.gz \bs
@@ -1053,7 +1054,7 @@ above, the first step is repeated for each phrase table.
       -merge 'merge_multi_column_counts -' \bs
       'dmcount -ext -v -m 8 -hier \bs
          ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
-         ../tm/tm-train.hmm3.fr2en.align.gz > hldm.hmm3.counts.gz'
+         ../tm/tm-train.hmm3.fr2en.align.gz | li-sort.sh > hldm.hmm3.counts.gz'
    parallelize.pl [...] 'dmcount [...] > hldm.ibm2.counts.gz'
    parallelize.pl [...] 'dmcount [...] > hldm.ibm4.counts.gz'
    merge_multi_column_counts -fillup - \bs
@@ -1082,16 +1083,17 @@ you can measure empirically on your data.  To turn on singleton filtering, edit
 \code{models/ldm/Makefile.params} and uncomment the line defining
 \code{HLDM_FILTER_SINGLETONS}.
 
-\tip\margintip The commands for step 1 illustrate the use of one of our generic utilities:
-\code{parallelize.pl}.  This script can be used to parallelize the execution
-of any command where each input line is processed independently.  It takes care
-of splitting the input(s) into chunks, running the chunks in parallel, and
-concatenating (or otherwise merging) the outputs.  In this example the output
-from all instances of \code{dmcount} are merged using
+\tip\margintip The commands for step 1 illustrate the use of one of our generic
+utilities: \code{parallelize.pl}.  This script can be used to parallelize the
+execution of any command where each input line is processed independently.  It
+takes care of splitting the input(s) into chunks, running the chunks in
+parallel, and concatenating (or otherwise merging) the outputs.  In this
+example the output from all instances of \code{dmcount} are merged using
 \code{merge_multi_column_counts}, a tool that adds counts together when it sees
-the same key in two files.  The default is to concatenate the parts
-together, which is appropriate for programs that produce one line of output per
-line of input.  Run \code{parallelize.pl -h} for more details.\tipend
+the same key in two files.  The default is to concatenate the parts together,
+which is appropriate for programs that produce one line of output per line of
+input, although not for this example.  Run \code{parallelize.pl -h} for more
+details.\tipend
 
 \subsection{Mixture Models and Domain Adaptation} \label{MIX}
 
@@ -1282,16 +1284,16 @@ MixTM replaces the regular TM.
    [commands to create IBM1, IBM2, HMM, and IBM4 models for each component corpus]
    [commands to create *.align.gz files for each corpus and alignment method]
    [commands to create jpt.* files for each corpus and alignment method]
-   merge_counts jpt.merged.tm-train1.fr-en.gz \bs
+   merge_multi_column_counts -a jpt.merged.tm-train1.fr-en.gz \bs
       jpt.ibm4.tm-train1.fr-en.gz jpt.hmm3.tm-train1.fr-en.gz jpt.ibm2.tm-train1.fr-en.gz
-   [repeat merge_counts for tm-train2, tm-train3]
+   [repeat merged_multi_column_counts for tm-train2, tm-train3]
 
    joint2cond_phrase_tables -prune1w 100 -v -i -z -hmm -1 fr -2 en \bs
       -s "KNSmoother 3" -s ZNSmoother -multipr fwd \bs
       -o cpt.merged.hmm3-kn3-zn.tm-train1 \bs
       -ibm_l2_given_l1  hmm3.tm-train1.en_given_fr.gz \bs
       -ibm_l1_given_l2  hmm3.tm-train1.fr_given_en.gz \bs
-      -reduce-mem -no-sort jpt.merged.tm-train1.fr-en.gz
+      -reduce-mem -no-sort -write-al top jpt.merged.tm-train1.fr-en.gz
    [repeat joint2cond_phrase_tables for tm-train2 and tm-train3]
 \end{alltt}
 \end{small}
@@ -1314,10 +1316,13 @@ same.
    [... continued from above]
    [commands to create *.align.gz and jpt.* for the dev1 set, using IBM2 and
     HMM3 models from tm-train1, assumed to be in domain]
-   merge_counts jpt.merged.dev1.fr-en.gz jpt.hmm3.dev1.fr-en.gz jpt.ibm2.dev1.fr-en.gz
+   merge_multi_column_counts -a jpt.merged.dev1.fr-en.gz \bs
+      jpt.hmm3.dev1.fr-en.gz jpt.ibm2.dev1.fr-en.gz
    train_tm_mixture -v -o cpt.mix.fr2en.gz \bs
-      cpt.merged.hmm3-kn3-zn.tm-train1.fr2en.gz cpt.merged.hmm3-kn3-zn.tm-train2.fr2en.gz \bs
-      cpt.merged.hmm3-kn3-zn.tm-train3.fr2en.gz jpt.merged.dev1.fr-en.gz
+      cpt.merged.hmm3-kn3-zn.tm-train1.fr2en.gz \bs
+      cpt.merged.hmm3-kn3-zn.tm-train2.fr2en.gz \bs
+      cpt.merged.hmm3-kn3-zn.tm-train3.fr2en.gz \bs
+      jpt.merged.dev1.fr-en.gz
    ln -sf mixtm/cpt.mix.fr2en.gz .
 \end{alltt}
 \end{small}
@@ -1526,7 +1531,7 @@ them all.} Here we call the temporary directory \code{foos}, and we use the
    tune.py -v -o canoe.ini.cow.FILT -p 4 -c 1 -m 15 -n 100 -a lmira --workdir=foos \bs
       -f canoe.ini.FILT ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc
    configtool -p args:"`configtool weights canoe.ini.cow.FILT`" canoe.ini > canoe.ini.cow
-   rm -f -r foos *.FILT.gz *.FILT.bkoff canoe.ini.FILT canoe.ini.FILT.cow
+   rm -f -r foos *.FILT.gz *.FILT.bkoff canoe.ini.FILT canoe.ini.cow.FILT
 \end{alltt}
 \end{small}
 Because \code{tune.py} takes a while to run (between 30 minutes and three
@@ -1626,7 +1631,7 @@ completion, remove the \code{rm} command executed after \code{tune.py} in
 %this can be summarized using the command \code{cowpie.py log.canoe.ini.cow}
 %(type \code{cowpie.py -h} for details). \tipend
 
-% EJJ No equivalent to cow-timeing.pl for tune.py, which is unfortunate.
+% EJJ No equivalent to cow-timing.pl for tune.py, which is unfortunate.
 %\tip \margintip The scripts \code{cow-timing.pl} and
 %\code{canoe-timing-stats.pl} provide detailed running time information for the
 %various components of \code{cow.sh}. \tipend
@@ -1998,9 +2003,9 @@ variable definition on a given call to \code{make}: adding \code{V=} undefines
    configtool check canoe.ini.cow.test1
    ok
    Generating translate/test1.out
-   canoe-parallel.sh -n 4 canoe -f canoe.ini.cow.test1 -palign \bs
+   canoe-parallel.sh -n 4 canoe -f canoe.ini.cow.test1 -walign -palign \bs
       < ../corpora/test1_fr.rule \bs
-      | nbest2rescore.pl -canoe -tagoov -palout=test1.out.pal \bs
+      | nbest2rescore.pl -canoe -tagoov -oov -wal -palout=test1.out.pal \bs
       | tee test1.out.oov | perl -pe 's/<OOV>(.+?)<\bs/OOV>/\bs1/g;' > test1.out
    [repeat for test2]
 \end{alltt}
@@ -2093,9 +2098,9 @@ trained previously:
 \begin{alltt}
    > \textbf{make tc}
    Truecasing translate/test1.out.tc
-   truecase.pl -text test1.out.oov -bos -encoding UTF-8 \bs
+   truecase.pl -text test1.out.oov -bos \bs
       -lm models/tc/lm-train_en-kn-3g.binlm.gz -map models/tc/lm-train_en.map \bs
-      -src ../corpora/test1_fr.al -pal test1.out.pal -srclang fr \bs
+      -src ../corpora/test1_fr.al -pal test1.out.pal -locale fr_CA.UTF-8 \bs
       -srclm models/tc/lm-train_fr.nc1.binlm.gz > test1.out.tc
    [repeat for test2]
 \end{alltt}
@@ -2110,7 +2115,7 @@ If you are using rescoring, \code{make tc} will also truecase the rescoring
 output, generating \code{test1.rat.tc}.
 
 Detokenization is done by the script \code{udetokenize.pl}, a rule-based
-detokenizer for French, English or Spanish text encoded in UTF-8. Other
+detokenizer for French, English, Spanish or Danish text encoded in UTF-8. Other
 languages are not supported at this point but may already be handled partly
 correctly by this script. As for other encodings, latin1 and cp-1252 are
 supported by \code{detokenize.pl}.
@@ -2119,9 +2124,9 @@ supported by \code{detokenize.pl}.
 \begin{alltt}
    > \textbf{make detok}
    Detokenizing test1.out
-   udetokenize.pl -lang=en test1.out test1.out.detok
+   udetokenize.pl -lang=en < test1.out > test1.out.detok
    Detokenizing test1.out.tc
-   udetokenize.pl -lang=en test1.out.tc test1.out.tc.detok
+   udetokenize.pl -lang=en < test1.out.tc > test1.out.tc.detok
    [repeat for test2]
 \end{alltt}
 \end{small}

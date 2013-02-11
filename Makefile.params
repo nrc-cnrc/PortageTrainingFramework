@@ -427,8 +427,7 @@ TRUECASING_NC1_SRC_LM  ?= ${TRAIN_TC}_${SRC_LANG}.nc1.binlm${GZ}
 endif
 
 # Determines whether TMs will include the alignment (a=) field or not.
-# This field will be needed for the next generation of truecasing models, as well
-# as tag transfers, when that's completed.
+# This field is used for truecasing and tags transfer.
 TMS_WITH_ALIGNMENT_FIELD ?= 1
 
 # When working with TMX files, we assume the language code in the TMX is the
