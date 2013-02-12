@@ -13,7 +13,7 @@
 # Include NRC's bash library.
 SH_UTILS=`which sh_utils.sh`
 if [[ "${SH_UTILS}" == "" ]]; then
-   echo "ERROR: Unable to find sh_utils.sh. Is your PATH set correctly for Portage?" >&2
+   echo "ERROR: Unable to find sh_utils.sh. Is your PATH set correctly for PortageII?" >&2
    exit 1
 fi
 source ${SH_UTILS}

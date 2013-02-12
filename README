@@ -2,21 +2,21 @@ Technologies langagieres interactives / Interactive Language Technologies
 Technologies de l'information et des communications /
    Information and Communications Technologies
 Conseil national de recherches Canada / National Research Council Canada
-Copyright 2008-2012, Sa Majeste la Reine du Chef du Canada
-Copyright 2008-2012, Her Majesty in Right of Canada
+Copyright 2008-2013, Sa Majeste la Reine du Chef du Canada
+Copyright 2008-2013, Her Majesty in Right of Canada
 
 Distributed under specific licensing terms.  Please refer to your signed
 license agreement for details.
 
 
-                  PORTAGEshared experimental framework
+                      PortageII experimental framework
 
 Framework author: Samuel Larkin, with suggestions by George Foster and Eric
 Joanis
 
 
 This experimental framework is intended as a starting point for experiments
-with PORTAGEshared.  It uses recommended settings for a reasonable experimental
+with PortageII.  It uses recommended settings for a reasonable experimental
 starting point.  In practice, our settings change all the time, at NRC, as we
 continue our research on Statistical Machine Translation, so no framework can
 truly represent the current state of the art.  Nonetheless, we've tried to
@@ -30,12 +30,12 @@ The following describes the quickest way to get started with this framework.
 
 SOFTWARE SETUP:
 
-Make sure you have PORTAGEshared installed and available in your $PATH.  Also
-make sure you have IRSTLM properly compiled and set up, which means that you
-have set $IRSTLM to the location of your installed IRSTLM.  Typing "make help"
-will give you sample commands you can cut and paste to do so.  Alternatively,
-if you have SRILM installed, set LM_TOOLKIT=SRI in Makefile.params or
-LM_TOOLKIT=MIT to use MITLM's toolkit.
+Make sure you have PortageII installed and available in your $PATH.  Also make
+sure you have IRSTLM properly compiled and set up, which means that you have
+set $IRSTLM to the location of your installed IRSTLM.  Typing "make help" will
+give you sample commands you can cut and paste to do so.  Alternatively, if you
+have SRILM installed, set LM_TOOLKIT=SRI in Makefile.params or LM_TOOLKIT=MIT
+to use MITLM's toolkit.
 
 
 TRAINING:
@@ -145,10 +145,10 @@ Make sure you have correctly installed SRILM.
 Either SRILM or IRSTLM:
 Error message:
 make: *** [lm-train_fr-kn-5g.binlm.gz] Error 127
-which mostly likely indicates that your PORTAGEshared setup is incomplete.
-You can verify that you have access to PORTAGEshared programs by typing:
+which mostly likely indicates that your PortageII setup is incomplete.
+You can verify that you have access to PortageII programs by typing:
 > which arpalm2binlm
-Make sure you have correctly installed PORTAGEshared.
+Make sure you have correctly installed PortageII.
 
 
 3. When running the models/tc module:

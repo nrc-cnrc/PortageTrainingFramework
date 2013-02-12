@@ -331,10 +331,10 @@ else
 		${CANOE_PARALLEL_EXTRAS} \
 		canoe \
 		-f $< \
-		-palign \
+		-walign -palign \
 		< $(word 2, $^) \
 		2> log.$@ \
-	| nbest2rescore.pl -canoe -tagoov -palout=$@.pal \
+	| nbest2rescore.pl -canoe -tagoov -oov -wal -palout=$@.pal \
 	| tee  $@.oov \
 	| perl -pe 's/<OOV>(.+?)<\/OOV>/\1/g;' \
 	| ${POST_DECODING} \
