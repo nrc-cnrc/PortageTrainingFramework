@@ -246,7 +246,7 @@ For detailed information about a particular program, run the program with the
 \section{Corpus Preparation} \label{CorpusPreparation}
 
 Corpus preparation involves converting raw document pairs into tokenized,
-sentence-aligned files in the format expected by Portage.  We provide a
+sentence-aligned files in the format expected by \PS.  We provide a
 tokenizer, a sentence aligner and sample corpus pre-processing scripts with
 \PS, which can help you with these steps.  We also provide a tool to extract
 text from a translation memory in TMX format.  For details, see section
@@ -314,7 +314,7 @@ tokenized, sentence-split and aligned, just like the ones we provide here.
 
 Although the framework does not support compressed dev and test files, the
 training files can and should be compressed, as shown here.  Most programs and
-modules in Portage transparently handle compressed files, compressing and
+modules in \PS transparently handle compressed files, compressing and
 decompressing them on the fly as needed.
 
 If you inspect them, you might notice that the \code{lm-train*} and
@@ -406,7 +406,7 @@ end up.  Again, for brevity, we don't show these log files in this document.
 \subsection{Lowercasing and Adding Escapes} \label{Lowercasing}
 
 To reduce data sparseness, we convert all files to lowercase.\footnote{We show
-\code{utf8\_casemap} being used.  If you installed Portage without ICU, you
+\code{utf8\_casemap} being used.  If you installed \PS without ICU, you
 will see \code{lc-utf8.pl} instead.} We keep the lowercase and truecase
 versions separate, because we'll use the lowercase version to train language
 and translation models, while use the truecase version will be used to train a
@@ -496,7 +496,7 @@ model:
 \end{small}
 The first command executed, \code{ngram-count}, produces the language model
 itself in ``ARPA'' format.  The second command, \code{arpalm2binlm},
-converts it into the Portage binary language model format for fast loading.
+converts it into the \PS binary language model format for fast loading.
 
 
 \subsubsection{MITLM}
@@ -524,7 +524,7 @@ removes extraneous whitespace, because \code{estimate-ngram} is picky about its
 input.  The second \code{perl} filter cuts lines that are longer than 4KB at
 the last word boundary before this internal limit of MITLM's, to avoid breaking
 words (or worse, utf-8 characters) apart.  The second command,
-\code{arpalm2binlm}, converts the model into the Portage binary language model
+\code{arpalm2binlm}, converts the model into the \PS binary language model
 format for fast loading.
 
 
