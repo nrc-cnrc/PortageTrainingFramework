@@ -68,8 +68,8 @@ MODEL_DIRS ?= ../tm ../tm/mixtm
 # Resource monitoring.
 TIME_MEM ?= time-mem
 
-# Number of cpu to use to create the final model.
-ESTIM_CPU ?= 4
+# Number of cpus to use to create the final model.
+ESTIM_CPUS ?= 4
 
 # [Hierarchical] Lexicalized Distortion count file extension.
 COUNTSX ?= .counts.gz
@@ -172,7 +172,7 @@ ${IBM1_MODEL_PFX}.%.gz:
 # - one or more lexicalized distortion model counts.
 %${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
 %${SRC_2_TGTX}:
-	RP_PSUB_OPTS="-${ESTIM_CPU}" \
+	RP_PSUB_OPTS="-${ESTIM_CPUS}" \
 	set -o pipefail; \
 	merge_multi_column_counts $(if ${DONT_USE_FILLUP},,-fillup) - $+ \
 		| ${LDM_FILTER_CMD} \
@@ -189,7 +189,7 @@ ${IBM1_MODEL_PFX}.%.gz:
 # - a text version of the lexicalized distortion model.
 %.tpldm: SHELL=${FRAMEWORK_SHELL}
 %.tpldm:
-	RP_PSUB_OPTS="-${ESTIM_CPU}" \
+	RP_PSUB_OPTS="-${ESTIM_CPUS}" \
 	${TIME_MEM} textldm2tpldm.sh $< &> log.$@
 
 

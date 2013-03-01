@@ -29,11 +29,14 @@
 # How many jobs to create when creating the counts.
 #PARALLELISM_LEVEL_LDM ?= 30
 
-# How many workers to use to process those jobs.
+# How many workers to use to process the jobs for creating the counts.
 #PARALLELISM_LEVEL_LDM_WORKERS ?= ${PARALLELISM_LEVEL_LDM}
 
-# How many cpus each workers should use.
+# How many cpus each worker should use when creating the counts.
 #COUNT_CPUS ?= 1
+
+# Number of cpus to use to create the final model.
+#ESTIM_CPUS ?= 4
 
 # Define this variable if you don't want to merge your ldm counts in a fillup manner.
 #DONT_USE_FILLUP ?= 1
