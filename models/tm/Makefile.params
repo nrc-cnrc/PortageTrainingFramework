@@ -60,3 +60,13 @@
 # IBMOchAligner 4 gives sparser, higher confidence alignments, and larger
 # phrase tables.  And better BLEU scores, at least in some situations.
 #ALIGNMENT_SYMMETRIZATION_OPTIONS = -a "IBMOchAligner 4"
+
+# Override the significance threshold default (a+e) for sigpruning:
+# SIG_THRESHOLD must be a positive real number or a pre-defined constant:
+# 'a+e' (alpha + epsilon) is the significance threshold such that <1,1,1> 
+#       phrase pairs are filtered out.
+# 'a-e' (alpha - epsilon) is the significance threshold such that <1,1,1> 
+#       phrase pairs are kept.
+# Note: a (alpha) is the significance level of <1,1,1> phrase pairs, as
+# discussed in Johnson et al, EMNLP 2007.
+#SIG_THRESHOLD ?= a+e
