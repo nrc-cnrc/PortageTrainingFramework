@@ -62,7 +62,7 @@ RAW_CORPORA_DIR ?= .
 TOKENIZER_en ?= utokenize.pl -noss -lang=en
 TOKENIZER_fr ?= utokenize.pl -noss -lang=fr
 TOKENIZER_da ?= utokenize.pl -noss -lang=da
-TOKENIZER_da ?= utokenize.pl -noss -lang=es
+TOKENIZER_es ?= utokenize.pl -noss -lang=es
 ifdef USE_ICTCLAS
 #TOKENIZER_ch ?= ictclas_run.sh 
 TOKENIZER_ch := { set -o pipefail; iconv -c -f UTF-8 -t CN-GB \
