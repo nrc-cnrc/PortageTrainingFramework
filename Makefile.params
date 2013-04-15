@@ -450,14 +450,20 @@ LOCAL_SHELL = /bin/bash
 
 
 # Auto-detecting if PortageII was compiled with ICU.
+ifeq (${MAKELEVEL},0)
+   PORTAGE_VERSION:=$(shell portage_info -version)
+   ifeq (${PORTAGE_VERSION},)
+      $(error Cannot find portage_info; make sure some version Portage is installed.)
+   endif
+endif
 ifeq ($(strip $(shell portage_info -with-icu > /dev/null && echo "true")),true)
    ICU = 1
    ifeq (${MAKELEVEL},0)
-      $(info PortageII was compiled with ICU)
+      $(info ${PORTAGE_VERSION} was compiled with ICU)
    endif
 else
    ifeq (${MAKELEVEL},0)
-      $(info PortageII was compiled without ICU)
+      $(info ${PORTAGE_VERSION} was compiled without ICU)
    endif
 endif
 
