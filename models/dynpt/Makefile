@@ -51,6 +51,7 @@ L2_2_L1X ?= ${L2_2_L1}.gz
 # Allows to search for alignment files in corpus.
 vpath %${L1X} ${CORPORA_DIR}
 vpath %${L2X} ${CORPORA_DIR}
+vpath %.align.gz models/tm
 
 .DELETE_ON_ERROR:
 .SUFFIXES:
@@ -78,11 +79,14 @@ tpsa: ${TRAIN_TM}${L1X}.tpsa ${TRAIN_TM}${L2X}.tpsa
 
 tpa: ${TRAIN_TM}.${L1_2_L2}.ibm2.tpa ${TRAIN_TM}.${L1_2_L2}.hmm3.tpa
 
-${TRAIN_TM}.${L1_2_L2}.%.tpa: models/tm/%.${TRAIN_TM}.${L2_GIVEN_L1X} models/tm/%.${TRAIN_TM}.${L1_GIVEN_L2X} ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-	parallelize.pl -n 4 -stripe \
-	   -s $(word 3,$+) -s $(word 4,$+) \
-	   "align-words -o green $+" | \
-	tp_alignment_build - $@
+#${TRAIN_TM}.${L1_2_L2}.%.tpa: models/tm/%.${TRAIN_TM}.${L2_GIVEN_L1X} models/tm/%.${TRAIN_TM}.${L1_GIVEN_L2X} ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+#	parallelize.pl -n 4 -stripe \
+#	   -s $(word 3,$+) -s $(word 4,$+) \
+#	   "align-words -o green $+" | \
+#	tp_alignment_build - $@
+
+%.tpa: %.align.gz
+	tp_alignment_build $< $@
 
 # the above is equivalent to the following, but parallel:
 #	align-words -o green $+ | tp_alignment_build - $@
