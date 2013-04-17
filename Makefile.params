@@ -172,7 +172,7 @@ TEST_SET      ?= test1 test2
 # Comment out to disable using an HLDM; uncomment to enable.
 # Expensive!  Use only if you know it's worthwhile.
 # HLDM seems to be quite effective in most scenarios, so we enable it by default.
-USE_HLDM = 1
+#USE_HLDM = 1
 
 # Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
