@@ -17,7 +17,10 @@ include ../../Makefile.params
 
 # TODO: Make sure this Makefile works for Portage's cluster.
 # This will require that run-parallel.sh -c RP_OPTS be functional.
-SHELL = ${FRAMEWORK_SHELL}
+#SHELL = ${FRAMEWORK_SHELL}
+SHELL = ${LOCAL_SHELL}
+
+.SECONDARY:
 
 # Where we can find the parallel corpora.
 CORPORA_DIR ?= ../../corpora
@@ -74,10 +77,11 @@ all: tpsa tpa
 
 tpsa: ${TRAIN_TM}${L1X}.tpsa ${TRAIN_TM}${L2X}.tpsa
 
+%.tpsa: SHELL=${FRAMEWORK_SHELL}
 %.tpsa: %
 	build-tp-suffix-array.sh $< $@
 
-tpa: ${TRAIN_TM}.${L1_2_L2}.ibm2.tpa ${TRAIN_TM}.${L1_2_L2}.hmm3.tpa
+tpa: ${TRAIN_TM}.ibm2.${L1_2_L2}.tpa ${TRAIN_TM}.hmm3.${L1_2_L2}.tpa
 
 #${TRAIN_TM}.${L1_2_L2}.%.tpa: models/tm/%.${TRAIN_TM}.${L2_GIVEN_L1X} models/tm/%.${TRAIN_TM}.${L1_GIVEN_L2X} ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 #	parallelize.pl -n 4 -stripe \
@@ -85,8 +89,9 @@ tpa: ${TRAIN_TM}.${L1_2_L2}.ibm2.tpa ${TRAIN_TM}.${L1_2_L2}.hmm3.tpa
 #	   "align-words -o green $+" | \
 #	tp_alignment_build - $@
 
-%.tpa: %.align.gz
-	tp_alignment_build $< $@
+%.tpa: SHELL=${FRAMEWORK_SHELL}
+%.tpa: ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X} %.align.gz
+	word_align_tool -fin sri -fout green $+ - | tp_alignment_build - $@
 
 # the above is equivalent to the following, but parallel:
 #	align-words -o green $+ | tp_alignment_build - $@

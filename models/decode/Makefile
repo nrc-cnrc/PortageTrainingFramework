@@ -223,7 +223,7 @@ $(info LMs: ${LMS})
 
 ${UNTUNED_DECODING_MODEL}: SHELL=${LOCAL_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
-	@ls ${CPT_SEARCH} &> /dev/null \
+	-@ls ${CPT_SEARCH} &> /dev/null \
 	|| ! echo "ERROR: No CPTs available. Please train the translation model(s) first!" >&2
 	@[[ `ls ${LM_SEARCH} 2> /dev/null | \wc -l` > 0 ]] \
 	|| ! echo "ERROR: No LMs available. Please train the language model(s) first!" >&2

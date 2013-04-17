@@ -1,5 +1,17 @@
-[ttable-multi-prob]
-  <CPTS>
+[load-first]
+[dynpt]
+   models/dynpt/train_en.lc.gz.tpsa
+   models/dynpt/train_fr.lc.gz.tpsa
+[dynpt-al-files]
+   models/dynpt/train.ibm2.en2fr.tpa
+   models/dynpt/train.hmm3.en2fr.tpa
+[dynpt-samples] 200
+[dynpt-smoothers]
+   RFSmoother
+   ZNSmoother
+[dynpt-smoother-ibm-models]
+   models/tm/hmm3.train.fr_given_en.gz
+   models/tm/hmm3.train.en_given_fr.gz
 [lmodel-file]
   <LMS>
 [use-ftm]
@@ -9,14 +21,24 @@
 [stack] 20000
 [beam-threshold] 0.001
 [distortion-limit] 7
-[dist-limit-simple]
 [cube-pruning]
 [bypass-marked]
-# Without a distortion model
-[distortion-model] WordDisplacement
+
 # With a lexicalized distortion model
 #[lex-dist-model-file] models/tm/ldm.hmm3+ibm2.en2fr.gz
 #[distortion-model] WordDisplacement:back-lex#m:back-lex#s:back-lex#d:fwd-lex#m:fwd-lex#s:fwd-lex#d
 #[distortion-model] WordDisplacement:back-hlex#m:back-hlex#s:back-hlex#d:fwd-hlex#m:fwd-hlex#s:fwd-hlex#d
 #[dist-phrase-swap]
 #[dist-limit-ext]
+
+# Options for Gappy dynamic
+[gappy-src]
+[gappy-tgt]
+#[dist-limit-simple]
+
+[distortion-model]
+   WordDisplacement
+   IntraPhraseWordDisplacement
+   TargetGapLength
+   AllCrossOvers
+
