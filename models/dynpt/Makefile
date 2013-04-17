@@ -15,6 +15,8 @@
 # Mandatory include: master config file.
 include ../../Makefile.params
 
+include ../../Makefile.toolkit
+
 # TODO: Make sure this Makefile works for Portage's cluster.
 # This will require that run-parallel.sh -c RP_OPTS be functional.
 #SHELL = ${FRAMEWORK_SHELL}
@@ -69,6 +71,28 @@ $(shell ln -fs ${MODEL_DIR})
 endif
 endif
 endif
+
+
+########################################
+# Clean up
+.PHONY: clean clean.content clean.logs hide.logs
+clean: SHELL=${LOCAL_SHELL}
+clean: clean.content clean.logs
+
+clean.content: SHELL=${LOCAL_SHELL}
+clean.content:
+	${RM} models
+	${RM} -r *.tpsa *.tpa
+
+clean.logs: SHELL=${LOCAL_SHELL}
+clean.logs:
+	${RM} log.* run-parallel-logs*
+	${RM} -r .logs/
+
+# Hide logs from user's view into .logs
+hide.logs: SHELL=${LOCAL_SHELL}
+hide.logs: hide_logs_sub
+
 
 ########################################
 # Real stuff
