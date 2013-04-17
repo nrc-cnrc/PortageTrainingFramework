@@ -384,6 +384,10 @@ else
                        $(if ${USE_MIXTM}, mix_cpt))
 endif
 
+# By default, we use static phrase tables.  Set this switch to use dynamic ones
+# instead.
+USE_DYNPT = 1
+
 # By default, we assume that the user wants to use the corpora listed in 
 # TRAIN_TM and MIXTM to build the Lexicalized Distortion Model (LDM).
 ifdef USE_LDM

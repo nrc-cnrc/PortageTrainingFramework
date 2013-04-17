@@ -22,8 +22,6 @@ include ../../Makefile.toolkit
 #SHELL = ${FRAMEWORK_SHELL}
 SHELL = ${LOCAL_SHELL}
 
-.SECONDARY:
-
 # Where we can find the parallel corpora.
 CORPORA_DIR ?= ../../corpora
 
@@ -53,7 +51,7 @@ L2_2_L1  ?= ${lang2}2${lang1}
 L1_2_L2X ?= ${L1_2_L2}.gz
 L2_2_L1X ?= ${L2_2_L1}.gz
 
-# Allows to search for alignment files in corpus.
+# Allows to search for alignment files and corpora.
 vpath %${L1X} ${CORPORA_DIR}
 vpath %${L2X} ${CORPORA_DIR}
 vpath %.align.gz models/tm

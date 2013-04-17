@@ -254,6 +254,11 @@ ldm:
 endif
 
 
+.PHONY: dynpt
+dynpt: tm
+ifdef USE_DYNPT
+decode: dynpt
+endif
 
 .PHONY: confidence
 confidence: SHELL=${LOCAL_SHELL}
