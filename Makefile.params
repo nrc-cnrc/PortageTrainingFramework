@@ -453,7 +453,9 @@ LOCAL_SHELL = /bin/bash
 ifeq (${MAKELEVEL},0)
    PORTAGE_VERSION:=$(shell portage_info -version)
    ifeq (${PORTAGE_VERSION},)
-      $(error Cannot find portage_info; make sure some version Portage is installed.)
+      ifneq (${MAKECMDGOALS},doc)
+         $(error Cannot find portage_info; make sure some version Portage is installed.)
+      endif
    endif
 endif
 ifeq ($(strip $(shell portage_info -with-icu > /dev/null && echo "true")),true)
