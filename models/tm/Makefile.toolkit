@@ -526,7 +526,7 @@ ${CPT_INDICATOR_PFX}%${L1_2_L2X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
 	joint2multi_cpt \
-                ${JOINT2MULTI_CPT_OPTIONS} \
+		${JOINT2MULTI_CPT_OPTIONS} \
 		${CPT_PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
@@ -545,7 +545,7 @@ ${CPT_INDICATOR_PFX}%${L2_2_L1X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
 	joint2multi_cpt \
-                ${JOINT2MULTI_CPT_OPTIONS} \
+		${JOINT2MULTI_CPT_OPTIONS} \
 		${CPT_PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
