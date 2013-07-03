@@ -130,6 +130,10 @@ if [[ ! $TMX_TGT_OPT && $TGT_LANG ]]; then
    TMX_TGT_OPT="-xtgt=`echo -n $TGT_LANG | tr 'a-z' 'A-Z'`-CA"
 fi
 
+# Determine the PortageLive parallelism level
+TEXT=`grep -E '^( *|export +)PARALLELISM_LEVEL_PORTAGELIVE *\??=' ${MAKEFILE_PARAMS}`
+[[ ${TEXT} =~ '= *([^ ]*)' ]] && PARALLEL_OPT="-w=3 -n=${BASH_REMATCH[1]}"
+
 # Locate the canoe.ini.cow file.
 # We assume that this translate.sh script is at the root of the framework.
 CANOE_INI="canoe.ini.cow"
@@ -170,6 +174,6 @@ done
 # Make sure plugins in the plugins directory in the framework will be used by translate.pl.
 export PATH="${ROOTDIR}/plugins:$PATH"
 
-run_cmd "translate.pl $MODE $SRC_OPT $TGT_OPT $TMX_SRC_OPT $TMX_TGT_OPT $TC_OPT $CANOE_INI_OPT $V_OPT $Q_OPT $SOURCE_FILE"
+run_cmd "translate.pl $MODE $SRC_OPT $TGT_OPT $TMX_SRC_OPT $TMX_TGT_OPT $PARALLEL_OPT $TC_OPT $CANOE_INI_OPT $V_OPT $Q_OPT $SOURCE_FILE"
 
 exit
