@@ -309,6 +309,7 @@ ifdef DO_TRUECASING
 models: tc
 
 portageLive: portageLive_models_tc
+portageLive/soap-translate.sh: portageLive_models_tc
 
 tc:
 	${MAKE} -C $@ all
