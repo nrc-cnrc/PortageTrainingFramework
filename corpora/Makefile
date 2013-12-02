@@ -45,7 +45,8 @@ else
 LOWERCASE ?= lc-utf8.pl
 endif
 
-# Uncomment if you don't want to have the source side of your corpora be lowercased.
+# If you don't want to have the source side of your corpora be lowercased
+# define DONT_LOWERCASE_SRC in ./Makefile.params
 #DONT_LOWERCASE_SRC = 1
 
 UTF8 := $(if $(findstring Darwin, ${OSTYPE}),UTF-8,utf8)
@@ -63,6 +64,7 @@ TOKENIZER_en ?= utokenize.pl -noss -lang=en
 TOKENIZER_fr ?= utokenize.pl -noss -lang=fr
 TOKENIZER_da ?= utokenize.pl -noss -lang=da
 TOKENIZER_es ?= utokenize.pl -noss -lang=es
+TOKENIZER_ar ?= tokenize_plugin ar
 ifdef USE_ICTCLAS
 #TOKENIZER_ch ?= ictclas_run.sh 
 TOKENIZER_ch := { set -o pipefail; iconv -c -f UTF-8 -t CN-GB \
@@ -366,26 +368,44 @@ lc: ${LC}
 
 # Construct a lowercased corpora from its aligned version.
 ifdef DONT_LOWERCASE_SRC
-${HELDOUT_REFS}:  %${LANGX}:  %${ALIGNX}
+%${SRC_LANG}${LANGX}: SHELL=${CORPUS_SHELL}
+%${SRC_LANG}${LANGX}: %${SRC_LANG}${ALIGNX}
 	@$(check_utf8)
-	ln -s $< $@
-%_${TGT_LANG}${LANGXZ}:  %_${TGT_LANG}${ALIGNX}${GZ}
-	@$(check_utf8)
-	ln -s $< $@
-endif
+	ln -fs $< $@
 
-%${LANGX}: SHELL=${CORPUS_SHELL}
-%${LANGX}: %${ALIGNX}
+%${SRC_LANG}${LANGXZ}: SHELL=${CORPUS_SHELL}
+%${SRC_LANG}${LANGXZ}: %${SRC_LANG}${ALIGNX}${GZ}
+	@$(check_utf8)
+	ln -fs $< $@
+
+else
+%${SRC_LANG}${LANGX}: SHELL=${CORPUS_SHELL}
+%${SRC_LANG}${LANGX}: %${SRC_LANG}${ALIGNX}
 	@$(check_utf8)
 	${RP_SHELL_OPTS} \
-	cat $< | ${TIME_MEM} ${LOWERCASE} ${LOG_STDERR} > $@
+	cat $< | ${TIME_MEM} $(or ${LOWERCASE_${SRC_LANG}}, ${LOWERCASE}) ${LOG_STDERR} > $@
 
-%${LANGXZ}: SHELL=${CORPUS_SHELL}
-%${LANGXZ}: %${ALIGNX}${GZ}
+%${SRC_LANG}${LANGXZ}: SHELL=${CORPUS_SHELL}
+%${SRC_LANG}${LANGXZ}: %${SRC_LANG}${ALIGNX}${GZ}
 	@$(check_utf8)
 	${RP_SHELL_OPTS} \
 	set -o pipefail; \
-	zcat $< | ${TIME_MEM} ${LOWERCASE} ${LOG_STDERR} | gzip > $@
+	zcat $< | ${TIME_MEM} $(or ${LOWERCASE_${SRC_LANG}}, ${LOWERCASE}) ${LOG_STDERR} | gzip > $@
+
+endif
+
+%${TGT_LANG}${LANGX}: SHELL=${CORPUS_SHELL}
+%${TGT_LANG}${LANGX}: %${TGT_LANG}${ALIGNX}
+	@$(check_utf8)
+	${RP_SHELL_OPTS} \
+	cat $< | ${TIME_MEM} $(or ${LOWERCASE_${TGT_LANG}}, ${LOWERCASE}) ${LOG_STDERR} > $@
+
+%${TGT_LANG}${LANGXZ}: SHELL=${CORPUS_SHELL}
+%${TGT_LANG}${LANGXZ}: %${TGT_LANG}${ALIGNX}${GZ}
+	@$(check_utf8)
+	${RP_SHELL_OPTS} \
+	set -o pipefail; \
+	zcat $< | ${TIME_MEM} $(or ${LOWERCASE_${TGT_LANG}}, ${LOWERCASE}) ${LOG_STDERR} | gzip > $@
 
 
 

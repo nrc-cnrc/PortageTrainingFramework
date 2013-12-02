@@ -169,11 +169,14 @@ for (( V=$VERBOSE; $V>0; V=$V-1 )) ; do
    V_OPT="$V_OPT -v"
 done
 
+# Determine if we need to skip lowercasing of the input.
+\make -C ${ROOTDIR} -pn | grep '^DONT_LOWERCASE_SRC' &> /dev/null && NOLC="-nolc"
+
 [[ $QUIET ]] && Q_OPT="-quiet"
 
 # Make sure plugins in the plugins directory in the framework will be used by translate.pl.
 export PATH="${ROOTDIR}/plugins:$PATH"
 
-run_cmd "translate.pl $MODE $SRC_OPT $TGT_OPT $TMX_SRC_OPT $TMX_TGT_OPT $PARALLEL_OPT $TC_OPT $CANOE_INI_OPT $V_OPT $Q_OPT $SOURCE_FILE"
+run_cmd "translate.pl $MODE $NOLC $SRC_OPT $TGT_OPT $TMX_SRC_OPT $TMX_TGT_OPT $PARALLEL_OPT $TC_OPT $CANOE_INI_OPT $V_OPT $Q_OPT $SOURCE_FILE"
 
 exit

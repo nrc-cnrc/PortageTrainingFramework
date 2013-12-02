@@ -479,7 +479,16 @@ endif
 
 
 # We include src_lang specific configuration just before we validate the configuration.
--include Makefile.params.${SRC_LANG}
+$(info MAKEFILE_LIST: ${MAKEFILE_LIST})
+-include $(dir $(lastword ${MAKEFILE_LIST}))Makefile.params.${SRC_LANG}
+
+
+########################################
+# LANGUAGE'S SPECIFICITIES
+ifeq (${SRC_LANG},ar)
+   DONT_LOWERCASE_SRC = 1
+endif
+
 
 ########################################
 # VALIDATION
