@@ -62,6 +62,9 @@ PSUB_OPTS ?=
 # i.e. -d 1:1:1:1:1:1:1 -load-first
 CANOE_INI_EXTRAS ?=
 
+# Extra distortion models to use
+DM_EXTRAS ?=
+
 # Indicates the nbest list size.
 NBEST_SIZE ?= 1000
 
@@ -233,7 +236,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      -e 's#<CPTS>#${CPTS}#g' \
 	      -e 's#<LMS>#${LMS}#g' \
 	      -e 's/^\(\[\(weight-f\|ftm\)\]\)/##mid##\1/' \
-	| configtool -p "args:$(and ${USE_LDM}${USE_HLDM}, -dist-phrase-swap) -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS} -lex-dist-model-file :${LDM}:${HLDM} ${CANOE_INI_EXTRAS}" - \
+	| configtool -p "args:$(and ${USE_LDM}${USE_HLDM}, -dist-phrase-swap) -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS}:${DM_EXTRAS} -lex-dist-model-file ${LDM}:${HLDM} ${CANOE_INI_EXTRAS}" - \
 	> $@
 	configtool check $@
 
