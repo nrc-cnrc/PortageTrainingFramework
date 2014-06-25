@@ -197,10 +197,21 @@ DO_TRUECASING = 1
 # names contain the source or target language two-letter identifier.  For,
 # example, for Spanish source you could define TOKENIZER_es.  More generally,
 # {DE|}TOKENIZER_{${SRC_LANG}|${TGT_LANG}}.
-# Defining what tokenizers we want to use:
+# Examples of defining what tokenizers we want to use:
+# This example shows how one can call opennlp instead of the Portage tokenizer:
 #TOKENIZER_en ?= opennlp TokenizerME /modeldir/en-model.bin
+# This example shows how to call the Portage tokenizer, which is the default
+# for fr, en, es, and da:
 #TOKENIZER_fr ?= utokenize.pl -noss -lang=fr
+# Here is how to call the Portage tokenizer, with fix-slashes.pl used as
+# preprocessing to separate pairs of words joined by /:
+#TOKENIZER_en := { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=en; }
+#TOKENIZER_fr := { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=fr; }
+# Do Chinese segmentation using ICTCLAS (assumes you have it):
 #TOKENIZER_ch ?= { set -o pipefail; iconv -c -f UTF-8 -t CN-GB | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl | iconv -c -f CN-GB -t UTF-8; }
+# Or do Chinese segmentation using the LDC-based segmenter we distribute:
+#TOKENIZER_ch ?= chinese_segmenter.pl
+
 # Defining what detokenizers we want to use:
 #DETOKENIZER_en ?= opennlp DetokenizerME /modeldir/en-model.bin
 #DETOKENIZER_fr ?= udetokenize.pl -lang=fr
