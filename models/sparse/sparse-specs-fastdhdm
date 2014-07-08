@@ -1,0 +1,12 @@
+[DistCurrentSrcFirstWord] auto:mkcls:<corp>_<srclang>.<srcext>:20:2
+[DistCurrentSrcFirstWord] auto:mkcls:<corp>_<srclang>.<srcext>:50:2
+[DistCurrentSrcFirstWord] auto:svoci:<corp>:80
+[DistCurrentSrcLastWord]  auto:mkcls:<corp>_<srclang>.<srcext>:20:2
+[DistCurrentSrcLastWord]  auto:mkcls:<corp>_<srclang>.<srcext>:50:2
+[DistCurrentSrcLastWord]  auto:svoci:<corp>:80
+[DistCurrentTgtFirstWord] auto:mkcls:<corp>_<tgtlang>.<tgtext>:20:2
+[DistCurrentTgtFirstWord] auto:mkcls:<corp>_<tgtlang>.<tgtext>:50:2
+[DistCurrentTgtFirstWord] auto:tvoci:<corp>:80
+[DistCurrentTgtLastWord]  auto:mkcls:<corp>_<tgtlang>.<tgtext>:20:2
+[DistCurrentTgtLastWord]  auto:mkcls:<corp>_<tgtlang>.<tgtext>:50:2
+[DistCurrentTgtLastWord]  auto:tvoci:<corp>:80

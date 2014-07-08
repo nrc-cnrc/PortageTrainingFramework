@@ -71,6 +71,9 @@ endif
 ifneq ($(strip ${TRAIN_HLDM}),)
 	@echo "   train hldm: ${TRAIN_HLDM}"
 endif
+ifneq ($(strip ${TRAIN_SPARSE}),)
+	@echo "   train sparse: ${TRAIN_SPARSE}"
+endif
 	@echo "   tune decode: ${TUNE_DECODE}"
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 	@echo "   tune decode variants: $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})"
@@ -104,6 +107,7 @@ clean.content clean.logs hide.logs: %:
 	${MAKE} -C rescore $@
 	${MAKE} -C confidence $@
 	${MAKE} -C mixlm $@
+	${MAKE} -C sparse $@
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 	${RM} -r $(addprefix decode., ${TUNE_DECODE_VARIANTS})
 	${RM} -r $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
@@ -116,7 +120,7 @@ endif
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem:
-	@time-mem-tally.pl `find ldm lm mixlm tm tc decode* rescore confidence* -type f -name log.\* -o -name \*.log` \
+	@time-mem-tally.pl `find ldm lm mixlm tm sparse tc decode* rescore confidence* -type f -name log.\* -o -name \*.log` \
 	| second-to-hms.pl \
 	| expand-auto.pl
 
@@ -253,6 +257,18 @@ ldm:
 	@echo "Not training a lexicalized distortion model." >&2
 endif
 
+
+.PHONY: sparse
+sparse: SHELL=${LOCAL_SHELL}
+ifdef USE_SPARSE
+models: sparse
+
+sparse: tm
+	${MAKE} -C $@ all
+else
+sparse:
+	@echo "Not training a sparse model." >&2
+endif
 
 
 .PHONY: confidence

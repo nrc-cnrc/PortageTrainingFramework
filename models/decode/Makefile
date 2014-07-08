@@ -209,6 +209,11 @@ HLDM := $(and ${USE_HLDM},${HLDM}\#H)
 HLDM_PARAMS := back-hlex\#m\#H:back-hlex\#s\#H:back-hlex\#d\#H:fwd-hlex\#m\#H:fwd-hlex\#s\#H:fwd-hlex\#d\#H
 endif
 
+ifdef USE_SPARSE
+SPARSE ?= models/sparse/model
+$(info Sparse: ${SPARSE})
+endif
+
 # NOTE: We need to keep the checks here AND in the target UNTUNED_DECODING_MODEL.
 CPT_SEARCH := models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz
 CPTS ?= $(wildcard ${CPT_SEARCH})
@@ -236,7 +241,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      -e 's#<CPTS>#${CPTS}#g' \
 	      -e 's#<LMS>#${LMS}#g' \
 	      -e 's/^\(\[\(weight-f\|ftm\)\]\)/##mid##\1/' \
-	| configtool -p "args:$(and ${USE_LDM}${USE_HLDM}, -dist-phrase-swap) -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS}:${DM_EXTRAS} -lex-dist-model-file ${LDM}:${HLDM} ${CANOE_INI_EXTRAS}" - \
+	| configtool -p "args:$(and ${USE_LDM}${USE_HLDM}, -dist-phrase-swap) -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS}:${DM_EXTRAS} -lex-dist-model-file ${LDM}:${HLDM} $(and ${USE_SPARSE}, -sparse-model ${SPARSE}) ${CANOE_INI_EXTRAS}" - \
 	> $@
 	configtool check $@
 
@@ -268,6 +273,7 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 		-m ${MERT_MAX_ITER} \
 		-n 100 \
 		-a lmira \
+		$(and ${USE_SPARSE},-r) \
 		--workdir=foos \
 		${MERT_EXTRAS} \
 		-f $<.FILT $(wordlist 2,100,$+) \

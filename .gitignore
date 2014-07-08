@@ -44,6 +44,10 @@ models/tc/vocabMap2tpt.*
 models/tm/mixtm/
 models/tm/*/
 
+models/sparse/model*
+models/sparse/data*
+models/sparse/*build-model.cmds*
+
 translate/models
 translate/canoe.ini.cow.*
 translate/*.out

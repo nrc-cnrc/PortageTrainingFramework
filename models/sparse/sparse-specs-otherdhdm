@@ -1,0 +1,12 @@
+[DistGapSrcWord]          auto:mkcls:<corp>_<srclang>.<srcext>:20:2
+[DistGapSrcWord]          auto:mkcls:<corp>_<srclang>.<srcext>:20:2
+[DistGapSrcWord]          auto:svoci:<corp>:80
+[DistTopSrcFirstWord]     auto:mkcls:<corp>_<srclang>.<srcext>:20:2
+[DistTopSrcFirstWord]     auto:mkcls:<corp>_<srclang>.<srcext>:20:2
+[DistTopSrcFirstWord]     auto:svoci:<corp>:80
+[DistTopSrcLastWord]      auto:mkcls:<corp>_<srclang>.<srcext>:20:2
+[DistTopSrcLastWord]      auto:mkcls:<corp>_<srclang>.<srcext>:20:2
+[DistTopSrcLastWord]      auto:svoci:<corp>:80
+[DistPrevTgtWord]         auto:mkcls:<corp>_<tgtlang>.<tgtext>:20:2
+[DistPrevTgtWord]         auto:mkcls:<corp>_<tgtlang>.<tgtext>:20:2
+[DistPrevTgtWord]         auto:tvoci:<corp>:80

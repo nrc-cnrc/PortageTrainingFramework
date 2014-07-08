@@ -255,6 +255,22 @@ check_decoding_model:
 
 
 ########################################
+# Sparse models need tuned weights
+ifdef USE_SPARSE
+# Tune sparse weights have to be copied/linked from models/decode
+# This is an ugly solution, but it works.
+check_decoding_model: ln_wts
+ln_wts:
+	ln -fs ${DECODING_MODEL_DIR}/models_sparse*.wts.gz .
+endif
+
+clean.content: clean.sparse
+clean.sparse: SHELL=${LOCAL_SHELL}
+clean.sparse:
+	${RM} models_sparse*.wts.gz
+
+
+########################################
 # Create a specific canoe.ini per test set.
 # You could add a specific target if you need to customize a canoe.ini.cow
 # for a particular file.

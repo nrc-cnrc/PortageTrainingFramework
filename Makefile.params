@@ -109,6 +109,11 @@ TRAIN_TM      ?= tm-train
 # => TRAIN_HLDM = TRAIN_LDM or TRAIN_TM MIXTM
 #TRAIN_HLDM ?= hldm-train
 
+# TRAIN_SPARSE is used to train sparse features
+# It should point to the concatenation of all your TRAIN_TM and MIXTM corpora in use.
+# TODO: Automate creating that concatenation.
+TRAIN_SPARSE ?= sparse-train
+
 # TUNE_DECODE is used to tune the decoding weights (using tune.py).
 TUNE_DECODE   ?= dev1
 # TUNE_DECODE_VARIANTS is used to tune and test using multiple tuning sets.
@@ -173,6 +178,9 @@ TEST_SET      ?= test1 test2
 # Expensive!  Use only if you know it's worthwhile.
 # HLDM seems to be quite effective in most scenarios, so we enable it by default.
 USE_HLDM = 1
+
+# Train and use a sparse model
+USE_SPARSE = 1
 
 # Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
@@ -269,6 +277,7 @@ PARALLELISM_LEVEL_CORPORA ?= 10
 PARALLELISM_LEVEL_LM ?= 5
 PARALLELISM_LEVEL_LDM ?= 30
 PARALLELISM_LEVEL_TM ?= 5
+PARALLELISM_LEVEL_SPARSE ?= 10
 PARALLELISM_LEVEL_TUNE_DECODE  ?= 10
 PARALLELISM_LEVEL_TUNE_RESCORE ?= 10
 PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= 10
@@ -291,6 +300,7 @@ PARALLELISM_LEVEL_CORPORA ?= ${NCPUS}
 PARALLELISM_LEVEL_LM ?= ${NCPUS}
 PARALLELISM_LEVEL_LDM ?= ${NCPUS}
 PARALLELISM_LEVEL_TM ?= ${NCPUS}
+PARALLELISM_LEVEL_SPARSE ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_DECODE  ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_RESCORE ?= ${NCPUS}
 PARALLELISM_LEVEL_TUNE_CONFIDENCE ?= ${NCPUS}
@@ -556,6 +566,12 @@ endif
 ifdef USE_HLDM
 ifeq (${TRAIN_HLDM},)
 $(error With USE_HLDM, you must always define a training corpus for training the distortion model)
+endif
+endif
+
+ifdef USE_SPARSE
+ifeq (${TRAIN_SPARSE},)
+$(error With USE_SPARSE, you must define a training corpus for sparse features using TRAIN_SPARSE)
 endif
 endif
 

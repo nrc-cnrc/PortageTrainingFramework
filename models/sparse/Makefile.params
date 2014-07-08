@@ -1,0 +1,33 @@
+# @file Makefile.parms
+# @brief User defined parameters.
+#
+# @author Eric Joanis
+#
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2014, Sa Majeste la Reine du Chef du Canada
+# Copyright 2014, Her Majesty in Right of Canada
+
+########################################
+# User defines for models/sparse.
+# Syntax is:
+#<VARIABLE_NAME> = <VALUE>
+# WARNING: you cannot override SRC_LANG or TGT_LANG!
+# Please change SRC_LANG/TGT_LANG in the ./Makefile.params.
+
+# Define what sparse features to use
+# The SPARSE_FEATURES variable must lists the suffixes of files that start with
+# sparse-specs- and end with the given suffix, e.g., hopmay refers to
+# sparse-specs-hopmay.
+
+# Predefined specs for sparse feature sets:
+#  - hopmay: the sparse features of Hopkins and May (2011).
+#  - fastdhdm: the features of Cherry (2013)'s Sparse HDM that are fast
+#  - otherdhdm: the features of Cherry (2013)'s Sparse HDM that are slow
+
+# Full DHDM (Cherry, 2013) plus Hopkins and May (2011) features:
+#SPARSE_FEATURES = fastdhdm otherdhdm hopmay
+
+# Use only the fast sparse features:
+#SPARSE_FEATURES = fastdhdm hopmay

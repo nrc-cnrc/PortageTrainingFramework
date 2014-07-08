@@ -346,6 +346,8 @@ TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_LDM})
 TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LDM})
 TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_HLDM})
 TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_HLDM})
+TM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_SPARSE})
+TM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_SPARSE})
 LC += ${TM_LC}
 MIXLM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXLM})
 MIXLM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXLM})
@@ -557,6 +559,11 @@ $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_LDM}) $(addsuffix _${TGT_LANG}, $
 $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_HLDM}) $(addsuffix _${TGT_LANG}, ${TRAIN_HLDM}), \
 	$(if $(call  FILE_EXISTS, $l),, \
 		$(error To train the HLDM, you must provide $l)))
+
+# Verify the presence of sparse's corpora files.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_SPARSE}) $(addsuffix _${TGT_LANG}, ${TRAIN_SPARSE}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error To train sparse models, you must provide $l)))
 
 # Verify the presence of decoder's tuning corpora files.
 $(foreach l, $(addsuffix _${SRC_LANG}, ${TUNE_DECODE}) $(subst ${LANGX},,$(call CREATE_REFERENCE_NAMES, ${TUNE_DECODE})), \

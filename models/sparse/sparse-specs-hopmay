@@ -1,0 +1,6 @@
+[AlignedWordPair]            auto:svoc:<corp>:80 auto:tvoc:<corp>:80
+[LexUnalTgtAny]              auto:tunal:../tm:50
+[PhrasePairCountMultiBin]    auto:bins11
+[PhrasePairAllBiLengthBins]  7 7
+[PhrasePairAllTgtLengthBins] 7
+[PhrasePairAllSrcLengthBins] 7
