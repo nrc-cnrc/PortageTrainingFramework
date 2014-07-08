@@ -180,7 +180,7 @@ TEST_SET      ?= test1 test2
 USE_HLDM = 1
 
 # Train and use a sparse model
-USE_SPARSE = 1
+#USE_SPARSE = 1
 
 # Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
