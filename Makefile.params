@@ -112,7 +112,7 @@ TRAIN_TM      ?= tm-train
 # TRAIN_SPARSE is used to train sparse features
 # It should point to the concatenation of all your TRAIN_TM and MIXTM corpora in use.
 # TODO: Automate creating that concatenation.
-TRAIN_SPARSE ?= sparse-train
+#TRAIN_SPARSE ?= sparse-train
 
 # TUNE_DECODE is used to tune the decoding weights (using tune.py).
 TUNE_DECODE   ?= dev1
