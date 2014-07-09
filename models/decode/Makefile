@@ -241,7 +241,13 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      -e 's#<CPTS>#${CPTS}#g' \
 	      -e 's#<LMS>#${LMS}#g' \
 	      -e 's/^\(\[\(weight-f\|ftm\)\]\)/##mid##\1/' \
-	| configtool -p "args:$(and ${USE_LDM}${USE_HLDM}, -dist-phrase-swap) -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS}:${DM_EXTRAS} -lex-dist-model-file ${LDM}:${HLDM} $(and ${USE_SPARSE}, -sparse-model ${SPARSE}) ${CANOE_INI_EXTRAS}" - \
+	| configtool -p "args: \
+	      $(and ${USE_LDM}${USE_HLDM}, -dist-phrase-swap) \
+	      -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS}:${DM_EXTRAS} \
+	      -lex-dist-model-file ${LDM}:${HLDM} \
+	      $(and ${USE_SPARSE}, -sparse-model ${SPARSE}) \
+	      ${CANOE_INI_EXTRAS} \
+	  " - \
 	> $@
 	configtool check $@
 
@@ -250,7 +256,7 @@ clean.content: clean.canoe.ini
 .PHONY: clean.canoe.ini
 clean.canoe.ini: SHELL=${LOCAL_SHELL}
 clean.canoe.ini:
-	${RM} ${DECODING_MODEL} tmp.${UNTUNED_DECODING_MODEL}
+	${RM} ${DECODING_MODEL} tmp.${UNTUNED_DECODING_MODEL} models_sparse*.wts.gz
 
 
 
