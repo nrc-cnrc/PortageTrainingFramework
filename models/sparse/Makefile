@@ -65,3 +65,16 @@ data: model
 
 model.templates: model data
 	palminer -v -pop -m model >& log.$@
+
+
+########################################
+# Transform models for PortageLive
+# Note: portageLive dependencies are defined in Makefile (or Makefile.zn-adapt)
+PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/sparse
+.PHONY: portageLive
+portageLive: SHELL=${LOCAL_SHELL}
+portageLive: model.templates
+portageLive:
+	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
+	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../sparse/{model*,data.*} .

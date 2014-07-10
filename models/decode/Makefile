@@ -256,7 +256,7 @@ clean.content: clean.canoe.ini
 .PHONY: clean.canoe.ini
 clean.canoe.ini: SHELL=${LOCAL_SHELL}
 clean.canoe.ini:
-	${RM} ${DECODING_MODEL} tmp.${UNTUNED_DECODING_MODEL} models_sparse*.wts.gz
+	${RM} ${DECODING_MODEL} tmp.${UNTUNED_DECODING_MODEL} rmodels_sparse*.wts.gz
 
 
 
@@ -308,6 +308,7 @@ clean.tune:
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive
 CANOE_LIVE            ?= ${PORTAGE_LIVE_DEST_DIR}/${DECODING_MODEL}
 
+
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}
 portageLive: ${CANOE_LIVE}
@@ -333,6 +334,20 @@ clean.portageLive: SHELL=${LOCAL_SHELL}
 clean.portageLive:
 	${RM} ${CANOE_LIVE}
 
+ifdef USE_SPARSE
+SPARSE_WTS ?= rmodels_sparse_model.wts.gz
+SPARSE_WTS_LIVE ?= ${PORTAGE_LIVE_DEST_DIR}/${SPARSE_WTS}
+${CANOE_LIVE}: ${SPARSE_WTS_LIVE} portageLive_models_sparse
+${SPARSE_WTS_LIVE}: SHELL=${LOCAL_SHELL}
+${SPARSE_WTS_LIVE}:
+	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	ln -s ../decode/${SPARSE_WTS} $@
+
+clean.portageLive: clean.sparseWtsLive
+clean.sparseWtsLive: SHELL=${LOCAL_SHELL}
+clean.sparseWtsLive:
+	${RM} ${SPARSE_WTS_LIVE}
+endif
 
 
 ################################################################################
