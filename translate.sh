@@ -97,42 +97,42 @@ MODE="-decode-only"
 if [[ ${WITH_RESCORING} ]]; then
    # Check if the rescoring model was set to build.
    TEXT=`grep -E '^ *DO_RESCORING *\??=' ${MAKEFILE_PARAMS}`
-   [[ ${TEXT} =~ '= *([^ ]*)' ]] && [[ ${BASH_REMATCH[1]} == 1 ]] \
+   [[ ${TEXT} =~ $'= *([^ \r]*)' ]] && [[ ${BASH_REMATCH[1]} == 1 ]] \
       || warn "DO_RESCORING not enabled; rescoring model may not have been built."
 fi
 
 if [[ ${WITH_CE} ]]; then
    # Check if the confidence estimation model was set to build.
    TEXT=`grep -E '^ *DO_CE *\??=' ${MAKEFILE_PARAMS}`
-   [[ ${TEXT} =~ '= *([^ ]*)' ]] && [[ ${BASH_REMATCH[1]} == 1 ]] \
+   [[ ${TEXT} =~ $'= *([^ \r]*)' ]] && [[ ${BASH_REMATCH[1]} == 1 ]] \
       || warn "DO_CE not enabled; confidence estimation model may not have been built."
 fi
 
 # Determine the source language.
 TEXT=`grep -E '^( *|export +)SRC_LANG *\??=' ${MAKEFILE_PARAMS}`
-[[ ${TEXT} =~ '= *([^ ]*)' ]] && SRC_LANG="${BASH_REMATCH[1]}" && SRC_OPT="-src=$SRC_LANG"
+[[ ${TEXT} =~ $'= *([^ \r]*)' ]] && SRC_LANG="${BASH_REMATCH[1]}" && SRC_OPT="-src=$SRC_LANG"
 
 # Determine the target language.
 TEXT=`grep -E '^( *|export +)TGT_LANG *\??=' ${MAKEFILE_PARAMS}`
-[[ ${TEXT} =~ '= *([^ ]*)' ]] && TGT_LANG="${BASH_REMATCH[1]}" && TGT_OPT="-tgt=$TGT_LANG"
+[[ ${TEXT} =~ $'= *([^ \r]*)' ]] && TGT_LANG="${BASH_REMATCH[1]}" && TGT_OPT="-tgt=$TGT_LANG"
 
 # Determine the TMX source language code
 TEXT=`grep -E '^( *|export +)TMX_SRC *\??=' ${MAKEFILE_PARAMS}`
-[[ ${TEXT} =~ '= *([^ ]*)' ]] && TMX_SRC_OPT="-xsrc=${BASH_REMATCH[1]}"
+[[ ${TEXT} =~ $'= *([^ \r]*)' ]] && TMX_SRC_OPT="-xsrc=${BASH_REMATCH[1]}"
 if [[ ! $TMX_SRC_OPT && $SRC_LANG ]]; then
    TMX_SRC_OPT="-xsrc=`echo -n $SRC_LANG | tr 'a-z' 'A-Z'`-CA"
 fi
 
 # Determine the TMX target language code
 TEXT=`grep -E '^( *|export +)TMX_TGT *\??=' ${MAKEFILE_PARAMS}`
-[[ ${TEXT} =~ '= *([^ ]*)' ]] && TMX_TGT_OPT="-xtgt=${BASH_REMATCH[1]}"
+[[ ${TEXT} =~ $'= *([^ \r]*)' ]] && TMX_TGT_OPT="-xtgt=${BASH_REMATCH[1]}"
 if [[ ! $TMX_TGT_OPT && $TGT_LANG ]]; then
    TMX_TGT_OPT="-xtgt=`echo -n $TGT_LANG | tr 'a-z' 'A-Z'`-CA"
 fi
 
 # Determine the PortageLive parallelism level
 TEXT=`grep -E '^( *|export +)PARALLELISM_LEVEL_PORTAGELIVE *\??=' ${MAKEFILE_PARAMS}`
-[[ ${TEXT} =~ '= *([^ ]*)' ]] && PARALLEL_OPT="-w=3 -n=${BASH_REMATCH[1]}"
+[[ ${TEXT} =~ $'= *([^ \r]*)' ]] && PARALLEL_OPT="-w=3 -n=${BASH_REMATCH[1]}"
 
 # Locate the canoe.ini.cow file.
 # We assume that this translate.sh script is at the root of the framework.
@@ -145,7 +145,7 @@ fi
 
 # Determine if truecasing
 TEXT=`grep -E '^ *DO_TRUECASING *\??=' ${MAKEFILE_PARAMS}`
-if [[ ${TEXT} =~ '= *([^ ]*)' ]] && [[ ${BASH_REMATCH[1]} == 1 ]]; then
+if [[ ${TEXT} =~ $'= *([^ \r]*)' ]] && [[ ${BASH_REMATCH[1]} == 1 ]]; then
    TPLM_CNT=0
    TPLM=( `dirname ${CANOE_INI}`/models/tc/*.tplm )
    if [[ ! "${TPLM[*]}" =~ '\*' ]]; then
