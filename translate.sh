@@ -87,6 +87,22 @@ if [[ $# -gt 0 ]]; then
    [[ $# -eq 0 ]] || error_exit "Unexpected argument(s): $@" >&2
 fi
 
+# get_param PARAM_NAME
+# Read the framework's top-level Makefile.params to find the value of PARAM_NAME
+get_param() {
+   var=$1
+   #echo "get_param $var" >&2
+   if TEXT=`make -pn --file=${MAKEFILE_PARAMS} 2> /dev/null | grep "^ *$var"`; then
+      #echo "Var $var found" >&2
+      if [[ ${TEXT} =~ '= *([^ ][^ ]*)' ]]; then
+         echo ${BASH_REMATCH[1]}
+      else
+         warn "Parameter $var found but has no value" >&2
+      fi
+   #else echo "Var $var NOT found" >&2
+   fi
+}
+
 [[ "${DECODE_ONLY}${WITH_RESCORING}${WITH_CE}" -gt "1" ]] \
    && error_exit "Specify only one of -decode-only, -with-rescoring, -with-ce."
 MODE="-decode-only"
@@ -96,43 +112,43 @@ MODE="-decode-only"
 
 if [[ ${WITH_RESCORING} ]]; then
    # Check if the rescoring model was set to build.
-   TEXT=`grep -E '^ *DO_RESCORING *\??=' ${MAKEFILE_PARAMS}`
-   [[ ${TEXT} =~ $'= *([^ \r]*)' ]] && [[ ${BASH_REMATCH[1]} == 1 ]] \
+   [[ `get_param DO_RESCORING` == 1 ]] \
       || warn "DO_RESCORING not enabled; rescoring model may not have been built."
 fi
 
 if [[ ${WITH_CE} ]]; then
    # Check if the confidence estimation model was set to build.
-   TEXT=`grep -E '^ *DO_CE *\??=' ${MAKEFILE_PARAMS}`
-   [[ ${TEXT} =~ $'= *([^ \r]*)' ]] && [[ ${BASH_REMATCH[1]} == 1 ]] \
+   [[ `get_param DO_CE` == 1 ]] \
       || warn "DO_CE not enabled; confidence estimation model may not have been built."
 fi
 
 # Determine the source language.
-TEXT=`grep -E '^( *|export +)SRC_LANG *\??=' ${MAKEFILE_PARAMS}`
-[[ ${TEXT} =~ $'= *([^ \r]*)' ]] && SRC_LANG="${BASH_REMATCH[1]}" && SRC_OPT="-src=$SRC_LANG"
+SRC_LANG=`get_param SRC_LANG`
+[[ $SRC_LANG ]] && SRC_OPT="-src=$SRC_LANG"
 
 # Determine the target language.
-TEXT=`grep -E '^( *|export +)TGT_LANG *\??=' ${MAKEFILE_PARAMS}`
-[[ ${TEXT} =~ $'= *([^ \r]*)' ]] && TGT_LANG="${BASH_REMATCH[1]}" && TGT_OPT="-tgt=$TGT_LANG"
+TGT_LANG=`get_param TGT_LANG`
+[[ $TGT_LANG ]] && TGT_OPT="-tgt=$TGT_LANG"
 
 # Determine the TMX source language code
-TEXT=`grep -E '^( *|export +)TMX_SRC *\??=' ${MAKEFILE_PARAMS}`
-[[ ${TEXT} =~ $'= *([^ \r]*)' ]] && TMX_SRC_OPT="-xsrc=${BASH_REMATCH[1]}"
+TMX_SRC=`get_param TMX_SRC`
+[[ $TMX_SRC ]] && TMX_SRC_OPT="-xsrc=$TMX_SRC"
 if [[ ! $TMX_SRC_OPT && $SRC_LANG ]]; then
    TMX_SRC_OPT="-xsrc=`echo -n $SRC_LANG | tr 'a-z' 'A-Z'`-CA"
 fi
 
 # Determine the TMX target language code
-TEXT=`grep -E '^( *|export +)TMX_TGT *\??=' ${MAKEFILE_PARAMS}`
-[[ ${TEXT} =~ $'= *([^ \r]*)' ]] && TMX_TGT_OPT="-xtgt=${BASH_REMATCH[1]}"
+TMX_TGT=`get_param TMX_TGT`
+[[ $TMX_TGT ]] && TMX_TGT_OPT="-xtgt=$TMX_TGT"
 if [[ ! $TMX_TGT_OPT && $TGT_LANG ]]; then
    TMX_TGT_OPT="-xtgt=`echo -n $TGT_LANG | tr 'a-z' 'A-Z'`-CA"
 fi
 
 # Determine the PortageLive parallelism level
-TEXT=`grep -E '^( *|export +)PARALLELISM_LEVEL_PORTAGELIVE *\??=' ${MAKEFILE_PARAMS}`
-[[ ${TEXT} =~ $'= *([^ \r]*)' ]] && PARALLEL_OPT="-w=3 -n=${BASH_REMATCH[1]}"
+PAR_LEVEL=`get_param PARALLELISM_LEVEL_PORTAGELIVE`
+if [[ $PAR_LEVEL && $PAR_LEVEL -gt 1 ]]; then
+   PARALLEL_OPT="-w=3 -n=$PAR_LEVEL"
+fi
 
 # Locate the canoe.ini.cow file.
 # We assume that this translate.sh script is at the root of the framework.
@@ -144,8 +160,7 @@ if [[ ! -e ${CANOE_INI} ]]; then
 fi
 
 # Determine if truecasing
-TEXT=`grep -E '^ *DO_TRUECASING *\??=' ${MAKEFILE_PARAMS}`
-if [[ ${TEXT} =~ $'= *([^ \r]*)' ]] && [[ ${BASH_REMATCH[1]} == 1 ]]; then
+if [[ `get_param DO_TRUECASING` == 1 ]]; then
    TPLM_CNT=0
    TPLM=( `dirname ${CANOE_INI}`/models/tc/*.tplm )
    if [[ ! "${TPLM[*]}" =~ '\*' ]]; then
@@ -170,7 +185,7 @@ for (( V=$VERBOSE; $V>0; V=$V-1 )) ; do
 done
 
 # Determine if we need to skip lowercasing of the input.
-\make -C ${ROOTDIR} -pn | grep '^DONT_LOWERCASE_SRC' &> /dev/null && NOLC="-nolc"
+[[ `get_param DONT_LOWERCASE_SRC` == 1 ]] && NOLC="-nolc"
 
 [[ $QUIET ]] && Q_OPT="-quiet"
 
