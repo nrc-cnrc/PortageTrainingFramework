@@ -222,7 +222,7 @@ $(warning No CPTs available. Have you trained at least one translation model?)
 endif
 $(info CPTs: ${CPTS})
 
-LM_SEARCH := models/lm/*${TGT_LANG}*.binlm.gz models/mixlm/${TUNE_DECODE}.mixlm
+LM_SEARCH := models/lm/*_${TGT_LANG}[-.]*binlm.gz models/mixlm/${TUNE_DECODE}.mixlm
 LMS  ?= $(wildcard ${LM_SEARCH})
 ifeq ("","$(or $(strip ${LMS}),$(findstring clean,${MAKECMDGOALS}))")
 $(warning No LMs available. Have you trained at least one language model?)
