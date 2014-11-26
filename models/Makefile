@@ -370,12 +370,27 @@ portageLive_models_%: SHELL=${LOCAL_SHELL}
 portageLive_models_%:
 	${MAKE} -C $* portageLive
 
-ifneq ("$(wildcard ../plugins)","")
-portageLive: portageLive/plugins
-portageLive/plugins: SHELL=${LOCAL_SHELL}
-portageLive/plugins:
-	ln -fs ../../plugins $@
-endif
+
+
+.PHONY:  portageLive_fixedTerms
+portageLive:  portageLive_fixedTerms
+portageLive_fixedTerms:  SHELL=${LOCAL_SHELL}
+portageLive_fixedTerms:  portageLive_plugins
+portageLive_fixedTerms:
+	prep-fixedTerms-layout.sh portageLive
+
+
+
+PLUGINS := $(notdir $(wildcard ../plugins/*))
+.PHONY:  portageLive_plugins
+portageLive_plugins:  $(addprefix portageLive/plugins/, ${PLUGINS})
+
+$(addprefix portageLive/plugins/, ${PLUGINS}):  SHELL=${LOCAL_SHELL}
+$(addprefix portageLive/plugins/, ${PLUGINS}):  portageLive/plugins/%:
+	mkdir -p $(dir $@)
+	cd $(dir $@) && ln -fs ../../../plugins/$*
+
+
 
 .PHONY: clean.portageLive
 clean clean.content: clean.portageLive
