@@ -250,7 +250,7 @@ IRSTLM ?= $(PORTAGE)/pkgs/irstlm
 # adjust this parameter later for a running system by changing the '-n <N>'
 # parameter in soap-translate.sh for each installed PortageLive context.  To
 # retroactively add parallelism to previously trained PortageLive contexts, add
-# "-w=5 -n=<n>" to their soap-translate.sh.
+# "-w=3 -n=<n>" to their soap-translate.sh.
 PARALLELISM_LEVEL_PORTAGELIVE ?= 1
 
 # If you are on a cluster that is run-parallel.sh friendly, define the
