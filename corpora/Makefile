@@ -368,6 +368,10 @@ LC := $(sort ${LC})
 lc: SHELL=${LOCAL_SHELL}
 lc: ${LC}
 
+.PHONY: lc.heldout
+lc.heldout: SHELL=${LOCAL_SHELL}
+lc.heldout: ${HELDOUT_LC}
+
 # Construct a lowercased corpora from its aligned version.
 ifdef DONT_LOWERCASE_SRC
 %${SRC_LANG}${LANGX}: SHELL=${CORPUS_SHELL}
