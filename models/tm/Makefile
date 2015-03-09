@@ -144,55 +144,43 @@ clean.word_alignment_models:
 .PHONY: word_alignment_models  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 word_alignment_models:  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
-# $(call which_wam,<wam-stem>)
-# Returns 1wam or <wam-stem> depending on whether 1wam is appropriate.
-# We only use 1wam for MIXTM corpora
-which_wam = $(strip $(if ${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL},\
-                         $(if $(filter $1, ${MIXTM} {MIXTM_TRAIN_MIX}),1wam,$1),$1))
+define PYSCRIPT
+from __future__ import print_function, unicode_literals, division, absolute_import
 
-# All word alignment models depend on ibm1 word alignment models except, of
-# course, for ibm1 word alignment models, and also ibm4 since we use external
-# software to create it.
-$(foreach m, $(filter-out ${IBM1_MODEL_PFX} ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-   $(eval ${m}_model:  ${IBM1_MODEL_PFX}_model) \
-)
+with open("Makefile.word_alignment.deps", "w") as df:
+   # All word alignment models depend on ibm1 word alignment models except, of
+   # course, for ibm1 word alignment models, and also ibm4 since we use external
+   # software to create it.
+   for wal in "$(filter-out ${IBM1_MODEL_PFX} ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split(" "):
+      print("{m}_model:  ${IBM1_MODEL_PFX}_model".format(m=wal), file=df)
 
-# the meta target for word alignment model depends on word alignment model files.
-# both forward and backward word alignment models require source and target corpora.
-$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
-	$(foreach c, $(filter-out 1wam, ${ALL_WAMS}), \
-		$(eval \
-			$(call lc, ${m})_model:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
-		$(eval \
-			${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X}:  $c${L1X} $c${L2X}) \
-		$(eval \
-			${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}:  $c${L1X} $c${L2X}) \
-	) \
-	$(eval \
-	   ${${m}_MODEL_PFX}.${L1_GIVEN_L2X}: $(foreach c, ${ALL_TMS}, $c${L1X} $c${L2X})) \
-	$(eval \
-	   ${${m}_MODEL_PFX}.${L2_GIVEN_L1X}: $(foreach c, ${ALL_TMS}, $c${L1X} $c${L2X})) \
-)
-${IBM4_MODEL_PFX}_model:  $(foreach c, ${ALL_WAMS}, ${IBM4_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${IBM4_MODEL_PFX}.$c.${L1_GIVEN_L2X})
+   # the meta target for word alignment model depends on word alignment model files.
+   # both forward and backward word alignment models require source and target corpora.
+   for wal in "$(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split(" "):
+      for corpora in "$(filter-out 1wam, ${ALL_WAMS})".split(" "):
+         print("{m}_model:  {m}.{c}.${L2_GIVEN_L1X}  {m}.{c}.${L1_GIVEN_L2X}".format(m=wal, c=corpora), file=df)
+         print("{m}.{c}.${L2_GIVEN_L1X}:  {c}${L1X}  {c}${L2X}".format(c=corpora, m=wal), file=df)
+         print("{m}.{c}.${L1_GIVEN_L2X}:  {c}${L1X}  {c}${L2X}".format(c=corpora, m=wal), file=df)
 
-# For 1wam we want only the MIXTM corpora.  We also deliberately exclude ibm4 models.
-ifdef MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
-$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
-	$(foreach c, ${MIXTM}, \
-		$(eval \
-			${${m}_MODEL_PFX}.1wam.${L1_GIVEN_L2X}: $c${L1X} $c${L2X}) \
-		$(eval \
-			${${m}_MODEL_PFX}.1wam.${L2_GIVEN_L1X}: $c${L1X} $c${L2X}) \
-))
-endif
+      for corpora in "${ALL_TMS}".split(" "):
+         print("{m}.${L1_GIVEN_L2X}:  {c}${L1X}  {c}${L2X}".format(c=corpora, m=wal), file=df)
+         print("{m}.${L2_GIVEN_L1X}:  {c}${L1X}  {c}${L2X}".format(c=corpora, m=wal), file=df)
 
-########################################
-# EXAMPLE of the resulting code generated previously:
-#ibm1_model: ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}
-#ibm1_model: ${IBM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-#
-#${IBM1_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
-#${IBM1_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+   # Note that corpora dependencies for IBM4 models are hardcoded in Makefile.toolkit.
+   for corpora in "${ALL_WAMS}".split(" "):
+      print("${IBM4_MODEL_PFX}_model:  ${IBM4_MODEL_PFX}.{c}.${L2_GIVEN_L1X}  ${IBM4_MODEL_PFX}.{c}.${L1_GIVEN_L2X}".format(c=corpora), file=df)
+
+   # For 1wam we want only the MIXTM corpora.  We also deliberately exclude ibm4 models.
+   if "${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}" != "":
+      print("#Using MIXTM Global Word Alignment Model", file=df)
+      for wal in "$(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split(" "):
+         for corpora in "${MIXTM}".split(" "):
+            print("{m}.1wam.${L1_GIVEN_L2X}:  {c}${L1X}  {c}${L2X}".format(c=corpora, m=wal), file=df)
+            print("{m}.1wam.${L2_GIVEN_L1X}:  {c}${L1X}  {c}${L2X}".format(c=corpora, m=wal), file=df)
+endef
+$(info WORD ALIGNMENT: ${PYSCRIPT})
+RET := $(shell python -c '${PYSCRIPT}')
+include Makefile.word_alignment.deps
 
 
 
@@ -210,28 +198,39 @@ clean.alignment_files:
 alignment_files:  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 
-$(foreach c, ${ALL_WAMS}, $(foreach w, $(call which_wam, $c), \
-	$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
-		$(eval \
-			$(call lc, $m)_alignment:  $c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
-		$(eval \
-			$c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  $c${L1X} $c${L2X}) \
-		$(eval \
-			$c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${m}_MODEL_PFX}.$w.${L2_GIVEN_L1X}  ${${m}_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
-	) \
-))
+define PYSCRIPT
+from __future__ import print_function, unicode_literals, division, absolute_import
 
-$(foreach c, ${ALL_WAMS}, \
-	$(eval \
-		ibm4_alignment:  $c.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz) \
-	$(eval \
-		$c.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
-	$(eval \
-		$c.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  $c/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz $c/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz) \
-)
+def which_wam(c):
+   if "${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}" != "":
+      if len(filter(lambda x: x == c, "$(strip ${MIXTM} ${MIXTM_TRAIN_MIX})".split(" "))) != 0:
+         return "1wam"
+      else:
+         return c
+   else:
+      return c
 
-#${TRAIN_TM}.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X}  ${IBM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-#${TRAIN_TM}.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
+with open("Makefile.alignment.deps", "w") as df:
+   for corpora in "${ALL_WAMS}".split(" "):
+      w = which_wam(corpora)
+      print("#c:{c} w:{w}".format(c=corpora, w=w), file=df)
+      for wal in "$(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split(" "):
+         print("{m}_alignment:  {m}_model".format(m=wal), file=df)
+         alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(c=corpora, m=wal)
+         print("{m}_alignment:  {alignmentFileName}".format(m=wal, alignmentFileName=alignmentFileName), file=df)
+         print("{alignmentFileName}:  {c}${L1X}  {c}${L2X}".format(c=corpora, alignmentFileName=alignmentFileName), file=df)
+         print("{alignmentFileName}:  {m}.{w}.${L2_GIVEN_L1X}  {m}.{w}.${L1_GIVEN_L2X}".format(m=wal, w=w, alignmentFileName=alignmentFileName), file=df)
+
+   # For IBM4.
+   for corpora in "${ALL_WAMS}".split(" "):
+      alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(c=corpora, m="${IBM4_MODEL_PFX}")
+      print("ibm4_alignment:  {alignmentFileName}".format(alignmentFileName=alignmentFileName), file=df)
+      print("{alignmentFileName}:  {c}/${SRC_LANG}.lc  {c}/${TGT_LANG}.lc".format(c=corpora, alignmentFileName=alignmentFileName), file=df)
+      print("{alignmentFileName}:  {c}/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz  {c}/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz".format(c=corpora, alignmentFileName=alignmentFileName), file=df)
+endef
+$(info ALIGNMENT: ${PYSCRIPT})
+RET := $(shell python -c '${PYSCRIPT}')
+include Makefile.alignment.deps
 
 
 
@@ -250,48 +249,53 @@ clean.jpts:
 jpts: SHELL=${LOCAL_SHELL}
 jpts: $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
-# Definition of the generated makefile rules/targets:
-# the meta target jpt have meta-dependency on a word alignment model,
-# the meta target jpt have a dependency on jpt file.
-# Defining a variable to hold the jpt file's prefix.
-# jpts requires the word alignment models in both directions.
-# jpts requires the source and target corpora.
-$(foreach c, ${ALL_TMS}, $(foreach w, $(call which_wam, $c), \
-	$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
-		$(eval \
-			$(call lc, ${m})_jpt:  $(call lc, ${m})_model) \
-		$(eval \
-			$(call lc, ${m})_jpt:  ${JPT_${m}_MODEL_PFX}.$c.${JOINTX}) \
-		$(eval \
-			${JPT_${m}_MODEL_PFX}.$c.${JOINTX}:  ${${m}_MODEL_PFX}.$w.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
-		$(eval \
-			${JPT_${m}_MODEL_PFX}.$c.${JOINTX}:  $c.${${m}_MODEL_PFX}.${L1_2_L2}.align.gz) \
-		$(eval \
-			${JPT_${m}_MODEL_PFX}.$c.${JOINTX}:  $c${L1X} $c${L2X}) \
-	) \
-))
+define PYSCRIPT
+from __future__ import print_function, unicode_literals, division, absolute_import
+
+def which_wam(c):
+   if "${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}" != "":
+      if len(filter(lambda x: x == c, "$(strip ${MIXTM} ${MIXTM_TRAIN_MIX})".split(" "))) != 0:
+         return "1wam"
+      else:
+         return c
+   else:
+      return c
+
+with open("Makefile.jpt.deps", "w") as df:
+   # Definition of the generated makefile rules/targets:
+   # the meta target jpt have meta-dependency on a word alignment model,
+   # the meta target jpt have meta-dependency on a alignment file,
+   # the meta target jpt have a dependency on jpt file.
+   # jpts require the word alignment models in both directions.
+   # jpts require the alignment file.
+   # jpts require the source and target corpora.
+   for corpora in "${ALL_TMS}".split(" "):
+      w = which_wam(corpora)
+      for wal in "$(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split(" "):
+         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wal)
+         print("{m}_jpt:  {m}_model  {m}_alignment".format(m=wal), file=df)
+         print("{m}_jpt:  {jptFileName}".format(m=wal, jptFileName=jptFileName), file=df)
+         print("{jptFileName}:  {m}.{w}.${L2_GIVEN_L1X}  {m}.{w}.${L1_GIVEN_L2X}".format(m=wal, w=w, jptFileName=jptFileName), file=df)
+         print("{jptFileName}:  {c}.{m}.${L1_2_L2}.align.gz".format(c=corpora, m=wal, jptFileName=jptFileName), file=df)
+         print("{jptFileName}:  {c}${L1X}  {c}${L2X}".format(c=corpora, jptFileName=jptFileName), file=df)
+
+   # IBM4 depends on special corpora.
+   for corpora in "${ALL_TMS}".split(" "):
+      w = which_wam(corpora)
+      wal = "${IBM4_MODEL_PFX}"
+      jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wal)
+      print("{m}_jpt:  {m}_model  {m}_alignment".format(m=wal), file=df)
+      print("{m}_jpt:  {jptFileName}".format(m=wal, jptFileName=jptFileName), file=df)
+      print("{jptFileName}:  {m}.{w}.${L2_GIVEN_L1X}  {m}.{w}.${L1_GIVEN_L2X}".format(m=wal, w=w, jptFileName=jptFileName), file=df)
+      print("{jptFileName}:  {c}.{m}.${L1_2_L2}.align.gz".format(c=corpora, m=wal, jptFileName=jptFileName), file=df)
+      print("{jptFileName}:  {c}/${SRC_LANG}.lc  {c}/${TGT_LANG}.lc".format(c=corpora, jptFileName=jptFileName), file=df)
+endef
+$(info JPT: ${PYSCRIPT})
+RET := $(shell python -c '${PYSCRIPT}')
+include Makefile.jpt.deps
 
 ${JPT_IBM4_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
 ${JPT_IBM4_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
-$(foreach c, ${ALL_TMS}, $(foreach w, $(call which_wam, $c), \
-	$(eval \
-		ibm4_jpt:  ${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}) \
-	$(eval \
-		${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}:  ${IBM4_MODEL_PFX}.$w.${L2_GIVEN_L1X}  ${IBM4_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
-	$(eval \
-		${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}:  $c.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz) \
-	$(eval \
-		${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
-))
-
-# EXAMPLE of the resulting code generated previously:
-#JPT_HMM3_MODEL_PFX ?= ${JPT_MODEL_PFX}.${HMM3_MODEL_PFX}
-#
-#hmm3_jpt: hmm3_model
-#hmm3_jpt: ${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
-#
-#${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM3_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-#${JPT_HMM3_MODEL_PFX}.${TRAIN_TM}.${JOINTX}:  ${TRAIN_TM}${L1X} ${TRAIN_TM}${L2X}
 
 
 
@@ -311,40 +315,46 @@ clean.sig:
 sigs: SHELL=${LOCAL_SHELL}
 sigs: $(addsuffix _sig, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
+define PYSCRIPT
+from __future__ import print_function, unicode_literals, division, absolute_import
+
 # To create a sigpruned jpt we need an original jpt.
 # To create a sigpruned jpt we need the source and target corpora.
-# source language to target language
-# m stands for model type
-$(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})), \
-		$(eval \
-			$(call lc, ${m})_sig: $(call lc, ${m})_jpt) \
-		$(eval \
-			$(call lc, ${m})_sig: ${SIG_${m}_MODEL_PFX}.$c.${JOINTX}) \
-		$(eval \
-			${SIG_${m}_MODEL_PFX}.$c.${JOINTX}:  ${JPT_${m}_MODEL_PFX}.$c.${JOINTX}) \
-		$(eval \
-			${SIG_${m}_MODEL_PFX}.$c.${JOINTX}:  $c${L1X} $c${L2X}) \
-		$(eval \
-			${SIG_${m}_MODEL_PFX}.$c.${RJOINTX}:  ${JPT_${m}_MODEL_PFX}.$c.${RJOINTX}) \
-		$(eval \
-			${SIG_${m}_MODEL_PFX}.$c.${RJOINTX}:  $c${L1X} $c${L2X}) \
-	) \
-)
+with open("Makefile.sigprune.deps", "w") as df:
+   for corpora in "${ALL_TMS}".split(" "):
+      for wal in  "$(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split(" "):
+         print("{m}_sig:  {m}_jpt".format(m=wal), file=df)
+         modelFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(m=wal, c=corpora)
+         print("{m}_sig:  {modelFileName}".format(m=wal, modelFileName=modelFileName), file=df)
+         print("{modelFileName}:  ${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(m=wal, c=corpora, modelFileName=modelFileName), file=df)
+         print("{modelFileName}:  {c}${L1X}  {c}${L2X}".format(c=corpora, modelFileName=modelFileName), file=df)
 
+         # TODO: Why do we do reverse?
+         modelFileName = "${SIG_MODEL_PFX}.{m}.{c}.${RJOINTX}".format(m=wal, c=corpora)
+         print("{modelFileName}:  ${JPT_MODEL_PFX}.{m}.{c}.${RJOINTX}".format(m=wal, c=corpora, modelFileName=modelFileName), file=df)
+         print("{modelFileName}:  {c}${L1X}  {c}${L2X}".format(c=corpora, modelFileName=modelFileName), file=df)
+
+   # IBM4 sigpruning
+   for corpora in "${ALL_TMS}".split(" "):
+      wal = "${IBM4_MODEL_PFX}"
+      print("{m}_sig:  {m}_jpt".format(m=wal), file=df)
+      modelFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(m=wal, c=corpora)
+      print("{m}_sig:  {modelFileName}".format(m=wal, modelFileName=modelFileName), file=df)
+      print("{modelFileName}:  ${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(m=wal, c=corpora, modelFileName=modelFileName), file=df)
+      print("{modelFileName}:  {c}/${SRC_LANG}.lc  {c}/${TGT_LANG}.lc".format(c=corpora, modelFileName=modelFileName), file=df)
+
+      #modelFileName = "${SIG_MODEL_PFX}.{m}.{c}.${RJOINTX}".format(m=wal, c=corpora)
+      #print("{modelFileName}:  ${JPT_MODEL_PFX}.{m}.{c}.${RJOINTX}".format(m=wal, c=corpora, modelFileName=modelFileName), file=df)
+      #print("{modelFileName}:  {c}/${SRC_LANG}.lc  {c}/${TGT_LANG}.lc".format(c=corpora, modelFileName=modelFileName), file=df)
+endef
+$(info SIG: ${PYSCRIPT})
+RET := $(shell python -c '${PYSCRIPT}')
+include Makefile.sigprune.deps
 
 # IBM4 sigpruning
-${IBM4_MODEL_PFX}_sig: ${IBM4_MODEL_PFX}_jpt
+# % should match a corpora-stem
 ${SIG_IBM4_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
 ${SIG_IBM4_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
-$(foreach c, ${ALL_TMS}, \
-	$(eval \
-		${IBM4_MODEL_PFX}_sig: ${SIG_IBM4_MODEL_PFX}.$c.${JOINTX}) \
-	$(eval \
-		${SIG_IBM4_MODEL_PFX}.$c.${JOINTX}:  ${JPT_IBM4_MODEL_PFX}.$c.${JOINTX}) \
-	$(eval \
-		${SIG_IBM4_MODEL_PFX}.$c.${JOINTX}:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
-)
 
 
 
@@ -393,63 +403,36 @@ HMM3_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${HMM3_MODEL_PFX}${HMM3_SMOOTHERS_DESCRIPTIO
 IBM4_SMOOTHERS_DESCRIPTION ?= ${SMOOTHERS_DESCRIPTION}
 IBM4_CPT_PREFIX ?= ${CPT_MODEL_PFX}.${IBM4_MODEL_PFX}${IBM4_SMOOTHERS_DESCRIPTION}
 
-# Create a variable to hold the conditional phrase table file's name e.i. hmm1_cpt_list.
-# Create meta-level dependencies between cpts and their jpts or sigs.
-# Create a meta-level target to generate cpts.
-$(foreach c, ${ALL_TMS}, \
-	$(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
-		$(eval \
-			${m}_cpt_list = ${$(call uc, ${m})_CPT_PREFIX}.$c.${L1_2_L2X}) \
-		$(eval \
-			${m}_cpt: ${m}_$(call lc, ${CPT_DEP_TAG})) \
-		$(eval \
-			${m}_cpt: ${${m}_cpt_list}) \
-	) \
-)
+define PYSCRIPT
+from __future__ import print_function, unicode_literals, division, absolute_import
 
-# Let's have a target to print out the variables that contain the conditional phrase table file's name.
-%_cpt_list: SHELL=${LOCAL_SHELL}
-%_cpt_list: ; @echo ${$@}
+with open("Makefile.cpt.deps", "w") as df:
+   dependencyType = "sig" if "${USE_SIGPRUNING}" != "" else "${JPT_MODEL_PFX}"
+   dependencyPrefix = "${SIG_MODEL_PFX}" if "${USE_SIGPRUNING}" != "" else "${JPT_MODEL_PFX}"
+   for corpora in "${ALL_TMS}".split(" "):
+      for wal in "${POSSIBLE_WORD_ALIGNMENT_MODELS}".split(" "):
+         fileName = "${CPT_MODEL_PFX}.{m}${SMOOTHERS_DESCRIPTION}.{c}.${L1_2_L2X}".format(c=corpora, m=wal)
+         # Create meta-level dependencies between cpts and their jpts or sigs.
+         print("{m}_cpt:  {m}_{t}".format(m=wal, t=dependencyType), file=df)
+         print("{m}_cpt:  {fileName}".format(m=wal, fileName=fileName), file=df)
+         print("{m}_cpt_list:  {fileName}".format(m=wal, fileName=fileName), file=df)
 
-# Creates dependencies for reversed Conditional Phrase Tables.
-# Conditional Phrase Tables depend on a word alignment model for Zens-Ney's smoother.
-# Conditional Phrase Tables depend on a joint frequency phrase table which can be raw or significance pruned (CPT_DEP_TAG).
-$(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-		$(eval \
-			${${m}_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
-		$(eval \
-			${${m}_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${CPT_DEP_TAG}_${m}_MODEL_PFX}.$c.${RJOINTX}) \
-	) \
-)
+         # Conditional Phrase Tables depend on a word alignment model for Zens-Neys smoother.
+         print("{fileName}:  {m}.{c}.${L2_GIVEN_L1X}  {m}.{c}.${L1_GIVEN_L2X}".format(c=corpora, m=wal, fileName=fileName), file=df)
+         # Conditional Phrase Tables depend on a joint frequency phrase table which can be raw or significance pruned.
+         print("{fileName}:  {dependencyPrefix}.{m}.{c}.${JOINTX}".format(c=corpora, m=wal, fileName=fileName, dependencyPrefix=dependencyPrefix), file=df)
 
-# Creates dependencies for Conditional Phrase Tables.
-# Conditional Phrase Tables depend on a word alignment model for Zens-Ney's smoother.
-# Conditional Phrase Tables depend on a jpt which can be raw or significance pruned (CPT_DEP_TAG).
-# NOTE: CPT_DEP_TAG is either JPT or SIG
-$(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-		$(eval \
-			${${m}_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${m}_MODEL_PFX}.$c.${L2_GIVEN_L1X} ${${m}_MODEL_PFX}.$c.${L1_GIVEN_L2X}) \
-		$(eval \
-			${${m}_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${CPT_DEP_TAG}_${m}_MODEL_PFX}.$c.${JOINTX}) \
-	) \
-)
+         # Reversed conditional phrase table.
+         fileName = "${CPT_MODEL_PFX}.{m}${SMOOTHERS_DESCRIPTION}.{c}.${L2_2_L1X}".format(c=corpora, m=wal)
+         # Conditional Phrase Tables depend on a word alignment model for Zens-Neys smoother.
+         print("{fileName}:  {m}.{c}.${L2_GIVEN_L1X}  {m}.{c}.${L1_GIVEN_L2X}".format(c=corpora, m=wal, fileName=fileName), file=df)
+         # Conditional Phrase Tables depend on a joint frequency phrase table which can be raw or significance pruned.
+         print("{fileName}:  {dependencyPrefix}.{m}.{c}.${RJOINTX}".format(c=corpora, m=wal, fileName=fileName, dependencyPrefix=dependencyPrefix), file=df)
+endef
+$(info CPT: ${PYSCRIPT})
+RET := $(shell python -c '${PYSCRIPT}')
+include Makefile.cpt.deps
 
-# EXAMPLE of the resulting code generated previously:
-#hmm2_cpt_list = ${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}
-#hmm2_cpt_list: SHELL=${LOCAL_SHELL}
-#hmm2_cpt_list: ; @echo ${hmm2_cpt_list}
-#
-#.PHONY:  hmm2_cpt
-#hmm2_cpt: hmm2_jpt
-#hmm2_cpt: ${hmm2_cpt_list}
-#
-#${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-#${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L2_GIVEN_L1X} ${HMM2_MODEL_PFX}.${TRAIN_TM}.${L1_GIVEN_L2X}
-#
-#${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L2_2_L1X}:  ${${CPT_DEP_TAG}_HMM2_MODEL_PFX}.${TRAIN_TM}.${RJOINTX}
-#${HMM2_CPT_PREFIX}.${TRAIN_TM}.${L1_2_L2X}:  ${${CPT_DEP_TAG}_HMM2_MODEL_PFX}.${TRAIN_TM}.${JOINTX}
 
 
 ########################################
@@ -525,33 +508,51 @@ SIG_MERGED_PFX := ${SIG_MODEL_PFX}.merged
 JPT_MERGED_PFX := ${JPT_MODEL_PFX}.merged
 
 
+define PYSCRIPT
+from __future__ import print_function, unicode_literals, division, absolute_import
+
+def which_wam(c):
+   if "${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}" != "":
+      if len(filter(lambda x: x == c, "$(strip ${MIXTM} ${MIXTM_TRAIN_MIX})".split(" "))) != 0:
+         return "1wam"
+      else:
+         return c
+   else:
+      return c
+
+with open("Makefile.merged_cpt.deps", "w") as df:
+   dependencyType = "${SIG_MODEL_PFX}" if "${USE_SIGPRUNING}" != "" else "${JPT_MODEL_PFX}"
+   for corpora in "${ALL_TMS}".split(" "):
+      w = which_wam(corpora)
+      fileName = "${CPT_MODEL_PFX}.merged.${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}${MERGED_CPT_SMOOTHERS_DESCRIPTION}.{c}.${L2_2_L1X}".format(c=corpora)
+      print("{fileName}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.{w}.${L2_GIVEN_L1X}  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.{w}.${L1_GIVEN_L2X}".format(w=w, fileName=fileName), file=df)
+      print("{fileName}:  ${${CPT_DEP_TAG}_MERGED_PFX}.{c}.${RJOINTX}".format(c=corpora, fileName=fileName), file=df)
+
+      fileName = "${CPT_MODEL_PFX}.merged.${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}${MERGED_CPT_SMOOTHERS_DESCRIPTION}.{c}.${L1_2_L2X}".format(c=corpora)
+      print("{fileName}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.{w}.${L2_GIVEN_L1X}  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.{w}.${L1_GIVEN_L2X}".format(w=w, fileName=fileName), file=df)
+      print("{fileName}:  ${${CPT_DEP_TAG}_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora, fileName=fileName), file=df)
+
+   for corpora in "${ALL_TMS}".split(" "):
+      for wal in "${MERGED_CPT_JPT_TYPES}".lower().split(" "):
+         filename = "${JPT_MERGED_PFX}.{c}.${RJOINTX}".format(c=corpora)
+         print("{filename}:  ${JPT_MODEL_PFX}.{m}.{c}.${RJOINTX}".format(c=corpora, m=wal, filename=filename), file=df)
+         filename = "${JPT_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
+         print("{filename}:  ${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wal, filename=filename), file=df)
+         filename = "${SIG_MERGED_PFX}.{c}.${RJOINTX}".format(c=corpora)
+         print("{filename}:  ${SIG_MODEL_PFX}.{m}.{c}.${RJOINTX}".format(c=corpora, m=wal, filename=filename), file=df)
+         filename = "${SIG_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
+         print("{filename}:  ${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wal, filename=filename), file=df)
+endef
+$(info MERGED CPT: ${PYSCRIPT})
+RET := $(shell python -c '${PYSCRIPT}')
+include Makefile.merged_cpt.deps
+
 # Merged conditional phrase tables depends on a word model alignment for Zens-Ney's smoother.
 # Merged conditional phrase tables depends on either a merged jpt (normal scenario) or a merged sig (when using significance pruning).
-$(foreach c, ${ALL_TMS}, $(foreach w, $(call which_wam, $c), \
-	$(eval \
-		${MERGED_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$w.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
-	$(eval \
-		${MERGED_CPT_PREFIX}.$c.${L2_2_L1X}:  ${${CPT_DEP_TAG}_MERGED_PFX}.$c.${RJOINTX}) \
-	$(eval \
-		${MERGED_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$w.${L2_GIVEN_L1X} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
-	$(eval \
-		${MERGED_CPT_PREFIX}.$c.${L1_2_L2X}:  ${${CPT_DEP_TAG}_MERGED_PFX}.$c.${JOINTX}) \
-))
-
 
 # A merged jpt depends on user define type of joint frequency count file.
+
 .INTERMEDIATE: $(foreach c, ${ALL_TMS}, ${JPT_MERGED_PFX}.$c.${RJOINTX} ${JPT_MERGED_PFX}.$c.${JOINTX})
-$(foreach c, ${ALL_TMS}, \
-	$(foreach m, $(call uc, ${MERGED_CPT_JPT_TYPES}), \
-		$(eval \
-			${JPT_MERGED_PFX}.$c.${RJOINTX}:  ${JPT_${m}_MODEL_PFX}.$c.${RJOINTX}) \
-		$(eval \
-			${JPT_MERGED_PFX}.$c.${JOINTX}:  ${JPT_${m}_MODEL_PFX}.$c.${JOINTX}) \
-		$(eval \
-			${SIG_MERGED_PFX}.$c.${RJOINTX}:  ${SIG_${m}_MODEL_PFX}.$c.${RJOINTX}) \
-		$(eval \
-			${SIG_MERGED_PFX}.$c.${JOINTX}:  ${SIG_${m}_MODEL_PFX}.$c.${JOINTX}) \
-))
 
 
 
@@ -597,26 +598,38 @@ ${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
 %.${TUNE_MIXTM_FINAL}.${JOINTX}: GEN_JPT_PARALLEL_OPTIONS=
 %.${TUNE_MIXTM_FINAL}.${JOINTX}: JPT_MODEL_TYPE=
 
-$(foreach j, ${MERGED_CPT_JPT_TYPES}, \
-	$(eval \
-		${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}) \
-	$(eval \
-		${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz) \
-)
+define PYSCRIPT
+from __future__ import print_function, unicode_literals, division, absolute_import
 
-$(foreach j, $(filter-out IBM4, ${MERGED_CPT_JPT_TYPES}), $(foreach w, $(call which_wam, ${MIXTM_TRAIN_MIX}), \
-	$(eval \
-		${JPT_${j}_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}${L1} ${TUNE_MIXTM_FINAL}${L2}) \
-	$(eval \
-		${TUNE_MIXTM_FINAL}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${${j}_MODEL_PFX}.$w.${L2_GIVEN_L1X} ${${j}_MODEL_PFX}.$w.${L1_GIVEN_L2X}) \
-	$(eval \
-		${TUNE_MIXTM_FINAL}.${${j}_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM_FINAL}${L1} ${TUNE_MIXTM_FINAL}${L2}) \
-))
+def which_wam(c):
+   if "${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}" != "":
+      if len(filter(lambda x: x == c, "$(strip ${MIXTM} ${MIXTM_TRAIN_MIX})".split(" "))) != 0:
+         return "1wam"
+      else:
+         return c
+   else:
+      return c
+
+with open("Makefile.mix_cpt.deps", "w") as df:
+   for j in "${MERGED_CPT_JPT_TYPES}".lower().split(" "):
+      print("${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${JPT_MODEL_PFX}.{j}.${TUNE_MIXTM_FINAL}.${JOINTX}".format(j=j), file=df)
+      print("${JPT_MODEL_PFX}.{j}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}.{j}.${L1_2_L2}.align.gz".format(j=j), file=df)
+
+   w = which_wam("${MIXTM_TRAIN_MIX}")
+   for j in "$(filter-out IBM4, ${MERGED_CPT_JPT_TYPES})".lower().split(" "):
+      print("${JPT_MODEL_PFX}.{j}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}${L1}  ${TUNE_MIXTM_FINAL}${L2}".format(j=j), file=df)
+      filename = "${TUNE_MIXTM_FINAL}.{j}.${L1_2_L2}.align.gz".format(j=j)
+      print("{filename}:  {j}.{w}.${L2_GIVEN_L1X}  {j}.{w}.${L1_GIVEN_L2X}".format(j=j, w=w, filename=filename), file=df)
+      print("{filename}:  ${TUNE_MIXTM_FINAL}${L1}  ${TUNE_MIXTM_FINAL}${L2}".format(filename=filename), file=df)
+endef
+$(info MIXED CPT: ${PYSCRIPT})
+RET := $(shell python -c '${PYSCRIPT}')
+include Makefile.mix_cpt.deps
 
 # FORCED ALIGNING tune mixtm with IBM4 models.
-${JPT_IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc
-${TUNE_MIXTM_FINAL}.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc
-${TUNE_MIXTM_FINAL}.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM_FINAL}/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz ${TUNE_MIXTM_FINAL}/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz
+${JPT_IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc  ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc
+${TUNE_MIXTM_FINAL}.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc  ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc
+${TUNE_MIXTM_FINAL}.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  ${TUNE_MIXTM_FINAL}/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz  ${TUNE_MIXTM_FINAL}/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz
 
 endif  # ifdef USE_MIXTM
 
@@ -698,6 +711,14 @@ ifneq ($(filter-out IBM4 HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_JPT_TYPES}),)
 $(error MERGED_CPT_JPT_TYPES must be one of IBM4, HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_JPT_TYPES})
 endif
 endif
+
+
+################################################################################
+# HELPERS
+
+# Let's have a target to print out the variables that contain the conditional phrase table file's name.
+%_cpt_list: SHELL=${LOCAL_SHELL}
+%_cpt_list: ; @echo ${$@}
 
 
 

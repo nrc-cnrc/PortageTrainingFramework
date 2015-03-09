@@ -128,7 +128,7 @@ HMM2_MODEL_EXTRAS ?=
 
 ########################################
 # HMM3 MODELS.
-HMM3_MODEL_PFX ?= hmm3
+HMM3_MODEL_PFX ?=hmm3
 HMM3_MODEL_CPUS ?= 1
 HMM3_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
 HMM3_MODEL_WORKERS ?= ${HMM3_MODEL_PARALLELISM_LEVEL}
@@ -157,7 +157,7 @@ JPT_EXTRAS ?=
 # Create variables to hold jpt model prefix.
 $(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${IBM4_MODEL_PFX}), \
    $(eval \
-	   JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
+      JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
 )
 
 ifdef TMS_WITH_ALIGNMENT_FIELD

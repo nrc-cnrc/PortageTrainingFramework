@@ -3,6 +3,7 @@
 *.tppt
 *.tpldm
 log.*
+Makefile.*.deps
 
 .*.tstamp
 
