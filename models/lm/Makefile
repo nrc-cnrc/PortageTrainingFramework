@@ -3,7 +3,7 @@
 #
 # @author Samuel Larkin and Darlene Stewart
 # @file Makefile
-# @brief Trains language model files.
+# @brief Train language model files.
 #
 # Traitement multilingue de textes / Multilingual Text Processing
 # Tech. de l'information et des communications / Information and Communications Tech.
@@ -11,19 +11,20 @@
 # Copyright 2008, 2015 Sa Majeste la Reine du Chef du Canada
 # Copyright 2008, 2015 Her Majesty in Right of Canada
 
+LM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
 # Mandatory include: master config file.
-include ../../Makefile.params
+include ${LM_DIR_PFX}../../Makefile.params
 
 # Include the config file.
 MAKEFILE_PARAMS ?= Makefile.params
--include ${MAKEFILE_PARAMS}
+-include ${LM_DIR_PFX}${MAKEFILE_PARAMS}
 
 # Include the master toolkit
-include ../../Makefile.toolkit
+include ${LM_DIR_PFX}../../Makefile.toolkit
 
 # Include the LM toolkit
-include Makefile.toolkit
+include ${LM_DIR_PFX}Makefile.toolkit
 
 
 # What is this module's name.
