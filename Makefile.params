@@ -55,6 +55,12 @@ TRAIN_LM      ?= lm-train
 # directory.
 #MIXLM_PRETRAINED_TGT_LMS ?= ${PORTAGE}/generic-model/lm/generic1.0_fr.binlm.gz
 
+# TRAIN_COARSELM is used to train coarse language models.
+# By default, we train coarse LMs for the corpora listed in TRAIN_LM; if you
+# want to use different corpora, uncomment and define TRAIN_COARSELM.
+# => TRAIN_COARSELM = TRAIN_LM
+#TRAIN_COARSELM ?= coarselm-train
+
 # TRAIN_TC is used to create a truecasing model.
 # By default, we use the first name listed in TRAIN_LM, thus if you do not, 
 # uncomment and define TRAIN_TC
@@ -116,7 +122,9 @@ TRAIN_TM      ?= tm-train
 
 # TRAIN_WCL is used to train word classes for use in coarse models.
 # It should point to the concatenation of all your training corpora.
-# By default, we use the TRAIN_LM and MIXLM corpora.
+# By default, we use the TRAIN_LM and MIXLM corpora; if you
+# want to use different corpora, uncomment and define TRAIN_WCL.
+# => TRAIN_WCL = TRAIN_LM MIXLM
 #TRAIN_WCL ?= wcl-train
 
 # TUNE_DECODE is used to tune the decoding weights (using tune.py).
@@ -187,10 +195,10 @@ USE_HLDM = 1
 # Train and use a sparse model
 #USE_SPARSE = 1
 
-# Word class granularities to train.
-# Defining WCL_NCLS_LIST triggers word class training.
-# If defined, WCL_NCLS_LIST must contain integer values.
-#WCL_NCLS_LIST = 200 800
+# Word class granularities for coarse LMs.
+# Defining COARSELM_NCLS_LIST triggers word class training and coarse LM training.
+# If defined, COARSELM_NCLS_LIST must contain integer values.
+#COARSELM_NCLS_LIST = 200 800
 
 # Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
@@ -440,6 +448,23 @@ ifdef USE_HLDM
 endif
 TRAIN_HLDM := $(strip ${TRAIN_HLDM})
 
+# By default, we assume that the user wants to use the TRAIN_LM corpora
+# for coarse LM too.
+COARSELM_NCLS_LIST := $(strip ${COARSELM_NCLS_LIST})
+ifdef COARSELM_NCLS_LIST
+	TRAIN_COARSELM ?= ${TRAIN_LM}
+endif
+TRAIN_COARSELM := $(strip ${TRAIN_COARSELM})
+
+# Word class granularities to train.
+# By default, we train word classes (wcl) for the granularites identified for
+# use in coarse models (coarse LMs, coarse BiLMs, coarse TMs).
+# => WCL_NCLS_LIST = COARSELM_NCLS_LIST
+# Defining WCL_NCLS_LIST triggers word class training.
+# If defined, WCL_NCLS_LIST must contain integer values.
+WCL_NCLS_LIST ?= $(sort ${COARSELM_NCLS_LIST})
+WCL_NCLS_LIST := $(strip ${WCL_NCLS_LIST})
+
 # By default, we assume that the user wants to use the corpora listed in
 # TRAIN_LM and MIXLM to build the word classes.
 ifdef WCL_NCLS_LIST
@@ -589,6 +614,12 @@ endif
 ifdef USE_SPARSE
 ifeq (${TRAIN_SPARSE},)
 $(error With USE_SPARSE, you must define a training corpus for sparse features using TRAIN_SPARSE)
+endif
+endif
+
+ifdef COARSELM_NCLS_LIST
+ifeq (${TRAIN_COARSELM},)
+$(error With COARSELM_NCLS_LIST, you must define a training corpus (TRAIN_COARSELM) for training the coarse LM(s))
 endif
 endif
 
