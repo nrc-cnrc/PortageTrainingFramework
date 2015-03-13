@@ -114,6 +114,11 @@ TRAIN_TM      ?= tm-train
 # TODO: Automate creating that concatenation.
 #TRAIN_SPARSE ?= sparse-train
 
+# TRAIN_WCL is used to train word classes for use in coarse models.
+# It should point to the concatenation of all your training corpora.
+# By default, we use the TRAIN_LM and MIXLM corpora.
+#TRAIN_WCL ?= wcl-train
+
 # TUNE_DECODE is used to tune the decoding weights (using tune.py).
 TUNE_DECODE   ?= dev1
 # TUNE_DECODE_VARIANTS is used to tune and test using multiple tuning sets.
@@ -181,6 +186,11 @@ USE_HLDM = 1
 
 # Train and use a sparse model
 #USE_SPARSE = 1
+
+# Word class granularities to train.
+# Defining WCL_NCLS_LIST triggers word class training.
+# If defined, WCL_NCLS_LIST must contain integer values.
+#WCL_NCLS_LIST = 200 800
 
 # Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
@@ -430,6 +440,13 @@ ifdef USE_HLDM
 endif
 TRAIN_HLDM := $(strip ${TRAIN_HLDM})
 
+# By default, we assume that the user wants to use the corpora listed in
+# TRAIN_LM and MIXLM to build the word classes.
+ifdef WCL_NCLS_LIST
+	TRAIN_WCL ?= $(sort ${TRAIN_LM} ${MIXLM})
+endif
+TRAIN_WCL := $(strip ${TRAIN_WCL})
+
 # Define what type of language model we want to generate.
 LM_TYPES ?= binlm
 
@@ -572,6 +589,12 @@ endif
 ifdef USE_SPARSE
 ifeq (${TRAIN_SPARSE},)
 $(error With USE_SPARSE, you must define a training corpus for sparse features using TRAIN_SPARSE)
+endif
+endif
+
+ifdef WCL_NCLS_LIST
+ifeq (${TRAIN_WCL},)
+$(error With WCL_NCLS_LIST, you must define a training corpus (TRAIN_WCL) for training the word classes)
 endif
 endif
 
