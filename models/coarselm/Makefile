@@ -77,8 +77,9 @@ CORPORA_DIR ?= ../../corpora
 FILES_TO_BE_LOCKED = $(addsuffix *, ${LM_NAMES})
 
 
-# Tells make where to find the corpus' file and the marked file if need be.
+# By default, locate corpora files in the corpora directory.
 vpath %${CORPUS_EXT} ${CORPORA_DIR}
+vpath %${CORPUS_EXT:.gz=} ${CORPORA_DIR}
 
 # Locate the classes files in the wcl module
 vpath %.classes ../wcl
@@ -128,8 +129,33 @@ $(foreach n, ${COARSELM_NCLS_LIST}, \
 	) \
 )
 
-%${CORPUS_EXT}:
-	word2class $(filter %${CORPUS_EXT}, $+) $(filter %.classes, $+) | gzip > $@
+.INTERMEDIATE: $(foreach c, ${CORPORA_NAMES}, ${c}${CORPUS_EXT})
+$(foreach c, ${CORPORA_NAMES}, ${c}${CORPUS_EXT}): %${CORPUS_EXT}:
+	word2class -no-error $(filter %${CORPUS_EXT}, $+) $(filter %.classes, $+) | gzip > $@
+
+# If tuning the discount parameters, we need to map the dev set to word classes too.
+ifeq (${LM_TOOLKIT}, MIT)
+ifdef TUNE_COARSELM
+$(foreach n, ${COARSELM_NCLS_LIST}, \
+	$(eval \
+		${TUNE_COARSELM}-${n}_${LM_LANG}${CORPUS_EXT:.gz=}: ${TUNE_COARSELM}_${LM_LANG}${CORPUS_EXT:.gz=} ${LM_LANG}.${n}.classes) \
+)
+
+TUNE_FILES = $(foreach n, ${COARSELM_NCLS_LIST}, ${TUNE_COARSELM}-${n}_${LM_LANG}${CORPUS_EXT:.gz=})
+.INTERMEDIATE: ${TUNE_FILES}
+${TUNE_FILES}: %${CORPUS_EXT:.gz=}:
+	_LOCAL=1 word2class -no-error $(filter %${CORPUS_EXT:.gz=}, $+) $(filter %.classes, $+) > $@
+
+# We also add a dependency on the mapped dev set for tuning the discount parameters.
+$(foreach n, ${COARSELM_NCLS_LIST}, \
+	$(foreach c, ${TRAIN_COARSELM}, \
+		$(eval \
+			${c}_${LM_LANG}-${n}${LM_DESC}.lm.gz: ${TUNE_COARSELM}-${n}_${LM_LANG}${CORPUS_EXT:.gz=}) \
+	) \
+)
+endif
+endif
+
 
 ########################################
 # What the user can expect from this module.
@@ -150,6 +176,7 @@ clean.content: SHELL=${LOCAL_SHELL}
 
 clean.content:
 	${RM} *.lm.gz *.binlm.gz
+	${RM} $(foreach n, ${COARSELM_NCLS_LIST}, *-${n}${CORPUS_EXT} *-${n}_*${CORPUS_EXT:.gz=})
 	${RM} -r *.tplm
 
 

@@ -105,6 +105,8 @@ endif
 # than 4095 characters.
 FILTER = perl -ple 's/^\s+//; s/\s+$$//; s/\s+/ /g;' | fold -s -w 4095
 
+# If there is a second dependency, it is assumed to be a dev file for tuning
+# the discounting parameters.
 # Here we've added LM_DESC to strip it out from the corpus file name.
 %${LM_DESC}.lm.gz: SHELL=${FRAMEWORK_SHELL}
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
@@ -118,8 +120,9 @@ FILTER = perl -ple 's/^\s+//; s/\s+$$//; s/\s+/ /g;' | fold -s -w 4095
 		-order ${ORDER} \
 		${SMOOTHING_OPT} \
 		-text /dev/stdin \
+		$(if $(word 2, $+), -opt-perp $(word 2, $+)) \
 		-write-lm $@ \
-		$(and ${KEEP_COUNTS}, -write-counts ${@:.lm.gz=.counts.gz}) \
+		$(if ${KEEP_COUNTS}, -write-counts ${@:.lm.gz=.counts.gz}) \
 		${EXTRA_LM_OPTS} \
 	>& log.$(basename $@)
 

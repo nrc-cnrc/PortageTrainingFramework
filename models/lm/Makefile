@@ -51,7 +51,7 @@ CORPORA_NAMES ?= $(addsuffix _${LM_LANG}, ${TRAIN_LM})
 # This indicates the corpus extension and looks like .tok.al.gz
 CORPUS_EXT  ?= ${LANGXZ}
 
-LM_DESC ?= -kn-${ORDER}g
+LM_DESC ?= -${SMOOTHER}-${ORDER}g
 LM_NAMES ?= $(addsuffix ${LM_DESC}, ${CORPORA_NAMES})
 
 # Where to find the corpus' file.
@@ -126,6 +126,16 @@ $(error Invalid LM_TYPES: $(filter-out ${VALID_LM_TYPES}, ${LM_TYPES}))
 endif
 
 all: $(foreach x, ${LM_EXTS}, $(addsuffix $x, ${LM_NAMES}))
+
+# If tuning the discount parameters, we add a dependency on that file too.
+ifeq (${LM_TOOLKIT}, MIT)
+ifdef TUNE_LM
+$(foreach c, ${TRAIN_LM}, \
+	$(eval \
+		${c}_${LM_LANG}${LM_DESC}.lm.gz: ${TUNE_LM}_${LM_LANG}${CORPUS_EXT:.gz=}) \
+)
+endif
+endif
 
 ########################################
 # What the user can expect from this module.

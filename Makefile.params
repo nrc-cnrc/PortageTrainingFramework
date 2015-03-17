@@ -369,6 +369,13 @@ LANGXZ ?= ${LANGX}${GZ}
 # Language pair for this system.
 LANGS ?= ${SRC_LANG} ${TGT_LANG}
 
+# With the MIT LM toolkit, a dev set can be used to tune the LM KN discounting
+# parameters. It is recommended that a dev set other than the TUNE_DECODE set
+# be used for such tuning; it's okay to use TUNE_RESCORE or TUNE_CE if different
+# from TUNE_DECODE. To tune the LM parameters, define TUNE_LM below.
+TUNE_LM ?=
+TUNE_LM := $(strip ${TUNE_LM})
+
 USE_MIXTM := $(if $(strip ${MIXTM} ${MIXTM_PRETRAINED_TMS}),1)
 ifdef USE_MIXTM
 # By default we assume that the user wants to use the first MIXTM corpus (its 
@@ -455,6 +462,17 @@ ifdef COARSELM_NCLS_LIST
 	TRAIN_COARSELM ?= ${TRAIN_LM}
 endif
 TRAIN_COARSELM := $(strip ${TRAIN_COARSELM})
+
+# With the MIT LM toolkit, a dev set can be used to tune the LM KN discounting
+# parameters. It is recommended that a dev set other than the TUNE_DECODE set
+# be used for such tuning; it's okay to use TUNE_RESCORE or TUNE_CE if different
+# from TUNE_DECODE. To tune the discount parameters for coarse LMs, define
+# TUNE_COARSELM below. By default, we assume the user wants to use the same
+# dev set to tune the coarse LMs as was used to turn the normal word LM.
+ifdef COARSELM_NCLS_LIST
+TUNE_COARSELM ?= ${TUNE_LM}
+endif
+TUNE_COARSELM := $(strip ${TUNE_COARSELM})
 
 # Word class granularities to train.
 # By default, we train word classes (wcl) for the granularites identified for
