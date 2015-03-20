@@ -41,35 +41,7 @@ ifeq (${LM_TOOLKIT},IRST)
 	@echo "   export IRSTLM=${IRSTLM}"
 	@echo
 endif
-	@echo "Your corpora are:"
-	@echo "   train lm: ${TRAIN_LM}"
-ifneq ($(strip ${MIXLM}),)
-	@echo "   train mixlm: ${MIXLM}"
-endif
-ifneq ($(strip ${TRAIN_TC}),)
-	@echo "   train tc: ${TRAIN_TC}"
-endif
-	@echo "   train tm: ${TRAIN_TM}"
-ifneq ($(strip ${MIXTM}),)
-	@echo "   train mixtm: ${MIXTM}"
-endif
-ifneq ($(strip ${MIXTM_TRAIN_MIX}),)
-	@echo "   tune mixtm mix: ${MIXTM_TRAIN_MIX}"
-endif
-ifneq ($(strip ${TRAIN_LDM}),)
-	@echo "   train ldm: ${TRAIN_LDM}"
-endif
-ifneq ($(strip ${TRAIN_HLDM}),)
-	@echo "   train hldm: ${TRAIN_HLDM}"
-endif
-	@echo "   tune decode: ${TUNE_DECODE}"
-ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
-	@echo "   tune decode variants: $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})"
-endif
-	@echo "   tune rescore: ${TUNE_RESCORE}"
-ifneq ($(strip ${TUNE_CE}),)
-	@echo "   tune ce: ${TUNE_CE}"
-endif
+	${LIST_ALL_CORPORA}
 	@echo "   test set: ${TEST_SET}"
 ifneq ($(strip ${TRANSLATE_SET}),)
 	@echo "   translate set: ${TRANSLATE_SET}"
@@ -131,13 +103,13 @@ corpora: check_setup
 
 
 
-# Create the Language Models (LM, MIXLM).
+# Create the Language Models (LM, MixLM, CoarseLM).
 # Create the Lexicalized Distortion Models (LDM).
 # Create models for truecasing (TC).
 # Create the Translation Model (TM).
-.PHONY: models lm mixlm ldm tc tm
-models lm mixlm ldm tc tm: SHELL=${LOCAL_SHELL}
-models lm mixlm ldm tc tm: %: corpora
+.PHONY: models lm mixlm coarselm ldm tc tm
+models lm mixlm coarselm ldm tc tm: SHELL=${LOCAL_SHELL}
+models lm mixlm coarselm ldm tc tm: %: corpora
 	${MAKE} -C models $@ DO_UPDATE_PRETRAINED_LINKS=1
 
 
