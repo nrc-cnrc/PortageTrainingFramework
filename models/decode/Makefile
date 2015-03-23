@@ -229,6 +229,14 @@ $(warning No LMs available. Have you trained at least one language model?)
 endif
 $(info LMs: ${LMS})
 
+COARSE_LM_SEARCH ?= models/coarselm/*_${TGT_LANG}-${n}[-.]*binlm.gz
+COARSE_LM_SPECS ?= $(foreach n, ${COARSELM_NCLS_LIST}, \
+                      $(foreach lm, $(wildcard ${COARSE_LM_SEARCH}), \
+                         DynMap;wordClasses-models/wcl/${TGT_LANG}.${n}.classes;${lm} \
+                      ) \
+                   )
+$(info Coarse LMs: ${COARSE_LM_SPECS})
+
 ${UNTUNED_DECODING_MODEL}: SHELL=${LOCAL_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	@ls ${CPT_SEARCH} &> /dev/null \
@@ -239,7 +247,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	| sed -e 's/<SL>/${SRC_LANG}/g' \
 	      -e 's/<TL>/${TGT_LANG}/g' \
 	      -e 's#<CPTS>#${CPTS}#g' \
-	      -e 's#<LMS>#${LMS}#g' \
+	      -e 's#<LMS>#${LMS} ${COARSE_LM_SPECS}#g' \
 	      -e 's/^\(\[\(weight-f\|ftm\)\]\)/##mid##\1/' \
 	| configtool -p "args: \
 	      $(and ${USE_LDM}${USE_HLDM}, -dist-phrase-swap) \
