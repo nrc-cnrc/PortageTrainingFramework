@@ -8,8 +8,8 @@
 # Traitement multilingue de textes / Multilingual Text Processing
 # Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, 2015 Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, 2015 Her Majesty in Right of Canada
+# Copyright 2008, 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2015, Her Majesty in Right of Canada
 
 LM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
@@ -31,7 +31,7 @@ include ${LM_DIR_PFX}Makefile.toolkit
 MODULE_NAME ?= lm
 
 # The following variables are defined in Makefile.toolkit included above:
-#    LM_LANG, ORDER, CORPUS_EXT, LM_DESC, IRSTLM
+#    ORDER, CORPUS_EXT, LM_DESC, IRSTLM
 # Their default definitions are repeated below for documentation.
 
 # What is the lm language.

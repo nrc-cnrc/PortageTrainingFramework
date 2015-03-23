@@ -12,9 +12,6 @@
 # Copyright 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2015, Her Majesty in Right of Canada
 
-# What is the LM language?
-LM_LANG ?= ${TGT_LANG}
-
 # What is the order of the required LM.
 ORDER ?= 5
 

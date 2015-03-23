@@ -8,8 +8,8 @@
 # Traitement multilingue de textes / Multilingual Text Processing
 # Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2015 Sa Majeste la Reine du Chef du Canada
-# Copyright 2015 Her Majesty in Right of Canada
+# Copyright 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2015, Her Majesty in Right of Canada
 
 # Mandatory include: master config file.
 include ../../Makefile.params
@@ -45,7 +45,7 @@ include ../lm/Makefile.toolkit
 MODULE_NAME ?= coarselm
 
 # The following variables are defined in Makefile.toolkit included above:
-#    LM_LANG, CORPUS_EXT, LM_DESC
+#    CORPUS_EXT, LM_DESC
 # Their default definitions are repeated below for documentation.
 
 # What is the lm language.
