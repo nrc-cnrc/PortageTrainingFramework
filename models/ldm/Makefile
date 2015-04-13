@@ -188,7 +188,12 @@ ${LDM_FILE:.gz=.tpldm}:  %.tpldm:  %.gz
 ${HLDM_FILE:.gz=.tpldm}:  %.tpldm:  %.gz
 
 
+clean.content: clean.tpldm
 
+.PHONY: clean.tpldm
+clean.tpldm: SHELL=${LOCAL_SHELL}
+clean.tpldm:
+	${RM} -r *.tpldm
 
 
 
