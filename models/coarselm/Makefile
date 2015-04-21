@@ -129,8 +129,10 @@ $(foreach n, ${COARSELM_NCLS_LIST}, \
 	) \
 )
 
-.INTERMEDIATE: $(foreach c, ${CORPORA_NAMES}, ${c}${CORPUS_EXT})
-$(foreach c, ${CORPORA_NAMES}, ${c}${CORPUS_EXT}): %${CORPUS_EXT}:
+CORP_FILES = $(foreach c, ${CORPORA_NAMES}, ${c}${CORPUS_EXT})
+.INTERMEDIATE: ${CORP_FILES}
+${CORP_FILES}: SHELL=${LOCAL_SHELL}
+${CORP_FILES}: %${CORPUS_EXT}:
 	word2class -no-error $(filter %${CORPUS_EXT}, $+) $(filter %.classes, $+) | gzip > $@
 
 # If tuning the discount parameters, we need to map the dev set to word classes too.
@@ -143,8 +145,9 @@ $(foreach n, ${COARSELM_NCLS_LIST}, \
 
 TUNE_FILES = $(foreach n, ${COARSELM_NCLS_LIST}, ${TUNE_COARSELM}-${n}_${LM_LANG}${CORPUS_EXT:.gz=})
 .INTERMEDIATE: ${TUNE_FILES}
+${TUNE_FILES}: SHELL=${LOCAL_SHELL}
 ${TUNE_FILES}: %${CORPUS_EXT:.gz=}:
-	_LOCAL=1 word2class -no-error $(filter %${CORPUS_EXT:.gz=}, $+) $(filter %.classes, $+) > $@
+	word2class -no-error $(filter %${CORPUS_EXT:.gz=}, $+) $(filter %.classes, $+) > $@
 
 # We also add a dependency on the mapped dev set for tuning the discount parameters.
 $(foreach n, ${COARSELM_NCLS_LIST}, \

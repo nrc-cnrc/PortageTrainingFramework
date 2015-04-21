@@ -18,7 +18,7 @@
 WCL_PROG ?= mkcls
 
 # More memory may be needed for very large corpora...
-CPUS ?= 1
+WCL_CPUS ?= 1
 
 # If you need to provide some extra options to mkcls or word2vec...
 EXTRA_WCL_OPTS ?=
@@ -30,9 +30,12 @@ ifeq ($(findstring ${WCL_PROG}, "mkcls word2vec"),)
 $(error Invalid value for WCL_PROG: ${WCL_PROG})
 endif
 
+%.classes: SHELL=${FRAMEWORK_SHELL}
+
 ifeq (${WCL_PROG}, mkcls)
 %.classes:
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	@_LOCAL=1; [[ $(words $^) != 0 ]] || ! echo "ERROR: Prerequisites not specified for $@. Please train models/wcl first!" >&2
+	RP_PSUB_OPTS="-${WCL_CPUS} -N $@" \
 	${TIME_MEM} \
 	run-mkcls.sh \
 	   -n10 \
@@ -44,8 +47,9 @@ ifeq (${WCL_PROG}, mkcls)
 else
 W2V_OPTS ?= -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 -min-count 1
 %.classes:
+	@_LOCAL=1; [[ $(words $^) != 0 ]] || ! echo "ERROR: Prerequisites not specified for $@. Please train models/wcl first!" >&2
    _LOCAL=1 zcat -f $(filter %_${WCL_LANG}${LANGX} %_${WCL_LANG}${LANGXZ}, $^) > all_${WCL_LANG}${LANGX}
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	RP_PSUB_OPTS="-${WCL_CPUS} -N $@" \
 	${TIME_MEM} \
 	word2vec \
 	   ${W2V_OPTS} \
@@ -64,9 +68,10 @@ endif
 
 ########################################
 # For debugging purpose
-.PHONY: check_setup
-check_setup: SHELL=${LOCAL_SHELL}
-check_setup:
+.PHONY: check_setup check_setup_wcl
+check_setup: check_setup_wcl
+check_setup_wcl: SHELL=${LOCAL_SHELL}
+check_setup_wcl:
 ifeq ($(findstring ${WCL_PROG}, "mkcls word2vec"),)
 	which ${WCL_PROG}
 else

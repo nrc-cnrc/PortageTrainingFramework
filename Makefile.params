@@ -61,6 +61,12 @@ TRAIN_LM      ?= lm-train
 # => TRAIN_COARSELM = TRAIN_LM
 #TRAIN_COARSELM ?= coarselm-train
 
+# TRAIN_BILM is used to train BiLM models.
+# By default, we train BiLMs for the corpora listed in TRAIN_TM; if you
+# want to use different corpora, uncomment and define TRAIN_BILM.
+# => TRAIN_BILM = TRAIN_TM
+#TRAIN_BILM ?= bilm-train
+
 # TRAIN_TC is used to create a truecasing model.
 # By default, we use the first name listed in TRAIN_LM, thus if you do not, 
 # uncomment and define TRAIN_TC
@@ -199,6 +205,16 @@ USE_HLDM = 1
 # Defining COARSELM_NCLS_LIST triggers word class training and coarse LM training.
 # If defined, COARSELM_NCLS_LIST must contain integer values.
 #COARSELM_NCLS_LIST = 200 800
+
+# Specifications for BiLMs.
+# Defining BILM_SPEC triggers BiLM training.
+# "word" indicates a word-based BiLM.
+# Coarse BiLM specifications take the form: NNNbi-NNNs-NNNt where NNN is the
+# word class granularity. Examples: 400bi-400s-400t, 400s-400t, 400bi,
+# 400bi-100s-200t
+# Multiple BiLM specifications are permitted. Each will be applied to each
+# corpus listed in TRAIN_BILM.
+#BILM_SPEC = 400bi-400s-400t
 
 # Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
@@ -474,13 +490,33 @@ TUNE_COARSELM ?= ${TUNE_LM}
 endif
 TUNE_COARSELM := $(strip ${TUNE_COARSELM})
 
+# By default, we assume that the user wants to use the TRAIN_TM corpora
+# for BiLMs too.
+BILM_SPEC := $(strip ${BILM_SPEC})
+ifdef BILM_SPEC
+	TRAIN_BILM ?= ${TRAIN_TM}
+endif
+TRAIN_BILM := $(strip ${TRAIN_BILM})
+BILM_NCLS_LIST := $(patsubst %s,%, $(patsubst %t,%, $(filter %s %t, $(subst -, ,${BILM_SPEC}))))
+
+# With the MIT LM toolkit, a dev set can be used to tune the LM KN discounting
+# parameters. It is recommended that a dev set other than the TUNE_DECODE set
+# be used for such tuning; it's okay to use TUNE_RESCORE or TUNE_CE if different
+# from TUNE_DECODE. To tune the discount parameters for BiLMs, define
+# TUNE_BILM below. By default, we assume the user wants to use the same
+# dev set to tune the BiLMs as was used to turn the normal word LM.
+ifdef BILM_SPEC
+TUNE_BILM ?= ${TUNE_LM}
+endif
+TUNE_BILM := $(strip ${TUNE_BILM})
+
 # Word class granularities to train.
 # By default, we train word classes (wcl) for the granularites identified for
 # use in coarse models (coarse LMs, coarse BiLMs, coarse TMs).
-# => WCL_NCLS_LIST = COARSELM_NCLS_LIST
+# => WCL_NCLS_LIST = COARSELM_NCLS_LIST BILM_NCLS_LIST
 # Defining WCL_NCLS_LIST triggers word class training.
 # If defined, WCL_NCLS_LIST must contain integer values.
-WCL_NCLS_LIST ?= $(sort ${COARSELM_NCLS_LIST})
+WCL_NCLS_LIST ?= $(sort ${COARSELM_NCLS_LIST} ${BILM_NCLS_LIST})
 WCL_NCLS_LIST := $(strip ${WCL_NCLS_LIST})
 
 # By default, we assume that the user wants to use the corpora listed in
@@ -638,6 +674,12 @@ endif
 ifdef COARSELM_NCLS_LIST
 ifeq (${TRAIN_COARSELM},)
 $(error With COARSELM_NCLS_LIST, you must define a training corpus (TRAIN_COARSELM) for training the coarse LM(s))
+endif
+endif
+
+ifdef BILM_SPEC
+ifeq (${TRAIN_BILM},)
+$(error With BILM_SPEC, you must define a training corpus (TRAIN_BILM) for training the BiLM(s))
 endif
 endif
 

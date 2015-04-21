@@ -37,7 +37,7 @@ PARALLELISM_LEVEL_LM ?= 5
 
 # Most steps require the LM to be loaded in memory, so...
 # how many cpus should those jobs use?
-CPUS ?= 2
+LM_CPUS ?= 2
 
 ifeq (${LM_TOOLKIT}, IRST)
 # Where is IRSTLM located?
@@ -76,7 +76,7 @@ endif
 %${LM_DESC}.lm.gz: SHELL=${FRAMEWORK_SHELL}
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
 	${TIME_MEM} \
 	ngram-count \
 		-order ${ORDER} \
@@ -108,7 +108,7 @@ FILTER = perl -ple 's/^\s+//; s/\s+$$//; s/\s+/ /g;' | fold -s -w 4095
 %${LM_DESC}.lm.gz: SHELL=${FRAMEWORK_SHELL}
 %${LM_DESC}.lm.gz: %${CORPUS_EXT}
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
 	set -o pipefail; \
 	zcat $< \
 	| ${FILTER} \
@@ -141,7 +141,7 @@ else ifeq (${LM_TOOLKIT}, IRST)
 %.lm.gz: SHELL=${FRAMEWORK_SHELL}
 %.lm.gz: %.ilm.gz
 	@_LOCAL=1 echo "  Creating ARPA text format $@"
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
 	set -o pipefail; \
 	${TIME_MEM} \
 	compile-lm \
@@ -162,7 +162,7 @@ endif
 
 %.binlm.gz: SHELL=${FRAMEWORK_SHELL}
 %.binlm.gz: %.lm.gz
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
 	${TIME_MEM} \
 	arpalm2binlm $< $@ >& log.$(basename $@)
 
@@ -171,7 +171,7 @@ endif
 
 %.tplm: SHELL=${FRAMEWORK_SHELL}
 %.tplm: %.lm.gz
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
 	${TIME_MEM} \
 	arpalm2tplm.sh $< $* 2> log.$@
 
@@ -184,7 +184,7 @@ endif
 %${LM_DESC}.ilm.gz: %.marked.gz
 	@_LOCAL=1 echo "  Creating IRSTLM $@"
 	_LOCAL=1 ${RM} $@
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
 	IRSTLM=${IRSTLM} ${BUILD_LM_PGM} \
 		-p \
 		-t stat.$$$$ \
@@ -215,7 +215,7 @@ endif
 %.blmt: SHELL=${FRAMEWORK_SHELL}
 %.blmt: %.ilm.gz
 	@_LOCAL=1 echo "  Creating bin.ARPA format $@"
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
 	${TIME_MEM} \
 	compile-lm \
 		$< \
@@ -228,7 +228,7 @@ endif
 %.qlm: SHELL=${FRAMEWORK_SHELL}
 %.qlm: %.lm.gz
 	@_LOCAL=1 echo "  qARPA $< to $@"
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
 	${TIME_MEM} \
 	quantize-lm \
 		$< \
@@ -241,7 +241,7 @@ endif
 %.Qblmt: SHELL=${FRAMEWORK_SHELL}
 %.Qblmt: %.qlm.gz
 	@_LOCAL=1 echo "  bin.qARPA $< to $@"
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
 	${TIME_MEM} \
 	compile-lm \
 		$< \
@@ -261,7 +261,7 @@ endif
 
 %.plm.gz: SHELL=${FRAMEWORK_SHELL}
 %.plm.gz: %.lm.gz
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
 	prune-lm --threshold=1e-6 $< /dev/stdout \
 	| gzip \
 	> $@
@@ -287,9 +287,10 @@ endif
 
 ########################################
 # For debugging purpose
-.PHONY: check_setup
-check_setup: SHELL=${LOCAL_SHELL}
-check_setup:
+.PHONY: check_setup check_setup_lm
+check_setup: check_setup_lm
+check_setup_lm: SHELL=${LOCAL_SHELL}
+check_setup_lm:
 ifeq (${LM_TOOLKIT}, SRI)
 	which ngram-count
 else ifeq (${LM_TOOLKIT}, MIT)
