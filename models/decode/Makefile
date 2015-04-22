@@ -237,6 +237,39 @@ COARSE_LM_SPECS ?= $(foreach n, ${COARSELM_NCLS_LIST}, \
                    )
 $(info Coarse LMs: ${COARSE_LM_SPECS})
 
+define BILM_SPECS_PYSCRIPT
+from __future__ import print_function, unicode_literals, division, absolute_import
+import re
+import glob
+
+src_lang = "${SRC_LANG}"
+tgt_lang = "${TGT_LANG}"
+lm_lang = "${SRC_LANG}2${TGT_LANG}"
+
+spec_re = re.compile("(?:-([0-9]+)bi)?(?:-([0-9]+)s)?(?:-([0-9]+)t)?_" + lm_lang)
+
+specs=[]
+for bilm in glob.iglob("models/bilm/*_{0}-*.binlm.gz".format(lm_lang)):
+   m = spec_re.search(bilm)
+   bit_ncls, src_ncls, tgt_ncls = m.groups()
+   src_spec = "-{0}s".format(src_ncls) if src_ncls else ""
+   tgt_spec = "-{0}t".format(tgt_ncls) if src_ncls else ""
+   spec = bilm
+   if bit_ncls:
+      spec += ";cls(tgt/src)=models/bilm/bitoks.all{ss}{ts}.{l}.{ncls}.classes".format(
+              ss=src_spec, ts=tgt_spec, l=lm_lang, ncls=bit_ncls)
+   if src_ncls:
+      spec += ";cls(src)=models/wcl/{sl}.{ncls}.classes".format(sl=src_lang, ncls=src_ncls)
+   if tgt_ncls:
+      spec += ";cls(tgt)=models/wcl/{tl}.{ncls}.classes".format(tl=tgt_lang, ncls=tgt_ncls)
+   specs.append(spec)
+print(":".join(specs))
+endef
+
+BILM_SPECS := $(shell python -c '${BILM_SPECS_PYSCRIPT}')
+$(info BiLMs: ${BILM_SPECS})
+
+
 ${UNTUNED_DECODING_MODEL}: SHELL=${LOCAL_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	@ls ${CPT_SEARCH} &> /dev/null \
@@ -253,6 +286,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      $(and ${USE_LDM}${USE_HLDM}, -dist-phrase-swap) \
 	      -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS}:${DM_EXTRAS} \
 	      -lex-dist-model-file ${LDM}:${HLDM} \
+	      $(if ${BILM_SPEC}, -bilm-file ${BILM_SPECS}) \
 	      $(and ${USE_SPARSE}, -sparse-model ${SPARSE}) \
 	      ${CANOE_INI_EXTRAS} \
 	  " - \
