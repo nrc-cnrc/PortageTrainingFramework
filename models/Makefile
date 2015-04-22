@@ -78,6 +78,7 @@ clean.content clean.logs hide.logs: %:
 	${MAKE} -C mixlm $@
 	${MAKE} -C sparse $@
 	${MAKE} -C coarselm $@
+	${MAKE} -C bilm $@
 	${MAKE} -C wcl $@
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 	${RM} -r $(addprefix decode., ${TUNE_DECODE_VARIANTS})
@@ -255,6 +256,22 @@ coarselm: wcl
 else
 coarselm:
 	@echo "Not training coarse language models." >&2
+endif
+
+
+.PHONY: bilm
+bilm: SHELL=${LOCAL_SHELL}
+ifdef BILM_SPEC
+models: bilm
+
+portageLive: portageLive_models_bilm
+portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_bilm
+
+bilm: wcl
+	${MAKE} -C $@ all
+else
+bilm:
+	@echo "Not training BiLM models." >&2
 endif
 
 
