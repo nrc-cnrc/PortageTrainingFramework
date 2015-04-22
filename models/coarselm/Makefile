@@ -44,10 +44,6 @@ include ../lm/Makefile.toolkit
 # What is this module's name?
 MODULE_NAME ?= coarselm
 
-# The following variables are defined in Makefile.toolkit included above:
-#    CORPUS_EXT, LM_DESC
-# Their default definitions are repeated below for documentation.
-
 # What is the lm language.
 LM_LANG ?= ${TGT_LANG}
 
@@ -120,6 +116,10 @@ $(error Invalid LM_TYPES: $(filter-out ${VALID_LM_TYPES}, ${LM_TYPES}))
 endif
 
 all: $(foreach x, ${LM_EXTS}, $(addsuffix $x, ${LM_NAMES}))
+
+# Corpus dependencies for Coarse LM files.
+$(foreach c, ${CORPORA_NAMES}, \
+   $(eval $(call LM_CORP_DEP,${c}${LM_DESC},${c}${CORPUS_EXT})))
 
 # Rules for creating files with corpus text mapped to word classes
 $(foreach n, ${COARSELM_NCLS_LIST}, \

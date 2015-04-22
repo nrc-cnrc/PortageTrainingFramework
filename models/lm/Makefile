@@ -31,7 +31,7 @@ include ${LM_DIR_PFX}Makefile.toolkit
 MODULE_NAME ?= lm
 
 # The following variables are defined in Makefile.toolkit included above:
-#    ORDER, CORPUS_EXT, LM_DESC, IRSTLM
+#    ORDER, IRSTLM
 # Their default definitions are repeated below for documentation.
 
 # What is the lm language.
@@ -126,6 +126,10 @@ $(error Invalid LM_TYPES: $(filter-out ${VALID_LM_TYPES}, ${LM_TYPES}))
 endif
 
 all: $(foreach x, ${LM_EXTS}, $(addsuffix $x, ${LM_NAMES}))
+
+# Corpus dependencies for LM files.
+$(foreach c, ${CORPORA_NAMES}, \
+   $(eval $(call LM_CORP_DEP,${c}${LM_DESC},${c}${CORPUS_EXT})))
 
 # If tuning the discount parameters, we add a dependency on that file too.
 ifeq (${LM_TOOLKIT}, MIT)
