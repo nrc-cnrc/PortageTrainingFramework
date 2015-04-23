@@ -1,9 +1,10 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
 #
-# @author Darlene Stewart
 # @file Makefile
 # @brief Train word classes for use by other modules
+#
+# @author Darlene Stewart
 #
 # Word classes are used by coarse LMs, coarse BiLMs, coarse TMs, and others.
 #
@@ -132,7 +133,7 @@ time-mem: resource_summary_sub
 
 
 ########################################
-# Transform the LM model for PortageLive
+# Transform the WCL model for PortageLive
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/wcl
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}

@@ -61,8 +61,8 @@ TIME_MEM ?= time-mem
 ifeq (${LM_TOOLKIT}, IRST)
 define LM_CORP_DEP
 $(1).lm.gz: $(1).ilm.gz
-$(1).ilm.gz: marked.$(2:.gz=).gz
-marked.$(2:.gz=).gz: $(2)
+$(1).ilm.gz: $(2:.gz=).marked.gz
+$(2:.gz=).marked.gz: $(2)
 endef
 else
 define LM_CORP_DEP
@@ -213,8 +213,8 @@ endif
 # Add sentence start and end markers
 
 # See LM_CORP_DEP helper function for corpus dependency specifications.
-marked.%.gz: SHELL=${FRAMEWORK_SHELL}
-marked.%.gz:
+%.marked.gz: SHELL=${FRAMEWORK_SHELL}
+%.marked.gz:
 	@_LOCAL=1 echo "Marking up $<"
 	RP_PSUB_OPTS="-N $@" \
 	set -o pipefail; \
@@ -281,6 +281,7 @@ marked.%.gz:
 	| gzip \
 	> $@
 
+
 ################################################################################
 # HELPERS
 ########################################
@@ -298,7 +299,6 @@ test_irstlm: SHELL=${LOCAL_SHELL}
 test_irstlm:
 	env | grep IRSTLM
 endif
-
 
 ########################################
 # For debugging purpose

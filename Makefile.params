@@ -1,12 +1,15 @@
 # vim:noet:ts=3:nowrap
-# @author Samuel Larkin
+#
+# @file Makefile.params
 # @brief Master parameter file where all user specific parameters should be set.
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# @author Samuel Larkin and Darlene Stewart and Eric Joanis
+#
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, 2012, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, 2012, Her Majesty in Right of Canada
+# Copyright 2008, 2012, 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2012, 2015, Her Majesty in Right of Canada
 
 # Print the PortageII Copyright no matter where we start from -- but only once.
 ifeq (${MAKELEVEL},0)
@@ -592,7 +595,6 @@ else
       $(info ${PORTAGE_VERSION} was compiled without ICU)
    endif
 endif
-
 
 
 # We include src_lang specific configuration just before we validate the configuration.

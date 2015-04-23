@@ -3,7 +3,7 @@
 #
 # @file Makefile
 # @brief Train a truecasing model.
-
+#
 # @author Samuel Larkin with modifications by Darlene Stewart
 #
 # Traitement multilingue de textes / Multilingual Text Processing
@@ -79,7 +79,7 @@ vpath %${SCX} ${CORPORA_DIR}
 
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
-#.INTERMEDIATE: marked.${TRAIN_LM}_${TGT_LANG}${GZ}
+#.INTERMEDIATE: ${TRAIN_LM}_${TGT_LANG}${LANGX}.marked.gz
 .SECONDARY:
 
 
@@ -150,6 +150,7 @@ clean.logs:
 hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
+
 ########################################
 # Resources Summary
 .PHONY: time-mem
@@ -158,7 +159,7 @@ time-mem: resource_summary_sub
 
 
 ########################################
-# portageLive easy target.
+# Transform the truecasing models for PortageLive
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/tc
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}

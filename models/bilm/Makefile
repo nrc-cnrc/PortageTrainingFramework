@@ -1,9 +1,10 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
 #
-# @author Darlene Stewart
 # @file Makefile
 # @brief Train non-coarse/coarse bidirectional language models (BiLM).
+#
+# @author Darlene Stewart
 #
 # Traitement multilingue de textes / Multilingual Text Processing
 # Tech. de l'information et des communications / Information and Communications Tech.
@@ -94,6 +95,7 @@ vpath %.align.gz ../tm
 
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
+.SECONDARY:
 
 
 ########################################
@@ -127,8 +129,6 @@ $(error Invalid LM_TYPES: $(filter-out ${VALID_LM_TYPES}, ${LM_TYPES}))
 endif
 
 all: $(foreach x, ${LM_EXTS}, $(addsuffix $x, ${LM_NAMES}))
-
-.SECONDARY: $(addsuffix .lm.gz, ${LM_NAMES})
 
 # Corpus dependencies for BiLM files.
 $(foreach c, ${CORPORA_NAMES}, \
@@ -247,7 +247,7 @@ $(shell python -c '${DEPS_PYSCRIPT}')
 
 include Makefile.deps
 
-#.INTERMEDIATE: ${MAPPED_CORP_FILES}
+.INTERMEDIATE: ${MAPPED_CORP_FILES}
 ${MAPPED_CORP_FILES}: SHELL=${LOCAL_SHELL}
 ${MAPPED_CORP_FILES}: %${CORPUS_EXT}:
 	word2class -no-error $(filter %${CORPUS_EXT}, $+) $(filter %.classes, $+) | gzip > $@
@@ -308,7 +308,7 @@ time-mem: resource_summary_sub
 
 
 ########################################
-# Transform the BiLM models for PortageLive
+# Transform the BiLM model(s) for PortageLive
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/bilm
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}

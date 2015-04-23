@@ -1,15 +1,17 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
 #
-# @author Samuel Larkin and Darlene Stewart
 # @file Makefile
 # @brief Train language model files.
+#
+# @author Samuel Larkin and Darlene Stewart
 #
 # Traitement multilingue de textes / Multilingual Text Processing
 # Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2008, 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2008, 2015, Her Majesty in Right of Canada
+
 
 LM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
@@ -42,7 +44,7 @@ ORDER ?= 5
 
 # What type of LMs to build
 # Valid LM types are:
-#    arpa binlm tplm irstlm mark blmt quantize Qblmt sort_arpa prune
+#    arpa binlm tplm irstlm blmt quantize Qblmt sort_arpa prune
 LM_TYPES ?= binlm
 
 # What are the corpora names and extension and what files define these corpora.
@@ -112,14 +114,13 @@ LM_EXTS += $(if $(findstring arpa, ${LM_TYPES}),.lm.gz)
 LM_EXTS += $(if $(findstring binlm, ${LM_TYPES}),.binlm.gz)
 LM_EXTS += $(if $(findstring tplm, ${LM_TYPES}),.tplm)
 LM_EXTS += $(if $(findstring irstlm, ${LM_TYPES}),.ilm.gz)
-LM_EXTS += $(if $(findstring mark, ${LM_TYPES}),.marked.gz)
 LM_EXTS += $(if $(findstring blmt, ${LM_TYPES}),.blmt)
 LM_EXTS += $(if $(findstring quantize, ${LM_TYPES}),.qlm.gz)
 LM_EXTS += $(if $(findstring Qblmt, ${LM_TYPES}),.Qblmt)
 LM_EXTS += $(if $(findstring sort_arpa, ${LM_TYPES}),.lm.sorted.gz)
 LM_EXTS += $(if $(findstring prune, ${LM_TYPES}),.plm.gz)
 
-VALID_LM_TYPES := arpa binlm tplm irstlm mark blmt quantize Qblmt sort_arpa prune
+VALID_LM_TYPES := arpa binlm tplm irstlm blmt quantize Qblmt sort_arpa prune
 
 ifneq ($(filter-out ${VALID_LM_TYPES}, ${LM_TYPES}),)
 $(error Invalid LM_TYPES: $(filter-out ${VALID_LM_TYPES}, ${LM_TYPES}))
@@ -140,6 +141,7 @@ $(foreach c, ${TRAIN_LM}, \
 )
 endif
 endif
+
 
 ########################################
 # What the user can expect from this module.
@@ -266,7 +268,6 @@ ${pretrained_lm_paths}: %:
 all_lm: SHELL=${LOCAL_SHELL}
 	${MAKE} LM_TYPES="${VALID_LM_TYPES}
 
-
 ################################################################################
 # The following targets are unmaintained and were used for initial testing of
 # irstlm.
@@ -285,4 +286,3 @@ ppx.irstlm: $(foreach lm_name, ${LM_NAMES}, $(addprefix ppx.irstlm.${lm_name}, .
 ppx.irstlm.%: SHELL=${FRAMEWORK_SHELL}
 ppx.irstlm.%: ${PPX_TEST_SET} %
 	compile-lm $* --eval=$< >& $(basename $@)
-

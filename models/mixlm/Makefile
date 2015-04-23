@@ -1,8 +1,8 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap:filetype=make
-
+#
 # @file Makefile
-# @brief Create mixlm files.
+# @brief Train MixLM files.
 #
 # @author Samuel Larkin and Darlene Stewart
 #
@@ -86,7 +86,7 @@ ifdef MIXLM_COMPONENTS
 all: mixlm
 else
 all:
-	@echo "No MIXLMs defined, nothing to do."
+	@echo "No MixLMs defined, nothing to do."
 endif
 
 
@@ -112,6 +112,7 @@ clean.logs:
 # Hide logs from user's view into .logs
 hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
+
 
 ########################################
 # Resources Summary
@@ -199,7 +200,7 @@ components_${TGT_LANG}: ${MIXLM_TGT_MODELS} $(notdir ${MIXLM_PRETRAINED_TGT_LMS}
 
 
 ########################################
-# Transform model for PortageLive
+# Transform the MixLM model for PortageLive
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/mixlm
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}
@@ -212,6 +213,5 @@ portageLive: ${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm} $(notdir ${MIXLM_PRETRAINED_T
 		> ${PORTAGE_LIVE_DEST_DIR}/${TUNE_DECODE}${PLIVE_DECODE_VARIANT}.mixlm	
 else
 portageLive:
-	@echo "No MIXLMs defined, nothing to do." >&2
+	@echo "No MixLMs defined, nothing to do." >&2
 endif
-

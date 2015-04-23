@@ -1,15 +1,17 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
 #
-# @author Darlene Stewart
 # @file Makefile
 # @brief Train coarse language model files.
+#
+# @author Darlene Stewart
 #
 # Traitement multilingue de textes / Multilingual Text Processing
 # Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2015, Her Majesty in Right of Canada
+
 
 # Mandatory include: master config file.
 include ../../Makefile.params
@@ -83,6 +85,7 @@ vpath %.classes ../wcl
 
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
+.SECONDARY:
 
 
 ########################################
@@ -202,7 +205,7 @@ time-mem: resource_summary_sub
 
 
 ########################################
-# Transform the coarse LM model for PortageLive
+# Transform the coarse LM model(s) for PortageLive
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/coarselm
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}
