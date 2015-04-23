@@ -1,12 +1,13 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
 #
-# @author Samuel Larkin with modifications by Darlene Stewart
 # @file Makefile
-# @brief Trains a truecasing model.
+# @brief Train a truecasing model.
+
+# @author Samuel Larkin with modifications by Darlene Stewart
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2008, 2011, Sa Majeste la Reine du Chef du Canada
 # Copyright 2008, 2011, Her Majesty in Right of Canada
@@ -22,20 +23,19 @@ MAKEFILE_PARAMS ?= Makefile.params
 # Lastly include the master toolkit
 include ../../Makefile.toolkit
 
+# Override the default LM ORDER setting in the LM Makefile.toolkit
+# Typical lms for truecasing are 3g.
+ORDER ?= 3
+
+# Include the LM toolkit
+include ../lm/Makefile.toolkit
+
 
 # What is this module's name.
 MODULE_NAME ?= tc
 
 # Where to find the corpus' file.
 CORPORA_DIR ?= ../../corpora
-
-# Define LM_TOOLKIT=SRI if you want to use SRILM
-# Define LM_TOOLKIT=MIT if you want to use MITLM
-# Make sure all Makefiles know about it.
-export LM_TOOLKIT
-
-# Typical lms for truecasing are 3g.
-export ORDER = 3
 
 # File encoding.
 ENCODING ?= UTF-8
@@ -56,7 +56,6 @@ endif
 # truecased form.  This can be done by simply tell lm/Makefile that our corpus
 # extension is now .tc.gz.
 TCX = .tc${GZ}
-#export CORPUS_EXT = ${TCX}
 
 # Source corpora extension
 ifneq ($(wildcard ${CORPORA_DIR}/$(TRUECASING_NC1_SRC_LM:.nc1.binlm${GZ}=${ALIGNX}${GZ})),)
@@ -78,12 +77,10 @@ vpath %${LANGXZ} ${CORPORA_DIR}
 vpath %${SCX} ${CORPORA_DIR}
 
 
-
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
-#.INTERMEDIATE: ${TRAIN_LM}_${TGT_LANG}.marked.gz
+#.INTERMEDIATE: marked.${TRAIN_LM}_${TGT_LANG}${GZ}
 .SECONDARY:
-
 
 
 .PHONY: help
@@ -115,7 +112,6 @@ all:
 endif
 
 
-
 # What the user can expect from this module.
 .PHONY: list_final_output
 list_final_output: SHELL=${LOCAL_SHELL}
@@ -128,30 +124,31 @@ list_final_output:
 
 ########################################
 # Clean up
-.PHONY: clean clean.content clean.map clean.logs hide.logs
+.PHONY: clean clean.content clean.map clean.lm clean.logs hide.logs
 clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs
 
 clean.content: SHELL=${LOCAL_SHELL}
-clean.content: lm-clean.content clean.map
+clean.content: clean.map clean.lm
 	${RM} *.{tokss,revtokss,nc1}${GZ}
+
+clean.lm: SHELL=${LOCAL_SHELL}
+clean.lm:
+	${RM} *.lm.gz *.binlm.gz
+	${RM} -r *.tplm
 
 clean.map: SHELL=${LOCAL_SHELL}
 clean.map:
 	${RM} -r *.map *.map.tppt vocabMap2tpt.*
 
-lm-clean.content lm-clean.logs: SHELL=${LOCAL_SHELL}
-lm-clean.content lm-clean.logs: lm-%:
-	${MAKE} -f ../lm/Makefile CORPUS_EXT=${TCX} $*
-
 clean.logs: SHELL=${LOCAL_SHELL}
-clean.logs: lm-clean.logs
+clean.logs:
 	${RM} log.* run-parallel-logs*
+	${RM} -r .logs
 
 # Hide logs from user's view into .logs
 hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
-
 
 ########################################
 # Resources Summary
@@ -186,7 +183,7 @@ endif
 # then only Step 5 below is done.
 # If running the new truecasing workflow using source language information in
 # addition to target language models, then Steps 1-5 are done.
-# The makefile in models/lm is used for building all language models.
+# Makefile.toolkit in models/lm is used for building all language models.
 .PHONY: lm
 lm: SHELL=${LOCAL_SHELL}
 lm: ${TRUECASING_LM}
@@ -232,9 +229,7 @@ else
 endif
 
 # Step 3: Build an NC1 target language model to use for normalizing BOS case.
-%_${TGT_LANG}.nc1.binlm${GZ}: SHELL=${LOCAL_SHELL}
-%_${TGT_LANG}.nc1.binlm${GZ}: %_${TGT_LANG}.revtokss${GZ}
-	${MAKE} -f ../lm/Makefile CORPUS_EXT=.revtokss${GZ} CORPORA_DIR=../tc LM_DESC=.nc1 $@
+$(eval $(call LM_CORP_DEP,${TRAIN_TC}_${TGT_LANG}.nc1,${TRAIN_TC}_${TGT_LANG}.revtokss${GZ}))
 
 # Step 4: Normalize the beginning-of-sentence case in the target language corpus.
 NORMC1_OPTS ?= -ignore 1 -extended -notitle
@@ -253,18 +248,8 @@ UN_SS_P := perl -pe 's/(.)$$/$$1 /; s/(.)\n/$$1/'
 # Step 5: Build the truecase target language model from the BOS-normalized,
 # uppercase-filtered target language corpus (or original target language
 # corpus if not using source language info too).
-%_${TGT_LANG}-kn-3g.binlm.gz: SHELL=${LOCAL_SHELL}
-ifdef TC_USE_SRC_MODELS
-%_${TGT_LANG}-kn-3g.binlm.gz: %_${TGT_LANG}.nc1${GZ}
-	${MAKE} -f ../lm/Makefile CORPUS_EXT=.nc1${GZ} CORPORA_DIR=../tc ${@:.binlm${GZ}=.lm${GZ}} $@
-else
-%_${TGT_LANG}-kn-3g.binlm.gz:
-	${MAKE} -f ../lm/Makefile CORPUS_EXT=${TCX} ${@:.binlm${GZ}=.lm${GZ}} $@
-endif
-
-%.tplm: SHELL=${LOCAL_SHELL}
-%.tplm: %.binlm.gz
-	${MAKE} -f ../lm/Makefile CORPUS_EXT=${TCX} $@
+CEXT := $(if ${TC_USE_SRC_MODELS},.nc1${GZ},${TCX})
+$(eval $(call LM_CORP_DEP,${TRAIN_TC}_${TGT_LANG}-kn-3g,${TRAIN_TC}_${TGT_LANG}${CEXT}))
 
 
 ########################################
@@ -295,9 +280,7 @@ else
 		"(${SRC_TOKENIZE} | ${SRC_UC_FILTER}) < $< > $@  2> log.$(basename $@)"
 endif
 
-%_${SRC_LANG}.nc1.binlm${GZ}: SHELL=${LOCAL_SHELL}
-%_${SRC_LANG}.nc1.binlm${GZ}: %_${SRC_LANG}.revtokss${GZ}
-	${MAKE} -f ../lm/Makefile CORPUS_EXT=.revtokss${GZ} CORPORA_DIR=../tc LM_DESC=.nc1 LM_LANG=${SRC_LANG} ${@:.binlm${GZ}=.lm${GZ}} $@
+$(eval $(call LM_CORP_DEP,${TRAIN_TC}_${SRC_LANG}.nc1,${TRAIN_TC}_${SRC_LANG}.revtokss${GZ}))
 
 
 ########################################
@@ -328,4 +311,3 @@ endif
 	RP_PSUB_OPTS="-1" \
 	${TIME_MEM} \
 	vocabMap2tpt.sh $< 2> log.$@
-
