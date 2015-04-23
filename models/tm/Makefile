@@ -178,7 +178,7 @@ with open("Makefile.word_alignment.deps", "w") as df:
             print("{m}.1wam.${L1_GIVEN_L2X}:  {c}${L1X}  {c}${L2X}".format(c=corpora, m=wal), file=df)
             print("{m}.1wam.${L2_GIVEN_L1X}:  {c}${L1X}  {c}${L2X}".format(c=corpora, m=wal), file=df)
 endef
-$(info WORD ALIGNMENT: ${PYSCRIPT})
+#$(info WORD ALIGNMENT: ${PYSCRIPT})
 RET := $(shell python -c '${PYSCRIPT}')
 include Makefile.word_alignment.deps
 
@@ -228,7 +228,7 @@ with open("Makefile.alignment.deps", "w") as df:
       print("{alignmentFileName}:  {c}/${SRC_LANG}.lc  {c}/${TGT_LANG}.lc".format(c=corpora, alignmentFileName=alignmentFileName), file=df)
       print("{alignmentFileName}:  {c}/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz  {c}/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz".format(c=corpora, alignmentFileName=alignmentFileName), file=df)
 endef
-$(info ALIGNMENT: ${PYSCRIPT})
+#$(info ALIGNMENT: ${PYSCRIPT})
 RET := $(shell python -c '${PYSCRIPT}')
 include Makefile.alignment.deps
 
@@ -290,7 +290,7 @@ with open("Makefile.jpt.deps", "w") as df:
       print("{jptFileName}:  {c}.{m}.${L1_2_L2}.align.gz".format(c=corpora, m=wal, jptFileName=jptFileName), file=df)
       print("{jptFileName}:  {c}/${SRC_LANG}.lc  {c}/${TGT_LANG}.lc".format(c=corpora, jptFileName=jptFileName), file=df)
 endef
-$(info JPT: ${PYSCRIPT})
+#$(info JPT: ${PYSCRIPT})
 RET := $(shell python -c '${PYSCRIPT}')
 include Makefile.jpt.deps
 
@@ -347,7 +347,7 @@ with open("Makefile.sigprune.deps", "w") as df:
       #print("{modelFileName}:  ${JPT_MODEL_PFX}.{m}.{c}.${RJOINTX}".format(m=wal, c=corpora, modelFileName=modelFileName), file=df)
       #print("{modelFileName}:  {c}/${SRC_LANG}.lc  {c}/${TGT_LANG}.lc".format(c=corpora, modelFileName=modelFileName), file=df)
 endef
-$(info SIG: ${PYSCRIPT})
+#$(info SIG: ${PYSCRIPT})
 RET := $(shell python -c '${PYSCRIPT}')
 include Makefile.sigprune.deps
 
@@ -429,7 +429,7 @@ with open("Makefile.cpt.deps", "w") as df:
          # Conditional Phrase Tables depend on a joint frequency phrase table which can be raw or significance pruned.
          print("{fileName}:  {dependencyPrefix}.{m}.{c}.${RJOINTX}".format(c=corpora, m=wal, fileName=fileName, dependencyPrefix=dependencyPrefix), file=df)
 endef
-$(info CPT: ${PYSCRIPT})
+#$(info CPT: ${PYSCRIPT})
 RET := $(shell python -c '${PYSCRIPT}')
 include Makefile.cpt.deps
 
@@ -543,7 +543,7 @@ with open("Makefile.merged_cpt.deps", "w") as df:
          filename = "${SIG_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
          print("{filename}:  ${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wal, filename=filename), file=df)
 endef
-$(info MERGED CPT: ${PYSCRIPT})
+#$(info MERGED CPT: ${PYSCRIPT})
 RET := $(shell python -c '${PYSCRIPT}')
 include Makefile.merged_cpt.deps
 
@@ -622,7 +622,7 @@ with open("Makefile.mix_cpt.deps", "w") as df:
       print("{filename}:  {j}.{w}.${L2_GIVEN_L1X}  {j}.{w}.${L1_GIVEN_L2X}".format(j=j, w=w, filename=filename), file=df)
       print("{filename}:  ${TUNE_MIXTM_FINAL}${L1}  ${TUNE_MIXTM_FINAL}${L2}".format(filename=filename), file=df)
 endef
-$(info MIXED CPT: ${PYSCRIPT})
+#$(info MIXED CPT: ${PYSCRIPT})
 RET := $(shell python -c '${PYSCRIPT}')
 include Makefile.mix_cpt.deps
 
