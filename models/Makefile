@@ -12,6 +12,8 @@
 # Copyright 2009, 2012 Sa Majeste la Reine du Chef du Canada /
 # Copyright 2009, 2012 Her Majesty in Right of Canada
 
+MODEL_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
+
 # Mandatory include: master config file.
 include ../Makefile.params
 
@@ -70,6 +72,10 @@ clean.content clean.logs hide.logs: SHELL=${LOCAL_SHELL}
 clean.content clean.logs hide.logs: %:
 	${MAKE} -C ldm $@
 	${MAKE} -C lm $@
+	${MAKE} -C ibm $@
+	${MAKE} -C wal $@
+	${MAKE} -C jpt $@
+	${MAKE} -C sig $@
 	${MAKE} -C tm $@
 	${MAKE} -C tc $@
 	${MAKE} -C decode $@
@@ -144,10 +150,38 @@ endif
 	${MAKE} -C $@ all
 
 
+.PHONY: ibm
+# Create Word Alignment Models (ibm).
+ibm: SHELL=${LOCAL_SHELL}
+ibm:
+	${MAKE} -C $@ all
+
+
+.PHONY: wal
+# Create Word Alignment File (wal).
+wal: SHELL=${LOCAL_SHELL}
+wal:  ibm
+	${MAKE} -C $@ all
+
+
+.PHONY: jpt
+# Create Joint frequency Phrase Tables (jpt).
+jpt: SHELL=${LOCAL_SHELL}
+jpt:  wal
+	${MAKE} -C $@ all
+
+
+.PHONY: sig
+# Create Significance Pruned Joint frequency Phrase Tables (sig).
+sig: SHELL=${LOCAL_SHELL}
+sig:  jpt
+	${MAKE} -C $@ all
+
+
 .PHONY: tm
 # Create the Translation Model (TM).
 tm: SHELL=${LOCAL_SHELL}
-tm:
+tm:  sig
 ifdef DO_UPDATE_PRETRAINED_LINKS
 ifneq ($(strip ${TM_PRETRAINED_TMS} ${MIXTM_PRETRAINED_TMS}),)
 	${MAKE} -C $@ trigger.update.pretrained.links
@@ -222,7 +256,7 @@ models: ldm
 portageLive: portageLive_models_ldm
 portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_ldm
 
-ldm: tm
+ldm:  ibm  wal
 	${MAKE} -C $@ all
 else
 ldm:

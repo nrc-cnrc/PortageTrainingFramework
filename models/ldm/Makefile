@@ -13,21 +13,23 @@
 # Copyright 2010, Her Majesty in Right of Canada
 
 
+LDM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
+
 # User specific configuration.
 MAKEFILE_PARAMS ?= Makefile.params
--include ${MAKEFILE_PARAMS}
+-include ${LDM_DIR_PFX}${MAKEFILE_PARAMS}
 
 # Mandatory include: master config file.
-include ../../Makefile.params
+include ${LDM_DIR_PFX}../../Makefile.params
 
 # Default toolkit.
-include ../../Makefile.toolkit
+include ${LDM_DIR_PFX}../../Makefile.toolkit
 
 # Always include the toolkit last.
-include Makefile.toolkit
+include ${LDM_DIR_PFX}Makefile.toolkit
 
 # GNU Make Standard Library
-include ../../gmsl/gmsl
+include ${LDM_DIR_PFX}../../gmsl/gmsl
 
 
 # What is this module's name.
@@ -63,6 +65,13 @@ LDM_NAME ?= $(call merge,+,$(call sort_aligners,${AVAILABLE_WORD_ALIGNMENT_MODEL
 # For the lock target, let's specify what file we want to put read-only.
 FILES_TO_BE_LOCKED = *${COUNTSX} ${LDM_MODEL_PFX}* ${HLDM_MODEL_PFX}*
 
+
+vpath %.${SRC_GIVEN_TGTX}  ${LDM_DIR_PFX}../ibm/
+vpath %.${TGT_GIVEN_SRCX}  ${LDM_DIR_PFX}../ibm/
+vpath %/${SRC_LANG}.lc     ${LDM_DIR_PFX}../ibm/
+vpath %/${TGT_LANG}.lc     ${LDM_DIR_PFX}../ibm/
+
+vpath %.align.gz  ${LDM_DIR_PFX}../wal/
 
 
 .DEFAULT_GOAL := help
@@ -137,7 +146,11 @@ $(foreach c, $(sort ${TRAIN_LDM} ${TRAIN_HLDM}), \
 LDM_FILE := ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}
 
 ifdef USE_LDM
+$(info Using Lexicalized Distortion Model.)
 all: ldm
+else
+$(info Skipping Lexicalized Distortion Model.)
+all:
 endif
 
 .PHONY:  ldm

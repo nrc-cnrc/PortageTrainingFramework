@@ -103,10 +103,10 @@ vpath %${TGTX}  ${CORPORA_DIR}
 vpath %${SRCXZ} ${CORPORA_DIR}
 vpath %${TGTXZ} ${CORPORA_DIR}
 
-# Where can we find the phrase models.
-vpath %${TGT_GIVEN_SRCX} ${MODEL_DIRS}
-vpath %${SRC_GIVEN_TGTX} ${MODEL_DIRS}
-vpath %.align.gz  ${MODEL_DIRS}
+## Where can we find the phrase models.
+#vpath %${TGT_GIVEN_SRCX} ${MODEL_DIRS}
+#vpath %${SRC_GIVEN_TGTX} ${MODEL_DIRS}
+#vpath %.align.gz  ${MODEL_DIRS}
 
 # Where to find the filtered corpora for IBM4
 vpath %/${SRC_LANG}.lc ${MODEL_DIRS}
@@ -151,18 +151,18 @@ FIX_PATHS = $(foreach f,$(filter $1,$2),$(if $(filter-out $1,$f),$f,$(if $(filte
 			| li-sort.sh > $@' \
 	&> log.$(basename $@)
 
-# This is a special rule to handle ibm4 since we need a filter corpora for IBM4.
-%.lc:  SHELL=${LOCAL_SHELL}
-%.lc:  
-	${MAKE} -C ../tm $@
+## This is a special rule to handle ibm4 since we need a filter corpora for IBM4.
+#%.lc:  SHELL=${LOCAL_SHELL}
+#%.lc:
+#	${MAKE} -C ../tm $@
 
-%.align.gz: SHELL=${LOCAL_SHELL}
-%.align.gz:
-	${MAKE} -C ../tm $@
+#%.align.gz: SHELL=${LOCAL_SHELL}
+#%.align.gz:
+#	${MAKE} -C ../tm $@
 
-${IBM1_MODEL_PFX}.%.gz: SHELL=${LOCAL_SHELL}
-${IBM1_MODEL_PFX}.%.gz:
-	${MAKE} -C ../tm $@
+#${IBM1_MODEL_PFX}.%.gz: SHELL=${LOCAL_SHELL}
+#${IBM1_MODEL_PFX}.%.gz:
+#	${MAKE} -C ../tm $@
 
 
 
@@ -195,7 +195,7 @@ ${IBM1_MODEL_PFX}.%.gz:
 
 
 ################################################################################
-# 
+#
 # NOTE: In practice, tuning the lexicalized distortion model yields most of the
 # time a similar set of weights thus we will skip tuning and use that set of
 # weights which looks like 5, 5, 5, 5.
@@ -227,7 +227,7 @@ tune: log.tune-dms
 log.tune-dms: tune-dms.cmds
 	run-parallel.sh -psub "-${NUMBER_PARALLEL_CPU}" $< ${NUMBER_PARALLEL_WORKER} &> $@
 
-ldm.counts.tune.hmm1+ibm2.gz: ldm.counts.tune.hmm1.gz ldm.counts.tune.ibm2.gz 
+ldm.counts.tune.hmm1+ibm2.gz: ldm.counts.tune.hmm1.gz ldm.counts.tune.ibm2.gz
 	zcat $+ | gzip > $@
 
 ldm.counts.tune.%.gz: $(addprefix ${TUNE_SET},${SRCX} ${TGTX})

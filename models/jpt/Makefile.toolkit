@@ -1,0 +1,93 @@
+# vim:noet:ts=3:nowrap:filetype=make
+# @file
+# @brief
+#
+# @author Samuel Larkin
+#
+# Technologies langagieres interactives / Interactive Language Technologies
+# Inst. de technologie de l'information / Institute for Information Technology
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2015, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2015, Her Majesty in Right of Canada
+
+
+JPT_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
+
+-include ${JPT_DIR_PFX}../../Makefile.params
+include ${JPT_DIR_PFX}../Makefile.definition
+
+
+# Maximum phrase length.
+M ?= 8
+
+# Options for merge_multi_column_counts
+MERGE_COUNT_OPTIONS ?=
+
+########################################
+# JPT MODELS.
+JPT_MODEL_PFX ?= jpt
+JPT_CPUS ?= 1
+JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+JPT_WORKERS ?= ${JPT_PARALLELISM_LEVEL}
+GEN_JPT_PARALLEL_OPTIONS ?= -w 1
+JPT_EXTRAS ?=
+
+ifdef TMS_WITH_ALIGNMENT_FIELD
+   MERGE_COUNT_OPTIONS += -a
+   JPT_EXTRAS += -write-al all
+endif
+
+# Given the user's configuration, what is the minimal set of model types that
+# we need to produce.
+EXPECTED_MODEL_TYPES := $(strip $(sort ${MERGED_CPT_JPT_TYPES}))
+EXPECTED_MODEL_TYPES_PFX := $(foreach m, ${EXPECTED_MODEL_TYPES}, ${${m}_MODEL_PFX})
+
+
+
+########################################
+# JPT MODELS
+# WARNING: The following two targets must precede the target to generate jpts.
+# WARNING: % is purposefully not surrounded by dots for zn-adapt.
+${JPT_MODEL_PFX}.merged%${JOINTX}: SHELL=${FRAMEWORK_SHELL}
+${JPT_MODEL_PFX}.merged%${JOINTX}:
+	${TIME_MEM} merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${JOINTX}, $+) &> log.${@:.gz=}
+
+${JPT_MODEL_PFX}.merged%${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
+${JPT_MODEL_PFX}.merged%${RJOINTX}:
+	${TIME_MEM} merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
+
+
+
+${JPT_MODEL_PFX}.%.${JOINTX}:  SHELL=${FRAMEWORK_SHELL}
+${JPT_MODEL_PFX}.${IBM1_MODEL_PFX}%:  JPT_MODEL_TYPE = -ibm 1
+${JPT_MODEL_PFX}.${IBM4_MODEL_PFX}%:  JPT_MODEL_TYPE = -ibm 1
+${JPT_MODEL_PFX}.%.${JOINTX}:
+	RP_PSUB_OPTS="-${JPT_CPUS} -N $@ ${PSUB_OPTS}" \
+	gen-jpt-parallel.sh \
+		-n ${JPT_PARALLELISM_LEVEL} \
+		-nw ${JPT_WORKERS} \
+		-o $@ \
+		${GEN_JPT_PARALLEL_OPTIONS} \
+		GPT \
+		-v -m ${M} ${JPT_MODEL_TYPE} \
+		-1 ${lang1} -2 ${lang2} \
+		-ext \
+		${JPT_EXTRAS} \
+		$(filter %${L2_GIVEN_L1X}, $+) $(filter %${L1_GIVEN_L2X}, $+) \
+		$(call interleave3, $(filter %${L1} %${L1X},$+), $(filter %${L2} %${L2X},$+), $(filter %.${L1_2_L2}.align.gz,$+)) \
+		&> log.${@:.gz=}
+
+
+
+########################################
+# INVERT ANY JOINT PHRASE TABLE
+%.${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
+%.${RJOINTX}: %.${JOINTX}
+	@_LOCAL=1; echo "Generating $@" >&2
+	RP_PSUB_OPTS="-1 -N $@" \
+	set -o pipefail; \
+	zcat $< \
+	| reverse_joint_phr_tab.py \
+	| TMPDIR=. LC_ALL=C sort \
+	| gzip \
+	> $@

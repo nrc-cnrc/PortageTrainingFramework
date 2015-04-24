@@ -1,0 +1,104 @@
+# vim:noet:ts=3:nowrap:filetype=make
+
+# @file Makefile.toolkit
+# @brief
+#
+# @author Samuel Larkin
+#
+# Technologies langagieres interactives / Interactive Language Technologies
+# Inst. de technologie de l'information / Institute for Information Technology
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2010, 2012, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2010, 2012, Her Majesty in Right of Canada
+
+SIG_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
+
+-include ${SIG_DIR_PFX}../../Makefile.params
+include ${SIG_DIR_PFX}../Makefile.definition
+
+# Options for merge_multi_column_counts
+MERGE_COUNT_OPTIONS ?=
+
+# Set all the flags needed to generate the a= field in phrase tables, if requested.
+ifdef TMS_WITH_ALIGNMENT_FIELD
+   MERGE_COUNT_OPTIONS += -a
+endif
+
+# Given the user's configuration, what is the minimal set of model types that
+# # we need to produce.
+EXPECTED_MODEL_TYPES := $(strip $(sort ${MERGED_CPT_JPT_TYPES}))
+EXPECTED_MODEL_TYPES_PFX := $(foreach m, ${EXPECTED_MODEL_TYPES}, ${${m}_MODEL_PFX})
+
+
+
+########################################
+# SIG MODELS.
+SIG_THRESHOLD ?= a+e
+SIG_MODEL_PFX ?= sig.${SIG_THRESHOLD}
+SIG_CPUS ?= 1
+SIG_OPTS ?=
+SIG_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
+SIG_MODEL_WORKERS ?= ${SIG_MODEL_PARALLELISM_LEVEL}
+
+
+########################################
+# SIGNIFICANCE PRUNING
+${SIG_MODEL_PFX}.merged%${JOINTX}: SHELL=${FRAMEWORK_SHELL}
+${SIG_MODEL_PFX}.merged%${JOINTX}:
+	${TIME_MEM} merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${JOINTX}, $+) &> log.${@:.gz=}
+
+${SIG_MODEL_PFX}.merged%${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
+${SIG_MODEL_PFX}.merged%${RJOINTX}:
+	${TIME_MEM} merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
+
+
+
+${SIG_MODEL_PFX}.%.${JOINTX}: SHELL=${FRAMEWORK_SHELL}
+${SIG_MODEL_PFX}.%.${JOINTX}:
+	RP_PSUB_OPTS="-${SIG_CPUS} -N $@ ${PSUB_OPTS}" \
+	${TIME_MEM} \
+	sigprune.sh \
+		-n $(call SIG_MODEL_PARALLELISM_LEVEL, $+) \
+		-np $(call SIG_MODEL_WORKERS, $+) \
+		-w 50000 \
+		-threshold ${SIG_THRESHOLD} \
+		${SIG_OPTS} \
+		$(filter %${JOINTX}, $+) \
+		$(filter %${L1} %${L1X}, $+) \
+		$(filter %${L2} %${L2X}, $+) \
+		$@ \
+		&> >(bzip2 > log.${@:.gz=}.bz2)
+
+
+# According to Howard: generating a sig for L1 to L2 and then using
+# reverse_joint_phr_tab.py to produce a sig for L2 to L1 is valid.
+#${SIG_MODEL_PFX}.%.${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
+#${SIG_MODEL_PFX}.%.${RJOINTX}:
+#	RP_PSUB_OPTS="-${SIG_CPUS} -N $@ ${PSUB_OPTS}" \
+#	${TIME_MEM} \
+#	sigprune.sh \
+#		-n $(call SIG_MODEL_PARALLELISM_LEVEL, $+) \
+#		-np $(call SIG_MODEL_WORKERS, $+) \
+#		-w 50000 \
+#		-threshold ${SIG_THRESHOLD} \
+#		${SIG_OPTS} \
+#		$(filter %${RJOINTX}, $+) \
+#		$(filter %${L2} %${L2X}, $+) \
+#		$(filter %${L1} %${L1X}, $+) \
+#		$@ \
+#		&> >(bzip2 > log.${@:.gz=}.bz2)
+
+
+
+########################################
+# INVERT ANY SIGNIFICANCE PRUNED JOINT PHRASE TABLE
+%.${RJOINTX}:  SHELL=${FRAMEWORK_SHELL}
+%.${RJOINTX}:  %.${JOINTX}
+	@_LOCAL=1; echo "Generating $@" >&2
+	RP_PSUB_OPTS="-1 -N $@" \
+	set -o pipefail; \
+	zcat $< \
+	| reverse_joint_phr_tab.py \
+	| TMPDIR=. LC_ALL=C sort \
+	| gzip \
+	> $@
