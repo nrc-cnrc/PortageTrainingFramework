@@ -33,7 +33,7 @@ TCX ?= .tc
 TRAIN_SET    := $(sort ${TRAIN_LM} ${TRAIN_TM} ${TRAIN_TC})
 # NOTE: heldout are stem that are for a source corpus and one or more references.
 HELDOUT_SET  := $(sort ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET} \
-							  ${TUNE_MIXTM} \
+							  ${TUNE_MIXTM} ${TUNE_LM} ${TUNE_COARSELM} \
                        $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}))
 CORPORA_SET  := $(sort ${TRAIN_SET} ${HELDOUT_SET})
 

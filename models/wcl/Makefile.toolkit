@@ -1,0 +1,81 @@
+#!/usr/bin/make -f
+# vim:noet:ts=3:nowrap
+#
+# @file Makefile.toolkit
+# @brief Targets required to build word classes for use by other modules
+#
+# @author Darlene Stewart
+#
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2015, Her Majesty in Right of Canada
+
+
+# What program should be used to train the word classes
+# Valid choices are mkcls or word2vec.
+# mkcls is slower but yields better results.
+WCL_PROG ?= mkcls
+
+# More memory may be needed for very large corpora...
+WCL_CPUS ?= 1
+
+# If you need to provide some extra options to mkcls or word2vec...
+EXTRA_WCL_OPTS ?=
+
+# Resource monitoring.
+TIME_MEM ?= time-mem
+
+ifeq ($(findstring ${WCL_PROG}, "mkcls word2vec"),)
+$(error Invalid value for WCL_PROG: ${WCL_PROG})
+endif
+
+%.classes: SHELL=${FRAMEWORK_SHELL}
+
+ifeq (${WCL_PROG}, mkcls)
+%.classes:
+	@_LOCAL=1; [[ $(words $^) != 0 ]] || ! echo "ERROR: Prerequisites not specified for $@. Please train models/wcl first!" >&2
+	RP_PSUB_OPTS="-${WCL_CPUS} -N $@" \
+	${TIME_MEM} \
+	run-mkcls.sh \
+	   -n10 \
+	   ${EXTRA_WCL_OPTS} \
+	   -c${WCL_NCLS} \
+	   -V$@ \
+	   $(filter %_${WCL_LANG}${LANGX} %_${WCL_LANG}${LANGXZ}, $^) \
+	&> log.$(basename $@)
+else
+W2V_OPTS ?= -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 -min-count 1
+%.classes:
+	@_LOCAL=1; [[ $(words $^) != 0 ]] || ! echo "ERROR: Prerequisites not specified for $@. Please train models/wcl first!" >&2
+   _LOCAL=1 zcat -f $(filter %_${WCL_LANG}${LANGX} %_${WCL_LANG}${LANGXZ}, $^) > all_${WCL_LANG}${LANGX}
+	RP_PSUB_OPTS="-${WCL_CPUS} -N $@" \
+	${TIME_MEM} \
+	word2vec \
+	   ${W2V_OPTS} \
+	   ${EXTRA_WCL_OPTS} \
+	   -classes ${WCL_NCLS} \
+	   -output $@
+	   -train all_${WCL_LANG}${LANGX} \
+	&> log.$(basename $@)
+	_LOCAL=1 sed -i -e 's/ /\t/' $@
+	_LOCAL=1 ${RM} all_${WCL_LANG}${LANGX}
+endif
+
+
+################################################################################
+# HELPERS
+########################################
+
+########################################
+# For debugging purpose
+.PHONY: check_setup check_setup_wcl
+check_setup: check_setup_wcl
+check_setup_wcl: SHELL=${LOCAL_SHELL}
+check_setup_wcl:
+ifeq ($(findstring ${WCL_PROG}, "mkcls word2vec"),)
+	which ${WCL_PROG}
+else
+	$(error Invalid value for WCL_PROG: ${WCL_PROG})
+endif

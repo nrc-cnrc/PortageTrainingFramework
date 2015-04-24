@@ -1,0 +1,318 @@
+#!/usr/bin/make -f
+# vim:noet:ts=3:nowrap
+#
+# @file Makefile.toolkit
+# @brief Targets required to build an ARPA LM
+#
+# @author Darlene Stewart based on original Makefile by Samuel Larkin
+#
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2015, Her Majesty in Right of Canada
+
+# What is the order of the required LM.
+ORDER ?= 5
+
+# LM smoothing method
+# For SRILM, one of:
+#    kn  - modified Kneser-Ney interpolated
+#    ukn - original (unmodified) Kneser-Ney interpolated
+#    wb  - Witten-Bell interpolated, which is more robust to small or
+#          repetitious data.
+#    gt  - Good-Turing smoothing
+# For MITLM, one of:
+#    kn  - modified Kneser-Ney interpolated
+#    ukn - original (unmodified) Kneser-Ney interpolated
+SMOOTHER ?= kn
+
+# What is the level of parallelism.
+PARALLELISM_LEVEL_LM ?= 5
+
+# Most steps require the LM to be loaded in memory, so...
+# how many cpus should those jobs use?
+LM_CPUS ?= 2
+
+ifeq (${LM_TOOLKIT}, IRST)
+# Where is IRSTLM located?
+IRSTLM ?= $(PORTAGE)/pkgs/irstlm
+
+# Allows to switch between a cluster distributed way of building the IRST LM format.
+ifdef USING_CLUSTER
+BUILD_LM_PGM ?= build-lm-qsub.sh
+else
+BUILD_LM_PGM ?= build-lm.sh
+endif
+endif
+
+# If you need to provide some extra parameters to ngram-count/estimate-ngram...
+EXTRA_LM_OPTS ?=
+
+# Resource monitoring.
+TIME_MEM ?= time-mem
+
+
+########################################
+# Helper function to create corpus dependencies for .lm.gz files
+# Usage: $(eval $(call LM_CORP_DEP,lm_file,corp))
+# Specify lm_name with LM_DESC but without LM_EXT, i.e. no .lm.gz
+# Specify corp with CORPUS_EXT
+ifeq (${LM_TOOLKIT}, IRST)
+define LM_CORP_DEP
+$(1).lm.gz: $(1).ilm.gz
+$(1).ilm.gz: $(2:.gz=).marked.gz
+$(2:.gz=).marked.gz: $(2)
+endef
+else
+define LM_CORP_DEP
+$(1).lm.gz: $(2)
+endef
+endif
+
+
+########################################
+# ARPA text compressed format
+
+ifeq (${LM_TOOLKIT}, SRI)
+
+ifeq ($(findstring ${SMOOTHER}, "kn ukn wb gt"),)
+$(error Invalid value for SMOOTHER: ${SMOOTHER})
+endif
+ifeq (${SMOOTHER}, gt)
+SMOOTHING_OPT =
+else
+SMOOTHING_OPT = -interpolate -${SMOOTHER}discount
+endif
+
+# See LM_CORP_DEP helper function for corpus dependency specifications.
+%.lm.gz: SHELL=${FRAMEWORK_SHELL}
+%.lm.gz:
+	@_LOCAL=1 echo "  Creating ARPA text format $@"
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
+	${TIME_MEM} \
+	ngram-count \
+		-order ${ORDER} \
+		${SMOOTHING_OPT} \
+		-text $< \
+		-lm $@ \
+		${EXTRA_LM_OPTS} \
+	>& log.$(basename $@)
+
+else ifeq (${LM_TOOLKIT}, MIT)
+
+ifeq ($(findstring ${SMOOTHER}, "kn ukn"),)
+$(error Invalid value for SMOOTHER: ${SMOOTHER})
+endif
+ifeq (${SMOOTHER}, kn)
+SMOOTHING_OPT = -smoothing ModKN
+else
+SMOOTHING_OPT = -smoothing KN
+endif
+
+# Note: MITLM is finicky about spaces. Thus we need to collapse multiple spaces,
+# and remove any leading or trailing spaces. Also, it doesn't like lines longer
+# than 4095 characters.
+FILTER = perl -ple 's/^\s+//; s/\s+$$//; s/\s+/ /g;' | fold -s -w 4095
+
+# See LM_CORP_DEP helper function for corpus dependency specifications.
+# If there is a second dependency, it is assumed to be a dev file for tuning
+# the discounting parameters.
+%.lm.gz: SHELL=${FRAMEWORK_SHELL}
+%.lm.gz:
+	@_LOCAL=1 echo "  Creating ARPA text format $@"
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
+	set -o pipefail; \
+	zcat $< \
+	| ${FILTER} \
+	| ${TIME_MEM} \
+	estimate-ngram \
+		-order ${ORDER} \
+		${SMOOTHING_OPT} \
+		-text /dev/stdin \
+		$(if $(word 2, $+), -opt-perp $(word 2, $+)) \
+		-write-lm $@ \
+		$(if ${KEEP_COUNTS}, -write-counts ${@:.lm.gz=.counts.gz}) \
+		${EXTRA_LM_OPTS} \
+	>& log.$(basename $@)
+
+NRC_PRUNING := 1 1 2 3 4
+SRI_PRUNING_DEFAULT := 1 1 2 2 2
+PRUNING ?= ${SRI_PRUNING_DEFAULT}
+%.filt.lm.gz: SHELL=${FRAMEWORK_SHELL}
+%.filt.lm.gz: override KEEP_COUNTS=1
+%.filt.lm.gz: %.lm.gz
+	RP_PSUB_OPTS="-1" \
+	set -o pipefail; \
+	${TIME_MEM} \
+	lm-filter.py $< ${<:.lm.gz=.counts.gz} ${PRUNING} \
+	2> log.$(@:.gz=) \
+	| gzip > $@
+
+else ifeq (${LM_TOOLKIT}, IRST)
+
+# See LM_CORP_DEP helper function for corpus dependency specifications.
+%.lm.gz: SHELL=${FRAMEWORK_SHELL}
+%.lm.gz:
+	@_LOCAL=1 echo "  Creating ARPA text format $@"
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
+	set -o pipefail; \
+	${TIME_MEM} \
+	compile-lm \
+		--text yes \
+		$< \
+		/dev/stdout \
+	2> log.$(basename $@) \
+	| egrep -v '^Saving in txt format to' \
+	| lm_sort.pl \
+	| gzip > $@
+
+else
+$(error Invalid value for LM_TOOLKIT: ${LM_TOOLKIT})
+endif
+
+########################################
+# Portage Binary LM (binlm) format
+
+%.binlm.gz: SHELL=${FRAMEWORK_SHELL}
+%.binlm.gz: %.lm.gz
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
+	${TIME_MEM} \
+	arpalm2binlm $< $@ >& log.$(basename $@)
+
+########################################
+# Portage Tightly Packed LM (tplm) format
+
+%.tplm: SHELL=${FRAMEWORK_SHELL}
+%.tplm: %.lm.gz
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
+	${TIME_MEM} \
+	arpalm2tplm.sh $< $* 2> log.$@
+
+########################################
+# iARPA
+# Compressed IRSTLM format
+
+# See LM_CORP_DEP helper function for corpus dependency specifications.
+%.ilm.gz: SHELL=${FRAMEWORK_SHELL}
+%.ilm.gz:
+	@_LOCAL=1 echo "  Creating IRSTLM $@"
+	_LOCAL=1 ${RM} $@
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
+	IRSTLM=${IRSTLM} ${BUILD_LM_PGM} \
+		-p \
+		-t stat.$$$$ \
+		-n ${ORDER} \
+		-k ${PARALLELISM_LEVEL_LM} \
+		-s kneser-ney \
+		-i "gunzip -c $<" \
+		-o $@ \
+	&> log.$(basename $@)
+
+########################################
+# Add sentence start and end markers
+
+# See LM_CORP_DEP helper function for corpus dependency specifications.
+%.marked.gz: SHELL=${FRAMEWORK_SHELL}
+%.marked.gz:
+	@_LOCAL=1 echo "Marking up $<"
+	RP_PSUB_OPTS="-N $@" \
+	set -o pipefail; \
+	zcat -f $< \
+	| add-start-end.sh \
+	| gzip -c \
+	> $@
+
+########################################
+# BINARY FORMAT
+# ARPA bin compressed format
+
+%.blmt: SHELL=${FRAMEWORK_SHELL}
+%.blmt: %.ilm.gz
+	@_LOCAL=1 echo "  Creating bin.ARPA format $@"
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
+	${TIME_MEM} \
+	compile-lm \
+		$< \
+		$@ \
+	&> log.$@
+
+########################################
+# qARPA format
+
+%.qlm: SHELL=${FRAMEWORK_SHELL}
+%.qlm: %.lm.gz
+	@_LOCAL=1 echo "  qARPA $< to $@"
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
+	${TIME_MEM} \
+	quantize-lm \
+		$< \
+		$@ \
+	&> log.$@
+
+########################################
+# Quantize binary
+
+%.Qblmt: SHELL=${FRAMEWORK_SHELL}
+%.Qblmt: %.qlm.gz
+	@_LOCAL=1 echo "  bin.qARPA $< to $@"
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
+	${TIME_MEM} \
+	compile-lm \
+		$< \
+		$@ \
+	&> log.$@
+
+########################################
+# Sort the ARPA format
+
+%.lm.sorted.gz: SHELL=${FRAMEWORK_SHELL}
+%.lm.sorted.gz: %.lm.gz
+	${TIME_MEM} \
+	lm_sort_filter.sh -lm $< $@ >& log.$(basename $@)
+
+########################################
+# Pruning ARPA format => ARPA format
+
+%.plm.gz: SHELL=${FRAMEWORK_SHELL}
+%.plm.gz: %.lm.gz
+	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
+	prune-lm --threshold=1e-6 $< /dev/stdout \
+	| gzip \
+	> $@
+
+
+################################################################################
+# HELPERS
+########################################
+
+########################################
+# Check if the environment is set
+.PHONY: test
+test: SHELL=${LOCAL_SHELL}
+
+ifeq (${LM_TOOLKIT}, IRST)
+test: test_irstlm
+
+.PHONY: test_irstlm
+test_irstlm: SHELL=${LOCAL_SHELL}
+test_irstlm:
+	env | grep IRSTLM
+endif
+
+########################################
+# For debugging purpose
+.PHONY: check_setup check_setup_lm
+check_setup: check_setup_lm
+check_setup_lm: SHELL=${LOCAL_SHELL}
+check_setup_lm:
+ifeq (${LM_TOOLKIT}, SRI)
+	which ngram-count
+else ifeq (${LM_TOOLKIT}, MIT)
+	which estimate-ngram
+else ifeq (${LM_TOOLKIT}, IRST)
+	test -n $$IRSTLM
+	which build-lm.sh
+else
+	$(error Invalid type for LM_TOOLKIT: ${LM_TOOLKIT})
+endif

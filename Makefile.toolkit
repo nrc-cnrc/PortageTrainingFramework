@@ -25,6 +25,30 @@ endif
 # Usage: $(call CREATE_REFERENCE_NAMES, ${TUNE_RESCORE}[, EXTENSION])
 CREATE_REFERENCE_NAMES = $(strip $(foreach c,$1,$(addprefix $c_${TGT_LANG},$(or $(addsuffix $(or $(strip $2),${LANGX}),$(strip ${REFERENCE_INDICES})),$(or $(strip $2),${LANGX})))))
 
+# Helper recipe to list all corpora in use.
+define LIST_ALL_CORPORA
+	@echo "Your corpora are:"
+	@echo "   train LMs: ${TRAIN_LM}"
+	$(if $(strip ${TUNE_LM}),@echo "   tune LM parameters: ${TUNE_LM}")
+	$(if $(strip ${MIXLM}),@echo "   train MixLM: ${MIXLM}")
+	$(if $(strip ${TRAIN_COARSELM}),@echo "   train coarse LMs: ${TRAIN_COARSELM}")
+	$(if $(strip ${TUNE_COARSELM}),@echo "   tune coarse LM parameters: ${TUNE_COARSELM}")
+	$(if $(strip ${TRAIN_BILM}),@echo "   train BiLMs: ${TRAIN_BILM}")
+	$(if $(strip ${TUNE_BILM}),@echo "   tune BiLM parameters: ${TUNE_BILM}")
+	$(if $(strip ${TRAIN_WCL}),@echo "   train word classes: ${TRAIN_WCL}")
+	$(if $(strip ${TRAIN_TC}),@echo "   train TC: ${TRAIN_TC}")
+	@echo "   train TM: ${TRAIN_TM}"
+	$(if $(strip ${MIXTM}),@echo "   train MixTM: ${MIXTM}")
+	$(if $(strip ${MIXTM_TRAIN_MIX}),@echo "   tune MixTM mix: ${MIXTM_TRAIN_MIX}")
+	$(if $(strip ${TRAIN_LDM}),@echo "   train LDM: ${TRAIN_LDM}")
+	$(if $(strip ${TRAIN_HLDM}),@echo "   train HLDM: ${TRAIN_HLDM}")
+	$(if $(strip ${TRAIN_SPARSE}),@echo "   train sparse: ${TRAIN_SPARSE}")
+	@echo "   tune decode: ${TUNE_DECODE}"
+	$(if $(strip ${TUNE_DECODE_VARIANTS}),@echo "   tune decode variants: $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})")
+	@echo "   tune rescore: ${TUNE_RESCORE}"
+	$(if $(strip ${TUNE_CE}),@echo "   tune CE: ${TUNE_CE}")
+endef
+
 
 ########################################
 # List of files that should read-only for safety.  Mainly this list

@@ -50,38 +50,7 @@ ifeq (${LM_TOOLKIT},IRST)
 	@echo "   export IRSTLM=${IRSTLM}"
 	@echo
 endif
-	@echo "Your corpora are:"
-	@echo "   train lm: ${TRAIN_LM}"
-ifneq ($(strip ${MIXLM}),)
-	@echo "   train mixlm: ${MIXLM}"
-endif
-ifneq ($(strip ${TRAIN_TC}),)
-	@echo "   train tc: ${TRAIN_TC}"
-endif
-	@echo "   train tm: ${TRAIN_TM}"
-ifneq ($(strip ${MIXTM}),)
-	@echo "   train mixtm: ${MIXTM}"
-endif
-ifneq ($(strip ${MIXTM_TRAIN_MIX}),)
-	@echo "   tune mixtm mix: ${MIXTM_TRAIN_MIX}"
-endif
-ifneq ($(strip ${TRAIN_LDM}),)
-	@echo "   train ldm: ${TRAIN_LDM}"
-endif
-ifneq ($(strip ${TRAIN_HLDM}),)
-	@echo "   train hldm: ${TRAIN_HLDM}"
-endif
-ifneq ($(strip ${TRAIN_SPARSE}),)
-	@echo "   train sparse: ${TRAIN_SPARSE}"
-endif
-	@echo "   tune decode: ${TUNE_DECODE}"
-ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
-	@echo "   tune decode variants: $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})"
-endif
-	@echo "   tune rescore: ${TUNE_RESCORE}"
-ifneq ($(strip ${TUNE_CE}),)
-	@echo "   tune ce: ${TUNE_CE}"
-endif
+	${LIST_ALL_CORPORA}
 	@echo
 	@echo "To train your models, type: make all"
 	@echo
@@ -108,6 +77,9 @@ clean.content clean.logs hide.logs: %:
 	${MAKE} -C confidence $@
 	${MAKE} -C mixlm $@
 	${MAKE} -C sparse $@
+	${MAKE} -C coarselm $@
+	${MAKE} -C bilm $@
+	${MAKE} -C wcl $@
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 	${RM} -r $(addprefix decode., ${TUNE_DECODE_VARIANTS})
 	${RM} -r $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
@@ -268,6 +240,54 @@ sparse: tm
 else
 sparse:
 	@echo "Not training a sparse model." >&2
+endif
+
+
+.PHONY: coarselm
+coarselm: SHELL=${LOCAL_SHELL}
+ifdef COARSELM_NCLS_LIST
+models: coarselm
+
+portageLive: portageLive_models_coarselm
+portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_coarselm
+
+coarselm: wcl
+	${MAKE} -C $@ all
+else
+coarselm:
+	@echo "Not training coarse language models." >&2
+endif
+
+
+.PHONY: bilm
+bilm: SHELL=${LOCAL_SHELL}
+ifdef BILM_SPEC
+models: bilm
+
+portageLive: portageLive_models_bilm
+portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_bilm
+
+bilm: wcl
+	${MAKE} -C $@ all
+else
+bilm:
+	@echo "Not training BiLM models." >&2
+endif
+
+
+.PHONY: wcl
+wcl: SHELL=${LOCAL_SHELL}
+ifdef WCL_NCLS_LIST
+models: wcl
+
+portageLive: portageLive_models_wcl
+portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_wcl
+
+wcl:
+	${MAKE} -C $@ all
+else
+wcl:
+	@echo "Not training word classes." >&2
 endif
 
 
