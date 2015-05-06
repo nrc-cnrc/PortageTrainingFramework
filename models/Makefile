@@ -451,3 +451,115 @@ clean clean.content: clean.portageLive
 clean.portageLive: SHELL=${LOCAL_SHELL}
 clean.portageLive:
 	${RM} -r portageLive
+
+
+
+
+
+
+
+
+################################################################################
+# TESTSUITE
+
+.PHONY: testsuite
+
+%.testcase:  export SHELL := bash
+
+%.testcase:  export TRAIN_TM   := tm-train  TM
+%.testcase:  export TRAIN_LDM  := ldm-train
+%.testcase:  export TRAIN_HLDM := hldm-train
+
+%.testcase:  export MERGED_CPT_ZN_MODEL := HMM1
+%.testcase:  export MERGED_CPT_JPT_TYPES := IBM2 HMM3
+%.testcase:  export MERGED_CPT_USE_ALIGNMENT_INDICATORS := 0
+
+%.testcase:  export MIXTM           := subtm1 subtm2
+%.testcase:  export MIXTM_TRAIN_MIX := mixtm_train_mix
+%.testcase:  export TUNE_MIXTM      := tune_mixtm
+%.testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL :=
+
+%.testcase:  export USE_SIGPRUNING :=
+%.testcase:  export USE_LDM := 1
+%.testcase:  export USE_HLDM :=
+
+%.testcase:  export USING_CLUSTER := 1
+%.testcase:  export PARALLELISM_LEVEL_TM := 1
+
+# Where MAKE_OPTS could be -t to only touch targets.
+%.testcase:
+	echo "TESTCASE:  $@"
+	${MAKE} clean &> /dev/null
+	mkdir -p tm/{mixtm,j2m,j2mr}
+	#${MAKE} -j 11 ${TESTCASE_OPTS} ibm
+	#${MAKE} -j 11 ${TESTCASE_OPTS} wal
+	#${MAKE} -j 11 ${TESTCASE_OPTS} jpt
+	#${MAKE} -j 11 ${TESTCASE_OPTS} sig
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} tm
+	@echo "*******************************************************************"
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} ldm
+
+
+testsuite:  ibm4.testcase
+ibm4.testcase:  export PT_TYPES := ibm4_cpt
+
+
+testsuite:  ibm2.testcase
+ibm2.testcase:  export PT_TYPES := ibm2_cpt
+
+testsuite:  ibm2.sig.testcase
+ibm2.sig.testcase:  export PT_TYPES := ibm2_cpt
+ibm2.sig.testcase:  export USE_SIGPRUNING := 1
+
+
+testsuite:  wams.testcase
+wams.testcase:  export PT_TYPES := ibm1_cpt ibm2_cpt  hmm1_cpt hmm2_cpt hmm3_cpt
+
+testsuite:  wams.sig.testcase
+wams.sig.testcase:  export PT_TYPES := ibm1_cpt ibm2_cpt  hmm1_cpt hmm2_cpt hmm3_cpt
+wams.sig.testcase:  export USE_SIGPRUNING := 1
+
+
+testsuite:  pretrained.testcase
+pretrained.testcase:  export PT_TYPES := pretrained_cpt
+
+
+testsuite:  merged.testcase
+merged.testcase:  export PT_TYPES := merged_cpt
+
+testsuite:  merged.sig.testcase
+merged.sig.testcase:  export PT_TYPES := merged_cpt
+merged.sig.testcase:  export USE_SIGPRUNING := 1
+
+
+tm/mixtm:
+	mkdir -p $@
+mix%testcase:  | tm/mixtm
+
+testsuite:  mix.testcase
+mix.testcase:  export PT_TYPES := mix_cpt
+
+testsuite:  mix.sig.testcase
+mix.sig.testcase:  export PT_TYPES := mix_cpt
+mix.sig.testcase:  export USE_SIGPRUNING := 1
+
+testsuite:  mixwam.testcase
+mixwam.testcase:  export PT_TYPES := mix_cpt
+mixwam.testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL := 1
+
+testsuite:  mixwam.sig.testcase
+mixwam.sig.testcase:  export PT_TYPES := mix_cpt
+mixwam.sig.testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL := 1
+mixwam.sig.testcase:  export USE_SIGPRUNING := 1
+
+
+tm/j2m  tm/j2mr:
+	mkdir -p $@
+indicator%testcase:  | tm/j2m  tm/j2mr
+
+testsuite:  indicator.testcase
+indicator.testcase:  export PT_TYPES := indicator_cpt
+
+testsuite:  indicator.sig.testcase
+indicator.sig.testcase:  export PT_TYPES := indicator_cpt
+indicator.sig.testcase:  export USE_SIGPRUNING := 1
