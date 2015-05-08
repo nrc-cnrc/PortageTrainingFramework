@@ -11,13 +11,32 @@
 # Copyright 2010, Sa Majeste la Reine du Chef du Canada
 # Copyright 2010, Her Majesty in Right of Canada
 
-ifndef SRC_LANG
-$(error You must define SRC_LANG)
-endif
+LDM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
-ifndef TGT_LANG
-$(error You must define TGT_LANG)
-endif
+-include ${LDM_DIR_PFX}../../Makefile.params
+include ${LDM_DIR_PFX}../Makefile.definition
+
+# Default languages
+SRC_LANG ?= en
+TGT_LANG ?= fr
+
+# Default language corpora extension.
+LANGX  ?= .lc
+LANGXZ ?= ${LANGX}.gz
+
+# Language file extension.
+L1  ?= _${SRC_LANG}${LANGX}
+L2  ?= _${TGT_LANG}${LANGX}
+L1X ?= _${SRC_LANG}${LANGXZ}
+L2X ?= _${TGT_LANG}${LANGXZ}
+
+# IBM / HMM models extension.
+L1_GIVEN_L2  ?= ${SRC_LANG}_given_${TGT_LANG}
+L1_GIVEN_L2X ?= ${L1_GIVEN_L2}.gz
+
+# conditional phrase table extension.
+L1_2_L2  ?= ${SRC_LANG}2${TGT_LANG}
+L1_2_L2X ?= ${L1_2_L2}.gz
 
 # Maximum phrase length.
 M ?= 8
@@ -28,12 +47,6 @@ WTG ?= 5
 WT1 ?= 5
 WT2 ?= 5
 
-# Define corpora extension.
-SRCX  ?= _${SRC_LANG}${LANGX}
-TGTX  ?= _${TGT_LANG}${LANGX}
-SRCXZ ?= ${SRCX}${GZ}
-TGTXZ ?= ${TGTX}${GZ}
-
 # How many jobs to create when creating the counts.
 PARALLELISM_LEVEL_LDM ?= 30
 # How many workers to use to process those jobs.
@@ -41,29 +54,8 @@ PARALLELISM_LEVEL_LDM_WORKERS ?= ${PARALLELISM_LEVEL_LDM}
 # How many cpus each workers should use.
 COUNT_CPUS ?= 1
 
-# IBM / HMM models extension
-SRC_GIVEN_TGT  ?= ${SRC_LANG}_given_${TGT_LANG}
-TGT_GIVEN_SRC  ?= ${TGT_LANG}_given_${SRC_LANG}
-SRC_GIVEN_TGTX ?= ${SRC_GIVEN_TGT}.gz
-TGT_GIVEN_SRCX ?= ${TGT_GIVEN_SRC}.gz
-
-# conditional phrase table extension
-SRC_2_TGT  ?= ${SRC_LANG}2${TGT_LANG}
-TGT_2_SRC  ?= ${TGT_LANG}2${SRC_LANG}
-SRC_2_TGTX ?= ${SRC_2_TGT}.gz
-TGT_2_SRCX ?= ${TGT_2_SRC}.gz
-
-IBM1_MODEL_PFX ?= ibm1
-IBM4_MODEL_PFX ?= ibm4
-
 # We want a minimum of 100,000 lines per jobs that parallelize.pl creates.
 MINIMUM_PARALLEL_CHUNK_SIZE ?= 100000
-
-# Where are the corpora?
-CORPORA_DIR ?= ../../corpora
-
-# Where are the word/phrase alignment models?
-MODEL_DIRS ?= ../tm ../tm/mixtm
 
 # Resource monitoring.
 TIME_MEM ?= time-mem
@@ -94,31 +86,10 @@ DONT_USE_FILLUP ?=
 # Joins two parallel lists of words.
 interleave = $(strip $(subst \, , $(join ${1}, $(addprefix \, $(join $2, $(addprefix \, $3))))))
 
-
-
-
-# Where can I find the corpora.
-vpath %${SRCX}  ${CORPORA_DIR}
-vpath %${TGTX}  ${CORPORA_DIR}
-vpath %${SRCXZ} ${CORPORA_DIR}
-vpath %${TGTXZ} ${CORPORA_DIR}
-
-## Where can we find the phrase models.
-#vpath %${TGT_GIVEN_SRCX} ${MODEL_DIRS}
-#vpath %${SRC_GIVEN_TGTX} ${MODEL_DIRS}
-#vpath %.align.gz  ${MODEL_DIRS}
-
-# Where to find the filtered corpora for IBM4
-vpath %/${SRC_LANG}.lc ${MODEL_DIRS}
-vpath %/${TGT_LANG}.lc ${MODEL_DIRS}
-
-
-
 # Adds the hierarchical lexicalized distortion model's option.
 ADD_HLDM_OPTS = $(and $(findstring ${HLDM_MODEL_PFX}, $1), -hier)
 
-# Fix the path of the alignment files, if necessary to pick them up from ../tm
-FIX_PATHS = $(foreach f,$(filter $1,$2),$(if $(filter-out $1,$f),$f,$(if $(filter ../%,$f),$f,../tm/$f)))
+
 
 ########################################
 # How to calculate the lexicalized counts.
@@ -126,8 +97,8 @@ FIX_PATHS = $(foreach f,$(filter $1,$2),$(if $(filter-out $1,$f),$f,$(if $(filte
 # command to the cluster queue since parallelize.pl will take care of this for
 # us.
 # You must provide this target with:
-# - a source corpus with the SRCXZ suffix;
-# - a target corpus with the TGTXZ suffix;
+# - a source corpus with the L1X suffix;
+# - a target corpus with the L2X suffix;
 # - a alignment file for each parallel corpora provided.
 %${COUNTSX}: SHELL=${LOCAL_SHELL}
 %${COUNTSX}:
@@ -139,30 +110,17 @@ FIX_PATHS = $(foreach f,$(filter $1,$2),$(if $(filter-out $1,$f),$f,$(if $(filte
 		-np ${PARALLELISM_LEVEL_LDM_WORKERS} \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \
 		$(addprefix -s , \
-			$(call FIX_PATHS, %${SRCXZ}, $+) \
-			$(call FIX_PATHS, %${TGTXZ}, $+) \
-			$(call FIX_PATHS, %align.gz, $+)) \
+			$(filter %${L1X}, $+) \
+			$(filter %${L2X}, $+) \
+			$(filter %align.gz, $+)) \
 		-merge 'merge_multi_column_counts -' \
 		'dmcount -ext -v -m ${M} $(call ADD_HLDM_OPTS, $@) \
 			$(call interleave, \
-				$(call FIX_PATHS, %${SRCXZ}, $+), \
-				$(call FIX_PATHS, %${TGTXZ}, $+), \
-				$(call FIX_PATHS, %.align.gz, $+)) \
+				$(filter %${L1X}, $+), \
+				$(filter %${L2X}, $+), \
+				$(filter %.align.gz, $+)) \
 			| li-sort.sh > $@' \
 	&> log.$(basename $@)
-
-## This is a special rule to handle ibm4 since we need a filter corpora for IBM4.
-#%.lc:  SHELL=${LOCAL_SHELL}
-#%.lc:
-#	${MAKE} -C ../tm $@
-
-#%.align.gz: SHELL=${LOCAL_SHELL}
-#%.align.gz:
-#	${MAKE} -C ../tm $@
-
-#${IBM1_MODEL_PFX}.%.gz: SHELL=${LOCAL_SHELL}
-#${IBM1_MODEL_PFX}.%.gz:
-#	${MAKE} -C ../tm $@
 
 
 
@@ -170,8 +128,8 @@ FIX_PATHS = $(foreach f,$(filter $1,$2),$(if $(filter-out $1,$f),$f,$(if $(filte
 # How to create a lexicalized distortion models.
 # You must provide this target:
 # - one or more lexicalized distortion model counts.
-%${SRC_2_TGTX}: SHELL=${FRAMEWORK_SHELL}
-%${SRC_2_TGTX}:
+%${L1_2_L2X}: SHELL=${FRAMEWORK_SHELL}
+%${L1_2_L2X}:
 	RP_PSUB_OPTS="-${ESTIM_CPUS}" \
 	set -o pipefail; \
 	merge_multi_column_counts $(if ${DONT_USE_FILLUP},,-fillup) - $+ \
@@ -203,6 +161,7 @@ TUNE_RESULTS_DIR ?= tune.results
 
 # What dev set to use for tuning.
 TUNE_SET ?= ${TUNE_DECODE}
+TUNE_SET ?= dev1
 
 # Number of workers to use in parallel during tuning.
 NUMBER_PARALLEL_WORKER ?= `wc -l < $<`
@@ -230,8 +189,8 @@ log.tune-dms: tune-dms.cmds
 ldm.counts.tune.hmm1+ibm2.gz: ldm.counts.tune.hmm1.gz ldm.counts.tune.ibm2.gz
 	zcat $+ | gzip > $@
 
-ldm.counts.tune.%.gz: $(addprefix ${TUNE_SET},${SRCX} ${TGTX})
-	dmcount -v -m ${M} $*.${TRAIN_TM}.${TGT_GIVEN_SRCX} $*.${TRAIN_TM}.${SRC_GIVEN_TGTX} $+ \
+ldm.counts.tune.%.gz: $(addprefix ${TUNE_SET},${L1} ${L2})
+	dmcount -v -m ${M} $*.${TRAIN_TM}.${L2_GIVEN_L1X} $*.${TRAIN_TM}.${L1_GIVEN_L2X} $+ \
 	| gzip > $@
 
 tune-dms.cmds: ldm.counts.ibm2.gz ldm.counts.hmm1.gz ldm.counts.tune.hmm1+ibm2.gz
