@@ -72,6 +72,7 @@ all:  SHELL=${LOCAL_SHELL}
 all:  ${PT_TYPES:_cpt=_wal}
 all:  $(and ${USE_LDM}, ldm_wal)
 all:  $(and ${USE_HLDM}, hldm_wal)
+all:  $(and ${BILM_SPEC}, bilm_wal)
 
 
 
@@ -245,6 +246,12 @@ with open(".Makefile.deps", "w") as df:
    # INDICATOR
    WAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
    addModelsToMetaTarget(wamType("indicator"), "$(sort ${ALL_TMS})", WAMs)
+
+
+   #############################################################################
+   # INDICATOR
+   WAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
+   addModelsToMetaTarget(wamType("bilm"), "$(sort ${TRAIN_BILM})", WAMs)
 
 
    print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)

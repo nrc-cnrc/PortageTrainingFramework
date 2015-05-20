@@ -301,7 +301,7 @@ models: bilm
 portageLive: portageLive_models_bilm
 portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_bilm
 
-bilm: wcl
+bilm: wcl wal
 	${MAKE} -C $@ all
 else
 bilm:
@@ -480,8 +480,8 @@ clean.portageLive:
 %.testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL :=
 
 %.testcase:  export USE_SIGPRUNING :=
-%.testcase:  export USE_LDM := 1
-%.testcase:  export USE_HLDM :=
+%.testcase:  export USE_LDM :=
+%.testcase:  export USE_HLDM := 1
 
 %.testcase:  export USING_CLUSTER := 1
 %.testcase:  export PARALLELISM_LEVEL_TM := 1
@@ -563,3 +563,15 @@ indicator.testcase:  export PT_TYPES := indicator_cpt
 testsuite:  indicator.sig.testcase
 indicator.sig.testcase:  export PT_TYPES := indicator_cpt
 indicator.sig.testcase:  export USE_SIGPRUNING := 1
+
+
+testsuite:  bilm.testcase
+bilm.testcase:  export BILM_SPEC := 40bi-40s-40t
+bilm.testcase:  export PT_TYPES := merged_cpt
+bilm.testcase:  export USE_HLDM :=
+bilm.testcase:  export TRAIN_BILM := bilm-train
+bilm.testcase:
+	echo "TESTCASE:  $@"
+	${MAKE} clean &> /dev/null
+	mkdir -p tm/{mixtm,j2m,j2mr}
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} bilm

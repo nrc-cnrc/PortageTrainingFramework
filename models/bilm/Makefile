@@ -90,7 +90,7 @@ vpath %${CORPUS_EXT:.gz=} ${CORPORA_DIR}
 vpath %.classes ../wcl
 
 # Locate the Word Alignment (wal) files in the tm directory
-vpath %.align.gz ../tm
+vpath %.align.gz ../wal
 
 
 .DEFAULT_GOAL := help
