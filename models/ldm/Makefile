@@ -13,56 +13,62 @@
 # Copyright 2010, Her Majesty in Right of Canada
 
 
+LDM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
+
 # User specific configuration.
 MAKEFILE_PARAMS ?= Makefile.params
--include ${MAKEFILE_PARAMS}
+-include ${LDM_DIR_PFX}${MAKEFILE_PARAMS}
 
 # Mandatory include: master config file.
-include ../../Makefile.params
+include ${LDM_DIR_PFX}../../Makefile.params
 
 # Default toolkit.
-include ../../Makefile.toolkit
+include ${LDM_DIR_PFX}../../Makefile.toolkit
 
 # Always include the toolkit last.
-include Makefile.toolkit
-
-# GNU Make Standard Library
-include ../../gmsl/gmsl
+include ${LDM_DIR_PFX}Makefile.toolkit
 
 
 # What is this module's name.
 MODULE_NAME ?= ldm
 
 # Sorts the corpora in order to create dependencies in the proper order.
-TRAIN_LDM := $(sort ${TRAIN_LDM})
+TRAIN_LDM  := $(sort ${TRAIN_LDM})
 TRAIN_HLDM := $(sort ${TRAIN_HLDM})
-
-# List of all possible word alignment models in the framework.
-# These must be ordered from most reliable to least reliable, because of the
-# fill-up procedure.
-POSSIBLE_WORD_ALIGNMENT_MODELS := ibm4 hmm3 hmm2 hmm1 ibm2 ibm1
 
 # Function to sort a list of models from arbitrary order to best-first order.
 sort_aligners = $(filter $1, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
 # Find out what the word alignment models the user asked for are,
 # based on the type of conditional phrase tables that was specified.
-TMP_AVAILABLE_WORD_ALIGNMENT_MODELS := $(filter-out merged indicator mix, $(PT_TYPES:_cpt=))
-ifneq ($(filter merged indicator mix, $(PT_TYPES:_cpt=)),)
-TMP_AVAILABLE_WORD_ALIGNMENT_MODELS += $(call lc, ${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES})
+TMP_AVAILABLE_WORD_ALIGNMENT_MODELS := $(filter-out pretrained merged indicator mix, $(PT_TYPES:_cpt=))
+ifneq ($(filter pretrained merged indicator mix, $(PT_TYPES:_cpt=)),)
+TMP_AVAILABLE_WORD_ALIGNMENT_MODELS += $(foreach m, ${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES}, ${${m}_MODEL_PFX})
 else
 ifeq (${PT_TYPES},)
-TMP_AVAILABLE_WORD_ALIGNMENT_MODELS += $(call lc, ${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES})
+TMP_AVAILABLE_WORD_ALIGNMENT_MODELS += $(foreach m, ${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES}, ${${m}_MODEL_PFX})
 endif
 endif
 AVAILABLE_WORD_ALIGNMENT_MODELS := $(call sort_aligners,${TMP_AVAILABLE_WORD_ALIGNMENT_MODELS})
 
-# What will we use for the LDM's name.
-LDM_NAME ?= $(call merge,+,$(call sort_aligners,${AVAILABLE_WORD_ALIGNMENT_MODELS}))
-
 # For the lock target, let's specify what file we want to put read-only.
 FILES_TO_BE_LOCKED = *${COUNTSX} ${LDM_MODEL_PFX}* ${HLDM_MODEL_PFX}*
 
+
+# Where we can find the parallel corpora.
+CORPORA_DIR ?= ${IBM_DIR_PFX}../../corpora
+
+# Allows to search for alignment files in corpus.
+vpath %${L1X} ${CORPORA_DIR}
+vpath %${L2X} ${CORPORA_DIR}
+vpath %${L1}  ${CORPORA_DIR}
+vpath %${L2}  ${CORPORA_DIR}
+
+vpath %/${SRC_LANG}.lc     ${LDM_DIR_PFX}../ibm/
+vpath %/${TGT_LANG}.lc     ${LDM_DIR_PFX}../ibm/
+
+# Allows to search for alignment files in corpus.
+vpath %.align.gz  ${LDM_DIR_PFX}../wal/
 
 
 .DEFAULT_GOAL := help
@@ -76,76 +82,17 @@ all:
 
 
 ########################################
-# LEXICALIZED COUNTS.
-# list of all lexicalized distortion count files required.
-LDM_COUNT_FILES := $(foreach m, ${AVAILABLE_WORD_ALIGNMENT_MODELS}, ${LDM_MODEL_PFX}.$m${COUNTSX})
-
-.PHONY:  ldm.counts
-ldm.counts:  ${LDM_COUNT_FILES}
-
-########################################
-# HIERARCHICAL LEXICALIZED COUNTS.
-# list of all hierarchical lexicalized distortion count files required.
-HLDM_COUNT_FILES := $(foreach m, ${AVAILABLE_WORD_ALIGNMENT_MODELS}, ${HLDM_MODEL_PFX}.$m${COUNTSX})
-
-.PHONY:  hldm.counts
-hldm.counts:  ${HLDM_COUNT_FILES}
-
-
-
-########################################
-# Auto-generate all dependencies for all possible word alignment models
-# To generate (h)ldm count files we need alignment files.
-$(foreach m, ${POSSIBLE_WORD_ALIGNMENT_MODELS}, \
-   $(eval \
-	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix .$m.${SRC_2_TGT}.align.gz,${TRAIN_LDM})) \
-   $(eval \
-	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix .$m.${SRC_2_TGT}.align.gz,${TRAIN_HLDM})) \
-)
-# We need to make sure the ibm1 models are built first (for make -j to work correctly)
-# This is to prevent a race condition where an IBM2 model that require an IBM1
-# model would be incompetition with an HMM3 model which also depends on an IBM1
-# model.  Who will trigger first the recursive call to make the IBM1 model?
-$(foreach m, $(filter-out ibm4, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-   $(foreach c, $(sort ${TRAIN_LDM} ${TRAIN_HLDM}), \
-      $(eval \
-			$c.$m.${SRC_2_TGT}.align.gz: ${IBM1_MODEL_PFX}.$c.${TGT_GIVEN_SRCX} ${IBM1_MODEL_PFX}.$c.${SRC_GIVEN_TGTX}) \
-   ) \
-)
-# To generate (h)ldm count files we need the source corpus and the target corpus
-# NOTE: IBM4 models require filtered corpora thus we need to write a separate rule.
-$(foreach m, $(filter-out ibm4, ${POSSIBLE_WORD_ALIGNMENT_MODELS}), \
-   $(eval \
-	   ${LDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix ${SRCXZ},${TRAIN_LDM}) $(addsuffix ${TGTXZ},${TRAIN_LDM})) \
-   $(eval \
-	   ${HLDM_MODEL_PFX}.$m${COUNTSX}:  $(addsuffix ${SRCXZ},${TRAIN_HLDM}) $(addsuffix ${TGTXZ},${TRAIN_HLDM})) \
-)
-# Pick up filtered corpora for (h)ldm models based on IBM4.
-%.ibm4${COUNTSX}:  SRCXZ=${SRC_LANG}.lc
-%.ibm4${COUNTSX}:  TGTXZ=${TGT_LANG}.lc
-${LDM_MODEL_PFX}.ibm4${COUNTSX}:   $(foreach c,${TRAIN_LDM}, $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc)
-${HLDM_MODEL_PFX}.ibm4${COUNTSX}:  $(foreach c,${TRAIN_HLDM}, $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc)
-$(foreach c, $(sort ${TRAIN_LDM} ${TRAIN_HLDM}), \
-	$(eval \
-		$c.ibm4.${SRC_2_TGT}.align.gz:  $c/${SRC_LANG}.lc $c/${TGT_LANG}.lc) \
-)
-
-
-########################################
 # LEXICALIZED DISTORTION MODEL.
-# Lexicalized distortion model file name.
-LDM_FILE := ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}
-
 ifdef USE_LDM
+$(info Using Lexicalized Distortion Model.)
 all: ldm
+else
+$(info Skipping Lexicalized Distortion Model.)
+all:
 endif
 
 .PHONY:  ldm
-ldm:  ${LDM_FILE}
-
-# We will build a Lexicalized Distortion Model based on all available word alignment models.
-${LDM_FILE}:  ${LDM_COUNT_FILES}
-
+ldm:
 
 # Filtering LDMs.
 ifdef LDM_FILTER_SINGLETONS
@@ -156,24 +103,82 @@ endif
 
 ########################################
 # HIERARCHICAL LEXICALIZED DISTORTION MODEL.
-# Hirarchical Lexicalized distortion model file name.
-HLDM_FILE := ${HLDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX}
-
 ifdef USE_HLDM
+$(info Using Hierarchical Lexicalized Distortion Model.)
 all:  hldm
+else
+$(info Skipping Hierarchical Lexicalized Distortion Model.)
+all:
 endif
 
 .PHONY:  hldm
-hldm:  ${HLDM_FILE}
-
-# We will build a Lexicalized Distortion Model based on all available word alignment models.
-${HLDM_FILE}:  ${HLDM_COUNT_FILES}
-
+hldm:
 
 # Filtering HLDMs.
 ifdef HLDM_FILTER_SINGLETONS
 ${HLDM_FILE}:  LDM_FILTER_CMD=egrep -v '\|( 0)* 1( 0)* 1( 0)*$$'
 endif
+
+
+
+#################################################################################
+# Dependencies
+define DEPS.PYSCRIPT
+from __future__ import print_function
+
+def corporaNames(corpora, wam, sx="${L1X}", tx="${L2X}"):
+   if wam == "${IBM4_MODEL_PFX}":
+      return {"s" : corpora+"/${SRC_LANG}.lc", "t":corpora+"/${TGT_LANG}.lc"}
+   else:
+      return {"s" : corpora+sx, "t":corpora+tx}
+
+# What will we use for the LDM is description.
+ldmDescription = "+".join("$(call sort_aligners,${AVAILABLE_WORD_ALIGNMENT_MODELS})".strip().split())
+
+# Lexicalized distortion model file name.
+ldmFile = "${LDM_MODEL_PFX}.{name}.${L1_2_L2X}".format(name=ldmDescription)
+
+# Hirarchical Lexicalized distortion model file name.
+hldmFile = "${HLDM_MODEL_PFX}.{name}.${L1_2_L2X}".format(name=ldmDescription)
+
+with open(".Makefile.deps", "w") as df:
+   expectedFiles = set()
+   print("ldm:   {file}".format(file=ldmFile), file=df)
+   print("hldm:  {file}".format(file=hldmFile), file=df)
+
+   # To generate (h)ldm count files we need alignment files.
+   # To generate (h)ldm count files we need the source corpus and the target corpus
+   for wam in "$(sort ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split():
+      for corpora in "$(sort ${TRAIN_LDM})".strip().split():
+         countFilename = "${LDM_MODEL_PFX}.{w}${COUNTSX}".format(w=wam)
+         alignment = "{c}.{m}.${L1_2_L2}.align.gz".format(c=corpora, m=wam)
+         print("{counts}:  {s}  {t}".format(counts=countFilename, **corporaNames(corpora, wam)), file=df)
+         print("{counts}:  {alignment}".format(counts=countFilename, alignment=alignment), file=df)
+
+      for corpora in "$(sort ${TRAIN_HLDM})".strip().split():
+         countFilename = "${HLDM_MODEL_PFX}.{w}${COUNTSX}".format(w=wam)
+         alignment = "{c}.{m}.${L1_2_L2}.align.gz".format(c=corpora, m=wam)
+         print("{counts}:  {s}  {t}".format(counts=countFilename, **corporaNames(corpora, wam)), file=df)
+         print("{counts}:  {alignment}".format(counts=countFilename, alignment=alignment), file=df)
+
+   #############################################################################
+   #
+   for wam in "$(sort ${AVAILABLE_WORD_ALIGNMENT_MODELS})".strip().split():
+      countFilename = "${LDM_MODEL_PFX}.{w}${COUNTSX}".format(w=wam)
+      print("ldm.counts:  {counts}".format(counts=countFilename), file=df)
+      print("{ldmFile}:  {counts}".format(ldmFile=ldmFile, counts=countFilename), file=df)
+      expectedFiles.add(countFilename)
+
+      countFilename = "${HLDM_MODEL_PFX}.{w}${COUNTSX}".format(w=wam)
+      print("hldm.counts:  {counts}".format(counts=countFilename), file=df)
+      print("{hldmFile}:  {counts}".format(hldmFile=hldmFile, counts=countFilename), file=df)
+      expectedFiles.add(countFilename)
+
+   print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
+endef
+#$(info WORD ALIGNMENT: ${DEPS.PYSCRIPT})
+$(shell python -c '${DEPS.PYSCRIPT}')
+include .Makefile.deps
 
 
 
@@ -235,7 +240,7 @@ clean: clean.content clean.logs
 
 clean.content: SHELL=${LOCAL_SHELL}
 clean.content:
-	${RM} *${COUNTSX} *${SRC_2_TGTX} *.bkoff
+	${RM} *${COUNTSX} *${L1_2_L2X} *.bkoff
 	${RM} -r parallelize.pl.*
 
 clean.logs: SHELL=${LOCAL_SHELL}
@@ -299,6 +304,6 @@ unittest1:
 	|| ! echo "ERROR: failed to generate hmm3 count file." >&2
 	@ [[ `find -name ${LDM_MODEL_PFX}.ibm4${COUNTSX} -size +21c | \wc -l` -eq 1 ]] \
 	|| ! echo "ERROR: failed to generate ibm4 count file." >&2
-	@ [[ `find -name ${LDM_MODEL_PFX}.${LDM_NAME}.${SRC_2_TGTX} -size +21c` ]] \
+	@ [[ `find -name ${LDM_MODEL_PFX}.${LDM_NAME}.${L1_2_L2X} -size +21c` ]] \
 	|| ! echo "ERROR: failed to generate lexicalized distortion model file." >&2
 

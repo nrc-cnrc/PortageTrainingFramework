@@ -12,6 +12,8 @@
 # Copyright 2009, 2012 Sa Majeste la Reine du Chef du Canada /
 # Copyright 2009, 2012 Her Majesty in Right of Canada
 
+MODEL_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
+
 # Mandatory include: master config file.
 include ../Makefile.params
 
@@ -70,6 +72,10 @@ clean.content clean.logs hide.logs: SHELL=${LOCAL_SHELL}
 clean.content clean.logs hide.logs: %:
 	${MAKE} -C ldm $@
 	${MAKE} -C lm $@
+	${MAKE} -C ibm $@
+	${MAKE} -C wal $@
+	${MAKE} -C jpt $@
+	${MAKE} -C sig $@
 	${MAKE} -C tm $@
 	${MAKE} -C tc $@
 	${MAKE} -C decode $@
@@ -144,10 +150,38 @@ endif
 	${MAKE} -C $@ all
 
 
+.PHONY: ibm
+# Create Word Alignment Models (ibm).
+ibm: SHELL=${LOCAL_SHELL}
+ibm:
+	${MAKE} -C $@ all
+
+
+.PHONY: wal
+# Create Word Alignment File (wal).
+wal: SHELL=${LOCAL_SHELL}
+wal:  ibm
+	${MAKE} -C $@ all
+
+
+.PHONY: jpt
+# Create Joint frequency Phrase Tables (jpt).
+jpt: SHELL=${LOCAL_SHELL}
+jpt:  wal
+	${MAKE} -C $@ all
+
+
+.PHONY: sig
+# Create Significance Pruned Joint frequency Phrase Tables (sig).
+sig: SHELL=${LOCAL_SHELL}
+sig:  jpt
+	${MAKE} -C $@ all
+
+
 .PHONY: tm
 # Create the Translation Model (TM).
 tm: SHELL=${LOCAL_SHELL}
-tm:
+tm:  sig
 ifdef DO_UPDATE_PRETRAINED_LINKS
 ifneq ($(strip ${TM_PRETRAINED_TMS} ${MIXTM_PRETRAINED_TMS}),)
 	${MAKE} -C $@ trigger.update.pretrained.links
@@ -222,7 +256,7 @@ models: ldm
 portageLive: portageLive_models_ldm
 portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_ldm
 
-ldm: tm
+ldm:  ibm  wal
 	${MAKE} -C $@ all
 else
 ldm:
@@ -267,7 +301,7 @@ models: bilm
 portageLive: portageLive_models_bilm
 portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_bilm
 
-bilm: wcl
+bilm: wcl wal
 	${MAKE} -C $@ all
 else
 bilm:
@@ -417,3 +451,127 @@ clean clean.content: clean.portageLive
 clean.portageLive: SHELL=${LOCAL_SHELL}
 clean.portageLive:
 	${RM} -r portageLive
+
+
+
+
+
+
+
+
+################################################################################
+# TESTSUITE
+
+.PHONY: testsuite
+
+%.testcase:  export SHELL := bash
+
+%.testcase:  export TRAIN_TM   := tm-train  TM
+%.testcase:  export TRAIN_LDM  := ldm-train
+%.testcase:  export TRAIN_HLDM := hldm-train
+
+%.testcase:  export MERGED_CPT_ZN_MODEL := HMM1
+%.testcase:  export MERGED_CPT_JPT_TYPES := IBM2 HMM3
+%.testcase:  export MERGED_CPT_USE_ALIGNMENT_INDICATORS := 0
+
+%.testcase:  export MIXTM           := subtm1 subtm2
+%.testcase:  export MIXTM_TRAIN_MIX := mixtm_train_mix
+%.testcase:  export TUNE_MIXTM      := tune_mixtm
+%.testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL :=
+
+%.testcase:  export USE_SIGPRUNING :=
+%.testcase:  export USE_LDM :=
+%.testcase:  export USE_HLDM := 1
+
+%.testcase:  export USING_CLUSTER := 1
+%.testcase:  export PARALLELISM_LEVEL_TM := 1
+
+# Where MAKE_OPTS could be -t to only touch targets.
+%.testcase:
+	echo "TESTCASE:  $@"
+	${MAKE} clean &> /dev/null
+	mkdir -p tm/{mixtm,j2m,j2mr}
+	#${MAKE} -j 11 ${TESTCASE_OPTS} ibm
+	#${MAKE} -j 11 ${TESTCASE_OPTS} wal
+	#${MAKE} -j 11 ${TESTCASE_OPTS} jpt
+	#${MAKE} -j 11 ${TESTCASE_OPTS} sig
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} tm
+	@echo "*******************************************************************"
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} ldm
+
+
+testsuite:  ibm4.testcase
+ibm4.testcase:  export PT_TYPES := ibm4_cpt
+
+
+testsuite:  ibm2.testcase
+ibm2.testcase:  export PT_TYPES := ibm2_cpt
+
+testsuite:  ibm2.sig.testcase
+ibm2.sig.testcase:  export PT_TYPES := ibm2_cpt
+ibm2.sig.testcase:  export USE_SIGPRUNING := 1
+
+
+testsuite:  wams.testcase
+wams.testcase:  export PT_TYPES := ibm1_cpt ibm2_cpt  hmm1_cpt hmm2_cpt hmm3_cpt
+
+testsuite:  wams.sig.testcase
+wams.sig.testcase:  export PT_TYPES := ibm1_cpt ibm2_cpt  hmm1_cpt hmm2_cpt hmm3_cpt
+wams.sig.testcase:  export USE_SIGPRUNING := 1
+
+
+testsuite:  pretrained.testcase
+pretrained.testcase:  export PT_TYPES := pretrained_cpt
+
+
+testsuite:  merged.testcase
+merged.testcase:  export PT_TYPES := merged_cpt
+
+testsuite:  merged.sig.testcase
+merged.sig.testcase:  export PT_TYPES := merged_cpt
+merged.sig.testcase:  export USE_SIGPRUNING := 1
+
+
+tm/mixtm:
+	mkdir -p $@
+mix%testcase:  | tm/mixtm
+
+testsuite:  mix.testcase
+mix.testcase:  export PT_TYPES := mix_cpt
+
+testsuite:  mix.sig.testcase
+mix.sig.testcase:  export PT_TYPES := mix_cpt
+mix.sig.testcase:  export USE_SIGPRUNING := 1
+
+testsuite:  mixwam.testcase
+mixwam.testcase:  export PT_TYPES := mix_cpt
+mixwam.testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL := 1
+
+testsuite:  mixwam.sig.testcase
+mixwam.sig.testcase:  export PT_TYPES := mix_cpt
+mixwam.sig.testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL := 1
+mixwam.sig.testcase:  export USE_SIGPRUNING := 1
+
+
+tm/j2m  tm/j2mr:
+	mkdir -p $@
+indicator%testcase:  | tm/j2m  tm/j2mr
+
+testsuite:  indicator.testcase
+indicator.testcase:  export PT_TYPES := indicator_cpt
+
+testsuite:  indicator.sig.testcase
+indicator.sig.testcase:  export PT_TYPES := indicator_cpt
+indicator.sig.testcase:  export USE_SIGPRUNING := 1
+
+
+testsuite:  bilm.testcase
+bilm.testcase:  export BILM_SPEC := 40bi-40s-40t
+bilm.testcase:  export PT_TYPES := merged_cpt
+bilm.testcase:  export USE_HLDM :=
+bilm.testcase:  export TRAIN_BILM := bilm-train
+bilm.testcase:
+	echo "TESTCASE:  $@"
+	${MAKE} clean &> /dev/null
+	mkdir -p tm/{mixtm,j2m,j2mr}
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} bilm

@@ -14,64 +14,22 @@
 TM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
 -include ${TM_DIR_PFX}../../Makefile.params
-include ${TM_DIR_PFX}../../gmsl/gmsl   # functions: uc
-
-UTF8 = $(if $(findstring Darwin, ${OSTYPE}),UTF-8,utf8)
-export LANG   = en_CA.${UTF8}
-export LC_ALL = en_CA.${UTF8}
+include ${TM_DIR_PFX}../Makefile.definition
 
 
-# sort is used to remove duplicate or else dependencies are duplicated.
-ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
-ALL_TMS := $(sort ${ALL_TMS})
+ifeq (${SRC_LANG},)
+$(error You MUST define SRC_LANG)
+endif
 
-# sort is used to remove duplicate or else dependencies are duplicated.
-ALL_WAMS ?= $(strip ${ALL_TMS} ${TRAIN_LDM} ${TRAIN_HLDM} ${MIXTM_TRAIN_MIX})
-ALL_WAMS := $(sort ${ALL_WAMS})
-
-# Default language corpora extension.
-LANGX ?= .lc
-LANGXZ ?= ${LANGX}.gz
-
-# Lets rename the language identifiers for the toolkit.
-lang1 = ${SRC_LANG}
-lang2 = ${TGT_LANG}
-
-# Language file extension.
-L1 ?= _${SRC_LANG}${LANGX}
-L2 ?= _${TGT_LANG}${LANGX}
-L1X ?= _${SRC_LANG}${LANGXZ}
-L2X ?= _${TGT_LANG}${LANGXZ}
-
-# IBM / HMM models extension.
-L1_GIVEN_L2  ?= ${lang1}_given_${lang2}
-L2_GIVEN_L1  ?= ${lang2}_given_${lang1}
-L1_GIVEN_L2X ?= ${L1_GIVEN_L2}.gz
-L2_GIVEN_L1X ?= ${L2_GIVEN_L1}.gz
-
-# conditional phrase table extension.
-L1_2_L2  ?= ${lang1}2${lang2}
-L2_2_L1  ?= ${lang2}2${lang1}
-L1_2_L2X ?= ${L1_2_L2}.gz
-L2_2_L1X ?= ${L2_2_L1}.gz
-
-# Joint phrase table extension.
-JOINT  ?= ${lang1}-${lang2}
-JOINTX ?= ${JOINT}.gz
-RJOINT  ?= ${lang2}-${lang1}
-RJOINTX ?= ${RJOINT}.gz
+ifeq (${TGT_LANG},)
+$(error You MUST define TGT_LANG)
+endif
 
 # This is already done in ../../Makefile.params, and we should not use
 # $(shell ...) in cluster mode, so we don't want to run this all the time.
 # Lets define a parallelism level if the user forgets about it.
 #NUM_LOCAL_CPUS := $(shell grep processor /proc/cpuinfo | \wc -l)
 #PARALLELISM_LEVEL_TM ?= ${NUM_LOCAL_CPUS}
-
-# Maximum phrase length.
-M ?= 8
-
-# What program to use to train models.
-CAT ?= cat.sh
 
 # We don't need to sort if we are using -reduce-mem and sorted jpts which is
 # the case in the framework.
@@ -80,103 +38,11 @@ JOINT2COND_PHRASE_TABLE_OPTION ?= -reduce-mem -no-sort
 # Options for joint2multi_cpt
 JOINT2MULTI_CPT_OPTIONS ?=
 
-# Options for merge_multi_column_counts
-MERGE_COUNT_OPTIONS ?=
-
 # Set all the flags needed to generate the a= field in phrase tables, if requested.
 ifdef TMS_WITH_ALIGNMENT_FIELD
    JOINT2COND_PHRASE_TABLE_OPTION += -write-al top
    JOINT2MULTI_CPT_OPTIONS += -write-al top
-   MERGE_COUNT_OPTIONS += -a
-   # JPT_EXTRAS is also modified - see later in this file
 endif
-
-# Track memory usage.
-TIME_MEM ?= time-mem
-
-########################################
-# IBM1 MODELS.
-IBM1_MODEL_PFX ?= ibm1
-IBM1_MODEL_CPUS ?= 1
-IBM1_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-IBM1_MODEL_WORKERS ?= ${IBM1_MODEL_PARALLELISM_LEVEL}
-IBM1_MODEL_EXTRAS ?=
-
-########################################
-# IBM2 MODELS.
-IBM2_MODEL_PFX ?= ibm2
-IBM2_MODEL_CPUS ?= 1
-IBM2_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-IBM2_MODEL_WORKERS ?= ${IBM2_MODEL_PARALLELISM_LEVEL}
-IBM2_MODEL_EXTRAS ?=
-
-########################################
-# HMM1 MODELS.
-HMM1_MODEL_PFX ?= hmm1
-HMM1_MODEL_CPUS ?= 1
-HMM1_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-HMM1_MODEL_WORKERS ?= ${HMM1_MODEL_PARALLELISM_LEVEL}
-HMM1_MODEL_EXTRAS ?=
-
-########################################
-# HMM2 MODELS.
-HMM2_MODEL_PFX ?= hmm2
-HMM2_MODEL_CPUS ?= 1
-HMM2_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-HMM2_MODEL_WORKERS ?= ${HMM2_MODEL_PARALLELISM_LEVEL}
-HMM2_MODEL_EXTRAS ?=
-
-########################################
-# HMM3 MODELS.
-HMM3_MODEL_PFX ?=hmm3
-HMM3_MODEL_CPUS ?= 1
-HMM3_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-HMM3_MODEL_WORKERS ?= ${HMM3_MODEL_PARALLELISM_LEVEL}
-HMM3_MODEL_EXTRAS ?=
-# Autodetect whether -newhmm is supported (i.e., it's not in PortageII).
-NEW_HMM := $(addprefix(-, $(strip $(shell train_ibm -h 2>&1 | grep -om1 newhmm)))
-
-########################################
-# IBM4 MODELS
-IBM4_MODEL_PFX ?= ibm4
-IBM4_MODEL_CPUS ?= 4
-IBM4_MODEL_PARALLELISM_LEVEL ?= ${IBM4_MODEL_CPUS}
-
-########################################
-# List of all possible word alignment models in the framework.
-POSSIBLE_WORD_ALIGNMENT_MODELS := ${IBM1_MODEL_PFX} ${IBM2_MODEL_PFX} ${HMM1_MODEL_PFX} ${HMM2_MODEL_PFX} ${HMM3_MODEL_PFX} ${IBM4_MODEL_PFX}
-
-########################################
-# JPT MODELS.
-JPT_MODEL_PFX ?= jpt
-JPT_CPUS ?= 1
-JPT_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-JPT_WORKERS ?= ${JPT_PARALLELISM_LEVEL}
-GEN_JPT_PARALLEL_OPTIONS ?= -w 1
-JPT_EXTRAS ?=
-# Create variables to hold jpt model prefix.
-$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${IBM4_MODEL_PFX}), \
-   $(eval \
-      JPT_${m}_MODEL_PFX ?= ${JPT_MODEL_PFX}.${${m}_MODEL_PFX}) \
-)
-
-ifdef TMS_WITH_ALIGNMENT_FIELD
-   JPT_EXTRAS += -write-al all
-endif
-
-########################################
-# SIG MODELS.
-SIG_CPUS ?= 1
-SIG_OPTS ?=
-SIG_THRESHOLD ?= a+e
-SIG_MODEL_PFX ?= sig.${SIG_THRESHOLD}
-SIG_MODEL_PARALLELISM_LEVEL ?= ${PARALLELISM_LEVEL_TM}
-SIG_MODEL_WORKERS ?= ${SIG_MODEL_PARALLELISM_LEVEL}
-# Create variables to hold significance model prefix.
-$(foreach m, $(call uc, ${POSSIBLE_WORD_ALIGNMENT_MODELS} ${IBM4_MODEL_PFX}), \
-   $(eval \
-	   SIG_${m}_MODEL_PFX ?= ${SIG_MODEL_PFX}.${${m}_MODEL_PFX}) \
-)
 
 ########################################
 # CPT MODELS.
@@ -197,10 +63,6 @@ PI_SMOOTHERS_DESCRIPTION ?= -kn3-zn
 # MIXTURE TRANSLATION MODEL
 MIX_CPUS ?= 1
 
-# DON'T change the following variable, we need a new variable to hold the
-# corpora stem for train mixture tm.
-TUNE_MIXTM_FINAL := $(or ${TUNE_MIXTM_MULTIPLE_REFERENCES}, ${TUNE_MIXTM})
-
 
 ########################################
 # TPPT MODELS.
@@ -215,277 +77,12 @@ CPT_DEP_TAG := JPT
 endif
 
 ########################################
-# FUNCTIONS.
-# Joins two parallel lists of words.
-interleave  = $(strip $(subst , , $(join $1, $(addprefix , $2))))
-interleave3 = $(strip $(subst , , $(join $1, $(addprefix , $(join $2, $(addprefix , $3))))))
-interleave4 = $(strip $(subst , , $(join $1, $(addprefix , $(join $2, $(addprefix , $(join $3, $(addprefix , $4))))))))
-# Make sure we interleave only the corpora and that we exclude the models.
-# filter_interleave list1_extension list2_extension filt-out-model all-files
-filter_interleave = $(call interleave, $(filter $1, $(filter-out $3, $4)), $(filter $2, $(filter-out $3, $4)))
-
-
-
-################################################################################
-# ARGUMENTS VALIDATION.
-ifndef lang1
-$(error You must define lang1)
-endif
-
-ifndef lang2
-$(error You must define lang2)
-endif
-
-ifndef PARALLELISM_LEVEL_TM
-$(error You must define PARALLELISM_LEVEL_TM)
-endif
-
-
-
-########################################
 # NOTES:
 # - We should have some rules to clean each type of models!?
-# - We might want to collapse the 3 hmm targets/rules into 1.
-# - lang1 & lang2 are side effects of WMT-ACL10 and we might want to rename
+# - SRC_LANG & TGT_LANG are side effects of WMT-ACL10 and we might want to rename
 #   them to L1 & L2.
 # - We also need to remove the hardcoded SHELL variable in this script to use
 #   the FRAMEWORK_SHELL of the portage.simple.framework.
-
-
-
-########################################
-# IBM1 MODELS
-# requires: source and target corpora.
-${IBM1_MODEL_PFX}%${L1_GIVEN_L2X}: IBM1_DIR=-r
-${IBM1_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
-${IBM1_MODEL_PFX}.%.gz:
-	_LOCAL=1; if [[ -w $@ ]]; then rm $@; fi
-	@_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
-	RP_PSUB_OPTS="-${IBM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n $(call IBM1_MODEL_PARALLELISM_LEVEL, $+) -pn $(call IBM1_MODEL_WORKERS, $+) \
-		-v ${IBM1_DIR} \
-		-n1 5 -n2 0 \
-		-bin \
-		${IBM1_MODEL_EXTRAS} \
-		$@ \
-		$(call interleave, $(filter %${L1} %${L1X}, $+), $(filter %${L2} %${L2X}, $+)) \
-		&> log.${@:.gz=}
-
-
-
-########################################
-# IBM2 MODELS
-${IBM2_MODEL_PFX}%${L1_GIVEN_L2X}: IBM2_DIR=-r
-${IBM2_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
-${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
-	_LOCAL=1; if [[ -w $@ ]]; then rm $@ ${@:.gz=}.pos.gz; fi
-	@_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
-	RP_PSUB_OPTS="-${IBM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_WORKERS} \
-		-v ${IBM2_DIR} \
-		-n1 0 -n2 5 \
-		-slen 20 -tlen 20 -bksize 20 \
-		-bin \
-		-i $(filter %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $^) \
-		${IBM2_MODEL_EXTRAS} \
-		$@ \
-		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
-		&> log.${@:.gz=}
-
-
-
-########################################
-# HMM1 MODELS
-${HMM1_MODEL_PFX}%${L1_GIVEN_L2X}: HMM1_DIR=-r
-${HMM1_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
-${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
-	_LOCAL=1; if [[ -w $@ ]]; then rm $@ ${@:.gz=}.dist.gz; fi
-	@_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
-	RP_PSUB_OPTS="-${HMM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_WORKERS} \
-		-v ${HMM1_DIR} \
-		-n1 0 -n2 5 \
-		-mimic he-lex \
-		-bin \
-		-i $(filter %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $^) \
-		${HMM1_MODEL_EXTRAS} \
-		$@ \
-		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
-		&> log.${@:.gz=}
-
-
-
-########################################
-# HMM2 MODELS
-${HMM2_MODEL_PFX}%${L1_GIVEN_L2X}: HMM2_DIR=-r
-${HMM2_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
-${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
-	_LOCAL=1; if [[ -w $@ ]]; then rm $@ ${@:.gz=}.dist.gz; fi
-	@_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
-	RP_PSUB_OPTS="-${HMM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_WORKERS} \
-		-v ${HMM2_DIR} \
-		-n1 0 -n2 5 \
-		-mimic liang \
-		-bin \
-		-i $(filter %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $^) \
-		${HMM2_MODEL_EXTRAS} \
-		$@ \
-		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
-		&> log.${@:.gz=}
-
-
-
-########################################
-# HMM3 MODELS
-#Note: We use "-end-dist" instead of "-start-dist -final-dist -anchor" because
-#      PortageII lacks "-start-dist"
-${HMM3_MODEL_PFX}%${L1_GIVEN_L2X}: HMM3_DIR=-r
-${HMM3_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
-${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
-	_LOCAL=1; if [[ -w $@ ]]; then rm $@ ${@:.gz=}.dist.gz; fi
-	@_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
-	RP_PSUB_OPTS="-${HMM3_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
-	${CAT} -n ${HMM3_MODEL_PARALLELISM_LEVEL} -pn ${HMM3_MODEL_WORKERS} \
-		-v ${HMM3_DIR} \
-		-n1 0 -n2 5 \
-		-hmm ${NEW_HMM} -end-dist -anchor -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 \
-		-bin \
-		-i $(filter %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $^) \
-		${HMM3_MODEL_EXTRAS} \
-		$@ \
-		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
-		&> log.${@:.gz=}
-
-
-
-########################################
-# Word Alignment Models.
-ALIGN_MODEL_TYPE := -hmm
-%.${IBM1_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 1
-%.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 2
-
-%.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:
-	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
-	set -o pipefail; \
-	time-mem \
-	align-words \
-		${ALIGNMENT_SYMMETRIZATION_OPTIONS} \
-		-o sri \
-		-ibm 0 -giza2 \
-		$(call interleave4, $(filter %${SRC_LANG}.lc,$+), $(filter %${TGT_LANG}.lc,$+), $(filter %${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz,$+), $(filter %${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz,$+)) \
-		2> log.${@:.gz=} \
-	| gzip > $@
-
-%.${L1_2_L2}.align.gz:  SHELL=${FRAMEWORK_SHELL}
-%.${L1_2_L2}.align.gz:
-	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
-	set -o pipefail; \
-	parallelize.pl \
-		-stripe \
-		-n ${PARALLELISM_LEVEL_TM} \
-		$(addprefix -s , $(filter %${L1} %${L1X} %${L2} %${L2X}, $+)) \
-		'align-words \
-			${ALIGNMENT_SYMMETRIZATION_OPTIONS} \
-			-o sri \
-			${ALIGN_MODEL_TYPE} \
-			$(filter %${L2_GIVEN_L1X}, $+)  $(filter %${L1_GIVEN_L2X}, $+) \
-			$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $+)' \
-		2> log.${@:.gz=} \
-	| gzip > $@
-
-
-%.${L2_2_L1}.align.gz:  SHELL=${LOCAL_SHELL}
-%.${L2_2_L1}.align.gz:  %.${L1_2_L2}.align.gz
-	set -o pipefail; \
-	zcat $< \
-	| perl -ple 's/(\d+)-(\d+)/$$2-$$1/g' \
-	| gzip \
-	2> log.${@:.gz=} \
-	> $@
-
-
-
-########################################
-# JPT MODELS
-# WARNING: The following two targets must precede the target to generate jpts.
-# WARNING: % is purposefully not surrounded by dots for zn-adapt.
-${JPT_MODEL_PFX}.merged%${JOINTX}: SHELL=${FRAMEWORK_SHELL}
-${JPT_MODEL_PFX}.merged%${JOINTX}:
-	time-mem merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${JOINTX}, $+) &> log.${@:.gz=}
-
-${JPT_MODEL_PFX}.merged%${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
-${JPT_MODEL_PFX}.merged%${RJOINTX}:
-	time-mem merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
-
-
-
-${JPT_MODEL_PFX}.%.${JOINTX}:  SHELL=${FRAMEWORK_SHELL}
-${JPT_MODEL_PFX}.${IBM4_MODEL_PFX}%: JPT_MODEL_TYPE = -ibm 1
-${JPT_MODEL_PFX}.%.${JOINTX}:
-	RP_PSUB_OPTS="-${JPT_CPUS} -N $@ ${PSUB_OPTS}" \
-	gen-jpt-parallel.sh \
-		-n ${JPT_PARALLELISM_LEVEL} \
-		-nw ${JPT_WORKERS} \
-		-o $@ \
-		${GEN_JPT_PARALLEL_OPTIONS} \
-		GPT \
-		-v -m ${M} ${JPT_MODEL_TYPE} \
-		-1 ${lang1} -2 ${lang2} \
-		-ext \
-		${JPT_EXTRAS} \
-		$(filter %${L2_GIVEN_L1X}, $+) $(filter %${L1_GIVEN_L2X}, $+) \
-		$(call interleave3, $(filter %${L1} %${L1X},$+), $(filter %${L2} %${L2X},$+), $(filter %.${L1_2_L2}.align.gz,$+)) \
-		&> log.${@:.gz=}
-
-
-
-########################################
-# SIGNIFICANCE PRUNING
-${SIG_MODEL_PFX}.merged%${JOINTX}: SHELL=${FRAMEWORK_SHELL}
-${SIG_MODEL_PFX}.merged%${JOINTX}:
-	time-mem merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${JOINTX}, $+) &> log.${@:.gz=}
-
-${SIG_MODEL_PFX}.merged%${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
-${SIG_MODEL_PFX}.merged%${RJOINTX}:
-	time-mem merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
-
-
-
-${SIG_MODEL_PFX}.%.${JOINTX}: SHELL=${FRAMEWORK_SHELL}
-${SIG_MODEL_PFX}.%.${JOINTX}:
-	RP_PSUB_OPTS="-${SIG_CPUS} -N $@ ${PSUB_OPTS}" \
-	${TIME_MEM} \
-	sigprune.sh \
-		-n $(call SIG_MODEL_PARALLELISM_LEVEL, $+) \
-		-np $(call SIG_MODEL_WORKERS, $+) \
-		-w 50000 \
-		-threshold ${SIG_THRESHOLD} \
-		${SIG_OPTS} \
-		$(filter %${JOINTX}, $+) \
-		$(filter %${L1} %${L1X}, $+) \
-		$(filter %${L2} %${L2X}, $+) \
-		$@ \
-		&> >(bzip2 > log.${@:.gz=}.bz2)
-
-
-# According to Howard: generating a sig for L1 to L2 and then using
-# reverse_joint_phr_tab.py to produce a sig for L2 to L1 is valid.
-${SIG_MODEL_PFX}.%.${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
-${SIG_MODEL_PFX}.%.${RJOINTX}:
-	RP_PSUB_OPTS="-${SIG_CPUS} -N $@ ${PSUB_OPTS}" \
-	${TIME_MEM} \
-	sigprune.sh \
-		-n $(call SIG_MODEL_PARALLELISM_LEVEL, $+) \
-		-np $(call SIG_MODEL_WORKERS, $+) \
-		-w 50000 \
-		-threshold ${SIG_THRESHOLD} \
-		${SIG_OPTS} \
-		$(filter %${RJOINTX}, $+) \
-		$(filter %${L2} %${L2X}, $+) \
-		$(filter %${L1} %${L1X}, $+) \
-		$@ \
-		&> >(bzip2 > log.${@:.gz=}.bz2)
 
 
 
@@ -530,7 +127,7 @@ ${CPT_INDICATOR_PFX}%${L1_2_L2X}:
 		${CPT_PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
-		-1 ${lang1} -2 ${lang2} \
+		-1 ${SRC_LANG} -2 ${TGT_LANG} \
 		${CPT_PI_SMOOTHERS} \
 		-dir fwd \
 		-o $(subst .${L1_2_L2X},,$@) \
@@ -549,7 +146,7 @@ ${CPT_INDICATOR_PFX}%${L2_2_L1X}:
 		${CPT_PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
-		-1 ${lang1} -2 ${lang2} \
+		-1 ${SRC_LANG} -2 ${TGT_LANG} \
 		${CPT_PI_SMOOTHERS} \
 		-dir fwd \
 		-o $(subst .${L1_2_L2X},,$@) \
@@ -566,6 +163,13 @@ ${CPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
 ${CPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
 ${CPT_MODEL_PFX}.hmm%: WORD_MODEL_TYPE=-hmm
 ${CPT_MODEL_PFX}.${IBM4_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
+
+# We need to specify what's the type of the models for Zen-Ney's smoother.
+${CPT_MODEL_PFX}.merged.${IBM1_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 1
+${CPT_MODEL_PFX}.merged.${IBM2_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 2
+${CPT_MODEL_PFX}.merged.hmm%:  WORD_MODEL_TYPE=-hmm
+${CPT_MODEL_PFX}.merged.${IBM4_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 1
+
 ${CPT_MODEL_PFX}.%: CPT_PRUNE1=-prune1w 100
 
 # Non mixture/indicator CPT models:
@@ -578,7 +182,7 @@ ${CPT_MODEL_PFX}%${L1_2_L2X}:
 		${CPT_PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
-		-1 ${lang1} -2 ${lang2} \
+		-1 ${SRC_LANG} -2 ${TGT_LANG} \
 		${CPT_SMOOTHERS} \
 		-multipr fwd \
 		-o $(subst .${L1_2_L2X},,$@) \
@@ -600,7 +204,7 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 		${CPT_PRUNE1} \
 		-v -i -z \
 		${WORD_MODEL_TYPE} \
-		-1 ${lang2} -2 ${lang1} \
+		-1 ${TGT_LANG} -2 ${SRC_LANG} \
 		${CPT_SMOOTHERS} \
 		-multipr fwd \
 		-o $(subst .${L2_2_L1X},,$@) \
@@ -609,337 +213,6 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 		${JOINT2COND_PHRASE_TABLE_OPTION} \
 		$(filter %.${RJOINTX}, $+) \
 		&> log.${@:.gz=}
-
-
-
-################################################################################
-# GIZA SPECIFIC TARGETS.
-$(addsuffix /,$(sort 1wam ${ALL_WAMS})):  SHELL=${LOCAL_SHELL}
-$(addsuffix /,$(sort 1wam ${ALL_WAMS})):  %:
-	mkdir -p $@
-
-
-.PHONY:  debug_giza
-
-debug_giza:  $(addsuffix /${SRC_LANG}.lc, ${ALL_WAMS})
-debug_giza:  $(addsuffix /${TGT_LANG}.lc, ${ALL_WAMS})
-
-.INTERMEDIATE:  1wam${L1X} 1wam${L2X}
-# how to create the 1wam filtered corpora pair for IBM4.
-1wam${L1X}:  ${MIXTM:=${L1X}}
-	zcat -f $+ | gzip > $@
-1wam${L2X}:  ${MIXTM:=${L2X}}
-	zcat -f $+ | gzip > $@
-
-# TODO:  where should we put these rules?
-# When creating the filtered version of a corpora we need to change file
-# extension to the uncompressed version when it comes to heldouts.
-$(foreach c, ${TUNE_MIXTM_FINAL}, \
-	$(eval \
-		$c/${SRC_LANG}.lc:  override L1X = ${L1}) \
-	$(eval \
-		$c/${SRC_LANG}.lc:  override L2X = ${L2}) \
-)
-
-# In order to pick up the proper extension for corpora, either compress or not,
-# we'll need to do second expansion.
-.SECONDEXPANSION:
-# Clean up the inputs for giza.
-%/${SRC_LANG}.lc:  SHELL=${LOCAL_SHELL}
-%/${SRC_LANG}.lc:  %$${L1X} %$${L2X}  | %
-	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> $@.log
-
-%/${TGT_LANG}.lc:  SHELL=${LOCAL_SHELL}
-%/${TGT_LANG}.lc:  %/${SRC_LANG}.lc | %
-	test -s $@ && sleep 1 && touch --reference=$< $@
-
-
-debug_giza:  $(addsuffix /${SRC_LANG}.lc.vcb, ${ALL_WAMS})
-debug_giza:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_WAMS})
-
-# Create the vocabulary files.
-%/${SRC_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
-%/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %
-	plain2snt $+ 2> $@.log
-
-%/${TGT_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
-%/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb | %
-	test -s $@ && sleep 1 && touch --reference=$< $@
-
-%/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  SHELL=${LOCAL_SHELL}
-%/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %
-	test -s $@ && sleep 1 && touch --reference=$< $@
-
-
-debug_giza:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${ALL_WAMS})
-debug_giza:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_WAMS})
-
-# Create the vocabulary classes.
-%.lc.vcb.classes:  SHELL=${FRAMEWORK_SHELL}
-%.lc.vcb.classes:  %.lc
-	time-mem mkcls -m2 -p$< -c50 -V$@ opt &> $@.log
-
-
-debug_giza:  $(addsuffix /${L1_2_L2}.cooc, ${ALL_WAMS})
-debug_giza:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_WAMS})
-
-# Create the cooccurrence counts.
-%/${L1_2_L2}.cooc:  SHELL=${LOCAL_SHELL}
-%/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb | %
-	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt 2> $@.log
-
-%/${L2_2_L1}.cooc:  SHELL=${LOCAL_SHELL}
-%/${L2_2_L1}.cooc:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb | %
-	snt2cooc $@  $+ $*/$(call merge,_,$(notdir $(basename ,$+))).snt 2> $@.log
-
-
-debug_giza:  $(addsuffix /${L2_GIVEN_L1}.gizacfg, ${ALL_WAMS})
-debug_giza:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${ALL_WAMS})
-
-# Perform word alignment.
-%/${L2_GIVEN_L1}.gizacfg:  SHELL=${FRAMEWORK_SHELL}
-%/${L2_GIVEN_L1}.gizacfg:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes  %/${L1_2_L2}.cooc | %
-	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
-	${TIME_MEM} \
-	mgiza \
-		-ncpus ${IBM4_MODEL_PARALLELISM_LEVEL} \
-		-sourcevocabularyfile $(filter %${SRC_LANG}.lc.vcb,$+) \
-		-targetvocabularyfile $(filter %${TGT_LANG}.lc.vcb,$+) \
-		-corpusfile $*/$(call merge,_,$(notdir $(basename $(filter %.vcb,$+)))).snt \
-		-p0 0.98 \
-		-coocurrencefile $(filter %.cooc,$+) \
-		-outputpath $* \
-		-ml 101 \
-		-outputfileprefix $(notdir ${@:.gizacfg=}) \
-		&> $@.log
-
-%/${L1_GIVEN_L2}.gizacfg:  SHELL=${FRAMEWORK_SHELL}
-%/${L1_GIVEN_L2}.gizacfg:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb.classes %/${SRC_LANG}.lc.vcb.classes  %/${L2_2_L1}.cooc | %
-	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
-	${TIME_MEM} \
-	mgiza \
-		-ncpus ${IBM4_MODEL_PARALLELISM_LEVEL} \
-		-sourcevocabularyfile $(filter %${TGT_LANG}.lc.vcb,$+) \
-		-targetvocabularyfile $(filter %${SRC_LANG}.lc.vcb,$+) \
-		-corpusfile $*/$(call merge,_,$(notdir $(basename $(filter %.vcb,$+)))).snt \
-		-p0 0.98 \
-		-coocurrencefile $(filter %.cooc,$+) \
-		-outputpath $* \
-		-ml 101 \
-		-outputfileprefix $(notdir ${@:.gizacfg=}) \
-		&> $@.log
-
-
-debug_giza:  $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS})
-debug_giza:  $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS})
-
-# NOTE/WARNING: 
-#   In order to properly bridge giza's output with Portage, the correct dependency for:
-#      - Portage's src to tgt model is giza's tgt given src files;
-#      - Portage's tgt to src model is giza's src given tgt files.
-$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L2_GIVEN_L1}.gizacfg | %
-$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.gizacfg | %
-%.${IBM4_MODEL_PFX}.alignment.gz:  SHELL=${LOCAL_SHELL}
-%.${IBM4_MODEL_PFX}.alignment.gz:
-	set -o pipefail; \
-	merge_alignment.py ${<:gizacfg=A3.final.part}* \
-	| gzip > $@
-
-
-# Converts Giza's IBM4 ttables in a format that Portage understands.
-# No need to time-mem or submit to the cluster since both giza_convert_ttable &
-# train_ibm on large data sets take only a couple of seconds and use little
-# memory.
-${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  SHELL=${LOCAL_SHELL}
-${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${L2_GIVEN_L1}.gizacfg
-	set -o pipefail; \
-	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
-	| gzip > tmp.$@
-	train_ibm -tobin tmp.$@ $@ 2> log.${@:.gz=}
-	rm -f tmp.$@
-
-${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  SHELL=${LOCAL_SHELL}
-${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${L1_GIVEN_L2}.gizacfg
-	set -o pipefail; \
-	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
-	| gzip > tmp.$@
-	train_ibm -tobin tmp.$@ $@ 2> log.${@:.gz=}
-	rm -f tmp.$@
-
-
-
-################################################################################
-# FORCE ALIGN
-# We'll need to force align the corpora used to "tune" the mixtm.
-FORCE_ALIGN_SET := $(sort ${TUNE_MIXTM_FINAL})
-ifdef MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
-# We also need to force align all corpora used in mixtm when using 1wam.
-# By adding the MIXTM to FORCE_ALIGN_SET, we effectively tell make to use the
-# force align rules instead of the normal IBM4 rules.
-FORCE_ALIGN_SET += $(sort ${MIXTM})
-
-# The word alignment models used to train mixtm in 1wam is the global word alignment.
-# MIXTM_TRAIN_MIX MUST be 1wam
-override MIXTM_TRAIN_MIX := 1wam
-endif
-
-
-${TUNE_MIXTM_FINAL}:  SHELL=${LOCAL_SHELL}
-${TUNE_MIXTM_FINAL}:  %:
-	mkdir -p $@
-
-vpath ${MIXTM_TRAIN_MIX}/% ${TM_DIR_PFX} ${TM_DIR_PFX}mixtm
-
-PLAIN2SNT_HASCVB := plain2snt-hasvcb.py
-
-# debug_forceAlign is used to debug the force aligned targets for mixture tm.
-.PHONY:  debug_forceAlign
-
-# NOTE: the filtered rules are located in the giza section.
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc
-
-#.SECONDEXPANSION:
-#$(addsuffix /${SRC_LANG}.lc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-#$(addsuffix /${SRC_LANG}.lc, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}.lc:  %$${L1} %$${L2} | %
-#	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> $@.log
-#
-#$(addsuffix /${TGT_LANG}.lc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-#$(addsuffix /${TGT_LANG}.lc, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}.lc:  %/${SRC_LANG}.lc | %
-#	test -s $@ && sleep 1 && touch --reference=$< $@
-
-
-$(addsuffix /${SRC_LANG}-${TGT_LANG}.snt, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${SRC_LANG}-${TGT_LANG}.snt, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}-${TGT_LANG}.snt:  %/${SRC_LANG}.lc.vcb | %
-	@test -s $@ && sleep 1 && touch --reference=$< $@
-
-$(addsuffix /${TGT_LANG}-${SRC_LANG}.snt, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${TGT_LANG}-${SRC_LANG}.snt, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}-${SRC_LANG}.snt:  %/${SRC_LANG}.lc.vcb | %
-	@test -s $@ && sleep 1 && touch --reference=$< $@
-
-
-$(addsuffix /${TGT_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${TGT_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb | %
-	@test -s $@ && sleep 1 && touch --reference=$< $@
-
-
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc.vcb
-
-# NOTE the lc.vcb is an extension of tm-train/${SRC_LANG}.lc.vcb with the dev vocab.
-$(addsuffix /${SRC_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${SRC_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}.lc.vcb:  ${MIXTM_TRAIN_MIX}/${SRC_LANG}.lc.vcb ${MIXTM_TRAIN_MIX}/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %
-	${PLAIN2SNT_HASCVB} \
-		$+ \
-		$*/${TGT_LANG}-${SRC_LANG}.snt $*/${SRC_LANG}-${TGT_LANG}.snt \
-		$*/${SRC_LANG}.lc.vcb $*/${TGT_LANG}.lc.vcb
-
-
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc.vcb.classes
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc.vcb.classes
-
-$(addsuffix /${SRC_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${SRC_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}.lc.vcb.classes:  ${MIXTM_TRAIN_MIX}/${SRC_LANG}.lc.vcb.classes | %
-	ln -fs ../$< $@
-
-$(addsuffix /${TGT_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${TGT_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}.lc.vcb.classes:  ${MIXTM_TRAIN_MIX}/${TGT_LANG}.lc.vcb.classes | %
-	ln -fs ../$< $@
-
-
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L1_2_L2}.cooc
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L2_2_L1}.cooc
-
-$(addsuffix /${L1_2_L2}.cooc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${L1_2_L2}.cooc, ${FORCE_ALIGN_SET}):  %/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb %/${TGT_LANG}-${SRC_LANG}.snt | %
-	snt2cooc $@  $+ 2> $@.log
-
-$(addsuffix /${L2_2_L1}.cooc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${L2_2_L1}.cooc, ${FORCE_ALIGN_SET}):  %/${L2_2_L1}.cooc:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb %/${SRC_LANG}-${TGT_LANG}.snt | %
-	snt2cooc $@  $+ 2> $@.log
-
-
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L2_GIVEN_L1}.gizacfg
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L1_GIVEN_L2}.gizacfg
-
-$(addsuffix /${L2_GIVEN_L1}.gizacfg, ${FORCE_ALIGN_SET}):  SHELL=${FRAMEWORK_SHELL}
-$(addsuffix /${L2_GIVEN_L1}.gizacfg, ${FORCE_ALIGN_SET}):  %/${L2_GIVEN_L1}.gizacfg:  \
-				%/${TGT_LANG}.lc.vcb  \
-				%/${SRC_LANG}.lc.vcb  \
-				%/${SRC_LANG}.lc.vcb.classes \
-				%/${TGT_LANG}.lc.vcb.classes \
-				%/${TGT_LANG}-${SRC_LANG}.snt  \
-				%/${L1_2_L2}.cooc \
-				${MIXTM_TRAIN_MIX}/${L2_GIVEN_L1}.gizacfg  \
-				| %
-	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
-	${TIME_MEM} \
-	mgiza \
-		$(filter %.gizacfg, $+) \
-		-sourcevocabularyfile $(filter %${SRC_LANG}.lc.vcb, $+) \
-		-targetvocabularyfile $(filter %${TGT_LANG}.lc.vcb, $+) \
-		-corpusfile $(filter %.snt, $+) \
-		-coocurrencefile $(filter %.cooc, $+) \
-		-outputpath $* \
-		-outputfileprefix $(notdir ${@:.gizacfg=}) \
-		-m1 0 -m2 0 -mh 0 -m3 0 -m4 1 \
-		-restart 11 \
-		-previoust   $(patsubst %.gizacfg,%.t3.final, $(filter %.gizacfg, $+)) \
-		-previousa   $(patsubst %.gizacfg,%.a3.final, $(filter %.gizacfg, $+)) \
-		-previousd   $(patsubst %.gizacfg,%.d3.final, $(filter %.gizacfg, $+)) \
-		-previousn   $(patsubst %.gizacfg,%.n3.final, $(filter %.gizacfg, $+)) \
-		-previousd4  $(patsubst %.gizacfg,%.d4.final, $(filter %.gizacfg, $+)) \
-		-previousd42 $(patsubst %.gizacfg,%.D4.final, $(filter %.gizacfg, $+)) \
-		&> $@.log
-
-$(addsuffix /${L1_GIVEN_L2}.gizacfg, ${FORCE_ALIGN_SET}):  SHELL=${FRAMEWORK_SHELL}
-$(addsuffix /${L1_GIVEN_L2}.gizacfg, ${FORCE_ALIGN_SET}):  %/${L1_GIVEN_L2}.gizacfg:  \
-				%/${TGT_LANG}.lc.vcb  \
-				%/${SRC_LANG}.lc.vcb  \
-				%/${SRC_LANG}.lc.vcb.classes \
-				%/${TGT_LANG}.lc.vcb.classes \
-				%/${SRC_LANG}-${TGT_LANG}.snt  \
-				%/${L2_2_L1}.cooc \
-				${MIXTM_TRAIN_MIX}/${L1_GIVEN_L2}.gizacfg  \
-				| %
-	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
-	${TIME_MEM} \
-	mgiza \
-		$(filter %.gizacfg, $+) \
-		-sourcevocabularyfile $(filter %${TGT_LANG}.lc.vcb, $+) \
-		-targetvocabularyfile $(filter %${SRC_LANG}.lc.vcb, $+) \
-		-corpusfile $(filter %.snt, $+) \
-		-coocurrencefile $(filter %.cooc, $+) \
-		-outputpath $* \
-		-outputfileprefix $(notdir ${@:.gizacfg=}) \
-		-m1 0 -m2 0 -mh 0 -m3 0 -m4 1 \
-		-restart 11 \
-		-previoust   $(patsubst %.gizacfg,%.t3.final, $(filter %.gizacfg, $+)) \
-		-previousa   $(patsubst %.gizacfg,%.a3.final, $(filter %.gizacfg, $+)) \
-		-previousd   $(patsubst %.gizacfg,%.d3.final, $(filter %.gizacfg, $+)) \
-		-previousn   $(patsubst %.gizacfg,%.n3.final, $(filter %.gizacfg, $+)) \
-		-previousd4  $(patsubst %.gizacfg,%.d4.final, $(filter %.gizacfg, $+)) \
-		-previousd42 $(patsubst %.gizacfg,%.D4.final, $(filter %.gizacfg, $+)) \
-		&> $@.log
-
-
-
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz
-
-# NOTE:  Some of the FORCE_ALIGN_SET corpora are also in ALL_WAMS and there are
-# dependencies already stated for those, that is why the following dependencies
-# are for the difference between FORCE_ALIGN_SET & ALL_WAMS.
-$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, $(filter-out ${ALL_WAMS}, ${FORCE_ALIGN_SET})):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L2_GIVEN_L1}.gizacfg | %
-$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, $(filter-out ${ALL_WAMS}, ${FORCE_ALIGN_SET})):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.gizacfg | %
-
-
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz
-
-
-debug_forceAlign:  ${IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${L2_GIVEN_L1X}
-debug_forceAlign:  ${IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${L1_GIVEN_L2X}
-
-
 
 
 
@@ -967,22 +240,6 @@ portageLive:
 
 ################################################################################
 # HELPERS
-
-########################################
-# INVERT ANY JOINT PHRASE TABLE
-%.${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
-%.${RJOINTX}: %.${JOINTX}
-	@_LOCAL=1; echo "Generating $@" >&2
-	RP_PSUB_OPTS="-1 -N $@" \
-	set -o pipefail; \
-	zcat $< \
-	| reverse_joint_phr_tab.py \
-	| TMPDIR=. LC_ALL=C sort \
-	| gzip \
-	> $@
-
-
-
 
 ################################################################################
 # UNITTESTS.
