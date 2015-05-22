@@ -181,6 +181,11 @@ $(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.deps
 
 
+# Pick up filtered corpora for (h)ldm models based on IBM4.
+%.ibm4${COUNTSX}:  L1X := ${SRC_LANG}.lc
+%.ibm4${COUNTSX}:  L2X := ${TGT_LANG}.lc
+
+
 
 ########################################
 # TIGHTLY PACKED LEXICALIZED DISTORTION MODEL.
@@ -299,11 +304,13 @@ unittest1: export AVAILABLE_WORD_ALIGNMENT_MODELS=ibm4 hmm3
 unittest1: export TRAIN_LDM=tm-train sublm1
 unittest1:
 	${MAKE} -C ../../corpora all
+	${MAKE} -C ../ibm all
+	${MAKE} -C ../wal all
 	${MAKE} all
 	@ [[ `find -name ${LDM_MODEL_PFX}.hmm3${COUNTSX} -size +21c | \wc -l` -eq 1 ]] \
 	|| ! echo "ERROR: failed to generate hmm3 count file." >&2
 	@ [[ `find -name ${LDM_MODEL_PFX}.ibm4${COUNTSX} -size +21c | \wc -l` -eq 1 ]] \
 	|| ! echo "ERROR: failed to generate ibm4 count file." >&2
-	@ [[ `find -name ${LDM_MODEL_PFX}.${LDM_NAME}.${L1_2_L2X} -size +21c` ]] \
+	@ [[ `find -name ${LDM_MODEL_PFX}.*.${L1_2_L2X} -size +21c` ]] \
 	|| ! echo "ERROR: failed to generate lexicalized distortion model file." >&2
 
