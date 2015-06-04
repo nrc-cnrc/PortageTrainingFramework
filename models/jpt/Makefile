@@ -148,7 +148,6 @@ jpts:  SHELL=${LOCAL_SHELL}
 jpts:  $(addsuffix _jpt, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 jpts:  merged_jpt
 
-MAIN_TARGETS = all clean help
 define DEPS.PYSCRIPT
 from __future__ import print_function
 
@@ -199,7 +198,7 @@ with open(".Makefile.deps", "w") as df:
    for corpora in set("${TUNE_MIXTM_FINAL}".strip().split()):
       mergedFileName = "${JPT_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
       for wam in WAMs:
-         jptFileName    = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
          print("{mergedFileName}:  {jptFileName}".format(mergedFileName=mergedFileName, jptFileName=jptFileName), file=df)
          print("{jptFileName}:  {c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corpora, jptFileName=jptFileName), file=df)
          print("{jptFileName}:  {s}  {t}".format(jptFileName=jptFileName, **corporaNames(corpora, wam, "${L1}", "${L2}")), file=df)

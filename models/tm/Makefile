@@ -3,7 +3,7 @@
 #
 # @author Samuel Larkin
 # @file Makefile
-# @brief Trains ibm models, hmm models, joint frequency counts models and phrase tables.
+# @brief Train phrase tables.
 #
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
@@ -90,6 +90,9 @@ vpath %.gz                          ${TM_DIR_PFX}  ${TM_DIR_PFX}mixtm
 all: SHELL=${LOCAL_SHELL}
 all: pretrained_cpt ${PT_TYPES}
 
+MAIN_TARGETS :=  all  clean  help  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained)
+$(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained):  %_model:  %_cpt
+
 
 
 ########################################
@@ -102,7 +105,10 @@ help:
 	@echo "To train your models, type: make all"
 	@echo
 	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo ${MAIN_TARGETS}
+	@echo
+	@echo "Expected output files are:"
+	@sed -e 's/  */\n/g' <<< "$(strip $(foreach pt,${PT_TYPES}, ${${pt}_list}))"
 
 
 
@@ -320,7 +326,7 @@ mix_cpt:  | ${MIX_CPT_META_DEPS}
 # Let's define which merged cpt files we need to mix and the dev jpt file we need
 # for calculating the weights for the mix.
 MIX_OTHER_CPTS := $(foreach c, $(addsuffix _list, $(filter-out mix_cpt,${PT_TYPES})), ${$c})
-$(info MIX_OTHER_CPTS: ${MIX_OTHER_CPTS})
+#$(info MIX_OTHER_CPTS: ${MIX_OTHER_CPTS})
 
 # Mixed Conditional Phrase Table
 ${CPT_MIX_PFX}.${L1_2_L2X}:  | ${MIX_CPT_META_DEPS}
