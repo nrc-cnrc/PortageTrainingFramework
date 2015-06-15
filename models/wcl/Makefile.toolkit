@@ -15,8 +15,8 @@
 
 # What program should be used to train the word classes
 # Valid choices are mkcls or word2vec.
-# mkcls is slower but yields better results.
-WCL_PROG ?= mkcls
+# mkcls is slower but yields slightly better results for small training corpora.
+WCL_PROG ?= word2vec
 
 # More memory may be needed for very large corpora...
 WCL_CPUS ?= 1
@@ -34,12 +34,14 @@ endif
 %.classes: SHELL=${FRAMEWORK_SHELL}
 
 ifeq (${WCL_PROG}, mkcls)
+# -n10 may give results that are a bit better, but takes up to 5 times longer.
+MKCLS_OPTS ?= -n2
 %.classes:
 	@_LOCAL=1; [[ $(words $^) != 0 ]] || ! echo "ERROR: Prerequisites not specified for $@. Please train models/wcl first!" >&2
 	RP_PSUB_OPTS="-${WCL_CPUS} -N $@" \
 	${TIME_MEM} \
 	run-mkcls.sh \
-	   -n10 \
+	   ${MKCLS_OPTS} \
 	   ${EXTRA_WCL_OPTS} \
 	   -c${WCL_NCLS} \
 	   -V$@ \
