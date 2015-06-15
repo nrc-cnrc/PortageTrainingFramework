@@ -131,9 +131,9 @@ TRAIN_TM      ?= tm-train
 
 # TRAIN_WCL is used to train word classes for use in coarse models.
 # It should point to the concatenation of all your training corpora.
-# By default, we use the TRAIN_LM and MIXLM corpora; if you
+# By default, we use the TRAIN_LM, MIXLM, TRAIN_TM, MIXTM corpora; if you
 # want to use different corpora, uncomment and define TRAIN_WCL.
-# => TRAIN_WCL = TRAIN_LM MIXLM
+# => TRAIN_WCL = TRAIN_LM MIXLM TRAIN_TM MIXTM
 #TRAIN_WCL ?= wcl-train
 
 # TUNE_DECODE is used to tune the decoding weights (using tune.py).
@@ -525,7 +525,7 @@ WCL_NCLS_LIST := $(strip ${WCL_NCLS_LIST})
 # By default, we assume that the user wants to use the corpora listed in
 # TRAIN_LM and MIXLM to build the word classes.
 ifdef WCL_NCLS_LIST
-	TRAIN_WCL ?= $(sort ${TRAIN_LM} ${MIXLM})
+	TRAIN_WCL ?= $(sort ${TRAIN_LM} ${MIXLM} ${TRAIN_TM} ${MIXTM})
 endif
 TRAIN_WCL := $(strip ${TRAIN_WCL})
 
