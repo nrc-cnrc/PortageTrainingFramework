@@ -261,13 +261,13 @@ ifdef USE_SPARSE
 # This is an ugly solution, but it works.
 check_decoding_model: ln_wts
 ln_wts:
-	ln -fs ${DECODING_MODEL_DIR}/models_sparse*.wts.gz .
+	ln -fs ${DECODING_MODEL_DIR}/rmodels_sparse*.wts.gz .
 endif
 
 clean.content: clean.sparse
 clean.sparse: SHELL=${LOCAL_SHELL}
 clean.sparse:
-	${RM} models_sparse*.wts.gz
+	${RM} rmodels_sparse*.wts.gz
 
 
 ########################################
