@@ -141,10 +141,21 @@ ldmFile = "${LDM_MODEL_PFX}.{name}.${L1_2_L2X}".format(name=ldmDescription)
 # Hirarchical Lexicalized distortion model file name.
 hldmFile = "${HLDM_MODEL_PFX}.{name}.${L1_2_L2X}".format(name=ldmDescription)
 
+# What is required to build a tpldm.
+def tpldmRules(required, ldmFile):
+   tpldmFile = ldmFile[:-2]+"tpldm"
+   print("{tpldm}:  {ldm}".format(tpldm=tpldmFile, ldm=ldmFile), file=df)
+   if required:
+      print("tpldm:  {file}".format(file=tpldmFile), file=df)
+      print("portageLive:  {file}".format(file=tpldmFile), file=df)
+
 with open(".Makefile.deps", "w") as df:
    expectedFiles = set()
    print("ldm:   {file}".format(file=ldmFile), file=df)
    print("hldm:  {file}".format(file=hldmFile), file=df)
+
+   tpldmRules("${USE_LDM}" != "", ldmFile)
+   tpldmRules("${USE_HLDM}" != "", hldmFile)
 
    # To generate (h)ldm count files we need alignment files.
    # To generate (h)ldm count files we need the source corpus and the target corpus
@@ -190,13 +201,6 @@ include .Makefile.deps
 ########################################
 # TIGHTLY PACKED LEXICALIZED DISTORTION MODEL.
 .PHONY:  tpldm
-tpldm:  ${LDM_FILE:.gz=.tpldm}
-tpldm:  ${HLDM_FILE:.gz=.tpldm}
-
-# Build a tpldm requires the .gz version.
-${LDM_FILE:.gz=.tpldm}:  %.tpldm:  %.gz
-${HLDM_FILE:.gz=.tpldm}:  %.tpldm:  %.gz
-
 
 clean.content: clean.tpldm
 
@@ -270,10 +274,12 @@ time-mem: resource_summary_sub
 # What is needed for PortageLive.
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/ldm
 
-.PHONY:  portageLive
+.PHONY:  portageLive  portagelive  PortageLive
+portagelive:  portageLive
+PortageLive:  portageLive
+
+
 ifneq ("", "${USE_LDM}${USE_HLDM}")
-portageLive:  $(and ${USE_LDM}, ${LDM_FILE:.gz=.tpldm})
-portageLive:  $(and ${USE_HLDM}, ${HLDM_FILE:.gz=.tpldm})
 portageLive:
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
