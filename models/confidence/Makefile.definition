@@ -55,8 +55,8 @@ MODEL_DIR ?= ../../models
 CORPORA_DIR ?= ../../corpora
 
 # Indicates where to find the IBM models.
-IBM_DIR ?= $(strip $(if $(or ${TRAIN_TM},$(wildcard ../tm/*${TGT_GIVEN_SRCX})), \
-                        models/tm, $(if $(wildcard models/tm/mixtm), models/tm/mixtm, models/tm)))
+IBM_DIR ?= $(strip $(if $(or ${TRAIN_TM},$(wildcard ../ibm/*${TGT_GIVEN_SRCX})), \
+                        models/ibm, $(if $(wildcard models/tm/mixtm), models/tm/mixtm, models/ibm)))
 
 # Indicates where to find the language models.
 LM_DIR ?= $(if $(or ${TRAIN_LM},$(wildcard ../lm/${LM_CORP}_${TGT_LANG}*.binlm.gz)),models/lm,models/mixlm)
