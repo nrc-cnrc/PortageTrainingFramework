@@ -71,7 +71,7 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 		${GEN_JPT_PARALLEL_OPTIONS} \
 		GPT \
 		-v -m ${M} ${JPT_MODEL_TYPE} \
-		-1 ${lang1} -2 ${lang2} \
+		-1 ${SRC_LANG} -2 ${TGT_LANG} \
 		-ext \
 		${JPT_EXTRAS} \
 		$(filter %${L2_GIVEN_L1X}, $+) $(filter %${L1_GIVEN_L2X}, $+) \

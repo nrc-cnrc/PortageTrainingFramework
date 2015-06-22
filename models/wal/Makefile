@@ -172,7 +172,7 @@ def writeDeps(alignmentFileName, source, target, d1, d2):
 def createRules(corpora, wam, source, target):
    alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corpora)
    d1 = "{m}.{c}.${L2_GIVEN_L1X}".format(m=wam, c=which_wam(corpora))
-   d2 = "{m}.{c}.${L2_GIVEN_L1X}".format(m=wam, c=which_wam(corpora))
+   d2 = "{m}.{c}.${L1_GIVEN_L2X}".format(m=wam, c=which_wam(corpora))
    writeDeps(alignmentFileName, source, target, d1, d2)
 
 
