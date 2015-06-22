@@ -1,15 +1,16 @@
 # vim:noet:ts=3:nowrap:filetype=make
 
 # @file Makefile.toolkit
-# @brief
+# @brief This file contains commands to create Significance Pruned Joint Phrase Tables.
 #
 # @author Samuel Larkin
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Technologies de l'information et des communications /
+#    Information and Communications Technologies
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2010, 2012, Sa Majeste la Reine du Chef du Canada /
-# Copyright 2010, 2012, Her Majesty in Right of Canada
+# Copyright 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2015, Her Majesty in Right of Canada
 
 SIG_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 

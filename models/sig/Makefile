@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap:filetype=make
 # @file Makefile
-# @brief
+# @brief This file contains dependencies to create Significance Pruned Joint Phrase Tables.
 #
 # @author Samuel Larkin
 #

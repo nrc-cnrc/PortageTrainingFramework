@@ -8,8 +8,8 @@
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, 2012, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, 2012, Her Majesty in Right of Canada
+# Copyright 2008, 2012, 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2012, 2015, Her Majesty in Right of Canada
 
 TM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 $(info TM_DIR_PFX: ${TM_DIR_PFX})

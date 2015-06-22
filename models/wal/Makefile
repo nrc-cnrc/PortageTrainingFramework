@@ -1,14 +1,15 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap:filetype=make
-# @file
-# @brief
+# @file Makefile
+# @brief This file contains dependencies to create Word Alignment for corpora.
 #
 # @author Samuel Larkin
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Technologies de l'information et des communications /
+#    Information and Communications Technologies
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2015, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2015, Her Majesty in Right of Canada
 
 
