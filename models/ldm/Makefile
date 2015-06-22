@@ -317,6 +317,6 @@ unittest1:
 	|| ! echo "ERROR: failed to generate hmm3 count file." >&2
 	@ [[ `find -name ${LDM_MODEL_PFX}.ibm4${COUNTSX} -size +21c | \wc -l` -eq 1 ]] \
 	|| ! echo "ERROR: failed to generate ibm4 count file." >&2
-	@ [[ `find -name ${LDM_MODEL_PFX}.*.${L1_2_L2X} -size +21c` ]] \
+	@ [[ `find -name ${LDM_MODEL_PFX}.ibm4+hmm3.${L1_2_L2X} -size +21c | \wc -l` -eq 1 ]] \
 	|| ! echo "ERROR: failed to generate lexicalized distortion model file." >&2
 
