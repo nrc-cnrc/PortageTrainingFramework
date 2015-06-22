@@ -186,7 +186,7 @@ with open(".Makefile.cpt.deps", "w") as df:
    #############################################################################
    # META LEVEL TARGETS
    #####################################
-   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3 }_wam
+   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3 }_cpt
    WAMs = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()
    for corpora in set("${TRAIN_TM}".strip().split()):
       for wam in set(WAMs):
