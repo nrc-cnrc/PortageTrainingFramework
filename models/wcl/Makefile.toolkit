@@ -58,7 +58,7 @@ W2V_OPTS ?= -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 -
 	   ${W2V_OPTS} \
 	   ${EXTRA_WCL_OPTS} \
 	   -classes ${WCL_NCLS} \
-	   -output $@
+	   -output $@ \
 	   -train all_${WCL_LANG}${LANGX} \
 	&> log.$(basename $@)
 	_LOCAL=1 sed -i -e 's/ /\t/' $@
