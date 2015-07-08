@@ -4,7 +4,7 @@
 *.tpldm
 log.*
 Makefile.*.deps
-.Makefile.*.deps
+.Makefile*.deps
 
 .*.tstamp
 
