@@ -39,6 +39,9 @@ MODULE_NAME ?= wal
 # Where we can find the parallel corpora.
 CORPORA_DIR ?= ${WAL_DIR_PFX}../../corpora
 
+# From which corpora should we use its gizacfg to force align ${FORCE_ALIGN_SET}?
+IBM4_FORCE_ALIGN_WAM := $(firstword ${TRAIN_TM})
+
 # This script might produce directory and we want to easily remove them.
 RM := rm -rf
 
@@ -184,7 +187,7 @@ with open(".Makefile.deps", "w") as df:
          createRules(corpora, wam, corpora+"${L1X}", corpora+"${L2X}")
 
    # For IBM4.
-   for corpora in set("${ALL_WAMS}".strip().split()):
+   for corpora in set("${ALL_WAMS} ${FORCE_ALIGN_SET}".strip().split()):
       for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
          alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corpora)
          source = corpora + "/${SRC_LANG}.lc"
@@ -193,14 +196,16 @@ with open(".Makefile.deps", "w") as df:
          d2 = corpora + "/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz"
          writeDeps(alignmentFileName, source, target, d1, d2)
 
+   # For IBM4.
+   # For the devs & tests, we want to use the first TRAIN_TM as IBM4 models.
+   for corpora in set("$(filter-out ${TUNE_MIXTM_FINAL}, ${FORCE_ALIGN_SET})".strip().split()):
+      for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
+         print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corpora, A="${IBM4_FORCE_ALIGN_WAM}"), file=df)
+
    # Special case for mixtm tuning.
    for corpora in set("${TUNE_MIXTM_FINAL}".strip().split()):
       for wam in set("$(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
          createRules(corpora, wam, corpora+"${L1}", corpora+"${L2}")
-
-      # FORCED ALIGNING tune mixtm with IBM4 models.
-      for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
-         createRules(corpora, wam, corpora+"/${SRC_LANG}.lc", corpora+"/${TGT_LANG}.lc")
 
 
    #############################################################################
@@ -250,9 +255,15 @@ with open(".Makefile.deps", "w") as df:
 
 
    #############################################################################
-   # INDICATOR
+   # BILM
    WAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
    addModelsToMetaTarget(wamType("bilm"), "$(sort ${TRAIN_BILM})", WAMs)
+
+
+   #############################################################################
+   # FORCE ALIGN
+   WAMs = "${IBM4_MODEL_PFX}"
+   addModelsToMetaTarget(wamType("ibm4_force_align"), "$(sort ${FORCE_ALIGN_SET})", WAMs)
 
 
    print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)

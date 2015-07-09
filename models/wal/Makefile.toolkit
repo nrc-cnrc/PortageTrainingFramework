@@ -30,7 +30,7 @@ EXPECTED_MODEL_TYPES_PFX := $(foreach m, ${EXPECTED_MODEL_TYPES}, ${${m}_MODEL_P
 ALIGN_MODEL_TYPE := -hmm
 %.${IBM1_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 1
 %.${IBM2_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 2
-%.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 1
+#%.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:  override ALIGN_MODEL_TYPE=-ibm 1
 
 %.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz:
 	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
@@ -106,14 +106,17 @@ $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS}):  %/${L2_2_
 %.${IBM4_MODEL_PFX}.alignment.gz:
 	mkdir -p $*
 	set -o pipefail; \
-	merge_alignment.py ${<:part0=part}* \
+	merge_alignment.py ${<:gizacfg=A3.final.part}* \
 	| gzip > $@
+
+
 
 
 ################################################################################
 # FORCE ALIGN
+
 # We'll need to force align the corpora used to "tune" the mixtm.
-FORCE_ALIGN_SET := $(sort ${TUNE_MIXTM_FINAL})
+FORCE_ALIGN_SET := $(sort ${TUNE_MIXTM_FINAL} ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET})
 ifdef MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
 # We also need to force align all corpora used in mixtm when using 1wam.
 # By adding the MIXTM to FORCE_ALIGN_SET, we effectively tell make to use the
@@ -125,11 +128,57 @@ FORCE_ALIGN_SET += $(sort ${MIXTM})
 # TODO WHY override MIXTM_TRAIN_MIX?
 #override MIXTM_TRAIN_MIX := 1wam
 endif
+$(info FORCE ALIGNING IBM4: ${FORCE_ALIGN_SET})
 
-
-${TUNE_MIXTM_FINAL}:  SHELL=${LOCAL_SHELL}
-${TUNE_MIXTM_FINAL}:  %:
+${FORCE_ALIGN_SET}:  SHELL=${LOCAL_SHELL}
+${FORCE_ALIGN_SET}:  %:
 	mkdir -p $@
+
+# TODO:  where should we put these rules?
+# When creating the filtered version of a corpora we need to change file
+# extension to the uncompressed version when it comes to heldouts.
+$(foreach c, ${FORCE_ALIGN_SET}, \
+	$(eval \
+		$c/${SRC_LANG}.lc:  override L1X = ${L1}) \
+	$(eval \
+		$c/${SRC_LANG}.lc:  override L2X = ${L2}) \
+)
+
+#include ../ibm/Makefile.toolkit
+# In order to pick up the proper extension for corpora, either compress or not,
+# we'll need to do second expansion.
+.SECONDEXPANSION:
+# Clean up the inputs for giza.
+%/${SRC_LANG}.lc:  SHELL=${LOCAL_SHELL}
+%/${SRC_LANG}.lc:  %$${L1X}  %$${L2X}  | %
+	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> $@.log
+
+%/${TGT_LANG}.lc:  SHELL=${LOCAL_SHELL}
+%/${TGT_LANG}.lc:  %/${SRC_LANG}.lc  | %
+	test -s $@ && sleep 1 && touch --reference=$< $@
+
+
+debug_forceAlign:  $(addsuffix /${SRC_LANG}.lc.vcb, ${FORCE_ALIGN_SET})
+debug_forceAlign:  $(addsuffix /${TGT_LANG}.lc.vcb, ${FORCE_ALIGN_SET})
+
+# Create the vocabulary files.
+%/${SRC_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
+%/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc  | %
+	plain2snt $+ 2> $@.log
+
+%/${TGT_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
+%/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb  | %
+	test -s $@ && sleep 1 && touch --reference=$< $@
+
+%/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  SHELL=${LOCAL_SHELL}
+%/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb  | %
+	test -s $@ && sleep 1 && touch --reference=$< $@
+
+%/${TGT_LANG}.lc_${SRC_LANG}.lc.snt:  SHELL=${LOCAL_SHELL}
+%/${TGT_LANG}.lc_${SRC_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb  | %
+	test -s $@ && sleep 1 && touch --reference=$< $@
+
+
 
 vpath ${MIXTM_TRAIN_MIX}/% ${TM_DIR_PFX} ${TM_DIR_PFX}mixtm
 
@@ -139,8 +188,10 @@ PLAIN2SNT_HASCVB := plain2snt-hasvcb.py
 .PHONY:  debug_forceAlign
 
 # NOTE: the filtered rules are located in the giza section.
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc
+debug_forceAlign:  $(addsuffix /${SRC_LANG}.lc, ${FORCE_ALIGN_SET})
+debug_forceAlign:  $(addsuffix /${TGT_LANG}.lc, ${FORCE_ALIGN_SET})
+
+
 
 #.SECONDEXPANSION:
 #$(addsuffix /${SRC_LANG}.lc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
@@ -153,66 +204,99 @@ debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc
 
 
 $(addsuffix /${SRC_LANG}-${TGT_LANG}.snt, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${SRC_LANG}-${TGT_LANG}.snt, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}-${TGT_LANG}.snt:  %/${SRC_LANG}.lc.vcb | %
+$(addsuffix /${SRC_LANG}-${TGT_LANG}.snt, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}-${TGT_LANG}.snt: \
+			%/${SRC_LANG}.lc.vcb \
+			| %
 	@test -s $@ && sleep 1 && touch --reference=$< $@
 
 $(addsuffix /${TGT_LANG}-${SRC_LANG}.snt, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${TGT_LANG}-${SRC_LANG}.snt, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}-${SRC_LANG}.snt:  %/${SRC_LANG}.lc.vcb | %
+$(addsuffix /${TGT_LANG}-${SRC_LANG}.snt, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}-${SRC_LANG}.snt: \
+			%/${SRC_LANG}.lc.vcb \
+			| %
 	@test -s $@ && sleep 1 && touch --reference=$< $@
 
 
 $(addsuffix /${TGT_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${TGT_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb | %
+$(addsuffix /${TGT_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}.lc.vcb: \
+			%/${SRC_LANG}.lc.vcb \
+			| %
 	@test -s $@ && sleep 1 && touch --reference=$< $@
 
+debug_forceAlign:  $(addsuffix /${SRC_LANG}.lc.vcb, ${FORCE_ALIGN_SET})
 
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc.vcb
+
+
+vpath %.lc.vcb ${WAL_DIR_PFX}../ibm
 
 # NOTE the lc.vcb is an extension of tm-train/${SRC_LANG}.lc.vcb with the dev vocab.
 $(addsuffix /${SRC_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${SRC_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}.lc.vcb:  ${MIXTM_TRAIN_MIX}/${SRC_LANG}.lc.vcb ${MIXTM_TRAIN_MIX}/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc | %
+$(addsuffix /${SRC_LANG}.lc.vcb, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}.lc.vcb: \
+			$${MIXTM_TRAIN_MIX}/${SRC_LANG}.lc.vcb \
+			$${MIXTM_TRAIN_MIX}/${TGT_LANG}.lc.vcb \
+			%/${SRC_LANG}.lc \
+			%/${TGT_LANG}.lc \
+			| %
 	${PLAIN2SNT_HASCVB} \
 		$+ \
 		$*/${TGT_LANG}-${SRC_LANG}.snt $*/${SRC_LANG}-${TGT_LANG}.snt \
 		$*/${SRC_LANG}.lc.vcb $*/${TGT_LANG}.lc.vcb
 
+debug_forceAlign:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET})
+debug_forceAlign:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET})
 
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${SRC_LANG}.lc.vcb.classes
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${TGT_LANG}.lc.vcb.classes
+
+
+vpath %.lc.vcb.classes ${WAL_DIR_PFX}../ibm
 
 $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${SRC_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}.lc.vcb.classes:  ${MIXTM_TRAIN_MIX}/${SRC_LANG}.lc.vcb.classes | %
+$(addsuffix /${SRC_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  %/${SRC_LANG}.lc.vcb.classes: \
+			$${MIXTM_TRAIN_MIX}/${SRC_LANG}.lc.vcb.classes \
+			| %
 	ln -fs ../$< $@
 
 $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${TGT_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}.lc.vcb.classes:  ${MIXTM_TRAIN_MIX}/${TGT_LANG}.lc.vcb.classes | %
+$(addsuffix /${TGT_LANG}.lc.vcb.classes, ${FORCE_ALIGN_SET}):  %/${TGT_LANG}.lc.vcb.classes: \
+			$${MIXTM_TRAIN_MIX}/${TGT_LANG}.lc.vcb.classes \
+			| %
 	ln -fs ../$< $@
 
+debug_forceAlign:  $(addsuffix /${L1_2_L2}.cooc, ${FORCE_ALIGN_SET})
+debug_forceAlign:  $(addsuffix /${L2_2_L1}.cooc, ${FORCE_ALIGN_SET})
 
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L1_2_L2}.cooc
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L2_2_L1}.cooc
+
 
 $(addsuffix /${L1_2_L2}.cooc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${L1_2_L2}.cooc, ${FORCE_ALIGN_SET}):  %/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb %/${TGT_LANG}-${SRC_LANG}.snt | %
+$(addsuffix /${L1_2_L2}.cooc, ${FORCE_ALIGN_SET}):  %/${L1_2_L2}.cooc: \
+			%/${SRC_LANG}.lc.vcb \
+			%/${TGT_LANG}.lc.vcb \
+			%/${TGT_LANG}-${SRC_LANG}.snt \
+			| %
 	snt2cooc $@  $+ 2> $@.log
 
 $(addsuffix /${L2_2_L1}.cooc, ${FORCE_ALIGN_SET}):  SHELL=${LOCAL_SHELL}
-$(addsuffix /${L2_2_L1}.cooc, ${FORCE_ALIGN_SET}):  %/${L2_2_L1}.cooc:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb %/${SRC_LANG}-${TGT_LANG}.snt | %
+$(addsuffix /${L2_2_L1}.cooc, ${FORCE_ALIGN_SET}):  %/${L2_2_L1}.cooc: \
+			%/${TGT_LANG}.lc.vcb \
+			%/${SRC_LANG}.lc.vcb \
+			%/${SRC_LANG}-${TGT_LANG}.snt \
+			| %
 	snt2cooc $@  $+ 2> $@.log
 
+debug_forceAlign:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${FORCE_ALIGN_SET})
+debug_forceAlign:  $(addsuffix /${L2_GIVEN_L1}.gizacfg, ${FORCE_ALIGN_SET})
 
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L2_GIVEN_L1}.gizacfg
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L1_GIVEN_L2}.gizacfg
+
+
+vpath %.gizacfg ${WAL_DIR_PFX}../ibm
 
 $(addsuffix /${L2_GIVEN_L1}.gizacfg, ${FORCE_ALIGN_SET}):  SHELL=${FRAMEWORK_SHELL}
-$(addsuffix /${L2_GIVEN_L1}.gizacfg, ${FORCE_ALIGN_SET}):  %/${L2_GIVEN_L1}.gizacfg:  \
-				%/${TGT_LANG}.lc.vcb  \
-				%/${SRC_LANG}.lc.vcb  \
+$(addsuffix /${L2_GIVEN_L1}.gizacfg, ${FORCE_ALIGN_SET}):  %/${L2_GIVEN_L1}.gizacfg: \
+				%/${TGT_LANG}.lc.vcb \
+				%/${SRC_LANG}.lc.vcb \
 				%/${SRC_LANG}.lc.vcb.classes \
 				%/${TGT_LANG}.lc.vcb.classes \
-				%/${TGT_LANG}-${SRC_LANG}.snt  \
+				%/${TGT_LANG}-${SRC_LANG}.snt \
 				%/${L1_2_L2}.cooc \
-				${MIXTM_TRAIN_MIX}/${L2_GIVEN_L1}.gizacfg  \
+				$${MIXTM_TRAIN_MIX}/${L2_GIVEN_L1}.gizacfg \
 				| %
 	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
 	${TIME_MEM} \
@@ -235,14 +319,14 @@ $(addsuffix /${L2_GIVEN_L1}.gizacfg, ${FORCE_ALIGN_SET}):  %/${L2_GIVEN_L1}.giza
 		&> $@.log
 
 $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${FORCE_ALIGN_SET}):  SHELL=${FRAMEWORK_SHELL}
-$(addsuffix /${L1_GIVEN_L2}.gizacfg, ${FORCE_ALIGN_SET}):  %/${L1_GIVEN_L2}.gizacfg:  \
-				%/${TGT_LANG}.lc.vcb  \
-				%/${SRC_LANG}.lc.vcb  \
+$(addsuffix /${L1_GIVEN_L2}.gizacfg, ${FORCE_ALIGN_SET}):  %/${L1_GIVEN_L2}.gizacfg: \
+				%/${TGT_LANG}.lc.vcb \
+				%/${SRC_LANG}.lc.vcb \
 				%/${SRC_LANG}.lc.vcb.classes \
 				%/${TGT_LANG}.lc.vcb.classes \
-				%/${SRC_LANG}-${TGT_LANG}.snt  \
+				%/${SRC_LANG}-${TGT_LANG}.snt \
 				%/${L2_2_L1}.cooc \
-				${MIXTM_TRAIN_MIX}/${L1_GIVEN_L2}.gizacfg  \
+				$${MIXTM_TRAIN_MIX}/${L1_GIVEN_L2}.gizacfg \
 				| %
 	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
 	${TIME_MEM} \
@@ -264,25 +348,24 @@ $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${FORCE_ALIGN_SET}):  %/${L1_GIVEN_L2}.giza
 		-previousd42 $(patsubst %.gizacfg,%.D4.final, $(filter %.gizacfg, $+)) \
 		&> $@.log
 
+debug_forceAlign:  $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${FORCE_ALIGN_SET})
+debug_forceAlign:  $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${FORCE_ALIGN_SET})
 
 
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz
 
 # NOTE:  Some of the FORCE_ALIGN_SET corpora are also in ALL_WAMS and there are
 # dependencies already stated for those, that is why the following dependencies
 # are for the difference between FORCE_ALIGN_SET & ALL_WAMS.
-$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, $(filter-out ${ALL_WAMS}, ${FORCE_ALIGN_SET})):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L2_GIVEN_L1}.gizacfg | %
-$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, $(filter-out ${ALL_WAMS}, ${FORCE_ALIGN_SET})):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.gizacfg | %
+$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, $(filter-out ${ALL_WAMS}, ${FORCE_ALIGN_SET})): \
+		%/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz: \
+			%/${L2_GIVEN_L1}.gizacfg \
+			| %
+$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, $(filter-out ${ALL_WAMS}, ${FORCE_ALIGN_SET})): \
+		%/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz: \
+			%/${L1_GIVEN_L2}.gizacfg \
+			| %
 
 
-debug_forceAlign:  ${TUNE_MIXTM_FINAL}.${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz
-
-
-debug_forceAlign:  ${IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${L2_GIVEN_L1X}
-debug_forceAlign:  ${IBM4_MODEL_PFX}.${TUNE_MIXTM_FINAL}.${L1_GIVEN_L2X}
-
-
-
+debug_forceAlign:  $(addsuffix .${IBM4_MODEL_PFX}.${L1_2_L2}.align.gz, ${FORCE_ALIGN_SET})
 
 
