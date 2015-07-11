@@ -500,6 +500,10 @@ clean.portageLive:
 	time ${MAKE} -j 11 ${TESTCASE_OPTS} ldm
 
 
+testsuite:  fast_align.testcase
+fast_align.testcase:  export PT_TYPES := fast_align_cpt
+
+
 testsuite:  ibm4.testcase
 ibm4.testcase:  export PT_TYPES := ibm4_cpt
 
@@ -526,6 +530,12 @@ pretrained.testcase:  export PT_TYPES := pretrained_cpt
 
 testsuite:  merged.testcase
 merged.testcase:  export PT_TYPES := merged_cpt
+
+testsuite:  merged.fa.testcase
+merged.fa.testcase:  export PT_TYPES := merged_cpt
+merged.fa.testcase:  export MERGED_CPT_JPT_TYPES := IBM2 HMM3 FAST_ALIGN
+merged.fa.testcase:  export USE_MIXTM :=
+merged.fa.testcase:  export MIXTM :=
 
 testsuite:  merged.sig.testcase
 merged.sig.testcase:  export PT_TYPES := merged_cpt

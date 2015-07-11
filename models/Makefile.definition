@@ -109,10 +109,14 @@ IBM4_MODEL_CPUS ?= 4
 IBM4_MODEL_PARALLELISM_LEVEL ?= ${IBM4_MODEL_CPUS}
 
 ########################################
+# FAST_ALIGN MODELS
+FAST_ALIGN_MODEL_PFX ?= fast_align
+
+########################################
 # List of all possible word alignment models in the framework.
 # These must be ordered from most reliable to least reliable, because of the
 # fill-up procedure.
-POSSIBLE_WORD_ALIGNMENT_MODELS := ${IBM4_MODEL_PFX} ${HMM3_MODEL_PFX} ${HMM2_MODEL_PFX} ${HMM1_MODEL_PFX} ${IBM2_MODEL_PFX} ${IBM1_MODEL_PFX}
+POSSIBLE_WORD_ALIGNMENT_MODELS := ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX} ${HMM3_MODEL_PFX} ${HMM2_MODEL_PFX} ${HMM1_MODEL_PFX} ${IBM2_MODEL_PFX} ${IBM1_MODEL_PFX}
 
 ########################################
 # JPT MODELS.

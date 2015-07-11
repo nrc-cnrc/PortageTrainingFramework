@@ -208,8 +208,8 @@ with open(".Makefile.deps", "w") as df:
    #############################################################################
    # META LEVEL TARGETS
    #####################################
-   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3 }_wam
-   WAMs = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX})"
+   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_jpt
+   WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}"
    WAMs = set(WAMs.strip().split())
    for corpora in "$(sort ${TRAIN_TM})".strip().split():
       for wam in WAMs:
@@ -244,6 +244,7 @@ with open(".Makefile.deps", "w") as df:
          jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
          print("indicator_jpt:  {jptFileName}".format(jptFileName=jptFileName), file=df)
          expectedFiles.add(jptFileName)
+
 
    print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
 endef

@@ -58,6 +58,7 @@ vpath %.${L1_GIVEN_L2X}  ${WAL_DIR_PFX}../ibm/
 vpath %.${L2_GIVEN_L1X}  ${WAL_DIR_PFX}../ibm/
 vpath %/${SRC_LANG}.lc   ${WAL_DIR_PFX}../ibm/
 vpath %/${TGT_LANG}.lc   ${WAL_DIR_PFX}../ibm/
+vpath %fast_align.gz     ${WAL_DIR_PFX}../ibm/${FAST_ALIGN_MODEL_PFX}
 vpath %/${L2_GIVEN_L1}.A3.final.part0  ${WAL_DIR_PFX}../ibm/
 vpath %/${L1_GIVEN_L2}.A3.final.part0  ${WAL_DIR_PFX}../ibm/
 
@@ -91,6 +92,8 @@ merged_wal:  $(addsuffix _wal, ${EXPECTED_MODEL_TYPES_PFX})
 mix_wal:  # Dependencies are defined in the python script.
 
 indicator_wal:  # Dependencies are defined in the python script.
+
+fast_align_wal:  # Dependencies are defined in the python script.
 
 
 ########################################
@@ -145,7 +148,8 @@ clean.content: clean.alignment_files
 .PHONY: clean.alignment_files
 clean.alignment_files:  SHELL=${LOCAL_SHELL}
 clean.alignment_files:
-	${RM} *.${L1_2_L2}.align.gz  *.${L2_2_L1}.align.gz
+	${RM} *.align.gz
+	${RM} -r ${ALL_WAMS}
 
 .PHONY: alignment_files  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 alignment_files:  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
@@ -182,8 +186,9 @@ def createRules(corpora, wam, source, target):
 with open(".Makefile.deps", "w") as df:
    expectedFiles = set()
 
+   # Default rules except for IBM4 & fast_align that are third-party aligners.
    for corpora in set("${ALL_WAMS}".strip().split()):
-      for wam in set("$(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
+      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
          createRules(corpora, wam, corpora+"${L1X}", corpora+"${L2X}")
 
    # For IBM4.
@@ -204,8 +209,21 @@ with open(".Makefile.deps", "w") as df:
 
    # Special case for mixtm tuning.
    for corpora in set("${TUNE_MIXTM_FINAL}".strip().split()):
-      for wam in set("$(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
+      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
          createRules(corpora, wam, corpora+"${L1}", corpora+"${L2}")
+
+   # FAST ALIGN
+   # source and target must be of the form %${L1x} and %${L2X}
+   for corpora in set("${ALL_WAMS}".strip().split()):
+      for wam in set("$(filter ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
+         alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corpora)
+         source = corpora + "${L1X}"
+         target = corpora + "${L2X}"
+         # How unfortunate that we need to specify the %.fast_align.gz dependencies
+         # in the Makefile and cannot to so in Makefile.toolkit.
+         fal1 = corpora + ".${L2_2_L1}.fast_align.gz"
+         fal2 = corpora + ".${L1_2_L2}.fast_align.gz"
+         writeDeps(alignmentFileName, source, target, fal1, fal2)
 
 
    #############################################################################
@@ -237,8 +255,8 @@ with open(".Makefile.deps", "w") as df:
 
 
    #####################################
-   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3 }_wam
-   WAMs = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX})"
+   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam
+   WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}"
    addModelsToMetaTarget(wamType(), "$(sort ${TRAIN_TM})", WAMs)
 
 
@@ -248,19 +266,19 @@ with open(".Makefile.deps", "w") as df:
    addModelsToMetaTarget(wamType("mix"), "$(sort ${TUNE_MIXTM_FINAL} ${MIX_WAMS})", WAMs)
 
 
-   #############################################################################
+   #####################################
    # INDICATOR
    WAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
    addModelsToMetaTarget(wamType("indicator"), "$(sort ${ALL_TMS})", WAMs)
 
 
-   #############################################################################
+   #####################################
    # BILM
    WAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
    addModelsToMetaTarget(wamType("bilm"), "$(sort ${TRAIN_BILM})", WAMs)
 
 
-   #############################################################################
+   #####################################
    # FORCE ALIGN
    WAMs = "${IBM4_MODEL_PFX}"
    addModelsToMetaTarget(wamType("ibm4_force_align"), "$(sort ${FORCE_ALIGN_SET})", WAMs)

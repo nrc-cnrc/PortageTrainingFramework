@@ -186,15 +186,21 @@ with open(".Makefile.cpt.deps", "w") as df:
    #############################################################################
    # META LEVEL TARGETS
    #####################################
-   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3 }_cpt
-   WAMs = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()
+   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_cpt
+   WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}".strip().split()
    for corpora in set("${TRAIN_TM}".strip().split()):
       for wam in set(WAMs):
          filename = "${CPT_MODEL_PFX}.{m}${SMOOTHERS_DESCRIPTION}.{c}.${L1_2_L2X}".format(c=corpora, m=wam)
          # Create meta-level dependencies between cpts and their jpts or sigs.
          print("{m}_cpt:  {filename}".format(m=wam, filename=filename), file=df)
-         print("{m}_cpt_list += {filename}".format(m=wam, filename=filename), file=df)
          expectedFiles.add(filename)
+
+   # Lets have a separate loop to build %_cpt_list, a list of cpt to convert to tppt.
+   WAMs = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()
+   for corpora in set("${TRAIN_TM}".strip().split()):
+      for wam in set(WAMs):
+         filename = "${CPT_MODEL_PFX}.{m}${SMOOTHERS_DESCRIPTION}.{c}.${L1_2_L2X}".format(c=corpora, m=wam)
+         print("{m}_cpt_list += {filename}".format(m=wam, filename=filename), file=df)
 
 endef
 #$(info CPT: ${DEPS.PYSCRIPT})
@@ -408,12 +414,12 @@ $(error You must specify one and only one MERGED_CPT_ZN_MODEL!)
 endif
 
 # Make sure MERGED_CPT_ZN_MODEL is valid.
-ifneq ($(filter-out IBM4 HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_ZN_MODEL}),)
+ifneq ($(filter-out FAST_ALIGN IBM4 HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_ZN_MODEL}),)
 $(error MERGED_CPT_ZN_MODEL must be one of IBM4, HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_ZN_MODEL})
 endif
 
 # Make sure MERGED_CPT_JPT_TYPES are valid.
-ifneq ($(filter-out IBM4 HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_JPT_TYPES}),)
+ifneq ($(filter-out FAST_ALIGN IBM4 HMM3 HMM2 HMM1 IBM2 IBM1, ${MERGED_CPT_JPT_TYPES}),)
 $(error MERGED_CPT_JPT_TYPES must be one of IBM4, HMM3, HMM2, HMM1, IBM2 or IBM1 instead of ${MERGED_CPT_JPT_TYPES})
 endif
 endif

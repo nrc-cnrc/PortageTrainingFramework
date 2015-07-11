@@ -135,6 +135,42 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 
 
 
+########################################
+# Fast Align
+${FAST_ALIGN_MODEL_PFX}:
+	mkdir -p $@
+
+${FAST_ALIGN_MODEL_PFX}/mixwam.${SRC_LANG}_${TGT_LANG}.glued:  | ${FAST_ALIGN_MODEL_PFX}
+	fast_align_glue_corpora.py \
+		<(zcat -f $(sort $(filter %${L1X}, $+))) \
+		<(zcat -f $(sort $(filter %${L2X}, $+))) \
+	> $@
+
+${FAST_ALIGN_MODEL_PFX}/%.${SRC_LANG}_${TGT_LANG}.glued:  %${L1X}  %${L2X}  | ${FAST_ALIGN_MODEL_PFX}
+	fast_align_glue_corpora.py $+ > $@
+
+${FAST_ALIGN_MODEL_PFX}.%.${L2_GIVEN_L1X}:  SHELL=${FRAMEWORK_SHELL}
+${FAST_ALIGN_MODEL_PFX}.%.${L2_GIVEN_L1X}:
+	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
+	set -o pipefail; \
+	time-mem \
+	fast_align -i $< -d -v -o \
+		-c >(fast_align_normalize_ttable.py | train_ibm -tobin - $@) \
+		2> log.$(notdir ${@:.gz=}) \
+	| gzip > ${FAST_ALIGN_MODEL_PFX}/$*.${L1_2_L2}.fast_align.gz
+
+${FAST_ALIGN_MODEL_PFX}.%.${L1_GIVEN_L2X}:  SHELL=${FRAMEWORK_SHELL}
+${FAST_ALIGN_MODEL_PFX}.%.${L1_GIVEN_L2X}:
+	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
+	set -o pipefail; \
+	time-mem \
+	fast_align -i $< -d -v -o -r \
+		-c >(fast_align_normalize_ttable.py | train_ibm -tobin - $@) \
+		2> log.$(notdir ${@:.gz=}) \
+	| gzip > ${FAST_ALIGN_MODEL_PFX}/$*.${L2_2_L1}.fast_align.gz
+
+
+
 ################################################################################
 # GIZA SPECIFIC TARGETS.
 $(addsuffix /,$(sort 1wam ${ALL_WAMS})):  SHELL=${LOCAL_SHELL}

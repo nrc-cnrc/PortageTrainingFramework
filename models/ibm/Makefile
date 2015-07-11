@@ -109,6 +109,8 @@ indicator_wam:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GIVEN_L1X}  ${${MERGED_
 indicator_wam:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GIVEN_L1X}  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L1_GIVEN_L2X}
 endif
 
+fast_align_wam:  # Dependencies for sub cpt are defined in the python code.
+
 
 
 
@@ -149,6 +151,7 @@ clean.word_alignment_models:  SHELL=${LOCAL_SHELL}
 clean.word_alignment_models:
 	${RM} $(addsuffix .*, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 	${RM} ${ALL_WAMS}  #  This is for ibm4 models.
+	${RM} -r ${FAST_ALIGN_MODEL_PFX}
 
 .PHONY: word_alignment_models  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 word_alignment_models:  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
@@ -182,7 +185,7 @@ with open(".Makefile.deps", "w") as df:
 
    # the meta target for word alignment model depends on word alignment model files.
    # both forward and backward word alignment models require source and target corpora.
-   WAMs = "$(sort $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}))"
+   WAMs = "$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
    WAMs = set(WAMs.strip().split())
    for wam in WAMs:
       # TODO:  Can we really get mixwam in ALL_WAMS?
@@ -194,7 +197,7 @@ with open(".Makefile.deps", "w") as df:
 
       # TODO Why do we create those rules?  These look like the rules for mixwam execpt for more corpora.
       # This seems to be required in tm.
-      # MOst likely there should be a if statement around this block of code.
+      # Most likely there should be a if statement around this block of code.
       # This mega global wam is used when indicator_cpt & len(TRAIN_TM) > 1
       forwardName  = "{m}.${L2_GIVEN_L1X}".format(m=wam)
       backwardName = "{m}.${L1_GIVEN_L2X}".format(m=wam)
@@ -216,6 +219,36 @@ with open(".Makefile.deps", "w") as df:
 #         forwardName  = forwardModel(corpora, wam)
 #         backwardName = backwardModel(corpora, wam)
 #         print("{m}_wam:  {f}  {b}".format(m=wam, f=forwardName, b=backwardName), file=df)
+
+   ########################################
+   # FAST ALIGN
+   for wam in ("${FAST_ALIGN_MODEL_PFX}",):
+      for corpora in set("$(filter-out mixwam, ${ALL_WAMS})".strip().split()):
+         forwardName  = forwardModel(corpora, wam)
+         backwardName = backwardModel(corpora, wam)
+         glued = "${FAST_ALIGN_MODEL_PFX}/" + corpora + ".${SRC_LANG}_${TGT_LANG}.glued"
+         print("{f}:  {g}".format(f=forwardName, g=glued), file=df)
+         print("{b}:  {g}".format(b=backwardName, g=glued), file=df)
+
+      # How to build a mixwam
+      forwardName  = forwardModel("mixwam", wam)
+      backwardName = backwardModel("mixwam", wam)
+      glued = "${FAST_ALIGN_MODEL_PFX}/mixwam.${SRC_LANG}_${TGT_LANG}.glued"
+      print("{f}:  {g}".format(f=forwardName, g=glued), file=df)
+      print("{b}:  {g}".format(b=backwardName, g=glued), file=df)
+      for corpora in set("${MIXTM} ${MIXTM_TRAIN_MIX}".strip().split()):
+         print("{g}:  {c}".format(g=glued, c=corpora+"${L1X}"), file=df)
+         print("{g}:  {c}".format(g=glued, c=corpora+"${L2X}"), file=df)
+
+      # How to build a global wam.
+      forwardName  = "{m}.${L2_GIVEN_L1X}".format(m=wam)
+      backwardName = "{m}.${L1_GIVEN_L2X}".format(m=wam)
+      glued = "${FAST_ALIGN_MODEL_PFX}/${SRC_LANG}_${TGT_LANG}.glued"
+      print("{f}:  {g}".format(f=forwardName, g=glued), file=df)
+      print("{b}:  {g}".format(b=backwardName, g=glued), file=df)
+      for corpora in set("${ALL_TMS}".strip().split()):
+         print("{g}:  {c}".format(g=glued, c=corpora+"${L1X}"), file=df)
+         print("{g}:  {c}".format(g=glued, c=corpora+"${L2X}"), file=df)
 
 
    #############################################################################
@@ -250,8 +283,8 @@ with open(".Makefile.deps", "w") as df:
 
 
    #####################################
-   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3 }_wam
-   WAMs = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX})"
+   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam
+   WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}"
    addModelsToMetaTarget(wamType(), "$(sort ${TRAIN_TM})", WAMs)
 
 
@@ -345,6 +378,9 @@ endif
 testsuite:  ibm4.testcase
 ibm4.testcase:  export PT_TYPES := ibm4_cpt
 
+testsuite:  fast_align.testcase
+fast_align.testcase:  export PT_TYPES := fast_align_cpt
+
 testsuite:  wams.testcase
 wams.testcase:  export PT_TYPES := ibm1_cpt ibm2_cpt  hmm1_cpt hmm2_cpt hmm3_cpt
 
@@ -361,6 +397,15 @@ testsuite:  mixwam.testcase
 mixwam.testcase:  export PT_TYPES := mix_cpt
 mixwam.testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL := 1
 
+# We haven't implemented how to create the alignment for TUNE_MIXTM, thus there
+# is a check that prevents us from performing the following test.  This is why
+# there is that weird UNITTESTING variable defined to bypass the check.
+testsuite:  mixwam.fa.testcase
+mixwam.fa.testcase:  export UNITTESTING := TRUE
+mixwam.fa.testcase:  export PT_TYPES := mix_cpt
+mixwam.fa.testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL := 1
+mixwam.fa.testcase:  export MERGED_CPT_JPT_TYPES := IBM2 HMM3 FAST_ALIGN
+
 testsuite:  indicator.testcase
 indicator.testcase:  export PT_TYPES := indicator_cpt
 
@@ -373,4 +418,4 @@ testsuite:  all.testcase
 all.testcase:  export USE_LDM :=
 all.testcase:  export USE_HLDM :=
 all.testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL := 1
-all.testcase:  export PT_TYPES :=  ibm4_cpt ibm1_cpt ibm2_cpt  hmm1_cpt hmm2_cpt hmm3_cpt merged_cpt pretrained_cpt mix_cpt indicator_cpt
+all.testcase:  export PT_TYPES :=  fast_align_cpt  ibm4_cpt ibm1_cpt ibm2_cpt  hmm1_cpt hmm2_cpt hmm3_cpt merged_cpt pretrained_cpt mix_cpt indicator_cpt

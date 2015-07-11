@@ -422,7 +422,7 @@ endif
 # MERGED_CPT_ZN_MODEL can be one of: IBM4, HMM3, HMM2, HMM1, IBM2 or IBM1
 MERGED_CPT_ZN_MODEL ?= HMM3
 # What type of jpts should be used to create the final merged_cpt?
-# MERGED_CPT_JPT_TYPES can be sevaral of: IBM4, HMM3, HMM2, HMM1, IBM2 or IBM1
+# MERGED_CPT_JPT_TYPES can be sevaral of: FAST_ALIGN, IBM4, HMM3, HMM2, HMM1, IBM2 or IBM1
 # Using IBM4 models in addition to IBM2 and HMM3 seems to give a small boost
 # in BLEU for most scenarios, but training IBM4 models can be very expensive,
 # so we do not include IBM4 by default for MERGED_CPT_JPT_TYPES.
@@ -646,6 +646,15 @@ $(error You cannot provide more than one corpora in MIXTM_TRAIN_MIX)
 endif
 ifeq (${TUNE_MIXTM},)
 $(error With a mixtm, you must always define a tuning corpus for tuning the mixture weights)
+endif
+ifneq ($(filter FAST_ALIGN,${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES}),)
+ifeq (${UNITTESTING},)
+$(error Mixtm with fast_align is not implemented.)
+# There is no force align with fast_align.  To create TUNE_MIXTM's word
+# alignment file, we would have to create a fast_align model with train then we
+# would train a second model where we concatenate train + TUNE_MIXTM from which
+# we would only keep the word alignment file for the subset of TUNE_MIXTM.
+endif
 endif
 endif
 
