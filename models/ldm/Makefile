@@ -159,14 +159,14 @@ with open(".Makefile.deps", "w") as df:
 
    # To generate (h)ldm count files we need alignment files.
    # To generate (h)ldm count files we need the source corpus and the target corpus
-   for wam in "$(sort ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split():
-      for corpora in "$(sort ${TRAIN_LDM})".strip().split():
+   for wam in set("${POSSIBLE_WORD_ALIGNMENT_MODELS}".strip().split()):
+      for corpora in set("${TRAIN_LDM}".strip().split()):
          countFilename = "${LDM_MODEL_PFX}.{w}${COUNTSX}".format(w=wam)
          alignment = "{c}.{m}.${L1_2_L2}.align.gz".format(c=corpora, m=wam)
          print("{counts}:  {s}  {t}".format(counts=countFilename, **corporaNames(corpora, wam)), file=df)
          print("{counts}:  {alignment}".format(counts=countFilename, alignment=alignment), file=df)
 
-      for corpora in "$(sort ${TRAIN_HLDM})".strip().split():
+      for corpora in set("${TRAIN_HLDM}".strip().split()):
          countFilename = "${HLDM_MODEL_PFX}.{w}${COUNTSX}".format(w=wam)
          alignment = "{c}.{m}.${L1_2_L2}.align.gz".format(c=corpora, m=wam)
          print("{counts}:  {s}  {t}".format(counts=countFilename, **corporaNames(corpora, wam)), file=df)
@@ -174,7 +174,7 @@ with open(".Makefile.deps", "w") as df:
 
    #############################################################################
    #
-   for wam in "$(sort ${AVAILABLE_WORD_ALIGNMENT_MODELS})".strip().split():
+   for wam in set("${AVAILABLE_WORD_ALIGNMENT_MODELS}".strip().split()):
       countFilename = "${LDM_MODEL_PFX}.{w}${COUNTSX}".format(w=wam)
       print("ldm.counts:  {counts}".format(counts=countFilename), file=df)
       print("{ldmFile}:  {counts}".format(ldmFile=ldmFile, counts=countFilename), file=df)
