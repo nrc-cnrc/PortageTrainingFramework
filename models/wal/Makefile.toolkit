@@ -100,8 +100,8 @@ debug_giza:  $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS}
 #   In order to properly bridge giza's output with Portage, the correct dependency for:
 #      - Portage's src to tgt model is giza's tgt given src files;
 #      - Portage's tgt to src model is giza's src given tgt files.
-$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L2_GIVEN_L1}.A3.final.part0
-$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.A3.final.part0
+$(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS}):  %/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L2_GIVEN_L1}.gizacfg
+$(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.gizacfg
 %.${IBM4_MODEL_PFX}.alignment.gz:  SHELL=${LOCAL_SHELL}
 %.${IBM4_MODEL_PFX}.alignment.gz:
 	mkdir -p $*
