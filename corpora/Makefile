@@ -30,7 +30,7 @@ TCX ?= .tc
 
 
 # Define the corpora.
-TRAIN_SET    := $(sort ${TRAIN_LM} ${TRAIN_TM} ${TRAIN_TC})
+TRAIN_SET    := $(sort ${TRAIN_LM} ${TRAIN_TM} ${TRAIN_TC} ${TRAIN_COARSELM} ${TRAIN_BILM})
 # NOTE: heldout are stem that are for a source corpus and one or more references.
 HELDOUT_SET  := $(sort ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET} \
 							  ${TUNE_MIXTM} ${TUNE_LM} ${TUNE_COARSELM} \
@@ -352,6 +352,11 @@ LC += ${TM_LC}
 MIXLM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${MIXLM})
 MIXLM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${MIXLM})
 LC += ${MIXLM_LC}
+COARSE_LM += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_COARSELM})
+LC += ${COARSE_LM}
+BILM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_BILM})
+BILM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_BILM})
+LC += ${BILM_LC}
 TC_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TC})
 LC += ${TC_LC}
 LM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
