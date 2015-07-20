@@ -47,6 +47,9 @@ ORDER ?= 5
 #    arpa binlm tplm irstlm blmt quantize Qblmt sort_arpa prune
 LM_TYPES ?= binlm
 
+# We must create tplm for tuning.
+LM_TYPES := $(sort ${LM_TYPES} tplm)
+
 # What are the corpora names and extension and what files define these corpora.
 CORPORA_NAMES ?= $(addsuffix _${LM_LANG}, ${TRAIN_LM})
 
@@ -286,3 +289,35 @@ ppx.irstlm: $(foreach lm_name, ${LM_NAMES}, $(addprefix ppx.irstlm.${lm_name}, .
 ppx.irstlm.%: SHELL=${FRAMEWORK_SHELL}
 ppx.irstlm.%: ${PPX_TEST_SET} %
 	compile-lm $* --eval=$< >& $(basename $@)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################################################################
+# TESTSUITE
+
+.PHONY: testsuite
+
+.PHONY:  tplm.testcase
+testsuite:  tplm.testcase
+tplm.testcase:  export TRAIN_LM := lm-train sublm3
+tplm.testcase:
+	echo "TESTCASE:  $@"
+	${MAKE} clean &> /dev/null
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} all
+	[[ `\ls -d {lm-train,sublm3}_fr-kn-5g.tplm | \wc -l` -eq 2 ]] || ! echo "$* should produce 2 tplm [200, 800]" >&2
+

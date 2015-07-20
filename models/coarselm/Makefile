@@ -59,6 +59,9 @@ COARSELM_NCLS_LIST ?=
 #    arpa binlm tplm
 LM_TYPES ?= binlm
 
+# We must create tplm for tuning.
+LM_TYPES := $(sort ${LM_TYPES} tplm)
+
 # What are the corpora names and extension and what files define these corpora.
 CORPORA_NAMES ?= $(foreach n, ${COARSELM_NCLS_LIST}, $(addsuffix _${LM_LANG}-$n, ${TRAIN_COARSELM}))
 
@@ -218,3 +221,39 @@ else
 portageLive:
 	@echo "No coarse LMs defined, nothing to do." >&2
 endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################################################################
+# TESTSUITE
+
+.PHONY: testsuite
+
+.PHONY:  tplm.testcase
+testsuite:  tplm.testcase
+tplm.testcase:  export TRAIN_COARSELM := coarselm-train
+tplm.testcase:  export COARSELM_NCLS_LIST := 200 800
+tplm.testcase:  export SHELL := bash
+tplm.testcase:
+	echo "TESTCASE:  $@"
+	${MAKE} clean &> /dev/null
+	${MAKE} -C ../wcl all
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} all
+	[[ `\ls -d coarselm-train_fr-{200,800}-ukn-8g.tplm | \wc -l` -eq 2 ]] || ! echo "$* should produce 2 tplm [200, 800]" >&2

@@ -61,10 +61,16 @@ COARSELM_NCLS_LIST ?=
 #    arpa binlm tplm
 LM_TYPES ?= binlm
 
+# We must create tplm for tuning.
+LM_TYPES := $(sort ${LM_TYPES} tplm)
+
+$(info TRAIN_BILM: ${TRAIN_BILM})
+
 # What are the corpora names and extension and what files define these corpora.
 CORPORA_NAMES ?= $(addprefix bitokens., \
                     $(foreach s, $(filter-out word, ${BILM_SPEC}), $(addsuffix -$s_${LM_LANG}, ${TRAIN_BILM})) \
                     $(if $(filter word, ${BILM_SPEC}), $(addsuffix _${LM_LANG}, ${TRAIN_BILM})) )
+$(info CORPORA_NAMES: ${CORPORA_NAMES})
 
 # This indicates the corpus extension and looks like .tok.al.gz
 CORPUS_EXT  ?= ${LANGXZ}
@@ -322,3 +328,37 @@ else
 portageLive:
 	@echo "No BiLMs defined, nothing to do." >&2
 endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################################################################
+# TestSuite
+.PHONY:  testsuite
+testsuite:  tplm.testcase
+
+# The default target should build a tplm.
+.PHONY:  tplm.testcase
+tplm.testcase:  export TRAIN_BILM := bilm-train
+tplm.testcase:  export BILM_SPEC := 400bi-400s-400t
+tplm.testcase:
+	echo "TESTCASE:  $@"
+	${MAKE} clean &> /dev/null
+	${MAKE} -C ../wcl all
+	${MAKE} -C ../ibm all
+	${MAKE} -C ../wal all
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} all
+	\ls -d bitokens.*.tplm || ! echo "Missing tplm." >&2
+

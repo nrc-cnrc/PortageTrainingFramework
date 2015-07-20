@@ -83,7 +83,8 @@ help:
 .PHONY: all
 all: SHELL=${LOCAL_SHELL}
 ifdef MIXLM_COMPONENTS
-all: mixlm
+all:  mixlm
+all:  tplm
 else
 all:
 	@echo "No MixLMs defined, nothing to do."
@@ -123,27 +124,27 @@ time-mem: resource_summary_sub
 ########################################
 
 
-MIXLM_SRC_MODELS := $(foreach lm, ${MIXLM}, $(or $(notdir $(wildcard ${lm}_${SRC_LANG}*.binlm${GZ})), \
-                                                 $(notdir $(wildcard ${LM_DIR}/${lm}_${SRC_LANG}*.binlm${GZ})), \
-                                                 ${lm}_${SRC_LANG}-kn-${ORDER}g.binlm${GZ}))
+MIXLM_SRC_MODELS := $(foreach lm, ${MIXLM}, $(or $(notdir $(wildcard ${lm}_${SRC_LANG}*.tplm)), \
+                                                 $(notdir $(wildcard ${LM_DIR}/${lm}_${SRC_LANG}*.tplm)), \
+                                                 ${lm}_${SRC_LANG}-kn-${ORDER}g.tplm))
 
-LMDIR_SRC_MODELS := $(foreach lm, ${MIXLM}, $(if $(notdir $(wildcard ${lm}_${SRC_LANG}*.binlm${GZ})),, \
-                                                       $(notdir $(wildcard ${LM_DIR}/${lm}_${SRC_LANG}*.binlm${GZ}))))
+LMDIR_SRC_MODELS := $(foreach lm, ${MIXLM}, $(if $(notdir $(wildcard ${lm}_${SRC_LANG}*.tplm)),, \
+                                                       $(notdir $(wildcard ${LM_DIR}/${lm}_${SRC_LANG}*.tplm))))
 
-LOCAL_SRC_MODELS := $(foreach lm, ${MIXLM}, $(or $(notdir $(wildcard ${lm}_${SRC_LANG}*.binlm${GZ})), \
-                                                 $(if $(notdir $(wildcard ${LM_DIR}/${lm}_${SRC_LANG}*.binlm${GZ})),, \
-                                                      ${lm}_${SRC_LANG}-kn-${ORDER}g.binlm${GZ})))
+LOCAL_SRC_MODELS := $(foreach lm, ${MIXLM}, $(or $(notdir $(wildcard ${lm}_${SRC_LANG}*.tplm)), \
+                                                 $(if $(notdir $(wildcard ${LM_DIR}/${lm}_${SRC_LANG}*.tplm)),, \
+                                                      ${lm}_${SRC_LANG}-kn-${ORDER}g.tplm)))
 
-MIXLM_TGT_MODELS := $(foreach lm, ${MIXLM}, $(or $(notdir $(wildcard ${lm}_${TGT_LANG}*.binlm${GZ})), \
-                                                 $(notdir $(wildcard ${LM_DIR}/${lm}_${TGT_LANG}*.binlm${GZ})), \
-                                                 ${lm}_${TGT_LANG}-kn-${ORDER}g.binlm${GZ}))
+MIXLM_TGT_MODELS := $(foreach lm, ${MIXLM}, $(or $(notdir $(wildcard ${lm}_${TGT_LANG}*.tplm)), \
+                                                 $(notdir $(wildcard ${LM_DIR}/${lm}_${TGT_LANG}*.tplm)), \
+                                                 ${lm}_${TGT_LANG}-kn-${ORDER}g.tplm))
 
-LMDIR_TGT_MODELS := $(foreach lm, ${MIXLM}, $(if $(notdir $(wildcard ${lm}_${TGT_LANG}*.binlm${GZ})),, \
-                                                       $(notdir $(wildcard ${LM_DIR}/${lm}_${TGT_LANG}*.binlm${GZ}))))
+LMDIR_TGT_MODELS := $(foreach lm, ${MIXLM}, $(if $(notdir $(wildcard ${lm}_${TGT_LANG}*.tplm)),, \
+                                                       $(notdir $(wildcard ${LM_DIR}/${lm}_${TGT_LANG}*.tplm))))
 
-LOCAL_TGT_MODELS := $(foreach lm, ${MIXLM}, $(or $(notdir $(wildcard ${lm}_${TGT_LANG}*.binlm${GZ})), \
-                                                 $(if $(notdir $(wildcard ${LM_DIR}/${lm}_${TGT_LANG}*.binlm${GZ})),, \
-                                                      ${lm}_${TGT_LANG}-kn-${ORDER}g.binlm${GZ})))
+LOCAL_TGT_MODELS := $(foreach lm, ${MIXLM}, $(or $(notdir $(wildcard ${lm}_${TGT_LANG}*.tplm)), \
+                                                 $(if $(notdir $(wildcard ${LM_DIR}/${lm}_${TGT_LANG}*.tplm)),, \
+                                                      ${lm}_${TGT_LANG}-kn-${ORDER}g.tplm)))
 
 MIXLM_PRETRAINED_LMS := ${MIXLM_PRETRAINED_SRC_LMS} ${MIXLM_PRETRAINED_TGT_LMS}
 
@@ -156,17 +157,18 @@ sublm.${TGT_LANG}: ${MIXLM_TGT_MODELS}
 # Create Language Models.
 # If for some reason one of the sublm was already created in models/lm, don't
 # recreate it, just link to it; otherwise build it here in the mixlm directory.
-${LMDIR_SRC_MODELS} ${LMDIR_TGT_MODELS}: %.binlm${GZ}:
+$(info LMDIR_SRC_MODELS: ${LMDIR_SRC_MODELS})
+$(info LMDIR_TGT_MODELS: ${LMDIR_TGT_MODELS})
+${LMDIR_SRC_MODELS} ${LMDIR_TGT_MODELS}: %.tplm:
 	ln -sf "${LM_DIR}/$@" .
-	[[ ! -d "${LM_DIR}/${@:.binlm${GZ}=.tplm}" ]] || ln -sf "${LM_DIR}/${@:.binlm${GZ}=.tplm}" .
 
 # Specify corpus dependencies for the component LMs
 $(foreach lm, ${MIXLM}, $(if $(filter ${lm}_${SRC_LANG}%, ${LOCAL_SRC_MODELS}), \
-	$(eval $(call LM_CORP_DEP,$(filter ${lm}_${SRC_LANG}%, ${LOCAL_SRC_MODELS:.binlm${GZ}=}),${lm}_${SRC_LANG}${LANGX}${GZ}))) \
+	$(eval $(call LM_CORP_DEP,$(filter ${lm}_${SRC_LANG}%, ${LOCAL_SRC_MODELS:.tplm=}),${lm}_${SRC_LANG}${LANGX}${GZ}))) \
 )
 
 $(foreach lm, ${MIXLM}, $(if $(filter ${lm}_${TGT_LANG}%, ${LOCAL_TGT_MODELS}), \
-	$(eval $(call LM_CORP_DEP,$(filter ${lm}_${TGT_LANG}%, ${LOCAL_TGT_MODELS:.binlm${GZ}=}),${lm}_${TGT_LANG}${LANGX}${GZ}))) \
+	$(eval $(call LM_CORP_DEP,$(filter ${lm}_${TGT_LANG}%, ${LOCAL_TGT_MODELS:.tplm=}),${lm}_${TGT_LANG}${LANGX}${GZ}))) \
 )
 
 $(foreach p, ${MIXLM_PRETRAINED_LMS}, \
@@ -174,12 +176,12 @@ $(foreach p, ${MIXLM_PRETRAINED_LMS}, \
    	$(notdir ${p}): ${p}) \
 )
 
+# Are pretrained models also available in tplm?
 $(notdir ${MIXLM_PRETRAINED_LMS}): SHELL=${LOCAL_SHELL}
 $(notdir ${MIXLM_PRETRAINED_LMS}):
 	@[[ ! -e $@ ]] || [[ -L $@ ]] || ! echo "ERROR: LM $@ already exists as a normal file."
-	@$(if $(filter-out %.binlm${GZ}, $@),! echo "ERROR: Name of pre-trained LM file must end with .binlm${GZ}: $<")
+	@$(if $(filter-out %.tplm, $@),! echo "ERROR: Name of pre-trained LM file must end with .tplm: $<")
 	ln -sf $< .
-	[[ ! -d ${<:.binlm${GZ}=.tplm} ]] || ln -sf ${<:.binlm.gz=.tplm} .
 
 .PHONY: mixlm
 mixlm: $(addsuffix .mixlm, ${TUNE_SETS})
@@ -199,13 +201,18 @@ components_${SRC_LANG}: ${MIXLM_SRC_MODELS} $(notdir ${MIXLM_PRETRAINED_SRC_LMS}
 components_${TGT_LANG}: ${MIXLM_TGT_MODELS} $(notdir ${MIXLM_PRETRAINED_TGT_LMS})
 
 
+TPLMS :=  ${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm} $(notdir ${MIXLM_PRETRAINED_TGT_LMS:.binlm${GZ}=.tplm})
+
+.PHONY:  tplm
+tplm:  ${TPLMS}
+
 ########################################
 # Transform the MixLM model for PortageLive
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/mixlm
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}
 ifdef MIXLM_COMPONENTS
-portageLive: ${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm} $(notdir ${MIXLM_PRETRAINED_TGT_LMS:.binlm${GZ}=.tplm})
+portageLive:  ${TPLMS}
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../mixlm/, $+) .
@@ -215,3 +222,43 @@ else
 portageLive:
 	@echo "No MixLMs defined, nothing to do." >&2
 endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################################################################
+# TESTSUITE
+
+.PHONY: testsuite
+
+.PHONY:  tplm.testcase
+testsuite:  tplm.testcase
+tplm.testcase:  export MIXLM := sublm1 sublm2 sublm3 lm-train
+tplm.testcase:  export MIXLM_PRETRAINED_TGT_LMS := /home/models/generic-model/v1.0/dvd_v1.0/lm/generic1.0_fr.tplm
+tplm.testcase:
+	echo "TESTCASE:  $@"
+	${MAKE} clean &> /dev/null
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} all
+	[[ `\ls -d {lm-train,sublm1,sublm2,sublm3}_{en,fr}-kn-5g.tplm | \wc -l` -eq 8 ]] || ! echo "$* should produce 8 tplm." >&2
+	[[ `find -type l -name generic1.0_\*.tplm | \wc -l` -eq 2 ]] || ! echo "$* should have linked two generic tplm." >&2
+	[[ `cut -f 1 dev1.mixlm | grep -c '.tplm$$'` -eq 5 ]] || ! echo "$* should create a mixlm file with 5 tplm." >&2
+

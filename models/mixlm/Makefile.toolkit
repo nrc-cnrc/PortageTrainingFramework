@@ -37,7 +37,7 @@ MIXLM_PRETRAINED_${TGT_LANG}_LMS := ${MIXLM_PRETRAINED_TGT_LMS}
 # they are not available when this tookkit is used by translate/Makefile.
 components_%: SHELL=${LOCAL_SHELL}
 components_%:
-	echo "$(foreach lm,${MIXLM},`basename models/mixlm/${lm}_$**.binlm.gz`)" \
+	echo "$(foreach lm,${MIXLM},`basename models/mixlm/${lm}_$**.tplm`)" \
 	     "$(notdir ${MIXLM_PRETRAINED_$*_LMS})" \
 		| tr " " "\n" > $@
 

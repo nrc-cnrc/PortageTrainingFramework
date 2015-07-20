@@ -585,3 +585,23 @@ bilm.testcase:
 	${MAKE} clean &> /dev/null
 	mkdir -p tm/{mixtm,j2m,j2mr}
 	time ${MAKE} -j 11 ${TESTCASE_OPTS} bilm
+
+
+
+testsuite:  tune_with_tplms.testcase
+tune_with_tplms.testcase:  export TRAIN_LM := lm-train sublm3
+tune_with_tplms.testcase:  export MIXLM := sublm1 sublm2 sublm3 lm-train
+tune_with_tplms.testcase:  export MIXLM_PRETRAINED_TGT_LMS := /home/models/generic-model/v1.0/dvd_v1.0/lm/generic1.0_fr.tplm
+tune_with_tplms.testcase:  export TRAIN_COARSELM := coarselm-train
+tune_with_tplms.testcase:  export TRAIN_BILM := bilm-train
+tune_with_tplms.testcase:  export COARSELM_NCLS_LIST := 200 800
+tune_with_tplms.testcase:  export BILM_SPEC := 400bi-400s-400t
+tune_with_tplms.testcase:  export MERT_MAX_ITER := 3
+tune_with_tplms.testcase:  export USE_HLDM :=
+tune_with_tplms.testcase:
+	echo "TESTCASE:  $@"
+	${MAKE} clean &> /dev/null
+	mkdir -p tm/{mixtm,j2m,j2mr}
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} wcl lm bilm coarselm mixlm ibm wal jpt tm
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} decode
+

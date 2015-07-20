@@ -222,14 +222,14 @@ $(warning No CPTs available. Have you trained at least one translation model?)
 endif
 $(info CPTs: ${CPTS})
 
-LM_SEARCH := models/lm/*_${TGT_LANG}[-.]*binlm.gz models/mixlm/${TUNE_DECODE}.mixlm
+LM_SEARCH := models/lm/*_${TGT_LANG}[-.]*.tplm models/mixlm/${TUNE_DECODE}.mixlm
 LMS  ?= $(wildcard ${LM_SEARCH})
 ifeq ("","$(or $(strip ${LMS}),$(findstring clean,${MAKECMDGOALS}))")
 $(warning No LMs available. Have you trained at least one language model?)
 endif
 $(info LMs: ${LMS})
 
-COARSE_LM_SEARCH ?= models/coarselm/*_${TGT_LANG}-${n}[-.]*binlm.gz
+COARSE_LM_SEARCH ?= models/coarselm/*_${TGT_LANG}-${n}[-.]*tplm
 COARSE_LM_SPECS ?= $(foreach n, ${COARSELM_NCLS_LIST}, \
                       $(foreach lm, $(wildcard ${COARSE_LM_SEARCH}), \
                          DynMap;wordClasses-models/wcl/${TGT_LANG}.${n}.classes;${lm} \
@@ -249,7 +249,7 @@ lm_lang = "${SRC_LANG}2${TGT_LANG}"
 spec_re = re.compile("(?:-([0-9]+)bi)?(?:-([0-9]+)s)?(?:-([0-9]+)t)?_" + lm_lang)
 
 specs=[]
-for bilm in glob.iglob("models/bilm/*_{0}-*.binlm.gz".format(lm_lang)):
+for bilm in glob.iglob("models/bilm/*_{0}-*.tplm".format(lm_lang)):
    m = spec_re.search(bilm)
    bit_ncls, src_ncls, tgt_ncls = m.groups()
    src_spec = "-{0}s".format(src_ncls) if src_ncls else ""
@@ -452,4 +452,38 @@ unittest4:
 unittest5:  ${DECODING_MODEL}
 	@grep -m1 MiraTrainLattice logs/log.optimize --quiet \
 	|| ! echo "Recommended practice is to use Lattice Mira for tuning but the framework is not using it by default" >&2
+
+
+
+testsuite:  tune_with_tplms.testcase
+tune_with_tplms.testcase:  export TRAIN_LM := lm-train sublm3
+tune_with_tplms.testcase:  export MIXLM := sublm1 sublm2 sublm3 lm-train
+tune_with_tplms.testcase:  export MIXLM_PRETRAINED_TGT_LMS := /home/models/generic-model/v1.0/dvd_v1.0/lm/generic1.0_fr.tplm
+tune_with_tplms.testcase:  export TRAIN_COARSELM := coarselm-train
+tune_with_tplms.testcase:  export TRAIN_BILM := bilm-train
+tune_with_tplms.testcase:  export COARSELM_NCLS_LIST := 200 800
+tune_with_tplms.testcase:  export BILM_SPEC := 400bi-400s-400t
+tune_with_tplms.testcase:  export MERT_MAX_ITER := 3
+tune_with_tplms.testcase:  SHELL := bash
+tune_with_tplms.testcase:
+	echo "TESTCASE:  $@"
+	${MAKE} clean &> /dev/null
+	time ${MAKE} -j 11 -C ../wcl all
+	time ${MAKE} -j 11 -C ../ibm all
+	time ${MAKE} -j 11 -C ../wal all
+	time ${MAKE} -j 11 -C ../lm all
+	time ${MAKE} -j 11 -C ../bilm all
+	time ${MAKE} -j 11 -C ../coarselm all
+	time ${MAKE} -j 11 -C ../mixlm all
+	time ${MAKE} -j 11 -C ../jpt all
+	time ${MAKE} -j 11 -C ../tm all
+	time ${MAKE} -j 11 ${TESTCASE_OPTS} all
+	[[ `configtool -l list-lm canoe.ini.cow | grep -c 'models/lm/lm-train'` -eq 1 ]] || ! echo "$@ is missing a LM for lm-train."
+	[[ `configtool -l list-lm canoe.ini.cow | grep -c 'models/lm/sublm3'` -eq 1 ]] || ! echo "$@ is missing a LM for sublm3."
+	[[ `configtool -l list-lm canoe.ini.cow | grep -c 'models/coarselm/'` -eq 2 ]] || ! echo "$@ failed to use coarselm."
+	[[ `configtool -l list-lm canoe.ini.cow | grep -c 'models/mixlm/.*\.mixlm'` -eq 1 ]] || ! echo "$@ failed to use mixlm."
+	[[ `configtool -l list-lm canoe.ini.cow | grep 'models/mixlm/.*\.mixlm' | xargs grep -c '.tplm	'` -eq 5 ]] || ! echo "$@'s Mixlm is not built around tplms."
+	[[ `configtool list-all-files canoe.ini.cow | grep -c '.tplm$$'` -eq 10 ]] || ! echo "$@ should be using 10 tplm."
+	[[ `configtool list-bilm canoe.ini.cow | grep -c bilm-train` -eq 1 ]] || ! echo "$@ failed to use bilm."
+	[[ `configtool list-bilm canoe.ini.cow | cut -f 1 -d ';' | grep -c '.tplm$$'` -eq 1 ]] || ! echo "$@ should be using 10 tplm."
 
