@@ -128,7 +128,7 @@ ADD_HLDM_OPTS = $(and $(findstring ${HLDM_MODEL_PFX}, $1), -hier)
 # How to create a lexicalized distortion models.
 # You must provide this target:
 # - one or more lexicalized distortion model counts.
-sort_count_files = $(filter $1, $(foreach a,${POSSIBLE_WORD_ALIGNMENT_MODELS},hldm.$a.counts.gz ldm.$a.counts.gz))
+sort_count_files = $(filter $1, $(foreach a,${POSSIBLE_WORD_ALIGNMENT_MODELS}, ${HLDM_MODEL_PFX}.$a${COUNTSX} ${LDM_MODEL_PFX}.$a${COUNTSX}))
 %${L1_2_L2X}: SHELL=${FRAMEWORK_SHELL}
 %${L1_2_L2X}:
 	RP_PSUB_OPTS="-${ESTIM_CPUS}" \
