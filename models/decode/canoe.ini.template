@@ -20,3 +20,4 @@
 #[distortion-model] WordDisplacement:back-hlex#m:back-hlex#s:back-hlex#d:fwd-hlex#m:fwd-hlex#s:fwd-hlex#d
 #[dist-phrase-swap]
 #[dist-limit-ext]
+[minimize-lm-context-size]
