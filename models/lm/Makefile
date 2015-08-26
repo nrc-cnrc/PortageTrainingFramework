@@ -77,9 +77,10 @@ PPX_TEST_SET ?= test.txt
 FILES_TO_BE_LOCKED = $(addsuffix *, ${LM_NAMES})
 
 
-# Tells make where to find the corpus' file and the marked file if need be.
+# By default, locate corpora files in the corpora directory.
 vpath %${CORPUS_EXT} ${CORPORA_DIR}
-vpath %.marked.gz    ${CORPORA_DIR}
+vpath %${CORPUS_EXT:.gz=} ${CORPORA_DIR}
+vpath %.marked.gz ${CORPORA_DIR}
 
 
 .DEFAULT_GOAL := help
