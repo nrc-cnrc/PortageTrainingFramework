@@ -6,12 +6,15 @@
 [weight-w] -1
 [ttable-limit] 30
 [ttable-threshold] 0
-[stack] 20000
+[ttable-prune-type] full
+[stack] 2000
 [beam-threshold] 0.001
 [distortion-limit] 7
 [dist-limit-simple]
+[dist-phrase-swap]
+[minimize-lm-context-size]
 [cube-pruning]
-[bypass-marked]
+[no-bypass-marked]
 # Without a distortion model
 [distortion-model] WordDisplacement
 # With a lexicalized distortion model
@@ -19,5 +22,3 @@
 #[distortion-model] WordDisplacement:back-lex#m:back-lex#s:back-lex#d:fwd-lex#m:fwd-lex#s:fwd-lex#d
 #[distortion-model] WordDisplacement:back-hlex#m:back-hlex#s:back-hlex#d:fwd-hlex#m:fwd-hlex#s:fwd-hlex#d
 #[dist-phrase-swap]
-#[dist-limit-ext]
-[minimize-lm-context-size]
