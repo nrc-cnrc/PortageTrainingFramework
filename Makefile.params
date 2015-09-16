@@ -333,6 +333,10 @@ NCPUS := $(shell test -n "$$OMP_NUM_THREADS" && echo $$OMP_NUM_THREADS || grep p
 else
 NCPUS := $(shell test -n "$$OMP_NUM_THREADS" && echo $$OMP_NUM_THREADS || sysctl -n hw.ncpu)
 endif
+
+# Uncomment the following line to fix the parallelism level in single-host mode
+#NCPUS := 24
+
 PARALLELISM_LEVEL_CORPORA ?= ${NCPUS}
 PARALLELISM_LEVEL_LM ?= ${NCPUS}
 PARALLELISM_LEVEL_LDM ?= ${NCPUS}
