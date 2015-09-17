@@ -33,10 +33,10 @@ endif
 
 # We don't need to sort if we are using -reduce-mem and sorted jpts which is
 # the case in the framework.
-JOINT2COND_PHRASE_TABLE_OPTION ?= -reduce-mem -no-sort
+JOINT2COND_PHRASE_TABLE_OPTION ?= -reduce-mem -no-sort -write-count
 
 # Options for joint2multi_cpt
-JOINT2MULTI_CPT_OPTIONS ?=
+JOINT2MULTI_CPT_OPTIONS ?= -write-count
 
 # Set all the flags needed to generate the a= field in phrase tables, if requested.
 ifdef TMS_WITH_ALIGNMENT_FIELD
