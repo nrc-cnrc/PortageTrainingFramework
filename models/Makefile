@@ -98,7 +98,7 @@ endif
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem:
-	@time-mem-tally.pl `find ldm lm mixlm tm sparse tc decode* rescore confidence* -type f -name log.\* -o -name \*.log` \
+	@time-mem-tally.pl `find -type f -name log.\* -o -name \*.log` \
 	| second-to-hms.pl \
 	| expand-auto.pl
 
