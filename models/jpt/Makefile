@@ -54,8 +54,8 @@ vpath %${L2}  ${CORPORA_DIR}
 
 vpath %.${L1_GIVEN_L2X}  ${JPT_DIR_PFX}../ibm/
 vpath %.${L2_GIVEN_L1X}  ${JPT_DIR_PFX}../ibm/
-vpath %/${SRC_LANG}.lc   ${JPT_DIR_PFX}../ibm/
-vpath %/${TGT_LANG}.lc   ${JPT_DIR_PFX}../ibm/
+vpath %/${SRC_LANG}.lc   ${JPT_DIR_PFX}../ibm/ ${JPT_DIR_PFX}../wal/
+vpath %/${TGT_LANG}.lc   ${JPT_DIR_PFX}../ibm/ ${JPT_DIR_PFX}../wal/
 
 vpath %.align.gz  ${JPT_DIR_PFX}../wal/
 
