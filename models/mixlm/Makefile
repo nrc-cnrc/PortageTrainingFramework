@@ -100,7 +100,7 @@ clean: clean.content clean.logs
 clean.content: SHELL=${LOCAL_SHELL}
 clean.content:
 	${RM} components_* models
-	${RM} *.distances *.weights *.mixlm 
+	${RM} *.distances *.weights *.mixlm
 	${RM} *.lm.gz *.binlm.gz .*.tstamp
 	${RM} -r *.tplm
 

@@ -111,7 +111,7 @@ models: SHELL=${LOCAL_SHELL}
 models: lm mixlm tm
 
 
-# NOTE: For lm, mixlm, tm, we first trigger an update of the symbolic links to 
+# NOTE: For lm, tm, we first trigger an update of the symbolic links to
 # pre-trained models, if using pre-trained models. This is done before
 # invoking the all target, so that make -j doesn't try to invoke these
 # targets in parallel.
@@ -142,11 +142,6 @@ endif
 # some lms built in lm/.
 mixlm: SHELL=${LOCAL_SHELL}
 mixlm: lm
-ifdef DO_UPDATE_PRETRAINED_LINKS
-ifdef MIXLM_PRETRAINED_TGT_LMS
-	${MAKE} -C $@ trigger.update.pretrained.links
-endif
-endif
 	${MAKE} -C $@ all
 
 
