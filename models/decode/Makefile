@@ -281,7 +281,6 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      -e 's/<TL>/${TGT_LANG}/g' \
 	      -e 's#<CPTS>#${CPTS}#g' \
 	      -e 's#<LMS>#${LMS} ${COARSE_LM_SPECS}#g' \
-	      -e 's/^\(\[\(weight-f\|ftm\)\]\)/##mid##\1/' \
 	| configtool -p "args: \
 	      $(and ${USE_LDM}${USE_HLDM}, -dist-phrase-swap) \
 	      -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS}:${DM_EXTRAS} \
