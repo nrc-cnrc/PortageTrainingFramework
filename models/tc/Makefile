@@ -219,7 +219,7 @@ ifndef BIG_CORPUS
 	RP_PSUB_OPTS="-1" \
 	set -o pipefail; \
 	zcat -f $+ \
-	| filter-nc1.py -enc ${ENCODING}\
+	| filter-nc1.py -enc ${ENCODING} \
 	| reverse.pl \
 	| gzip \
 	> $@
