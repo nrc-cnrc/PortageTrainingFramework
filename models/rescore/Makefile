@@ -52,7 +52,7 @@ DECODING_MODEL_DIR ?= models/decode
 DECODING_MODEL     ?= canoe.ini.cow
 
 # Indicates where to find the IBM models.
-IBM_DIR ?= models/tm
+IBM_DIR ?= models/ibm
 
 # Will indicate to make where to find the SETs (dev & test & eval)
 CORPORA_DIR ?= ../../corpora
