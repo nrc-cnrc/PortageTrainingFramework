@@ -335,6 +335,9 @@ NCPUS := $(shell test -n "$$OMP_NUM_THREADS" && echo $$OMP_NUM_THREADS || sysctl
 endif
 
 # Uncomment the following line to fix the parallelism level in single-host mode
+# You would normally do this to set NCPUS to a smaller number than you really
+# have, e.g., if you are sharing the machine with other uses.
+# Should be <= the real number of CPUs on your machine.
 #NCPUS := 24
 
 PARALLELISM_LEVEL_CORPORA ?= ${NCPUS}
