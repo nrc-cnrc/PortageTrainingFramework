@@ -30,7 +30,7 @@ CONTEXT=`dirname $0`
 PrimeMode=$1
 
 if [[ "$PrimeMode" == "full" ]] || [[ "$PrimeMode" == "partial" ]]; then
-   configtool prime_$PrimeMode canoe.ini.cow
+   configtool prime_$PrimeMode $CONTEXT/canoe.ini.cow
 else
    # This is a unknown prime mode.
    exit 3
