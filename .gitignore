@@ -15,6 +15,9 @@ corpora/*.raw
 corpora/*.al
 corpora/*.lc
 corpora/*.rule
+corpora/*.id
+
+models/coarselm/*.lc
 
 models/confidence/models
 models/confidence/canoe.ini.cow
@@ -45,6 +48,8 @@ models/tc/vocabMap2tpt.*
 
 models/tm/mixtm/
 models/tm/*/
+
+models/wcl/*.classes
 
 models/sparse/model*
 models/sparse/data*
