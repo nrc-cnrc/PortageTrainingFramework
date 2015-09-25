@@ -202,12 +202,12 @@ TEST_SET      ?= test1 test2
 USE_HLDM = 1
 
 # Train and use a sparse model
-#USE_SPARSE = 1
+USE_SPARSE = 1
 
 # Word class granularities for coarse LMs.
 # Defining COARSELM_NCLS_LIST triggers word class training and coarse LM training.
 # If defined, COARSELM_NCLS_LIST must contain integer values.
-#COARSELM_NCLS_LIST = 200 800
+COARSELM_NCLS_LIST = 200 800
 
 # Specifications for BiLMs.
 # Defining BILM_SPEC triggers BiLM training.
@@ -399,7 +399,7 @@ LANGS ?= ${SRC_LANG} ${TGT_LANG}
 # parameters. It is recommended that a dev set other than the TUNE_DECODE set
 # be used for such tuning; it's okay to use TUNE_RESCORE or TUNE_CE if different
 # from TUNE_DECODE. To tune the LM parameters, define TUNE_LM below.
-TUNE_LM ?=
+TUNE_LM ?= ${TUNE_DECODE}
 TUNE_LM := $(strip ${TUNE_LM})
 
 USE_MIXTM := $(if $(strip ${MIXTM} ${MIXTM_PRETRAINED_TMS}),1)
@@ -437,16 +437,16 @@ MERGED_CPT_JPT_TYPES ?= IBM2 HMM3 IBM4
 MERGED_CPT_USE_ALIGNMENT_INDICATORS ?= 0
 
 # Specify the alignment symmetrization strategy:
-# The former default, IBMOchAligner 3, gives denser alignments and smaller phrase
-# tables It works best for very large corpora.  This is equivalent to "diag" in
-# Koehn, Och and Marcu (2003), and is often referred to as "grow-diag-final".
-#ALIGNMENT_SYMMETRIZATION_OPTIONS = -a "IBMOchAligner 3"
-# IBMOchAligner 4 gives sparser, higher confidence alignments, and larger
+# The former default, IBMOchAligner 3 (GDF), gives denser alignments and smaller
+# phrase tables It works best for very large corpora.  This is equivalent to "diag"
+# in Koehn, Och and Marcu (2003), and is often referred to as "grow-diag-final".
+#ALIGNMENT_SYMMETRIZATION_OPTIONS = -a GDF
+# IBMOchAligner 4 (GDFA) gives sparser, higher confidence alignments, and larger
 # phrase tables.  It works best for small to large corpora: with up to hundreds
 # of thousands of sentence pairs, maybe more, this is known to be the better option.
 # This is equivalent to "diag-and" in Koehn, Och and Marcu (2003), and is often
 # referred to as "grow-diag-final-and".
-ALIGNMENT_SYMMETRIZATION_OPTIONS = -a "IBMOchAligner 4"
+ALIGNMENT_SYMMETRIZATION_OPTIONS = -a GDFA
 
 # Define what type of phrase table we want to generate.
 # Can be one or more: ibm2_cpt, hmm1_cpt, hmm2_cpt, hmm3_cpt, ibm4_cpt,
