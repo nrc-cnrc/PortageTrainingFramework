@@ -29,6 +29,8 @@
 \usepackage{color}
 \newcommand{\TODO}[1]{\emph{\textbf{\textcolor{red}{<TODO> #1 </TODO>}}}}
 
+\newcommand{\New}{\textcolor{red}{New }}
+
 % Official typesetting of PORTAGEshared, now called Portage II
 \newcommand{\PS}{PortageII\xspace}
 
@@ -261,6 +263,7 @@ sections:
       truecasing model (\S\ref{TC}),
       translation model (\S\ref{TM}),
       hierarchical lexicalized distortion model (\S\ref{LDM}),
+      sparse model (\S\ref{sparse}),
       mixture models (\S\ref{MIX}),
       decoder weight optimization (\S\ref{COW}),
       confidence estimation model training (\S\ref{CE}),
@@ -396,6 +399,8 @@ Now you need to edit \code{Makefile.params} to set some global parameters:
 the other way around, which is the default;
 \item \code{TRAIN_LM} and \code{TRAIN_TM} already have the right values, so
 they don't need to be changed;
+\item \New set \code{TRAIN_SPARSE} to \code{tm-train}, to train the
+new sparse models on the same corpus as the phrase tables;
 \item set \code{TUNE_RESCORE} to \code{dev2} and \code{TUNE_CE} to \code{dev3}
 by uncommenting the lines defining them, i.e., by removing the \code{\#} at the
 beginning of these lines;
@@ -550,6 +555,7 @@ the language model needed for this example:
       | perl -ple 's/^{\bs}s*(.*?){\bs}s*$/$1/; s/{\bs}s+/ /g;' \bs
       | fold -s -w 4095 \bs
       | estimate-ngram -order 5 -smoothing ModKN -text /dev/stdin \bs
+        -opt-perp ../../corpora/dev1_en.lc \bs
         -write-lm lm-train_en-kn-5g.lm.gz
    arpalm2binlm lm-train_en-kn-5g.lm.gz lm-train_en-kn-5g.binlm.gz
    arpalm2tplm.sh lm-train_en-kn-5g.lm.gz lm-train_en-kn-5g
@@ -563,6 +569,12 @@ breaking a word (or worse, a utf-8 character) apart at MITLM's internal buffer
 boundary.  The last two command, \code{arpalm2binlm} and \code{arpalm2tplm.sh},
 convert the model into the \PS binary language model format, and the \PS
 tightly-packed language model format, respectively, for fast loading and use.
+
+Since version 3.0 of \PS, we take advantage of MITLM's ability to tune the
+metaparameters on our dev set, yielding slightly better language models.  The
+tuning set is specified to \code{estimate-ngram} using \code{-opt-perp}, and is
+configured in the framework via the \code{TUNE_LM} parameter in
+\code{Makefile.params}.
 
 \subsection{Creating a Truecasing Model} \label{TC}
 
@@ -741,6 +753,10 @@ material.
 
 \subsubsection{Creating a Translation Model Using IBM2 Alignments} \label{IBM2}
 
+\TODO{Think about whether I should reorganize this code around the directory
+structure instead of the alighment model: a IBM section, a WAL section, a JPT
+section, and then the TM section. This would probably be easier to follow.}
+
 \subsubsection*{Training IBM2 Models}
 
 First we train IBM2 word alignment models, which requires training IBM1 models
@@ -814,7 +830,7 @@ phrase tables and other models that rely on word alignments.
 \begin{alltt}
    > \textbf{cd toy.experiment/models/wal}
    > \textbf{make ibm2_model}
-   align-words -a "IBMOchAligner 4" -o sri -ibm 2 \bs
+   align-words -a GDFA -o sri -ibm 2 \bs
       ../ibm/ibm2.tm-train.en_given_fr.gz ../ibm/ibm2.tm-train.fr_given_en.gz \bs
       ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
       | gzip > tm-train.ibm2.fr2en.align.gz
@@ -1160,6 +1176,120 @@ example the output from all instances of \code{dmcount} are merged using
 the same key in two files.  The default is to concatenate the parts together,
 which is appropriate for programs that produce one line of output per line of
 input.  Run \code{parallelize.pl -h} for more details.\tipend
+
+\subsection{Sparse Models} \label{sparse}
+
+\PS 3.0 brings in sparse models from our recent research successes.
+Taking advantage of MIRA (see \S\ref{COW}) and it ability to deal with a lot
+more features than our previous tuning algorithm, the sparse models introduce a
+large number of decoder features that let the decoder make more fine-grained
+decisions about what constitutes a good translation. The main sparse feature
+set constitutes the Discriminative Hierarchical Distortion Model (DHDM), which
+can, for example, make reordering choices based on the presence of a highly
+frequent word at the beginning or at the end of a phrase pair. Thus, the model
+could learn that a particular preposition triggers reordering. Other sparse
+features pay attention to various characteristics of phrase pairs that might
+indicate how reliable they are.
+
+Turning on sparse features increases the quality of the translations produced
+by \PS, at a minimal computing cost, and is always recommended. Therefore
+sparse features are now turned on by default.\footnote{By default, only the
+fast sparse features sets are enabled: \code{hopmay} and \code{fastdhdm}. A
+third set is available, \code{otherdhdm}, but it significantly slows down
+decoding and is not worth the very small gain it provides. The choice of sparse
+features can be changed by setting variable \code{SPARSE\us{}FEATURES} in
+\code{toy.experiment/models/sparse/Makefile.params}.}
+
+Training sparse models:
+\begin{small}
+\begin{alltt}
+   > \textbf{cd toy.experiment}
+   > \textbf{make sparse}
+   [Make enters multiple directories to check that all dependencies were built.]
+   make -C sparse all
+   cat sparse-specs-fastdhdm sparse-specs-hopmay > model.specs
+   rm -f data.* build-model.cmds model
+   build-sparse-model.sh -cmdfile build-model.cmds -model model -config model.specs \bs
+      -corp ../../corpora/tm-train \bs
+      -srclang fr -tgtlang en -srcext lc.gz -tgtext lc.gz
+   run-parallel.sh build-model.cmds 4 >& log.data
+   echo "This file exists just so make dependencies work." > data
+   palminer -v -pop -m model >& log.model.templates
+\end{alltt}
+\end{small}
+
+To build sparse models, we first list all the sparse feature sets we want in
+\code{model.specs}.
+
+Then we use command \code{build-sparse-model.sh} to list the feature templates
+implied by the feature sets we chose (see file \code{model}), and to build all
+the data files required for those feature templates. Actually, not quite: it
+outputs \code{build-model.cmds}, which lists all the commands to run to build
+these data files, and then we use \code{run-parallel.sh} to run them in
+parallel.
+
+Finally, the program \code{palminer} expands the model into its complete list
+of features, enumerating the features for each template, saving the (not very
+legible) results in several files matching \code{model.*}.
+
+
+If you're interested in the inner-workings of sparse features, it's worth
+examining the \code{model.specs} file. Each line gives a feature template and
+the type of data that will be needed to enumerate all feature instances:
+
+\begin{small}
+\begin{alltt}
+   > \textbf{cat model.specs}
+   [DistCurrentSrcFirstWord] auto:mkcls:<corp>_<srclang>.<srcext>:20:2
+   [DistCurrentSrcFirstWord] auto:mkcls:<corp>_<srclang>.<srcext>:50:2
+   [DistCurrentSrcFirstWord] auto:svoci:<corp>:80
+   [DistCurrentSrcLastWord]  auto:mkcls:<corp>_<srclang>.<srcext>:20:2
+   [DistCurrentSrcLastWord]  auto:mkcls:<corp>_<srclang>.<srcext>:50:2
+   [DistCurrentSrcLastWord]  auto:svoci:<corp>:80
+   [DistCurrentTgtFirstWord] auto:mkcls:<corp>_<tgtlang>.<tgtext>:20:2
+   [DistCurrentTgtFirstWord] auto:mkcls:<corp>_<tgtlang>.<tgtext>:50:2
+   [DistCurrentTgtFirstWord] auto:tvoci:<corp>:80
+   [DistCurrentTgtLastWord]  auto:mkcls:<corp>_<tgtlang>.<tgtext>:20:2
+   [DistCurrentTgtLastWord]  auto:mkcls:<corp>_<tgtlang>.<tgtext>:50:2
+   [DistCurrentTgtLastWord]  auto:tvoci:<corp>:80
+   [AlignedWordPair]            auto:svoc:<corp>:80 auto:tvoc:<corp>:80
+   [LexUnalTgtAny]              auto:tunal:../jpt:50
+   [PhrasePairCountMultiBin]    auto:bins11
+   [PhrasePairAllBiLengthBins]  7 7
+   [PhrasePairAllTgtLengthBins] 7
+   [PhrasePairAllSrcLengthBins] 7
+\end{alltt}
+\end{small}
+
+The \code{build-model.cmds} files, as mentioned, lists the actual commands
+to build the data files required to define all these features:
+
+\begin{small}
+\begin{alltt}
+   > \textbf{cat build-model.cmds}
+   [The following output is abbreviated to highlight the key elements:]
+   echo -e '1 1\bs{}n2 2\bs{}n3 4\bs{}n5 8\bs{}n9 16\bs{}n17 32\bs{}n33 64\bs{}n...\bs{}n10001 0' > data.bins11
+   get_voc -sc ../../corpora/tm-train_en.lc.gz | head -80 | cut -d' ' -f1 > data.tvoc...
+   get_voc -sc ../../corpora/tm-train_en.lc.gz | head -80 | cut -d' ' -f1 | ... > data.tvoci...
+   get_voc -sc ../../corpora/tm-train_fr.lc.gz | head -80 | cut -d' ' -f1 > data.svoc...
+   get_voc -sc ../../corpora/tm-train_fr.lc.gz | head -80 | cut -d' ' -f1 | ... > data.svoci...
+   mkcls -c20 -n2 -Vdata.mkcls...tm-train_en.lc.gz_20_2 -p<(zcat -f .../tm-train_en.lc.gz) opt
+   mkcls -c20 -n2 -Vdata.mkcls...tm-train_fr.lc.gz_20_2 -p<(zcat -f .../tm-train_fr.lc.gz) opt
+   mkcls -c50 -n2 -Vdata.mkcls...tm-train_en.lc.gz_50_2 -p<(zcat -f .../tm-train_en.lc.gz) opt
+   mkcls -c50 -n2 -Vdata.mkcls...tm-train_fr.lc.gz_50_2 -p<(zcat -f .../tm-train_fr.lc.gz) opt
+   count_unal_words -l 2 .../jpt.* | sort -nr -k2,2 | head -50 | cut -d' ' -f1 > data.tunal_.._jpt_50
+\end{alltt}
+\end{small}
+
+These commands build frequency bins, vocabularies of most frequent
+source/target words, classes of source/target words, and the list of most
+frequently unaligned words, as required by one or the other of the sparse
+feature templates.
+
+Please refer to the annotated bibliography included with the \PS user manual
+for the literature on sparse features, how they work and what they mean.
+You can also refer to \code{doc/sparse-features.README} for the nitty-gritty
+of sparse features in \PS.
 
 \subsection{Mixture Models and Domain Adaptation} \label{MIX}
 
