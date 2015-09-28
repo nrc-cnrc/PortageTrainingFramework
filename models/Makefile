@@ -264,7 +264,7 @@ sparse: SHELL=${LOCAL_SHELL}
 ifdef USE_SPARSE
 models: sparse
 
-sparse: tm
+sparse: jpt
 	${MAKE} -C $@ all
 else
 sparse:
