@@ -193,17 +193,16 @@ ${RESCORING_MODEL}:  SHELL=${FRAMEWORK_SHELL}
 ${RESCORING_MODEL}:  ${TUNE_RESCORE_RULE} ${DECODING_MODEL}.${TUNE_RESCORE} ${UNTUNED_RESCORING_MODEL} ${TUNE_RESCORE_SRC} ${TUNE_RESCORE_TGTS}
 	@_LOCAL=1 echo "Tuning the rescoring model."
 	RP_PSUB_OPTS="-4 -N $@" \
-	rat.sh \
-		-lb \
-		-n ${PARALLELISM_LEVEL_TUNE_RESCORE} \
-		-psub -${RAT_TRANS_CPUS} \
-		train \
-		-a mira \
-		-v \
-		-K ${NBEST_SIZE} \
-		-o $@ \
-		-msrc $< \
-		-f $(wordlist 2,100,$+) \
+	rescore.py \
+		--cp-numpar ${PARALLELISM_LEVEL_TUNE_RESCORE} \
+		--cp-ncpus ${RAT_TRANS_CPUS} \
+		--train \
+		--algorithm mira \
+		--verbose \
+		--nbest-size ${NBEST_SIZE} \
+		--model-out $@ \
+		--marked-src $< \
+		--canoe-config $(wordlist 2,100,$+) \
 	>& log.$@
 	_LOCAL=1 ${RM} -r workdir-${TUNE_RESCORE_RULE}-${NBEST_SIZE}best
 

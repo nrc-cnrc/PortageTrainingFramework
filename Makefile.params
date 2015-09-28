@@ -156,7 +156,7 @@ TUNE_DECODE   ?= dev1
 # bleu score on the test sets.
 #PLIVE_DECODE_VARIANT ?=
 
-# TUNE_RESCORE is used to tune the rescoring weights (using rat.sh).
+# TUNE_RESCORE is used to tune the rescoring weights (using rescore.py).
 #TUNE_RESCORE  ?= dev2
 
 # TUNE_CE is used to train confidence estimation.

@@ -412,14 +412,13 @@ rat: $(addsuffix .rat, ${TEST_SET})
 %.rat: ${DECODING_MODEL}.% %${SRCX} %${RULEX} check_rescoring_model
 	@_LOCAL=1 echo "Generating $@"
 	RP_PSUB_OPTS="-${TRANS_CPUS}" \
-	rat.sh \
-		-lb \
-		-n ${PARALLELISM_LEVEL_TRANSLATE} \
-		trans \
-		-v \
-		-K ${NBEST_SIZE} \
-		-msrc $(filter %${RULEX}, $+) \
-		-f $(filter ${DECODING_MODEL}.%, $+) \
+	rescore.py \
+		--cp-numpar ${PARALLELISM_LEVEL_TRANSLATE} \
+		--trans \
+		--verbose \
+		--nbest-size ${NBEST_SIZE} \
+		--marked-src $(filter %${RULEX}, $+) \
+		--canoe-config $(filter ${DECODING_MODEL}.%, $+) \
 		${RESCORING_MODEL_DIR}/${RESCORING_MODEL} \
 		$(filter %${SRCX}, $+) \
 	>& log.$@ \
