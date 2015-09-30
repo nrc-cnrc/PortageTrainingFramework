@@ -29,7 +29,7 @@ TGT_LANG ?= fr
 # Here we specify the stem of the corpora files.
 # Files should look like this: <PREFIX>_<LANGUAGE>.al
 # e.g. test1_fr.al
-# Warning: TRAIN_TC, TUNE_DECODE, TUNE_RESCORE, TUNE_CE may not contain
+# Warning: TRAIN_TC, TRAIN_SPARSE, TUNE_DECODE, TUNE_RESCORE, TUNE_CE may not contain
 #          more than one <PREFIX>.
 
 # TRAIN_LM is used to create language models. 
@@ -479,6 +479,14 @@ ifdef USE_HLDM
    TRAIN_HLDM ?= $(or ${TRAIN_LDM}, $(sort ${TRAIN_TM} ${MIXTM}))
 endif
 TRAIN_HLDM := $(strip ${TRAIN_HLDM})
+
+# TRAIN_SPARSE should be the concatenation of all TRAIN_TM and MIXTM, but
+# creation of that corpus hasn't been added yet. For now, we add a hack to
+# default TRAIN_SPARSE to the first word of TRAIN_TM.
+ifdef USE_SPARSE
+   TRAIN_SPARSE ?= $(firstword ${TRAIN_TM})
+endif
+TRAIN_SPARSE := $(strip ${TRAIN_SPARSE})
 
 # By default, we assume that the user wants to use the TRAIN_LM corpora
 # for coarse LM too.
