@@ -427,7 +427,7 @@ endif
 # MERGED_CPT_ZN_MODEL & MERGED_CPT_JPT_TYPES
 # What word alignment model to use for Zens-Ney's smoother when building a merged_cpt?
 # MERGED_CPT_ZN_MODEL can be one of: IBM4, HMM3, HMM2, HMM1, IBM2 or IBM1
-MERGED_CPT_ZN_MODEL ?= IBM4
+MERGED_CPT_ZN_MODEL ?= HMM3
 # What type of jpts should be used to create the final merged_cpt?
 # MERGED_CPT_JPT_TYPES can be sevaral of: FAST_ALIGN, IBM4, HMM3, HMM2, HMM1, IBM2 or IBM1
 # Using IBM4 models in addition to IBM2 and HMM3 gives a small boost in BLEU
