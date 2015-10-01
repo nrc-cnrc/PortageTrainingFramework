@@ -106,6 +106,9 @@ TRANS_CPUS ?= 1
 # If you need to add any other options to canoe-parallel.
 CANOE_PARALLEL_EXTRAS ?=
 
+# Extra canoe options
+CANOE_EXTRAS ?=
+
 # What to use to monitor resources.
 TIME_MEM ?= time-mem
 
@@ -348,6 +351,7 @@ else
 		canoe \
 		-f $< \
 		-walign -palign \
+		${CANOE_EXTRAS} \
 		< $(word 2, $^) \
 		2> log.$@ \
 	| nbest2rescore.pl -canoe -tagoov -oov -wal -palout=$@.pal \

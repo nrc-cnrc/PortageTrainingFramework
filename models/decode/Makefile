@@ -83,6 +83,9 @@ DECODE_CPUS ?= 1
 # What is the maximum number of iterations mert should do?
 MERT_MAX_ITER ?= 15
 
+# Extra canoe options passed via tune.py's -d option
+CANOE_EXTRAS ?= -lattice-source-density
+
 # If you need to add any other options to MERT.
 MERT_EXTRAS ?=
 
@@ -322,6 +325,7 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 		-a lmira \
 		$(and ${USE_SPARSE},-r) \
 		--workdir=foos \
+		$(if ${CANOE_EXTRAS},-d '${CANOE_EXTRAS}') \
 		${MERT_EXTRAS} \
 		-f $<.FILT $(wordlist 2,100,$+) \
 		&> log.$@
