@@ -40,7 +40,7 @@ endif
 endif
 endif
 
-# Make sure the user setup this framework to generate proper models for
+# Make sure the user set up this framework to generate proper models for
 # Confidence Estimation.
 ifndef DO_CE
 $(warning You must set DO_CE in Makefile.params, or some required models will not be built automatically.)
@@ -108,6 +108,22 @@ ${CANOE_MODEL}:
 	sed -e 's#${TUNE_DECODE}${VARIANT}.mixlm#${TUNE_DECODE}${VARIANT}.mixlm#g' ${DECODING_MODEL_DIR}/${CANOE_MODEL} > $@
 	configtool check $@
 
+
+########################################
+# Sparse models need tuned weights
+ifdef USE_SPARSE
+# Tune sparse weights have to be copied/linked from models/decode
+# This is an ugly solution, but it works.
+${CANOE_MODEL}: ln_wts
+ln_wts: SHELL=${LOCAL_SHELL}
+ln_wts:
+	ln -fs ${DECODING_MODEL_DIR}/rmodels_sparse*.wts.gz .
+endif
+
+clean.content: clean.sparse
+clean.sparse: SHELL=${LOCAL_SHELL}
+clean.sparse:
+	${RM} rmodels_sparse*.wts.gz
 
 
 ########################################

@@ -263,6 +263,7 @@ ifdef USE_SPARSE
 # Tune sparse weights have to be copied/linked from models/decode
 # This is an ugly solution, but it works.
 check_decoding_model: ln_wts
+ln_wts: SHELL=${LOCAL_SHELL}
 ln_wts:
 	ln -fs ${DECODING_MODEL_DIR}/rmodels_sparse*.wts.gz .
 endif
