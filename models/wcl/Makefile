@@ -116,9 +116,9 @@ clean.content:
 
 clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
-	${RM} log.*
+	${RM} log.* core*
 	${RM} run-parallel-logs-*
-	${RM} -r .logs
+	${RM} -r .logs run-p.*
 
 # Hide logs from user's view into .logs
 hide.logs: SHELL=${LOCAL_SHELL}
