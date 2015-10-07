@@ -104,14 +104,15 @@ corpora: check_setup
 
 
 # Create the Language Models (LM, MixLM, CoarseLM, BiLM).
+# Create the word classes required for CoarseLM (wcl)
 # Create the Lexicalized Distortion Models (LDM).
 # Create the sparse model, which includes the discriminative hierarchical
 # distortion model (sparse / DHDM).
 # Create models for truecasing (TC).
 # Create the Translation Model (TM).
-.PHONY: models lm mixlm coarselm bilm ldm sparse tc tm
-models lm mixlm coarselm bilm ldm sparse tc tm: SHELL=${LOCAL_SHELL}
-models lm mixlm coarselm bilm ldm sparse tc tm: %: corpora
+.PHONY: models lm mixlm wcl coarselm bilm ldm sparse tc tm
+models lm mixlm wcl coarselm bilm ldm sparse tc tm: SHELL=${LOCAL_SHELL}
+models lm mixlm wcl coarselm bilm ldm sparse tc tm: %: corpora
 	${MAKE} -C models $@ DO_UPDATE_PRETRAINED_LINKS=1
 
 
