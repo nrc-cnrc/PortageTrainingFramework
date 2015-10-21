@@ -207,6 +207,7 @@ USE_SPARSE = 1
 # Word class granularities for coarse LMs.
 # Defining COARSELM_NCLS_LIST triggers word class training and coarse LM training.
 # If defined, COARSELM_NCLS_LIST must contain integer values.
+# We recommend combining a 200-class coarse LM with an 800-class one:
 COARSELM_NCLS_LIST = 200 800
 
 # Specifications for BiLMs.

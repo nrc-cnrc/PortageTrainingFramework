@@ -98,7 +98,7 @@
 An adaptation of George Foster's \emph{Running Portage: A Toy Example} \\
 to Samuel Larkin's experimental framework,\\
 %updated to reflect recommended usage of \PS.
-updated to reflect recommended usage of PortageII 2.0
+updated to reflect recommended usage of PortageII 3.0
 \end{center}
 
 \vfill
@@ -260,6 +260,7 @@ sections:
       lowercasing (\S\ref{Lowercasing}).
 \item Model training (\S\ref{Training}) includes
       language model (\S\ref{LM}),
+      coarse language model (\S\ref{coarseLM}),
       truecasing model (\S\ref{TC}),
       translation model (\S\ref{TM}),
       hierarchical lexicalized distortion model (\S\ref{LDM}),
@@ -570,11 +571,133 @@ boundary.  The last two command, \code{arpalm2binlm} and \code{arpalm2tplm.sh},
 convert the model into the \PS binary language model format, and the \PS
 tightly-packed language model format, respectively, for fast loading and use.
 
-Since version 3.0 of \PS, we take advantage of MITLM's ability to tune the
+Since version 3.0 of \PS, we take advantage of MITLM's ability to tune the LM
 metaparameters on our dev set, yielding slightly better language models.  The
 tuning set is specified to \code{estimate-ngram} using \code{-opt-perp}, and is
 configured in the framework via the \code{TUNE_LM} parameter in
 \code{Makefile.params}.
+
+\subsection{Creating a Coarse Language Model} \label{coarseLM}
+
+In \PS 3.0, we added the capacity to train and use coarse language models:
+language models that are trained and queried not on sequences of words, but
+rather on sequences of classes of words. These models have a useful capacity of
+abstraction: similar words and likely in similar contexts and unlikely in
+similar context.
+
+Empirically, we get the best results when we combine a coarse LM model trained
+on 200 word classes with one trained on 800 classes. These models capture
+abstractions at different levels of granularity. With only 200 classes, the
+first model is modelling something that probably resembles part-of-speech tag
+sequences, while 800 classes gives the second model a chance to capture some
+semantic caterogies as well. As for the order of the model, coarse models do
+not suffer from the data sparsity that affects regular LMs, so we train 8-gram
+coarse LMs, whereas we only go up to 5-grams for the regular LMs.
+
+So our recommendation, and the framework default, is to train two 8-gram coarse
+LMs, one with 200 classes and one with 800 classes.
+
+Before training the coarse LMs themselves, we need to learn word classes on the
+target language vocabulary. We use Google's free, open source \code{word2vec}
+tool to learn these classes from the corpora.
+
+\TODO{Once the race condition has been fixed in framwork/models/wcl, adjust the
+quoted commands below accordingly.}
+
+\begin{small}
+\begin{alltt}
+   > \textbf{cd toy.experiment}
+   > \textbf{make wcl}
+   [...]
+   make[2]: Entering directory `.../models/wcl'
+   zcat -f ../../corpora/lm-train_fr.lc.gz ../../corpora/tm-train_fr.lc.gz > all_fr.lc
+   word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
+      -min-count 1 -classes 200 -output fr.200.classes -train all_fr.lc
+   sed -i -e 's/ /{\bs}t/' fr.200.classes
+   rm -r all_fr.lc
+   zcat -f ../../corpora/lm-train_en.lc.gz ../../corpora/tm-train_en.lc.gz > all_en.lc
+   word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
+      -min-count 1 -classes 200 -output en.200.classes -train all_en.lc
+   sed -i -e 's/ /{\bs}t/' en.200.classes
+   zcat -f ../../corpora/lm-train_fr.lc.gz ../../corpora/tm-train_fr.lc.gz > all_fr.lc
+   word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
+      -min-count 1 -classes 800 -output fr.800.classes -train all_fr.lc
+   sed -i -e 's/ /{\bs}t/' fr.800.classes
+   zcat -f ../../corpora/lm-train_en.lc.gz ../../corpora/tm-train_en.lc.gz > all_en.lc
+   word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
+      -min-count 1 -classes 800 -output en.800.classes -train all_en.lc
+   sed -i -e 's/ /{\bs}t/' en.800.classes
+\end{alltt}
+\end{small}
+
+In each block above, we first concatenate all the files in a temporary single,
+uncompressed input file, as required by \code{word2vec}.\footnote{For coarse
+LM classes, we should only need \code{lm-train\us{}en.lc.gz}, but instead we
+use all target language corpora because we want these classes to be aware of
+all target-side vocabulary of training files used for any models. Although we
+don't use them here, classes are also trained in the source side because some
+models need them.} Then we call \code{word2vec} with the parameters we have
+determined are optimal.  Finally the resulting \code{.classes} files are
+reformated to respect the standard word-tab-class format on each line and the
+temporary input file is deleted.
+
+Now that we have our word-class files, we can train the language models
+themselves:
+
+\begin{small}
+\begin{alltt}
+   > \textbf{cd toy.experiment}
+   > \textbf{make coarselm}
+   [...]
+   make[2]: Entering directory `.../models/coarselm'
+
+   word2class -no-error ../../corpora/lm-train_en.lc.gz ../wcl/en.200.classes | \bs
+      gzip > lm-train_en-200.lc.gz
+   182273 of 182273 words mapped to word classes.
+
+   word2class -no-error ../../corpora/dev1_en.lc ../wcl/en.200.classes > dev1-200_en.lc
+   57 word mapping errors.
+   2058 of 2115 words mapped to word classes.
+   Warning: Output contains 57 word class mapping errors (<unk>).
+\end{alltt}
+\end{small}
+
+Using \code{word2class}, we create a copy of all the input training corpus with
+all the words substituted by their word class. A message tells us that all
+182273 words were mapped to their classes. Since we're using the dev set for
+metaparameter tuning with MITLM, we also need to do the same mapping on the dev
+set, but now we see 57 mapping errors: this is due to words in the dev set not
+being in the training corpus and is perfectly normal: we want to train \PS and
+all its models to deal with unseen words.
+
+Then the command we launched above proceeds to use our chosen LM toolkit to
+train a language model on this sequence of classes, instead of the usual
+sequence of tokens:
+\begin{small}
+\begin{alltt}
+   Creating ARPA text format lm-train_en-200-ukn-8g.lm.gz
+   zcat lm-train_en-200.lc.gz \bs
+      | perl -ple 's/^{\bs}s+//; s/{\bs}s+$//; s/{\bs}s+/ /g;' | fold -s -w 4095 \bs
+      | estimate-ngram -order 8 -smoothing KN -text /dev/stdin \bs
+           -opt-perp dev1-200_en.lc -write-lm lm-train_en-200-ukn-8g.lm.gz
+   arpalm2binlm lm-train_en-200-ukn-8g.lm.gz lm-train_en-200-ukn-8g.binlm.gz
+   arpalm2tplm.sh lm-train_en-200-ukn-8g.lm.gz lm-train_en-200-ukn-8g
+\end{alltt}
+\end{small}
+
+The whole sequence above, starting at \code{word2class}, is repeated with 800
+classes instead of 200, since we train both a 200 class and an 800 class coarse
+LM.
+
+When the decoder uses a coarse model, it applies the same mapping from tokens
+to classes before querying the LM, giving us a probability for class
+sequences. This helps with sequences that were not seen in training, but where
+words are somehow similar to those in sequences that were seen. For example,
+maybe ``the blue car'' was never seen in training, but ``the \emph{colour}
+car'' was seen for several colours which ended up in the same class: the coarse
+LM will consider all these variants equally likely if they map to the same
+class sequence.
+
 
 \subsection{Creating a Truecasing Model} \label{TC}
 
