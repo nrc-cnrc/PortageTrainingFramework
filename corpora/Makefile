@@ -30,7 +30,8 @@ TCX ?= .tc
 
 
 # Define the corpora.
-TRAIN_SET    := $(sort ${TRAIN_LM} ${TRAIN_TM} ${TRAIN_TC} ${TRAIN_COARSELM} ${TRAIN_BILM})
+TRAIN_SET    := $(sort ${TRAIN_LM} ${TRAIN_TM} ${TRAIN_TC} ${TRAIN_LDM} ${TRAIN_HLDM} \
+                       ${TRAIN_COARSELM} ${TRAIN_BILM} ${TRAIN_WCL} ${TRAIN_SPARSE})
 # NOTE: heldout are stem that are for a source corpus and one or more references.
 HELDOUT_SET  := $(sort ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET} \
 							  ${TUNE_MIXTM} ${TUNE_LM} ${TUNE_COARSELM} \
@@ -141,7 +142,7 @@ endif
 .PHONY: list_final_output
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
-	@echo "Expected final output are:"
+	@echo "Expected final output files are:"
 	@echo ${LC}
 	@echo ${RULE}
 	@echo ${TC}
@@ -359,6 +360,9 @@ BILM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_BILM})
 LC += ${BILM_LC}
 TC_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_TC})
 LC += ${TC_LC}
+WCL_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_WCL})
+WCL_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_WCL})
+LC += ${WCL_LC}
 LM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
 ifdef TC_USE_SRC_MODELS
 LM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_TC})
@@ -536,11 +540,6 @@ endif
 endif
 
 
-# Verify the presence of the truecasing language model's corpus file.
-$(foreach l, $(addsuffix _${TGT_LANG}, ${TRAIN_TC}), \
-	$(if $(strip $(call  BASE_FILE_EXISTS, $l) $(wildcard $l${TCX}) $(wildcard $l${TCX}${GZ})),, \
-		$(error For your truecasing language model, you must provide $l)))
-
 
 # Verify the presence of the target language model's corpus file.
 $(foreach l, $(addsuffix _${TGT_LANG}, ${TRAIN_LM}), \
@@ -577,6 +576,26 @@ $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_HLDM}) $(addsuffix _${TGT_LANG}, 
 $(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_SPARSE}) $(addsuffix _${TGT_LANG}, ${TRAIN_SPARSE}), \
 	$(if $(call  FILE_EXISTS, $l),, \
 		$(error To train sparse models, you must provide $l)))
+
+# Verify the presence of the truecasing language model's corpus file.
+$(foreach l, $(addsuffix _${TGT_LANG}, ${TRAIN_TC}), \
+	$(if $(strip $(call  BASE_FILE_EXISTS, $l) $(wildcard $l${TCX}) $(wildcard $l${TCX}${GZ})),, \
+		$(error For your truecasing language model, you must provide $l)))
+
+# Verify the presence of the coarse LM corpora files.
+$(foreach l, $(addsuffix _${TGT_LANG}, ${TRAIN_COARSELM}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error For your coarse language models, you must provide $l)))
+
+# Verify the presence of the (coarse) BiLM corpora files.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_BILM}) $(addsuffix _${TGT_LANG}, ${TRAIN_BILM}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error For your (coarse) BiLMs, you must provide $l)))
+
+# Verify the presence of the WCL corpora files.
+$(foreach l, $(addsuffix _${SRC_LANG}, ${TRAIN_WCL}) $(addsuffix _${TGT_LANG}, ${TRAIN_WCL}), \
+	$(if $(call  FILE_EXISTS, $l),, \
+		$(error For training word classes, you must provide $l)))
 
 # Verify the presence of decoder's tuning corpora files.
 $(foreach l, $(addsuffix _${SRC_LANG}, ${TUNE_DECODE}) $(subst ${LANGX},,$(call CREATE_REFERENCE_NAMES, ${TUNE_DECODE})), \
