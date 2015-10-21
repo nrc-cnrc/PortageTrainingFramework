@@ -3,8 +3,14 @@
 *.tppt
 *.tpldm
 log.*
-Makefile.*.deps
+Makefile*.deps
 .Makefile*.deps
+
+*.aux
+*.log
+*.out
+*.pdf
+*.toc
 
 .*.tstamp
 
