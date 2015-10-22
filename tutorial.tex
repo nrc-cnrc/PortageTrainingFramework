@@ -244,9 +244,9 @@ To follow a job run this way as it is running, you can use \code{tail -f
 log.make-all}.\tipend
 
 \tip\margintip You can use \code{disown} to retroactively ``nohup'' a process:
- Ctrl-Z and \code{bg} put it in the background; \code{jobs}
-tells you its job number, typically \code{1}; \code{disown \%1} disconnects it
-from the shell, protecting it from hangup signals.\tipend
+Ctrl-Z and \code{bg} put it in the background; \code{jobs} tells you its job
+number, typically \code{1}; \code{disown \%1} disconnects it from the shell,
+protecting it from hangup signals.\tipend
 
 \subsection{Overview of the Process}
 
@@ -1939,74 +1939,96 @@ each iteration.
 Note that the BLEU score does not always increase monotonically, as can
 be seen in the \code{summary} file.
 % cat summary | perl -pe 's/(\.\d\d\d\d)\d+(:| \S|$)/\1\2/g; s/   -d/  -d/'
-% cat summary.wts | perl -pe 's/(\.\d\d\d)\d+(:| \S|$)/\1\2/g; s/   -d/  -d/' | tr ' ' $'\t' | expand-auto.pl -t 1
+% cat summary.wts | perl -pe 's/(\.\d\d\d)\d+(:| \S|$)/\1\2/g; s/(-\d\.\d\d)\d/\1/g; s/   -d/  -d/' | tr ' ' $'\t' | expand-auto.pl -t 1 | cut -c1-100
 \begin{footnotesize}
 \begin{alltt}
 > \textbf{cat summary}
-decode-score=0.1844 prev-optimizer-score=0 prev-nbest-size=0 avg-wt-diff=0.0
-decode-score=0.1998 prev-optimizer-score=19.82 prev-nbest-size=0 avg-wt-diff=0.6324
-decode-score=0.2107 prev-optimizer-score=21.07 prev-nbest-size=0 avg-wt-diff=0.1210
-decode-score=0.1649 prev-optimizer-score=20.40 prev-nbest-size=0 avg-wt-diff=0.1048
-decode-score=0.2056 prev-optimizer-score=21.18 prev-nbest-size=0 avg-wt-diff=0.0684
-decode-score=0.2087 prev-optimizer-score=20.88 prev-nbest-size=0 avg-wt-diff=0.1098
-decode-score=0.2091 prev-optimizer-score=20.91 prev-nbest-size=0 avg-wt-diff=0.0813
-decode-score=0.2066 prev-optimizer-score=20.67 prev-nbest-size=0 avg-wt-diff=0.0767
+decode-score=0.1934 prev-optimizer-score=0 prev-nbest-size=0 avg-wt-diff=0.0
+decode-score=0.0975 prev-optimizer-score=23.23 prev-nbest-size=0 avg-wt-diff=0.0104
+decode-score=0.1475 prev-optimizer-score=23.40 prev-nbest-size=0 avg-wt-diff=0.0027
+decode-score=0.2144 prev-optimizer-score=25.08 prev-nbest-size=0 avg-wt-diff=0.0134
+decode-score=0.2679 prev-optimizer-score=27.20 prev-nbest-size=0 avg-wt-diff=0.0191
+decode-score=0.2572 prev-optimizer-score=27.62 prev-nbest-size=0 avg-wt-diff=0.0149
+decode-score=0.2594 prev-optimizer-score=27.33 prev-nbest-size=0 avg-wt-diff=0.0109
+decode-score=0.2664 prev-optimizer-score=27.61 prev-nbest-size=0 avg-wt-diff=0.0118
 [...]
-> \textbf{cat summary.wts}
-1.0   1.0   1.0    1.0   1.0   1.0   1.0   -1.0   1.0   1.0    1.0    1.0   1.0   1.0   1.0   1.0
-0.106 0.310 0.115  0.261 0.425 0.243 0.276 -0.506 1.0   0.180  0.284  0.301 0.397 0.561 0.315 0.592
-0.284 0.853 0.108  0.315 0.680 0.250 0.350 -0.648 1.0   -0.025 0.231  0.159 0.357 0.612 0.408 0.497
-0.267 1.0   0.152  0.204 0.734 0.209 0.476 -0.848 0.965 0.161  -0.019 0.258 0.529 0.676 0.441 0.398
-0.194 1.0   0.203  0.129 0.738 0.165 0.357 -0.685 0.920 0.182  0.180  0.069 0.490 0.638 0.449 0.424
-0.317 0.933 0.046  0.291 0.724 0.423 0.268 -0.642 1.0   0.000  0.245  0.209 0.337 0.493 0.396 0.447
-0.343 0.914 0.120  0.191 0.656 0.326 0.126 -0.744 1.0   0.044  0.155  0.025 0.478 0.481 0.492 0.553
-0.306 0.989 0.098  0.301 0.747 0.263 0.160 -0.804 1.0   0.062  0.143  0.283 0.346 0.570 0.481 0.770
+> \textbf{less -S summary.wts}
+1.0   1.0   1.0   1.0   1.0   1.0   1.0   -1.0  0.0 1.0   1.0   1.0   1.0   1.0   1.0   1.0   0.0   ...
+-0.34 -0.00 -0.02 0.204 -0.15 0.171 0.100 -1.0  0.0 0.639 0.432 0.670 0.192 -0.03 0.181 0.164 -0.02 ...
+-0.10 0.051 -0.03 0.137 -0.12 0.024 0.110 -1.0  0.0 0.694 0.679 0.798 0.114 0.427 0.768 0.094 -0.00 ...
+0.674 -0.36 0.251 0.336 -0.33 0.569 0.074 -0.73 0.0 0.799 0.655 0.354 0.047 0.312 0.641 0.139 0.099 ...
+0.628 0.158 0.035 0.399 0.610 0.231 0.278 -0.41 0.0 1.0   0.670 0.284 0.374 0.256 0.540 0.166 0.017 ...
+0.343 0.362 0.080 0.394 0.661 0.306 0.359 -0.42 0.0 0.982 0.898 0.472 0.637 0.138 -0.01 0.156 0.046 ...
+0.484 0.349 0.007 0.368 0.493 0.341 0.229 -0.29 0.0 1.0   0.548 0.174 0.327 0.186 0.162 0.088 0.016 ...
+0.374 0.190 0.203 0.516 0.772 0.485 0.494 -0.13 0.0 1.0   0.493 0.359 0.290 0.212 0.275 0.185 -0.00 ...
 [...]
 \end{alltt}
 \end{footnotesize}
-When the last iteration still shows an improvement (which is not the case
-here), it is sometimes a sign that we should have allowed \code{tune.py} to run
-more iterations, by setting the \code{-m} option to a higher value (which is
-controlled by the \code{MERT_MAX_ITER} variable in the framework.
+When the last iteration still shows an improvement (which is not usually the
+case in this tutorial), it is sometimes a sign that we should have allowed
+\code{tune.py} to run more iterations, by setting the \code{-m} option to a
+higher value (which is controlled by the \code{MERT_MAX_ITER} variable in the
+framework).
 
 It's hard to make sense of the contents of \code{summary.wts} here: it shows
-the weight of each feature at each iteration.  A more verbose version of the
-same information is shown in \code{logs/log.decode}, along with lots of logging
-information about decoding.  Here is an excerpt from the middle of that log file:
+the weight of each feature at each iteration. Without sparse features, that was
+only 16 columns, but with sparse features this file now has 8736 columns!  A
+human-readable version of the information is shown in \code{logs/log.decode},
+along with lots of logging information about decoding.  Here is an excerpt from
+the middle of that log file:
 \begin{small}
 \begin{alltt}
 Log-linear model used:
-index  weight      feature description
-1      0.28407     DistortionModel:WordDisplacement
-2      0.85348     DistortionModel:back-hlex#m#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
-3      0.108569    DistortionModel:back-hlex#s#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
-4      0.315305    DistortionModel:back-hlex#d#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
-5      0.680355    DistortionModel:fwd-hlex#m#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
-6      0.250053    DistortionModel:fwd-hlex#s#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
-7      0.350334    DistortionModel:fwd-hlex#d#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
-8      -0.648458   LengthFeature
-9      1           LanguageModel:models/lm/lm-train_en-kn-5g.tplm;SimpleAutoVoc
-10     -0.0253152  TranslationModel:cpt.dev1.FILT.gz(col=0)
-11     0.231081    TranslationModel:cpt.dev1.FILT.gz(col=1)
-12     0.159888    ForwardTranslationModel:cpt.dev1.FILT.gz(col=2)
-13     0.35799     ForwardTranslationModel:cpt.dev1.FILT.gz(col=3)
-14     0.612504    AdirectionalModel:cpt.dev1.FILT.gz(col=0)
-15     0.408082    AdirectionalModel:cpt.dev1.FILT.gz(col=1)
-16     0.497147    AdirectionalModel:cpt.dev1.FILT.gz(col=2)
+index     weight    feature description
+1         0.56392   DistortionModel:WordDisplacement
+2         0.254499  DistortionModel:back-hlex#m#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
+3         0.243196  DistortionModel:back-hlex#s#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
+4         0.581631  DistortionModel:back-hlex#d#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
+5         0.651703  DistortionModel:fwd-hlex#m#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
+6         0.222988  DistortionModel:fwd-hlex#s#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
+7         0.0401815 DistortionModel:fwd-hlex#d#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
+8         -0.329553 LengthFeature
+9         1         SparseModel:./models/sparse/model
+10        1         LanguageModel:models/lm/lm-train_en-kn-5g.tplm;SimpleAutoVoc
+11        0.483673  LanguageModel:wordClasses-models/wcl/en.200.classes;models/coarselm/lm-train_en-200-ukn-8g.tplm;SimpleAutoVoc
+12        0.266164  LanguageModel:wordClasses-models/wcl/en.800.classes;models/coarselm/lm-train_en-800-ukn-8g.tplm;SimpleAutoVoc
+13        0.335264  TranslationModel:cpt.dev1.FILT.gz(col=0)
+14        0.177488  TranslationModel:cpt.dev1.FILT.gz(col=1)
+15        0.149706  ForwardTranslationModel:cpt.dev1.FILT.gz(col=2)
+16        0.197426  ForwardTranslationModel:cpt.dev1.FILT.gz(col=3)
+17-82     0.521932  SparseModel:DistCurrentSrcFirstWord:data.mkcls_.._.._corpora_tm-train_fr.lc.gz_20_2
+83-238    0.521934  SparseModel:DistCurrentSrcFirstWord:data.mkcls_.._.._corpora_tm-train_fr.lc.gz_50_2
+239-484   0.521935  SparseModel:DistCurrentSrcFirstWord:data.svoci_.._.._corpora_tm-train_80
+485-550   0.521933  SparseModel:DistCurrentSrcLastWord:data.mkcls_.._.._corpora_tm-train_fr.lc.gz_20_2
+551-706   0.521933  SparseModel:DistCurrentSrcLastWord:data.mkcls_.._.._corpora_tm-train_fr.lc.gz_50_2
+707-952   0.52193   SparseModel:DistCurrentSrcLastWord:data.svoci_.._.._corpora_tm-train_80
+953-1018  0.521934  SparseModel:DistCurrentTgtFirstWord:data.mkcls_.._.._corpora_tm-train_en.lc.gz_20_2
+1019-1174 0.521933  SparseModel:DistCurrentTgtFirstWord:data.mkcls_.._.._corpora_tm-train_en.lc.gz_50_2
+1175-1420 0.521934  SparseModel:DistCurrentTgtFirstWord:data.tvoci_.._.._corpora_tm-train_80
+1421-1486 0.52193   SparseModel:DistCurrentTgtLastWord:data.mkcls_.._.._corpora_tm-train_en.lc.gz_20_2
+1487-1642 0.521929  SparseModel:DistCurrentTgtLastWord:data.mkcls_.._.._corpora_tm-train_en.lc.gz_50_2
+1643-1888 0.521932  SparseModel:DistCurrentTgtLastWord:data.tvoci_.._.._corpora_tm-train_80
+1889-8612 1.66568   SparseModel:AlignedWordPair:data.svoc_.._.._corpora_tm-train_80 data.tvoc_.._.._corpora_tm-train_80
+8613-8662 1.24093   SparseModel:LexUnalTgtAny:data.tunal_.._jpt_50
+8663-8673 0.521933  SparseModel:PhrasePairCountMultiBin:data.bins11
+8674-8722 0.616501  SparseModel:PhrasePairAllBiLengthBins:7 7
+8723-8729 0.523808  SparseModel:PhrasePairAllTgtLengthBins:7
+8730-8736 0.602322  SparseModel:PhrasePairAllSrcLengthBins:7
 \end{alltt}
 \end{small}
 Here the features used are listed with their respective weights in a way that
 is easy to read, whereas in the \code{summary.wts} file you can see how the
 weights evolved to get to the final weights we see here.
-You will notice that there are two ``TranslationModel''
-weights and features: one for each of the backward probability estimates in the
-merged phrase table.  Similarly, there are two ``ForwardTranslationModel''
-weights and features.  The three ``AdirectionalModel'' are the alignment
-indicator features we generated.  Since we are using HLDMs, there are seven
-``DistortionModel'' weights and features.  Finally, we have our language model
-and the length feature which, with its negative weight here, encourages the
+You will notice that there are two ``TranslationModel'' weights and features:
+one for each of the backward probability estimates in the merged phrase table.
+Similarly, there are two ``ForwardTranslationModel'' weights and features.
+Since we are using HLDMs, there are seven ``DistortionModel'' weights and
+features.  The regular and coarse language models show up, we well as the
+length feature which, with its typically negative weight, encourages the
 decoder to explore longer sentences, at least partially in compensation with
-the language model's tendency to prefer short sentences.
+the language model's tendency to prefer short sentences.  Finally, there is a
+line for each sparse feature template showing the range of feature IDs, the sum
+of their weights and the template specification.
 
 While \code{tune.py} is working, it saves lattices or $n$-best lists, and other
 intermediate files, to a temporary work directory called \code{foos}. If you
@@ -2044,34 +2066,16 @@ completed and the BLEU score on dev so far.\tipend
 The final output from \code{tune.py} is written to the file
 \code{canoe.ini.cow} This duplicates the contents of \code{canoe.ini}, but adds
 the weights tuned on the development corpus:
-% cat canoe.ini.cow | perl -pe 's/(\.\d\d\d\d\d\d)\d+/\1/g; s/(\.\d\d\d\d)\d+/\1/g if /weight-d/; s/^/   /'
+% grep weight canoe.ini.cow | perl -pe 's/(\.\d\d\d\d\d\d)\d+/\1/g; s/(\.\d\d\d\d)\d+/\1/g if /weight-d/; s/^/   /'
 \begin{small}
 \begin{alltt}
-   > \textbf{cat canoe.ini.cow}
-   [ttable-multi-prob]   models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz
-   [lex-dist-model-file] models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz
-   [lmodel-file]         models/lm/lm-train_en-kn-5g.tplm
-   [minimize-lm-context-size]
-   [weight-l] 1
-   [weight-t] -0.025315:0.231080
-   [weight-f] 0.159887:0.357990
-   [weight-a] 0.612503:0.408081:0.497146
-   [ttable-limit] 30
-   [ttable-threshold] 0
-   [ttable-prune-type] full
-   [stack] 2000
-   [beam-threshold] 0.001
-   [distortion-limit] 7
-   [dist-limit-simple]
-   [dist-phrase-swap]
-   [no-bypass-marked]
-   [cube-pruning]
-   [use-ftm]
-   [weight-d] 0.2840:0.8534:0.1085:0.3153:0.6803:0.2500:0.3503
-   [weight-w] -0.648457
-   [distortion-model] WordDisplacement
-      back-hlex#m#0 back-hlex#s#0 back-hlex#d#0
-      fwd-hlex#m#0 fwd-hlex#s#0 fwd-hlex#d#0
+   > \textbf{grep weight canoe.ini.cow}
+   [weight-l] 0.866507:0.655232:0.305486
+   [weight-t] 0.308211:0.223461
+   [weight-f] 0.207032:0.202139
+   [weight-d] 0.4037:0.3889:0.1811:0.7207:0.7390:0.3564:0.3785
+   [weight-w] -0.368477
+   [weight-sparse] 1
 \end{alltt}
 \end{small}
 
@@ -2080,9 +2084,10 @@ The set of \code{weight-} parameters above provide the decoder features weights:
 \item the language model (\code{weight-l}),
 \item the backward probability estimates in the translation model (\code{weight-t}),
 \item the forward probability estimates in the translation model (\code{weight-f}),
-\item the adirectional features (alignment indicator features) in the translation model (\code{weight-a}),
-\item the distortion models (basic + HLDM) (\code{weight-d}), and
-\item the sentence-length penalty (if positive) or bonus (if negative) (\code{weight-w}).
+\item if we were using them, the adirectional features (alignment indicator features) in the translation model (\code{weight-a}),
+\item the distortion models (basic + HLDM) (\code{weight-d}),
+\item the sentence-length penalty (if positive) or bonus (if negative) (\code{weight-w}), and
+\item the special sparse weight (\code{weight-sparse}, always 1).
 \end{itemize}
 The language model often obtains the highest weight, as is the case
 here.\footnote{A note of warning about the LM weight: following Doug Paul's
@@ -2097,6 +2102,9 @@ backward compatibility with all previously trained models.  But if you want to
 compare the relative importance given to LMs vs. other models, you should
 mentally divide the LM weights by 2.3.}
 
+The \code{weight-sparse} value is always 1 because the real sparse feature
+weights are in a separate file, \code{rmodels_sparse_model.wts.gz}, with a
+weight for each of the 8720 sparse features used in this tutorial.
 
 \subsection{Training a Confidence Estimation Model} \label{CE}
 
@@ -2164,6 +2172,7 @@ trained CE model.
 
 \begin{small}
 \begin{alltt}
+   > \textbf{cd toy.experiment/models/confidence}
    > \textbf{make all}
    ce_translate.pl -n=4 -train -src=fr -tgt=en -notok -nolc -nl=s \bs
       -k=5 -desc=ce-notm.ini canoe.ini.cow ce_model \bs
@@ -2212,8 +2221,8 @@ usual.
 
 \subsubsection{The Input Rescoring Model}
 
-Training is carried out by the \code{rat.sh} script. This takes as input a
-rescoring model that specifies which features to use, and it finds optimal
+Training is carried out by the \code{rescore.py} script. This takes as input a
+rescoring model that specifies which features to use, and finds optimal
 weights for these features, maximizing BLEU on your rescoring dev set.
 
 The default model created by this framework contains a small set of useful
