@@ -118,7 +118,6 @@ ${CPT_MIX_PFX}%${L2_2_L1X}:
 # ALIGNMENT INDICATOR FEATURES
 
 ${CPT_INDICATOR_PFX}%${L1_2_L2X}:  SHELL=${FRAMEWORK_SHELL}
-#${CPT_INDICATOR_PFX}%${L1_2_L2X}:  WORD_MODEL_TYPE=-ibm 1
 ${CPT_INDICATOR_PFX}%${L1_2_L2X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
@@ -126,7 +125,6 @@ ${CPT_INDICATOR_PFX}%${L1_2_L2X}:
 		${JOINT2MULTI_CPT_OPTIONS} \
 		${CPT_PRUNE1} \
 		-v -i -z \
-		${WORD_MODEL_TYPE} \
 		-1 ${SRC_LANG} -2 ${TGT_LANG} \
 		${CPT_PI_SMOOTHERS} \
 		-dir fwd \
@@ -137,7 +135,6 @@ ${CPT_INDICATOR_PFX}%${L1_2_L2X}:
 		&> log.${@:.gz=}
 
 ${CPT_INDICATOR_PFX}%${L2_2_L1X}:  SHELL=${FRAMEWORK_SHELL}
-#${CPT_INDICATOR_PFX}%${L2_2_L1X}:  WORD_MODEL_TYPE=-ibm 1
 ${CPT_INDICATOR_PFX}%${L2_2_L1X}:
 	RP_PSUB_OPTS="-${CPT_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
@@ -145,7 +142,6 @@ ${CPT_INDICATOR_PFX}%${L2_2_L1X}:
 		${JOINT2MULTI_CPT_OPTIONS} \
 		${CPT_PRUNE1} \
 		-v -i -z \
-		${WORD_MODEL_TYPE} \
 		-1 ${SRC_LANG} -2 ${TGT_LANG} \
 		${CPT_PI_SMOOTHERS} \
 		-dir fwd \
@@ -159,17 +155,6 @@ ${CPT_INDICATOR_PFX}%${L2_2_L1X}:
 
 ########################################
 # CPT MODELS
-${CPT_MODEL_PFX}.${IBM1_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
-${CPT_MODEL_PFX}.${IBM2_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 2
-${CPT_MODEL_PFX}.hmm%: WORD_MODEL_TYPE=-hmm
-${CPT_MODEL_PFX}.${IBM4_MODEL_PFX}%: WORD_MODEL_TYPE=-ibm 1
-
-# We need to specify what's the type of the models for Zen-Ney's smoother.
-${CPT_MODEL_PFX}.merged.${IBM1_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 1
-${CPT_MODEL_PFX}.merged.${IBM2_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 2
-${CPT_MODEL_PFX}.merged.hmm%:  WORD_MODEL_TYPE=-hmm
-${CPT_MODEL_PFX}.merged.${IBM4_MODEL_PFX}%:  WORD_MODEL_TYPE=-ibm 1
-
 ${CPT_MODEL_PFX}.%: CPT_PRUNE1=-prune1w 100
 
 # Non mixture/indicator CPT models:
@@ -181,7 +166,6 @@ ${CPT_MODEL_PFX}%${L1_2_L2X}:
 	joint2cond_phrase_tables \
 		${CPT_PRUNE1} \
 		-v -i -z \
-		${WORD_MODEL_TYPE} \
 		-1 ${SRC_LANG} -2 ${TGT_LANG} \
 		${CPT_SMOOTHERS} \
 		-multipr fwd \
@@ -203,7 +187,6 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 	joint2cond_phrase_tables \
 		${CPT_PRUNE1} \
 		-v -i -z \
-		${WORD_MODEL_TYPE} \
 		-1 ${TGT_LANG} -2 ${SRC_LANG} \
 		${CPT_SMOOTHERS} \
 		-multipr fwd \
