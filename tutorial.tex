@@ -243,6 +243,11 @@ you will not lose your logs:
 To follow a job run this way as it is running, you can use \code{tail -f
 log.make-all}.\tipend
 
+\tip\margintip You can use \code{disown} to retroactively ``nohup'' a process:
+ Ctrl-Z and \code{bg} put it in the background; \code{jobs}
+tells you its job number, typically \code{1}; \code{disown \%1} disconnects it
+from the shell, protecting it from hangup signals.\tipend
+
 \subsection{Overview of the Process}
 
 \TODO{Hide or remove rescoring stuff from here.}
@@ -609,7 +614,7 @@ quoted commands below accordingly.}
    > \textbf{cd toy.experiment}
    > \textbf{make wcl}
    [...]
-   make[2]: Entering directory `.../models/wcl'
+   make[2]: Entering directory `.../toy.experiment/models/wcl'
    zcat -f ../../corpora/lm-train_fr.lc.gz ../../corpora/tm-train_fr.lc.gz > all_fr.lc
    word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
       -min-count 1 -classes 200 -output fr.200.classes -train all_fr.lc
@@ -649,7 +654,7 @@ themselves:
    > \textbf{cd toy.experiment}
    > \textbf{make coarselm}
    [...]
-   make[2]: Entering directory `.../models/coarselm'
+   make[2]: Entering directory `.../toy.experiment/models/coarselm'
 
    word2class -no-error ../../corpora/lm-train_en.lc.gz ../wcl/en.200.classes | \bs
       gzip > lm-train_en-200.lc.gz
@@ -746,8 +751,8 @@ improve readability.
 \begin{alltt}
    > \textbf{cd toy.experiment}
    > \textbf{make tc}
-   make -C models tc
-   make -C tc all
+   [...]
+   make[2]: Entering directory `.../toy.experiment/models/tc'
    zcat -f ../../corpora/lm-train_en.tc.gz \bs
         | perl -ne 'use encoding "UTF-8"; s/^[^[:lower:]]+$/{\bs}n/; print $_ unless /^$/;' \bs
         | utokenize.pl -pretok -paraline -ss -p -lang=en \bs
@@ -1022,7 +1027,7 @@ variant instead.
    > \textbf{cd toy.experiment/models/jpt}
    > \textbf{make hmm3_model}
    gen-jpt-parallel.sh -n 4 -nw 4 -o jpt.hmm3.tm-train.fr-en.gz -w 1 \bs
-      GPT -v -m 8 -hmm -1 fr -2 en -ext -write-al all \bs
+      GPT -v -m 8 -1 fr -2 en -ext -write-al all \bs
       ../ibm/hmm3.tm-train.en_given_fr.gz ../ibm/hmm3.tm-train.fr_given_en.gz \bs
       ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
       ../wal/tm-train.hmm3.fr2en.align.gz
@@ -1106,14 +1111,14 @@ models, whose relative weights will be tuned during decoder weight optimization
 \begin{alltt}
    > \textbf{cd toy.experiment/models/tm}
    > \textbf{make merged_model}
-   joint2cond_phrase_tables -prune1w 100 -v -i -z -ibm 1 -1 fr -2 en \bs
-      -s "KNSmoother 3" -s ZNSmoother -multipr fwd -o cpt.merged.ibm4-kn3-zn.tm-train \bs
-      -ibm_l2_given_l1 ../ibm/ibm4.tm-train.en_given_fr.gz \bs
-      -ibm_l1_given_l2 ../ibm/ibm4.tm-train.fr_given_en.gz \bs
+   joint2cond_phrase_tables -prune1w 100 -v -i -z -1 fr -2 en \bs
+      -s "KNSmoother 3" -s ZNSmoother -multipr fwd -o cpt.merged.hmm3-kn3-zn.tm-train \bs
+      -ibm_l2_given_l1 ../ibm/hmm3.tm-train.en_given_fr.gz \bs
+      -ibm_l1_given_l2 ../ibm/hmm3.tm-train.fr_given_en.gz \bs
       -reduce-mem -no-sort -write-count -write-al top ../jpt/jpt.merged.tm-train.fr-en.gz
 \end{alltt}
 \end{small}
-The phrase table \code{cpt.merged.ibm4-kn3-zn.tm-train.fr2en.gz} is the main source
+The phrase table \code{cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz} is the main source
 of information for French to English translation. Each of its lines is of the
 form:
 \begin{alltt}
@@ -1137,7 +1142,7 @@ smoothers you use.
 Here are two sample lines from this file:
 \begin{small}
 \begin{alltt}
-   > \textbf{zgrep '| proposed regulations |' cpt.merged.ibm4-kn3-zn.tm-train.fr2en.gz}
+   > \textbf{zgrep '| proposed regulations |' cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz}
    projets de règlement ||| proposed regulations ||| 0.35 0.0028 0.52 0.022 a=0_-_1 c=6
    règlements proposés ||| proposed regulations ||| 0.015 0.023 0.045 0.39 a=1_0 c=3
 \end{alltt}
@@ -1145,7 +1150,7 @@ Here are two sample lines from this file:
 Here we observe that the Kneser-Ney phrase probability estimate likes the
 more idiomatic ``projets de règlement'' better than the more literal
 ``règlements proposés'', while the lexical smoother prefers the latter
-because it is focused on individual words instead of the phrase. Combining the
+because it focuses on individual words instead of the phrase. Combining the
 two makes the system more robust because it can exploit the strenghts of the
 phrase and the lexical scoring approaches.
 
@@ -1154,7 +1159,7 @@ training corpus, many entries in the phrase table are not good translations.
 
 To modify the default word alignment models that go in to the creation of the
 CPT, change the \code{MERGED_CPT_JPT_TYPES} variable in
-\code{toy.experiment/Makefile.params} to, for instance, \code{IBM2 HMM1 IBM4}:
+\code{toy.experiment/Makefile.params} to, for instance, \code{IBM2 HMM3 IBM4}:
 this variable enumerates which word-alignment models you want to generate when
 you type \code{make tm} or \code{make all} at the root level. All models you
 generate will be used in subsequent steps, so generate only the ones you intend
@@ -1199,9 +1204,9 @@ run \code{make indicator_model}:
    cd j2m/ibm4 && ln -s -f ../../jpt.ibm4*fr-en.gz .
    joint2multi_cpt -write-count -write-al top -prune1w 100 -v -i -z -1 fr -2 en \bs
       -s '0:KNSmoother 3' -s ZNSmoother -a '1-100:PureIndicator' \bs
-      -dir fwd -o cpt.PI-kn3-zn.ibm4 \bs
-      -ibm_l2_given_l1  ../ibm/ibm4.tm-train.en_given_fr.gz \bs
-      -ibm_l1_given_l2  ../ibm/ibm4.tm-train.fr_given_en.gz \bs
+      -dir fwd -o cpt.PI-kn3-zn.hmm3 \bs
+      -ibm_l2_given_l1  ../ibm/hmm3.tm-train.en_given_fr.gz \bs
+      -ibm_l1_given_l2  ../ibm/hmm3.tm-train.fr_given_en.gz \bs
       j2m/ibm2 j2m/hmm3 j2m/ibm4
 \end{alltt}
 \end{small}
@@ -1328,8 +1333,8 @@ Training sparse models:
 \begin{alltt}
    > \textbf{cd toy.experiment}
    > \textbf{make sparse}
-   [Make enters multiple directories to check that all dependencies were built.]
-   make -C sparse all
+   [...]
+   make[2]: Entering directory `.../toy.experiment/models/sparse'
    cat sparse-specs-fastdhdm sparse-specs-hopmay > model.specs
    rm -f data.* build-model.cmds model
    build-sparse-model.sh -cmdfile build-model.cmds -model model -config model.specs \bs
@@ -1342,7 +1347,7 @@ Training sparse models:
 \end{small}
 
 To build sparse models, we first list all the sparse feature sets we want in
-\code{model.specs}.
+\code{model.specs} by concatenating the relevant template spec files.
 
 Then we use command \code{build-sparse-model.sh} to list the feature templates
 implied by the feature sets we chose (see file \code{model}), and to build all
@@ -1404,8 +1409,8 @@ to build the data files required to define all these features:
 \end{alltt}
 \end{small}
 
-These commands build frequency bins, vocabularies of most frequent
-source/target words, classes of source/target words, and the list of most
+These commands build frequency bins, vocabularies of most frequent source and
+target words, classes of source and target words, and the list of most
 frequently unaligned words, as required by one or the other of the sparse
 feature templates.
 
@@ -1413,6 +1418,10 @@ Please refer to the annotated bibliography included with the \PS user manual
 for the literature on sparse features, how they work and what they mean.
 You can also refer to \code{doc/sparse-features.README} for the nitty-gritty
 of sparse features in \PS.
+
+\TODO{Add the paper on sparse features in ann. biblio}
+
+\TODO{Add the paper on DHDM in ann. biblio}
 
 \subsection{Mixture Models and Domain Adaptation} \label{MIX}
 
@@ -1631,11 +1640,11 @@ MixTM replaces the regular TM.
    [repeat merged_multi_column_counts for tm-train2, tm-train3]
 
    [in tm/mixtm/:]
-   joint2cond_phrase_tables -prune1w 100 -v -i -z -ibm 1 -1 fr -2 en \bs
+   joint2cond_phrase_tables -prune1w 100 -v -i -z -1 fr -2 en \bs
       -s "KNSmoother 3" -s ZNSmoother -multipr fwd \bs
-      -o cpt.merged.ibm4-kn3-zn.tm-train1 \bs
-      -ibm_l2_given_l1  ../../ibm/ibm4.tm-train1.en_given_fr.gz \bs
-      -ibm_l1_given_l2  ../../ibm/ibm4.tm-train1.fr_given_en.gz \bs
+      -o cpt.merged.hmm3-kn3-zn.tm-train1 \bs
+      -ibm_l2_given_l1  ../../ibm/hmm3.tm-train1.en_given_fr.gz \bs
+      -ibm_l1_given_l2  ../../ibm/hmm3.tm-train1.fr_given_en.gz \bs
       -reduce-mem -no-sort -write-count -write-al top \bs
       ../../jpt/jpt.merged.tm-train1.fr-en.gz
    [repeat joint2cond_phrase_tables for tm-train2 and tm-train3]
@@ -1667,9 +1676,9 @@ to the next.
       jpt.ibm4.dev1.fr-en.gz jpt.hmm3.dev1.fr-en.gz jpt.ibm2.dev1.fr-en.gz
    [in tm/mixtm/:]
    train_tm_mixture -v -o cpt.mix.fr2en.gz \bs
-      cpt.merged.ibm4-kn3-zn.tm-train1.fr2en.gz \bs
-      cpt.merged.ibm4-kn3-zn.tm-train2.fr2en.gz \bs
-      cpt.merged.ibm4-kn3-zn.tm-train3.fr2en.gz \bs
+      cpt.merged.hmm3-kn3-zn.tm-train1.fr2en.gz \bs
+      cpt.merged.hmm3-kn3-zn.tm-train2.fr2en.gz \bs
+      cpt.merged.hmm3-kn3-zn.tm-train3.fr2en.gz \bs
       ../../jpt/jpt.merged.dev1.fr-en.gz
    ln -sf mixtm/cpt.mix.fr2en.gz .
 \end{alltt}
@@ -1793,29 +1802,29 @@ special processing is also done to insert the necessary (H)LDM parameters into
 the \code{canoe.ini} file.
 \end{itemize}
 
-So now we make the \code{canoe.ini} file:\footnote{Note that here, we kept all the
-optional paths discussed in previous sections: alignment indicator features.
-\TODO{is this the right choice? and it's not all optional paths, since MixLMs
-and MixTMs are not used.}
-Output will differ if you choose a different path
-through this tutorial.}
+So now we make the \code{canoe.ini} file:\footnote{Note that your results here
+will be slightly different if you followed any of the optional paths above.}
 \begin{small}
 \begin{alltt}
    > \textbf{make canoe.ini}
    ln -fs ../../models
    HLDM: models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz
-   CPTs: models/tm/cpt.PI-kn3-zn.ibm4.fr2en.gz
+   Sparse: models/sparse/model
+   CPTs: models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz
    LMs: models/lm/lm-train_en-kn-5g.tplm
    Coarse LMs:
+      DynMap;wordClasses-models/wcl/en.200.classes;models/coarselm/lm-train_en-200-ukn-8g.tplm
+      DynMap;wordClasses-models/wcl/en.800.classes;models/coarselm/lm-train_en-800-ukn-8g.tplm  
    BiLMs:
    cat canoe.ini.template \bs
       | sed -e 's/<SL>/fr/g' \bs
             -e 's/<TL>/en/g' \bs
-            -e 's#<CPTS>#models/tm/cpt.PI-kn3-zn.ibm4.fr2en.gz#g' \bs
-            -e 's#<LMS>#models/lm/lm-train_en-kn-5g.tplm #g' \bs
+            -e 's#<CPTS>#models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz#g' \bs
+            -e 's#<LMS>#models/lm/lm-train_en-kn-5g.tplm DynMap;wordClasses-models...#g' \bs
       | configtool -p "args: -dist-phrase-swap -distortion-model WordDisplacement::\bs
-        back-hlex#m#H:back-hlex#s#H:back-hlex#d#H:fwd-hlex#m#H:fwd-hlex#s#H:fwd-hlex#d#H\bs
-        -lex-dist-model-file :models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz#H " - \bs
+        back-hlex#m#H:back-hlex#s#H:back-hlex#d#H:fwd-hlex#m#H:fwd-hlex#s#H:fwd-hlex#d#H \bs
+        -lex-dist-model-file :models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz#H \bs
+        -sparse-model models/sparse/model " - \bs
       > canoe.ini
    configtool check canoe.ini
    ok
@@ -1834,9 +1843,14 @@ Here is the result:
 \begin{small}
 \begin{alltt}
    > \textbf{cat canoe.ini}
-   [ttable-multi-prob]   models/tm/cpt.PI-kn3-zn.ibm4.fr2en.gz
-   [lex-dist-model-file] models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz#H
-   [lmodel-file]         models/lm/lm-train_en-kn-5g.tplm
+   [ttable-multi-prob]
+      models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz
+   [lex-dist-model-file]
+      models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz#H
+   [lmodel-file]
+      models/lm/lm-train_en-kn-5g.tplm
+      DynMap;wordClasses-models/wcl/en.200.classes;models/coarselm/lm-train_en-200-ukn-8g.tplm
+      DynMap;wordClasses-models/wcl/en.800.classes;models/coarselm/lm-train_en-800-ukn-8g.tplm
    [minimize-lm-context-size]
    [ttable-limit] 30
    [ttable-threshold] 0
@@ -1858,6 +1872,8 @@ Here is the result:
       fwd-hlex#m#H
       fwd-hlex#s#H
       fwd-hlex#d#H
+   [sparse-model]
+      models/sparse/model
 \end{alltt}
 \end{small}
 
@@ -1900,16 +1916,17 @@ and we use the
    > \textbf{make all}
    mkdir -p foos
    filter_models -z -r -tm-soft-limit cpt.dev1 -ldm < ../../corpora/dev1_fr.rule
-   tune.py -v -o canoe.ini.cow.FILT -p 4 -c 1 -m 15 -n 100 -a lmira --workdir=foos \bs
-      -f canoe.ini.FILT ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc
+   tune.py -v -o canoe.ini.cow.FILT -p 4 -c 1 -m 15 -n 100 -a lmira -r --workdir=foos \bs
+      -d '-lattice-source-density' -f canoe.ini.FILT \bs
+      ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc
    configtool -p args:"`configtool weights canoe.ini.cow.FILT`" canoe.ini > canoe.ini.cow
    rm -f -r foos *.FILT.gz *.FILT.bkoff canoe.ini.FILT canoe.ini.cow.FILT
 \end{alltt}
 \end{small}
 Because \code{tune.py} takes a while to run (between 15 minutes and three
 hours in this example, depending on your computing hardware)\footnote{Running time for
-\code{tune.py} can be reduced by executing it in parallel. Type
-\code{tune.py -h} to see documentation on this option; modify
+\code{tune.py} can be reduced increasing decoder parallelism. Type
+\code{tune.py -h} to see documentation on this option: \code{-p}; modify
 \code{PARALLELISM\us{}LEVEL\us{}TUNE\us{}DECODE} and/or \code{NCPUS} in \code{Makefile.params} to
 adjust tuning parallelism in this framework.} and writes large amounts of logging
 information, it is usually a good idea to redirect all of its output to a log
@@ -2031,7 +2048,7 @@ the weights tuned on the development corpus:
 \begin{small}
 \begin{alltt}
    > \textbf{cat canoe.ini.cow}
-   [ttable-multi-prob]   models/tm/cpt.PI-kn3-zn.ibm4.fr2en.gz
+   [ttable-multi-prob]   models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz
    [lex-dist-model-file] models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz
    [lmodel-file]         models/lm/lm-train_en-kn-5g.tplm
    [minimize-lm-context-size]
@@ -2652,7 +2669,7 @@ actually expanding it:
    > \textbf{du -hL models/portageLive/}
    12M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
    12M     models/portageLive/models/ldm
-   15M     models/portageLive/models/tm/cpt.PI-kn3-zn.ibm4.fr2en.tppt
+   15M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
    15M     models/portageLive/models/tm
    1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
    516K    models/portageLive/models/tc/tc-map.en.tppt
@@ -2723,9 +2740,8 @@ Resource summary for $PORTAGE/toy.experiment:
          log.lm-train_fr.nc1.tplm:TIME-MEM                    WALL TIME: 4s       CPU TIME: 2s         VSZ: 0.072G    RSS: 0.008G
          log.lm-train_fr.tokss:TIME-MEM                       WALL TIME: 3s       CPU TIME: 2s         VSZ: 0.042G    RSS: 0.007G
       tc:TIME-MEM                                             WALL TIME: 51s      CPU TIME: 23s        VSZ: 0.072G    RSS: 0.008G
-         log.cpt.merged.ibm4-kn3-zn.tm-train.fr2en:TIME-MEM   WALL TIME: 1s       CPU TIME: 0s         VSZ: 0G        RSS: 0G
-         log.cpt.PI-kn3-zn.ibm4.fr2en:TIME-MEM                WALL TIME: 24s      CPU TIME: 23s        VSZ: 0.042G    RSS: 0.007G
-         log.cpt.PI-kn3-zn.ibm4.fr2en.tppt:TIME-MEM           WALL TIME: 15s      CPU TIME: 17s        VSZ: 0.042G    RSS: 0.007G
+         log.cpt.merged.hmm3-kn3-zn.tm-train.fr2en:TIME-MEM   WALL TIME: 24s      CPU TIME: 23s        VSZ: 0.042G    RSS: 0.007G
+         log.cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt:TIME-MEM WALL TIME: 15s   CPU TIME: 17s        VSZ: 0.042G    RSS: 0.007G
          log.giza_filter:TIME-MEM                             WALL TIME: 0s       CPU TIME: 0s         VSZ: 0G        RSS: 0G
          log.hmm3.tm-train.en_given_fr:TIME-MEM               WALL TIME: 1m5s     CPU TIME: 3m5s       VSZ: 0.096G    RSS: 0.025G
          log.hmm3.tm-train.fr_given_en:TIME-MEM               WALL TIME: 1m0s     CPU TIME: 2m45s      VSZ: 0.096G    RSS: 0.025G
@@ -2810,8 +2826,8 @@ by the models.  When you run \code{make summary}, you will first get the
    1.3M    models/jpt/jpt.ibm2.tm-train.fr-en.gz
    2.4M    models/jpt/jpt.ibm4.tm-train.fr-en.gz
    4.4M    models/jpt/jpt.merged.tm-train.fr-en.gz
-   13M     models/tm/cpt.PI-kn3-zn.ibm4.fr2en.gz
-   14M     models/tm/cpt.PI-kn3-zn.ibm4.fr2en.tppt
+   13M     models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz
+   14M     models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
    3.4M    models/lm/lm-train_en-kn-5g.binlm.gz
    5.4M    models/lm/lm-train_en-kn-5g.lm.gz
    4.9M    models/lm/lm-train_en-kn-5g.tplm
@@ -2825,7 +2841,7 @@ by the models.  When you run \code{make summary}, you will first get the
    Disk usage for portageLive models:
    12M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
    12M     models/portageLive/models/ldm
-   14M     models/portageLive/models/tm/cpt.PI-kn3-zn.ibm4.fr2en.tppt
+   14M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
    14M     models/portageLive/models/tm
    1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
    516K    models/portageLive/models/tc/tc-map.en.tppt
