@@ -238,6 +238,26 @@ clean.decoding.model:
 
 
 
+########################################
+# Sparse models need tuned weights
+ifdef USE_SPARSE
+# Tune sparse weights have to be copied/linked from models/decode
+# This is an ugly solution, but it works.
+check_decoding_model: ln_sparse_wts
+.PHONY: ln_sparse_wts
+ln_sparse_wts: SHELL=${LOCAL_SHELL}
+ln_sparse_wts:
+	ln -fs ${DECODING_MODEL_DIR}/rmodels_sparse*.wts.gz .
+endif
+
+clean.content: clean.sparse
+.PHONY: clean.sparse
+clean.sparse: SHELL=${LOCAL_SHELL}
+clean.sparse:
+	${RM} rmodels_sparse*.wts.gz
+
+
+
 ################################################################################
 # HELPERS
 
