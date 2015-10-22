@@ -44,7 +44,11 @@ TGTTCX ?= _${TGT_LANG}${ALIGNX}
 ENCODING ?= UTF-8
 
 # Source language locale.
-SRC_LOCALE ?= ${SRC_LANG}_CA.${ENCODING}
+SRC_LOCALE ?= ${SRC_LANG}_${SRC_LOCALE_COUNTRY}.${ENCODING}
+# SRC_COUNTRY_CODE should be the same as SRC_LOCALE_COUNTRY, but the following
+# definition handles the situation where the SRC_LOCALE has been defined, and
+# for some reason is not consistent with the SRC_LOCALE_COUNTRY.
+SRC_COUNTRY_CODE ?= $(firstword $(subst ., ,$(word 2,$(subst _, ,${SRC_LOCALE}))))
 
 # What program to use to detokenize.
 ifdef DETOKENIZER_${TGT_LANG}
@@ -482,6 +486,7 @@ endif
 		-notok -nl s $(if ${DO_TRUECASING},-tc,) \
 		-encoding ${ENCODING} \
 		-src ${SRC_LANG} -tgt ${TGT_LANG} \
+		-src-country ${SRC_COUNTRY_CODE} \
 		-f $(filter ${DECODING_MODEL}%, $+) \
 		-model $(filter ${CONFIDENCE_MODEL}, $+) \
 		$(filter %${SRCTCX}, $+) \

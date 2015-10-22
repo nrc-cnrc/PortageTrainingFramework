@@ -41,7 +41,7 @@ CORPORA_DIR ?= ../../corpora
 ENCODING ?= UTF-8
 
 # Target language locale.
-TGT_LOCALE ?= ${TGT_LANG}_CA.${ENCODING}
+TGT_LOCALE ?= ${TGT_LANG}_${TGT_LOCALE_COUNTRY}.${ENCODING}
 
 # What commands to use for sentence splitting (using tokenize) and lowercasing.
 ifneq ($(findstring ${ENCODING}, UTF-8 UTF8 utf-8 utf8),)

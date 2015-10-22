@@ -26,6 +26,12 @@ SRC_LANG ?= en
 # This is the to/target language (must be two lowercase letters)
 TGT_LANG ?= fr
 
+# Source locale country code (two uppercase letters).
+SRC_LOCALE_COUNTRY ?= CA
+
+# Target locale country code (two uppercase letters).
+TGT_LOCALE_COUNTRY ?= CA
+
 # Here we specify the stem of the corpora files.
 # Files should look like this: <PREFIX>_<LANGUAGE>.al
 # e.g. test1_fr.al
@@ -225,11 +231,15 @@ COARSELM_NCLS_LIST = 200 800
 DO_TRUECASING = 1
 
 # Source language locale used during truecasing.
-#SRC_LOCALE ?= ${SRC_LANG}_CA.utf8
+# If the default of ${SRC_LANG}_${SRC_LOCALE_COUNTRY}.UTF-8 is not correct,
+# uncomment the following and declare the correct string here.
+#SRC_LOCALE ?= ${SRC_LANG}_${SRC_LOCALE_COUNTRY}.UTF-8
 #SRC_LOCALE ?= da_DK.utf8
 
 # Target language locale used during truecasing.
-#TGT_LOCALE ?= ${TGT_LANG}_CA.utf8
+# If the default of ${TGT_LANG}_${TGT_LOCALE_COUNTRY}.UTF-8 is not correct,
+# uncomment the following and declare the correct string here.
+#TGT_LOCALE ?= ${TGT_LANG}_${TGT_LOCALE_COUNTRY}.UTF-8
 
 # If USE_SIGPRUNING is set, phrase tables will be filtered using significance
 # pruning before they are used.  Significance pruning removes phrase pairs that
@@ -568,6 +578,11 @@ TRUECASING_LM  ?= ${TRAIN_TC}_${TGT_LANG}-kn-3g.binlm${GZ}
 TC_USE_SRC_MODELS = 1
 ifdef TC_USE_SRC_MODELS
 TRUECASING_NC1_SRC_LM  ?= ${TRAIN_TC}_${SRC_LANG}.nc1.binlm${GZ}
+# Make sure the source and target language locales are set.
+SRC_LOCALE ?= ${SRC_LANG}_${SRC_LOCALE_COUNTRY}.UTF-8
+SRC_LOCALE := $(strip ${SRC_LOCALE})
+TGT_LOCALE ?= ${TGT_LANG}_${TGT_LOCALE_COUNTRY}.UTF-8
+TGT_LOCALE := $(strip ${TGT_LOCALE})
 endif
 
 # Determines whether TMs will include the alignment (a=) field or not.
@@ -575,7 +590,8 @@ endif
 TMS_WITH_ALIGNMENT_FIELD ?= 1
 
 # When working with TMX files, we assume the language code in the TMX is the
-# upper case of $SRC_LANG/$TGT_LANG followed by -CA.  When that's not true,
+# upper case of $SRC_LANG/$TGT_LANG followed by '-' (hyphen) followed by
+# $SRC_LOCALE_COUNTRY/$TGT_LOCALE_COUNTRY. When that's not true,
 # uncomment the following and declare the correct strings here.
 #TMX_SRC = EN-CA
 #TMX_TGT = FR-CA
@@ -626,6 +642,7 @@ endif
 
 ########################################
 # VALIDATION
+
 ifdef DO_CE
 ifeq (${TUNE_CE},)
 $(error When asking for confidence estimation, you must also define a TUNE_CE!)
@@ -677,7 +694,37 @@ ifdef DO_TRUECASING
 ifeq (${TRAIN_TC},)
 $(error With truecasing, you must always define a training corpus for truecasing models)
 endif
-endif
+# Check the SRC_LOCALE and TGT_LOCALE if needed for truecasing, but only once.
+ifdef TC_USE_SRC_MODELS
+ifeq (${MAKELEVEL},0)
+CHECK_LOCALE = $(shell perl -e "use POSIX qw(locale_h); exit 1 unless defined setlocale(LC_CTYPE,q($1));"; echo $$?)
+ifeq (${SRC_LOCALE},)
+   $(error With truecasing with TC_USE_SRC_MODELS, you must define the SRC_LOCALE!)
+else
+   LOCALE_RC := $(call CHECK_LOCALE,${SRC_LOCALE})
+   ifneq (${LOCALE_RC},0)
+     $(info SRC_LANG: ${SRC_LANG})
+     $(info SRC_LOCALE_COUNTRY: ${SRC_LOCALE_COUNTRY})
+     $(info SRC_LOCALE: ${SRC_LOCALE})
+     $(error Error: Invalid locale ${SRC_LOCALE}; check values of SRC_LOCALE, SRC_LANG, SRC_LOCALE_COUNTRY; \
+             if correct, locale ${SRC_LOCALE} needs to be installed)
+   endif
+endif # SRC_LOCALE
+ifeq (${TGT_LOCALE},)
+   $(error With truecasing with TC_USE_SRC_MODELS, you must define the TGT_LOCALE!)
+else
+   LOCALE_RC := $(call CHECK_LOCALE,${TGT_LOCALE})
+   ifneq (${LOCALE_RC},0)
+     $(info TGT_LANG: ${TGT_LANG})
+     $(info TGT_LOCALE_COUNTRY: ${TGT_LOCALE_COUNTRY})
+     $(info TGT_LOCALE: ${TGT_LOCALE})
+     $(error Error: Invalid locale ${TGT_LOCALE}; check values of TGT_LOCALE, TGT_LANG, TGT_LOCALE_COUNTRY; \
+             if correct, locale ${TGT_LOCALE} needs to be installed)
+   endif
+endif # TGT_LOCALE
+endif # MAKELEVEL 0
+endif # TC_USE_SRC_MODELS
+endif # DO_TRUECASING
 
 ifdef USE_LDM
 ifeq (${TRAIN_LDM},)
@@ -729,6 +776,14 @@ endif
 
 ifeq (${SRC_LANG},${TGT_LANG})
 $(error SRC_LANG=${SRC_LANG} cannot be the same as TGT_LANG=${TGT_LANG}!)
+endif
+
+ifeq (${SRC_LOCALE_COUNTRY},)
+$(error You must provide a SRC_LOCALE_COUNTRY!)
+endif
+
+ifeq (${TGT_LOCALE_COUNTRY},)
+$(error You must provide a TGT_LOCALE_COUNTRY!)
 endif
 
 # Warn the user that the IBM4 feature is not available to him since he doesn't have mgiza.

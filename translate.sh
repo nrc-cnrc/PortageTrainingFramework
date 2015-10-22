@@ -130,18 +130,25 @@ SRC_LANG=`get_param SRC_LANG`
 TGT_LANG=`get_param TGT_LANG`
 [[ $TGT_LANG ]] && TGT_OPT="-tgt=$TGT_LANG"
 
+# Determine the source locale country code.
+SRC_LOCALE_COUNTRY=`get_param SRC_LOCALE_COUNTRY`
+[[ $SRC_LOCALE_COUNTRY ]] && SRC_CC_OPT="-src-country=$SRC_LOCALE_COUNTRY"
+
+# Determine the target locale country code.
+TGT_LOCALE_COUNTRY=`get_param TGT_LOCALE_COUNTRY`
+
 # Determine the TMX source language code
 TMX_SRC=`get_param TMX_SRC`
 [[ $TMX_SRC ]] && TMX_SRC_OPT="-xsrc=$TMX_SRC"
 if [[ ! $TMX_SRC_OPT && $SRC_LANG ]]; then
-   TMX_SRC_OPT="-xsrc=`echo -n $SRC_LANG | tr 'a-z' 'A-Z'`-CA"
+   TMX_SRC_OPT="-xsrc=`echo -n $SRC_LANG | tr 'a-z' 'A-Z'`-$SRC_LOCALE_COUNTRY"
 fi
 
 # Determine the TMX target language code
 TMX_TGT=`get_param TMX_TGT`
 [[ $TMX_TGT ]] && TMX_TGT_OPT="-xtgt=$TMX_TGT"
 if [[ ! $TMX_TGT_OPT && $TGT_LANG ]]; then
-   TMX_TGT_OPT="-xtgt=`echo -n $TGT_LANG | tr 'a-z' 'A-Z'`-CA"
+   TMX_TGT_OPT="-xtgt=`echo -n $TGT_LANG | tr 'a-z' 'A-Z'`-$TGT_LOCALE_COUNTRY"
 fi
 
 # Determine the PortageLive parallelism level
@@ -192,6 +199,6 @@ done
 # Make sure plugins in the plugins directory in the framework will be used by translate.pl.
 export PATH="${ROOTDIR}/plugins:$PATH"
 
-run_cmd "translate.pl $MODE $NOLC $SRC_OPT $TGT_OPT $TMX_SRC_OPT $TMX_TGT_OPT $PARALLEL_OPT $TC_OPT $CANOE_INI_OPT $V_OPT $Q_OPT $SOURCE_FILE"
+run_cmd "translate.pl $MODE $NOLC $SRC_OPT $TGT_OPT $SRC_CC_OPT $TMX_SRC_OPT $TMX_TGT_OPT $PARALLEL_OPT $TC_OPT $CANOE_INI_OPT $V_OPT $Q_OPT $SOURCE_FILE"
 
 exit
