@@ -2692,19 +2692,28 @@ You can use \code{du -hL} to find out the total size that structure without
 actually expanding it:
 \begin{small}
 \begin{alltt}
-   > \textbf{du -hL models/portageLive/}
-   12M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
-   12M     models/portageLive/models/ldm
-   15M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
-   15M     models/portageLive/models/tm
-   1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
-   516K    models/portageLive/models/tc/tc-map.en.tppt
-   1.8M    models/portageLive/models/tc/tc-lm.en.tplm
-   4.2M    models/portageLive/models/tc
+   > \textbf{du -hL models/portageLive}
+   12M     models/portageLive/models/ibm
    4.9M    models/portageLive/models/lm/lm-train_en-kn-5g.tplm
-   4.9M    models/portageLive/models/lm
-   36M     models/portageLive/models
-   36M     models/portageLive/
+   5.3M    models/portageLive/models/lm/lm-train_fr-kn-5g.tplm
+   11M     models/portageLive/models/lm
+   1016K   models/portageLive/models/sparse
+   1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
+   1.8M    models/portageLive/models/tc/tc-lm.en.tplm
+   504K    models/portageLive/models/tc/tc-map.en.tppt
+   4.2M    models/portageLive/models/tc
+   38M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
+   38M     models/portageLive/models/ldm
+   544K    models/portageLive/models/wcl
+   47M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
+   47M     models/portageLive/models/tm
+   7.9M    models/portageLive/models/coarselm/lm-train_en-200-ukn-8g.tplm
+   9.0M    models/portageLive/models/coarselm/lm-train_en-800-ukn-8g.tplm
+   17M     models/portageLive/models/coarselm
+   129M    models/portageLive/models
+   8.0K    models/portageLive/plugins/fixedTerms
+   12K     models/portageLive/plugins
+   129M    models/portageLi
 \end{alltt}
 \end{small}
 
@@ -2728,79 +2737,107 @@ usage from all the parts of the framework, as shown below:
 \begin{tiny}
 \begin{alltt}
 Resource summary for $PORTAGE/toy.experiment:
-         log.ce_model.cem:TIME-MEM                            WALL TIME: 39s      CPU TIME: 2m47s      VSZ: 0.137G    RSS: 0.019G
-      confidence:TIME-MEM                                     WALL TIME: 39s      CPU TIME: 2m47s      VSZ: 0.137G    RSS: 0.019G
-         log.canoe.ini.cow:TIME-MEM                           WALL TIME: 18m6s    CPU TIME: 32m47s     VSZ: 16.138G   RSS: 3.074G
-         log.cpt.dev1.FILT:TIME-MEM                           WALL TIME: 6s       CPU TIME: 5s         VSZ: 0.042G    RSS: 0.007G
-            log.aggregate:TIME-MEM                            WALL TIME: 0s       CPU TIME: 0s         VSZ: 0G        RSS: 0G
-            log.decode:TIME-MEM                               WALL TIME: 11m18s   CPU TIME: 59m3s      VSZ: 0.107G    RSS: 0.016G
-            log.eval:TIME-MEM                                 WALL TIME: 0s       CPU TIME: 0s         VSZ: 0G        RSS: 0G
-            log.optimize:TIME-MEM                             WALL TIME: 33s      CPU TIME: 7m20s      VSZ: 16.003G   RSS: 3.669G
-         logs:TIME-MEM                                        WALL TIME: 11m51s   CPU TIME: 1h6m23s    VSZ: 16.003G   RSS: 3.669G
-      decode:TIME-MEM                                         WALL TIME: 30m3s    CPU TIME: 1h39m14s   VSZ: 16.138G   RSS: 3.669G
-         log.hldm.hmm3.counts:TIME-MEM                        WALL TIME: 10s      CPU TIME: 9s         VSZ: 0.139G    RSS: 0.012G
-         log.hldm.ibm2.counts:TIME-MEM                        WALL TIME: 7s       CPU TIME: 6s         VSZ: 0.140G    RSS: 0.012G
-         log.hldm.ibm4.counts:TIME-MEM                        WALL TIME: 8s       CPU TIME: 7s         VSZ: 0.042G    RSS: 0.006G
-         log.hldm.ibm4+hmm3+ibm2.fr2en:TIME-MEM               WALL TIME: 12s      CPU TIME: 9s         VSZ: 0.042G    RSS: 0.007G
-         log.hldm.ibm4+hmm3+ibm2.fr2en.tpldm:TIME-MEM         WALL TIME: 15s      CPU TIME: 15s        VSZ: 0.042G    RSS: 0.007G
-      ldm:TIME-MEM                                            WALL TIME: 52s      CPU TIME: 46s        VSZ: 0.140G    RSS: 0.012G
-         log.lm-train_en-kn-5g.binlm:TIME-MEM                 WALL TIME: 15s      CPU TIME: 13s        VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en-kn-5g.lm:TIME-MEM                    WALL TIME: 4s       CPU TIME: 2s         VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en-kn-5g.tplm:TIME-MEM                  WALL TIME: 7s       CPU TIME: 5s         VSZ: 0.076G    RSS: 0.012G
-         log.lm-train_fr-kn-5g.binlm:TIME-MEM                 WALL TIME: 13s      CPU TIME: 11s        VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_fr-kn-5g.lm:TIME-MEM                    WALL TIME: 3s       CPU TIME: 2s         VSZ: 0.042G    RSS: 0.007G
-      lm:TIME-MEM                                             WALL TIME: 42s      CPU TIME: 32s        VSZ: 0.076G    RSS: 0.012G
-         log.rescore-model:TIME-MEM                           WALL TIME: 2m10s    CPU TIME: 9m53s      VSZ: 15.900G   RSS: 0.017G
-      rescore:TIME-MEM                                        WALL TIME: 2m10s    CPU TIME: 9m53s      VSZ: 15.900G   RSS: 0.017G
-         log.lm-train_en-kn-3g.binlm:TIME-MEM                 WALL TIME: 5s       CPU TIME: 3s         VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en-kn-3g.lm:TIME-MEM                    WALL TIME: 2s       CPU TIME: 1s         VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en-kn-3g.tplm:TIME-MEM                  WALL TIME: 5s       CPU TIME: 2s         VSZ: 0.057G    RSS: 0.008G
-         log.lm-train_en.map:TIME-MEM                         WALL TIME: 2s       CPU TIME: 0s         VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en.map.tppt:TIME-MEM                    WALL TIME: 10s      CPU TIME: 1s         VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en.nc1:TIME-MEM                         WALL TIME: 4s       CPU TIME: 2s         VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en.nc1.binlm:TIME-MEM                   WALL TIME: 4s       CPU TIME: 3s         VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en.nc1.lm:TIME-MEM                      WALL TIME: 2s       CPU TIME: 1s         VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en.tokss:TIME-MEM                       WALL TIME: 3s       CPU TIME: 2s         VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_fr.nc1.binlm:TIME-MEM                   WALL TIME: 5s       CPU TIME: 3s         VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_fr.nc1.lm:TIME-MEM                      WALL TIME: 2s       CPU TIME: 1s         VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_fr.nc1.tplm:TIME-MEM                    WALL TIME: 4s       CPU TIME: 2s         VSZ: 0.072G    RSS: 0.008G
-         log.lm-train_fr.tokss:TIME-MEM                       WALL TIME: 3s       CPU TIME: 2s         VSZ: 0.042G    RSS: 0.007G
-      tc:TIME-MEM                                             WALL TIME: 51s      CPU TIME: 23s        VSZ: 0.072G    RSS: 0.008G
-         log.cpt.merged.hmm3-kn3-zn.tm-train.fr2en:TIME-MEM   WALL TIME: 24s      CPU TIME: 23s        VSZ: 0.042G    RSS: 0.007G
-         log.cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt:TIME-MEM WALL TIME: 15s   CPU TIME: 17s        VSZ: 0.042G    RSS: 0.007G
-         log.giza_filter:TIME-MEM                             WALL TIME: 0s       CPU TIME: 0s         VSZ: 0G        RSS: 0G
-         log.hmm3.tm-train.en_given_fr:TIME-MEM               WALL TIME: 1m5s     CPU TIME: 3m5s       VSZ: 0.096G    RSS: 0.025G
-         log.hmm3.tm-train.fr_given_en:TIME-MEM               WALL TIME: 1m0s     CPU TIME: 2m45s      VSZ: 0.096G    RSS: 0.025G
-         log.ibm1.tm-train.en_given_fr:TIME-MEM               WALL TIME: 28s      CPU TIME: 42s        VSZ: 0.108G    RSS: 0.037G
-         log.ibm1.tm-train.fr_given_en:TIME-MEM               WALL TIME: 27s      CPU TIME: 42s        VSZ: 0.108G    RSS: 0.036G
-         log.ibm2.tm-train.en_given_fr:TIME-MEM               WALL TIME: 23s      CPU TIME: 35s        VSZ: 0.090G    RSS: 0.019G
-         log.ibm2.tm-train.fr_given_en:TIME-MEM               WALL TIME: 23s      CPU TIME: 34s        VSZ: 0.090G    RSS: 0.019G
-         log.jpt.hmm3.tm-train.fr-en:TIME-MEM                 WALL TIME: 13s      CPU TIME: 17s        VSZ: 0.240G    RSS: 0.028G
-         log.jpt.ibm2.tm-train.fr-en:TIME-MEM                 WALL TIME: 8s       CPU TIME: 12s        VSZ: 0.243G    RSS: 0.031G
-         log.jpt.ibm4.tm-train.fr-en:TIME-MEM                 WALL TIME: 10s      CPU TIME: 13s        VSZ: 0.250G    RSS: 0.032G
-         log.jpt.merged.tm-train.fr-en:TIME-MEM               WALL TIME: 0s       CPU TIME: 0s         VSZ: 0G        RSS: 0G
-         log.tm-train.hmm3.fr2en.align:TIME-MEM               WALL TIME: 22s      CPU TIME: 20s        VSZ: 0.041G    RSS: 0.007G
-         log.tm-train.ibm2.fr2en.align:TIME-MEM               WALL TIME: 6s       CPU TIME: 5s         VSZ: 0.041G    RSS: 0.007G
-         log.tm-train.ibm4.fr2en.align:TIME-MEM               WALL TIME: 3s       CPU TIME: 1s         VSZ: 0.041G    RSS: 0.007G
-            B.gizacfg.log:TIME-MEM                            WALL TIME: 1m44s    CPU TIME: 6m28s      VSZ: 0.266G    RSS: 0.056G
-            en.lc.vcb.classes.log:TIME-MEM                    WALL TIME: 10s      CPU TIME: 9s         VSZ: 0.041G    RSS: 0.007G
-            F.gizacfg.log:TIME-MEM                            WALL TIME: 1m39s    CPU TIME: 6m10s      VSZ: 0.274G    RSS: 0.055G
-            fr.lc.vcb.classes.log:TIME-MEM                    WALL TIME: 11s      CPU TIME: 10s        VSZ: 0.041G    RSS: 0.007G
-         tm-train:TIME-MEM                                    WALL TIME: 3m44s    CPU TIME: 12m56s     VSZ: 0.274G    RSS: 0.056G
-      tm:TIME-MEM                                             WALL TIME: 9m12s    CPU TIME: 23m7s      VSZ: 0.274G    RSS: 0.056G
-   models:TIME-MEM                                            WALL TIME: 44m29s   CPU TIME: 2h16m41s   VSZ: 16.138G   RSS: 3.669G
-      log.test1.ce:TIME-MEM                                   WALL TIME: 53s      CPU TIME: 2m7s       VSZ: 0.298G    RSS: 0.025G
-      log.test1.out:TIME-MEM                                  WALL TIME: 44s      CPU TIME: 1m37s      VSZ: 0.107G    RSS: 0.016G
-      log.test1.out.tc:TIME-MEM                               WALL TIME: 3s       CPU TIME: 1s         VSZ: 0.042G    RSS: 0.007G
-      log.test1.rat:TIME-MEM                                  WALL TIME: 3m54s    CPU TIME: 12m53s     VSZ: 0.106G    RSS: 0.023G
-      log.test1.rat.tc:TIME-MEM                               WALL TIME: 2s       CPU TIME: 0s         VSZ: 0.042G    RSS: 0.007G
-      log.test2.ce:TIME-MEM                                   WALL TIME: 53s      CPU TIME: 2m21s      VSZ: 0.556G    RSS: 0.236G
-      log.test2.out:TIME-MEM                                  WALL TIME: 44s      CPU TIME: 1m47s      VSZ: 0.106G    RSS: 0.015G
-      log.test2.out.tc:TIME-MEM                               WALL TIME: 3s       CPU TIME: 1s         VSZ: 0.042G    RSS: 0.007G
-      log.test2.rat:TIME-MEM                                  WALL TIME: 4m31s    CPU TIME: 15m29s     VSZ: 0.107G    RSS: 0.025G
-      log.test2.rat.tc:TIME-MEM                               WALL TIME: 2s       CPU TIME: 0s         VSZ: 0.042G    RSS: 0.007G
-   translate:TIME-MEM                                         WALL TIME: 11m49s   CPU TIME: 36m16s     VSZ: 0.556G    RSS: 0.236G
-TIME-MEM                                                      WALL TIME: 56m18s   CPU TIME: 2h52m57s   VSZ: 16.138G   RSS: 3.669G
+         log.lm-train_en-200-ukn-8g.binlm                 WALL TIME: 20s      CPU TIME: 19s       PCPU: 100\%   VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_en-200-ukn-8g.lm                    WALL TIME: 4s       CPU TIME: 4s        PCPU: 117\%   VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_en-800-ukn-8g.binlm                 WALL TIME: 21s      CPU TIME: 20s       PCPU: 100\%   VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_en-800-ukn-8g.lm                    WALL TIME: 5s       CPU TIME: 5s        PCPU: 117\%   VSZ: 0.042G    RSS: 0.007G
+         log.tplm.lm-train_en-200-ukn-8g                  WALL TIME: 7s       CPU TIME: 7s        PCPU: 94\%    VSZ: 0.077G    RSS: 0.010G
+         log.tplm.lm-train_en-800-ukn-8g                  WALL TIME: 8s       CPU TIME: 8s        PCPU: 94\%    VSZ: 0.054G    RSS: 0.008G
+      coarselm                                            WALL TIME: 1m5s     CPU TIME: 1m4s      PCPU: 100\%   VSZ: 0.077G    RSS: 0.010G
+         log.ce_model.cem                                 WALL TIME: 32s      CPU TIME: 2m3s      PCPU: 89\%    VSZ: 0.114G    RSS: 0.019G
+      confidence                                          WALL TIME: 32s      CPU TIME: 2m3s      PCPU: 89\%    VSZ: 0.114G    RSS: 0.019G
+         log.canoe.ini.cow                                WALL TIME: 8m31s    CPU TIME: 9m4s      PCPU: 107\%   VSZ: 16.727G   RSS: 3.233G
+         log.cpt.dev1.FILT                                WALL TIME: 11s      CPU TIME: 12s       PCPU: 120\%   VSZ: 0.042G    RSS: 0.007G
+            log.aggregate                                 WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
+            log.decode                                    WALL TIME: 16s      CPU TIME: 5m45s     PCPU: 93\%    VSZ: 0.042G    RSS: 0.007G
+            log.eval                                      WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
+            log.optimize                                  WALL TIME: 29s      CPU TIME: 5m37s     PCPU: 129\%   VSZ: 16.633G   RSS: 3.218G
+         logs                                             WALL TIME: 45s      CPU TIME: 11m22s    PCPU: 108\%   VSZ: 16.633G   RSS: 3.218G
+         timing.log                                       WALL TIME: 19s      CPU TIME: 37s       PCPU: 98\%    VSZ: 0.042G    RSS: 0.007G
+      decode                                              WALL TIME: 9m46s    CPU TIME: 21m15s    PCPU: 107\%   VSZ: 16.727G   RSS: 3.233G
+         log.hmm3.tm-train.en_given_fr                    WALL TIME: 2m27s    CPU TIME: 57s       PCPU: 40\%    VSZ: 0.103G    RSS: 0.016G
+         log.hmm3.tm-train.fr_given_en                    WALL TIME: 2m15s    CPU TIME: 55s       PCPU: 42\%    VSZ: 0.103G    RSS: 0.016G
+         log.ibm1.tm-train.en_given_fr                    WALL TIME: 2m1s     CPU TIME: 19s       PCPU: 31\%    VSZ: 0.101G    RSS: 0.015G
+         log.ibm1.tm-train.fr_given_en                    WALL TIME: 2m1s     CPU TIME: 18s       PCPU: 44\%    VSZ: 0.102G    RSS: 0.015G
+         log.ibm2.tm-train.en_given_fr                    WALL TIME: 2m2s     CPU TIME: 16s       PCPU: 28\%    VSZ: 0.104G    RSS: 0.017G
+         log.ibm2.tm-train.fr_given_en                    WALL TIME: 2m4s     CPU TIME: 15s       PCPU: 18\%    VSZ: 0.102G    RSS: 0.015G
+         log.ibm4.tm-train.en_given_fr                    WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
+         log.ibm4.tm-train.fr_given_en                    WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
+            en2fr.cooc.log                                WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
+            en_given_fr.gizacfg.log                       WALL TIME: 1m1s     CPU TIME: 3m32s     PCPU: 354\%   VSZ: 0.540G    RSS: 0.060G
+            en.lc.vcb.classes.log                         WALL TIME: 6s       CPU TIME: 5s        PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
+            fr2en.cooc.log                                WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
+            fr_given_en.gizacfg.log                       WALL TIME: 58s      CPU TIME: 3m24s     PCPU: 359\%   VSZ: 0.543G    RSS: 0.051G
+            fr.lc.log                                     WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
+            fr.lc.vcb.classes.log                         WALL TIME: 7s       CPU TIME: 6s        PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
+            fr.lc.vcb.log                                 WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
+         tm-train                                         WALL TIME: 2m12s    CPU TIME: 7m7s      PCPU: 334\%   VSZ: 0.543G    RSS: 0.060G
+      ibm                                                 WALL TIME: 15m2s    CPU TIME: 10m8s     PCPU: 95\%    VSZ: 0.543G    RSS: 0.060G
+         log.jpt.hmm3.tm-train.fr-en                      WALL TIME: 40s      CPU TIME: 21s       PCPU: 69\%    VSZ: 0.256G    RSS: 0.025G
+         log.jpt.ibm2.tm-train.fr-en                      WALL TIME: 32s      CPU TIME: 8s        PCPU: 89\%    VSZ: 0.256G    RSS: 0.026G
+         log.jpt.ibm4.tm-train.fr-en                      WALL TIME: 34s      CPU TIME: 10s       PCPU: 99\%    VSZ: 0.255G    RSS: 0.027G
+         log.jpt.merged.tm-train.fr-en                    WALL TIME: 20s      CPU TIME: 19s       PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
+            log.jpt.hmm3.tm-train.fr-en                   WALL TIME: 40s      CPU TIME: 21s       PCPU: 66\%    VSZ: 0.255G    RSS: 0.026G
+            log.jpt.ibm2.tm-train.fr-en                   WALL TIME: 32s      CPU TIME: 11s       PCPU: 59\%    VSZ: 0.256G    RSS: 0.029G
+            log.jpt.ibm4.tm-train.fr-en                   WALL TIME: 34s      CPU TIME: 10s       PCPU: 88\%    VSZ: 0.255G    RSS: 0.026G
+            log.jpt.merged.tm-train.fr-en                 WALL TIME: 19s      CPU TIME: 18s       PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
+         save                                             WALL TIME: 2m5s     CPU TIME: 1m0s      PCPU: 75\%    VSZ: 0.256G    RSS: 0.029G
+      jpt                                                 WALL TIME: 4m11s    CPU TIME: 1m59s     PCPU: 79\%    VSZ: 0.256G    RSS: 0.029G
+         log.hldm.hmm3.counts                             WALL TIME: 24s      CPU TIME: 11s       PCPU: 57\%    VSZ: 0.155G    RSS: 0.013G
+         log.hldm.ibm2.counts                             WALL TIME: 27s      CPU TIME: 0s                     VSZ: 0.119G    RSS: 0.009G
+         log.hldm.ibm4.counts                             WALL TIME: 24s      CPU TIME: 0s                     VSZ: 0.153G    RSS: 0.011G
+         log.hldm.ibm4+hmm3+ibm2.fr2en                    WALL TIME: 37s      CPU TIME: 30s       PCPU: 83\%    VSZ: 0.387G    RSS: 0.282G
+         log.hldm.ibm4+hmm3+ibm2.fr2en.tpldm              WALL TIME: 29s      CPU TIME: 46s       PCPU: 92\%    VSZ: 0.042G    RSS: 0.007G
+      ldm                                                 WALL TIME: 2m21s    CPU TIME: 1m27s     PCPU: 82\%    VSZ: 0.387G    RSS: 0.282G
+         log.lm-train_en-kn-5g.binlm                      WALL TIME: 10s      CPU TIME: 9s        PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_en-kn-5g.lm                         WALL TIME: 3s       CPU TIME: 3s        PCPU: 118\%   VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_fr-kn-5g.binlm                      WALL TIME: 11s      CPU TIME: 10s       PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_fr-kn-5g.lm                         WALL TIME: 4s       CPU TIME: 4s        PCPU: 112\%   VSZ: 0.042G    RSS: 0.007G
+         log.tplm.lm-train_en-kn-5g                       WALL TIME: 5s       CPU TIME: 5s        PCPU: 90\%    VSZ: 0.045G    RSS: 0.008G
+         log.tplm.lm-train_fr-kn-5g                       WALL TIME: 6s       CPU TIME: 5s        PCPU: 90\%    VSZ: 0.042G    RSS: 0.007G
+      lm                                                  WALL TIME: 39s      CPU TIME: 35s       PCPU: 99\%    VSZ: 0.045G    RSS: 0.008G
+         log.rescore-model                                WALL TIME: 1m47s    CPU TIME: 6m16s     PCPU: 96\%    VSZ: 0.094G    RSS: 0.011G
+      rescore                                             WALL TIME: 1m47s    CPU TIME: 6m16s     PCPU: 96\%    VSZ: 0.094G    RSS: 0.011G
+         log.data                                         WALL TIME: 1m17s    CPU TIME: 1m51s     PCPU: 43\%    VSZ: 0.224G    RSS: 0.065G
+         log.model.templates                              WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
+      sparse                                              WALL TIME: 1m17s    CPU TIME: 1m51s     PCPU: 43\%    VSZ: 0.224G    RSS: 0.065G
+         log.lm-train_en-kn-3g.binlm                      WALL TIME: 3s       CPU TIME: 2s        PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_en-kn-3g.lm                         WALL TIME: 1s       CPU TIME: 1s        PCPU: 115\%   VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_en.map                              WALL TIME: 1s       CPU TIME: 0s        PCPU: 89\%    VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_en.map.tppt                         WALL TIME: 6s       CPU TIME: 1s        PCPU: 14\%    VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_en.nc1                              WALL TIME: 2s       CPU TIME: 1s        PCPU: 94\%    VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_en.nc1.binlm                        WALL TIME: 3s       CPU TIME: 2s        PCPU: 97\%    VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_en.nc1.lm                           WALL TIME: 2s       CPU TIME: 1s        PCPU: 118\%   VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_en.tokss                            WALL TIME: 2s       CPU TIME: 1s        PCPU: 97\%    VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_fr.nc1.binlm                        WALL TIME: 4s       CPU TIME: 3s        PCPU: 98\%    VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_fr.nc1.lm                           WALL TIME: 2s       CPU TIME: 1s        PCPU: 116\%   VSZ: 0.042G    RSS: 0.007G
+         log.lm-train_fr.tokss                            WALL TIME: 3s       CPU TIME: 2s        PCPU: 97\%    VSZ: 0.042G    RSS: 0.007G
+         log.tplm.lm-train_en-kn-3g                       WALL TIME: 3s       CPU TIME: 2s        PCPU: 82\%    VSZ: 0.080G    RSS: 0.013G
+         log.tplm.lm-train_fr.nc1                         WALL TIME: 3s       CPU TIME: 2s        PCPU: 83\%    VSZ: 0.081G    RSS: 0.013G
+      tc                                                  WALL TIME: 35s      CPU TIME: 18s       PCPU: 78\%    VSZ: 0.081G    RSS: 0.013G
+         log.cpt.merged.hmm3-kn3-zn.tm-train.fr2en        WALL TIME: 1m29s    CPU TIME: 1m27s     PCPU: 99\%    VSZ: 0.203G    RSS: 0.110G
+         log.cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt   WALL TIME: 40s      CPU TIME: 1m9s      PCPU: 94\%    VSZ: 0.111G    RSS: 0.019G
+      tm                                                  WALL TIME: 2m9s     CPU TIME: 2m36s     PCPU: 97\%    VSZ: 0.203G    RSS: 0.110G
+         log.tm-train.hmm3.fr2en.align                    WALL TIME: 22s      CPU TIME: 6s        PCPU: 28\%    VSZ: 0.163G    RSS: 0.019G
+         log.tm-train.ibm2.fr2en.align                    WALL TIME: 22s      CPU TIME: 3s        PCPU: 16\%    VSZ: 0.165G    RSS: 0.020G
+         log.tm-train.ibm4.fr2en.align                    WALL TIME: 2s       CPU TIME: 1s        PCPU: 95\%    VSZ: 0.042G    RSS: 0.007G
+      wal                                                 WALL TIME: 46s      CPU TIME: 10s       PCPU: 24\%    VSZ: 0.165G    RSS: 0.020G
+         log.en.200                                       WALL TIME: 10s      CPU TIME: 9s        PCPU: 100\%   VSZ: 0.042G    RSS: 0.007G
+         log.en.800                                       WALL TIME: 15s      CPU TIME: 14s       PCPU: 100\%   VSZ: 0.042G    RSS: 0.007G
+         log.fr.200                                       WALL TIME: 12s      CPU TIME: 11s       PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
+         log.fr.800                                       WALL TIME: 18s      CPU TIME: 17s       PCPU: 100\%   VSZ: 0.042G    RSS: 0.007G
+      wcl                                                 WALL TIME: 55s      CPU TIME: 51s       PCPU: 100\%   VSZ: 0.042G    RSS: 0.007G
+   models                                                 WALL TIME: 41m5s    CPU TIME: 50m33s    PCPU: 93\%    VSZ: 16.727G   RSS: 3.233G
+      log.test1.ce                                        WALL TIME: 24s      CPU TIME: 22s       PCPU: 93\%    VSZ: 0.042G    RSS: 0.007G
+      log.test1.out                                       WALL TIME: 33s      CPU TIME: 19s       PCPU: 68\%    VSZ: 0.042G    RSS: 0.007G
+      log.test1.out.tc                                    WALL TIME: 4s       CPU TIME: 1s        PCPU: 34\%    VSZ: 0.042G    RSS: 0.007G
+      log.test1.rat                                       WALL TIME: 6m56s    CPU TIME: 6m45s     PCPU: 100\%   VSZ: 0.108G    RSS: 0.027G
+      log.test2.ce                                        WALL TIME: 24s      CPU TIME: 22s       PCPU: 97\%    VSZ: 0.042G    RSS: 0.007G
+      log.test2.out                                       WALL TIME: 33s      CPU TIME: 20s       PCPU: 69\%    VSZ: 0.042G    RSS: 0.007G
+      log.test2.out.tc                                    WALL TIME: 2s       CPU TIME: 1s        PCPU: 73\%    VSZ: 0.042G    RSS: 0.007G
+      log.test2.rat                                       WALL TIME: 8m22s    CPU TIME: 8m12s     PCPU: 100\%   VSZ: 0.110G    RSS: 0.028G
+   translate                                              WALL TIME: 17m18s   CPU TIME: 16m21s    PCPU: 98\%    VSZ: 0.110G    RSS: 0.028G
+TIME-MEM                                                  WALL TIME: 58m23s   CPU TIME: 1h6m54s   PCPU: 94\%    VSZ: 16.727G   RSS: 3.233G
 \end{alltt}
 \end{tiny}
 %\end{sidewaysfigure}
@@ -2808,13 +2845,14 @@ TIME-MEM                                                      WALL TIME: 56m18s 
 
 The output of \code{make time-mem} tells us how much RAM (``RSS'') and
 virtual memory (``VSZ'') was used by each step of the process. It also tells us
-the total amount of CPU time and the actual elapsed time (``wall time'').  When
+the total amount of CPU time, the actual elapsed time (``wall time''), and the
+percent CPU utilisation when it can be calculated.  When
 running in parallel, the total CPU time will be higher than the wall time, as is
-the case here.
+the case on many lines here.
 
-In each summary line (the ones outdented, those for each component, and the
-global summary at the end), the wall and CPU times are the sum of the
-lines it summarizes, whereas the two memory figures are the maximum values from
+On each summary line (all the outdented lines are summary lines),
+the wall and CPU times is the sum of the
+lines it summarizes, whereas the memory figures are the maximums from
 the lines that it summarizes.
 
 The memory figures might be a bit misleading: they reflect the maximum
