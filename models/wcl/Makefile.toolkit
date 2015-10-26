@@ -51,7 +51,7 @@ else
 W2V_OPTS ?= -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 -min-count 1
 %.classes:
 	@_LOCAL=1; [[ $(words $^) != 0 ]] || ! echo "ERROR: Prerequisites not specified for $@. Please train models/wcl first!" >&2
-	_LOCAL=1 zcat -f $(filter %_${WCL_LANG}${LANGX} %_${WCL_LANG}${LANGXZ}, $^) > all_${WCL_LANG}${LANGX}
+	_LOCAL=1 zcat -f $(filter %_${WCL_LANG}${LANGX} %_${WCL_LANG}${LANGXZ}, $^) > all-${WCL_NCLS}_${WCL_LANG}${LANGX}
 	RP_PSUB_OPTS="-${WCL_CPUS} -N $@" \
 	${TIME_MEM} \
 	word2vec \
@@ -59,10 +59,10 @@ W2V_OPTS ?= -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 -
 	   ${EXTRA_WCL_OPTS} \
 	   -classes ${WCL_NCLS} \
 	   -output $@ \
-	   -train all_${WCL_LANG}${LANGX} \
+	   -train all-${WCL_NCLS}_${WCL_LANG}${LANGX} \
 	&> log.$(basename $@)
 	_LOCAL=1 sed -i -e 's/ /\t/' $@
-	_LOCAL=1 ${RM} all_${WCL_LANG}${LANGX}
+	_LOCAL=1 ${RM} all-${WCL_NCLS}_${WCL_LANG}${LANGX}
 endif
 
 
