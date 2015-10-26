@@ -625,23 +625,26 @@ quoted commands below accordingly.}
    > \textbf{make wcl}
    [...]
    make[2]: Entering directory `.../toy.experiment/models/wcl'
-   zcat -f ../../corpora/lm-train_fr.lc.gz ../../corpora/tm-train_fr.lc.gz > all_fr.lc
+   zcat -f ../../corpora/lm-train_fr.lc.gz ../../corpora/tm-train_fr.lc.gz > all-200_fr.lc
    word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
-      -min-count 1 -classes 200 -output fr.200.classes -train all_fr.lc
+      -min-count 1 -classes 200 -output fr.200.classes -train all-200_fr.lc
    sed -i -e 's/ /{\bs}t/' fr.200.classes
-   rm -r all_fr.lc
-   zcat -f ../../corpora/lm-train_en.lc.gz ../../corpora/tm-train_en.lc.gz > all_en.lc
+   rm -r all-200_fr.lc
+   zcat -f ../../corpora/lm-train_en.lc.gz ../../corpora/tm-train_en.lc.gz > all-200_en.lc
    word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
-      -min-count 1 -classes 200 -output en.200.classes -train all_en.lc
+      -min-count 1 -classes 200 -output en.200.classes -train all-200_en.lc
    sed -i -e 's/ /{\bs}t/' en.200.classes
-   zcat -f ../../corpora/lm-train_fr.lc.gz ../../corpora/tm-train_fr.lc.gz > all_fr.lc
+   rm -r all-200_en.lc
+   zcat -f ../../corpora/lm-train_fr.lc.gz ../../corpora/tm-train_fr.lc.gz > all-800_fr.lc
    word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
-      -min-count 1 -classes 800 -output fr.800.classes -train all_fr.lc
+      -min-count 1 -classes 800 -output fr.800.classes -train all-800_fr.lc
    sed -i -e 's/ /{\bs}t/' fr.800.classes
-   zcat -f ../../corpora/lm-train_en.lc.gz ../../corpora/tm-train_en.lc.gz > all_en.lc
+   rm -r all-800_fr.lc
+   zcat -f ../../corpora/lm-train_en.lc.gz ../../corpora/tm-train_en.lc.gz > all-800_en.lc
    word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
-      -min-count 1 -classes 800 -output en.800.classes -train all_en.lc
+      -min-count 1 -classes 800 -output en.800.classes -train all-800_en.lc
    sed -i -e 's/ /{\bs}t/' en.800.classes
+   rm -r all-800_en.lc
 \end{alltt}
 \end{small}
 
