@@ -163,8 +163,8 @@ portageLive: ${CE_MODEL_NAME}${CEMX}
 		MODELS=($${MODELS[@]/%.gz/*}); \
 		MODELS=($${MODELS[@]/#/$(subst /,\/,../../../../${IBM_DIR}/)}); \
 		echo "TM files:" $${MODELS[@]} >&2; \
-		mkdir -p ../portageLive/models/tm; \
-		cd ../portageLive/models/tm && ln -fs $${MODELS[@]} .; \
+		mkdir -p ../portageLive/${IBM_DIR}; \
+		cd ../portageLive/${IBM_DIR} && ln -fs $${MODELS[@]} .; \
 	fi
 	sed -i -e 's/tm\/mixtm/tm/' tmp.live/model
 	cd tmp.live && tar zcf ../../portageLive/$< *
