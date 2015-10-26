@@ -49,6 +49,8 @@ endif
 
 
 .DEFAULT_GOAL := help
+.SECONDARY:
+.SUFFIXES:
 .DELETE_ON_ERROR:
 
 .PHONY: all
@@ -114,9 +116,10 @@ ${CANOE_MODEL}:
 ifdef USE_SPARSE
 # Tune sparse weights have to be copied/linked from models/decode
 # This is an ugly solution, but it works.
-${CANOE_MODEL}: ln_wts
-ln_wts: SHELL=${LOCAL_SHELL}
-ln_wts:
+${CANOE_MODEL}: ln_sparse_wts
+.INTERMEDIATE: ln_sparse_wts
+ln_sparse_wts: SHELL=${LOCAL_SHELL}
+ln_sparse_wts:
 	ln -fs ${DECODING_MODEL_DIR}/rmodels_sparse*.wts.gz .
 endif
 

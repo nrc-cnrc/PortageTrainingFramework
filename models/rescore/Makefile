@@ -160,6 +160,7 @@ time-mem: resource_summary_sub
 ########################################
 # Check if there is a trained decoding model available
 # Cannot be phony or it will always trigger remaking all targets.
+.INTERMEDIATE: check_decoding_model
 check_decoding_model: SHELL=${LOCAL_SHELL}
 check_decoding_model:
 	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] \
@@ -244,7 +245,7 @@ ifdef USE_SPARSE
 # Tune sparse weights have to be copied/linked from models/decode
 # This is an ugly solution, but it works.
 check_decoding_model: ln_sparse_wts
-.PHONY: ln_sparse_wts
+.INTERMEDIATE: ln_sparse_wts
 ln_sparse_wts: SHELL=${LOCAL_SHELL}
 ln_sparse_wts:
 	ln -fs ${DECODING_MODEL_DIR}/rmodels_sparse*.wts.gz .
