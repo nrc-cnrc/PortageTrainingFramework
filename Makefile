@@ -245,17 +245,21 @@ time-mem:
 
 
 
-DU_DIRS = models/tm/{ibm,hmm,jpt,cpt}* models/*lm/*lm* models/decode* translate translate.*
-ifdef DO_CE
-DU_DIRS += models/confidence*/*.cem
-endif
+DU_DIRS = models/ibm/{ibm,hmm}* models/jpt/jpt* models/tm/cpt* models/*lm/*lm*
 ifdef DO_TRUECASING
 DU_DIRS += models/tc
 endif
-ifdef USE_LDM
+ifneq ($(or $(USE_LDM),$(USE_HLDM)),)
 DU_DIRS += models/ldm
 endif
-
+ifdef USE_SPARSE
+DU_DIRS += models/sparse
+endif
+DU_DIRS += models/decode*
+ifdef DO_CE
+DU_DIRS += models/confidence*/*.cem
+endif
+DU_DIRS += translate translate.*
 
 .PHONY: summary
 summary: SHELL=${LOCAL_SHELL}
