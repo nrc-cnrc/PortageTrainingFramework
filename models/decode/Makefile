@@ -289,7 +289,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS}:${DM_EXTRAS} \
 	      -lex-dist-model-file ${LDM}:${HLDM} \
 	      $(if ${BILM_SPEC}, -bilm-file ${BILM_SPECS}) \
-	      $(and ${USE_SPARSE}, -sparse-model ${SPARSE}) \
+	      $(and ${USE_SPARSE}, -sparse-model ${SPARSE} -force-shift-reduce) \
 	      ${CANOE_INI_EXTRAS} \
 	  " - \
 	> $@
