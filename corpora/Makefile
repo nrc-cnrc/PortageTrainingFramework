@@ -61,13 +61,13 @@ ALIGN_CORPORA_DIR ?= .
 RAW_CORPORA_DIR ?= .
 
 # Let's allow for different tokenizer based on language.
-TOKENIZER_en ?= utokenize.pl -noss -lang=en
-TOKENIZER_fr ?= utokenize.pl -noss -lang=fr
-TOKENIZER_da ?= utokenize.pl -noss -lang=da
-TOKENIZER_es ?= utokenize.pl -noss -lang=es
+TOKENIZER_en ?= { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=en; }
+TOKENIZER_fr ?= { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=fr; }
+TOKENIZER_da ?= { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=da; }
+TOKENIZER_es ?= { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=es; }
 TOKENIZER_ar ?= tokenize_plugin ar
 ifdef USE_ICTCLAS
-#TOKENIZER_ch ?= ictclas_run.sh 
+#TOKENIZER_ch ?= ictclas_run.sh
 TOKENIZER_ch := { set -o pipefail; iconv -c -f UTF-8 -t CN-GB \
                 | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl \
                 | iconv -c -f CN-GB -t UTF-8; }
