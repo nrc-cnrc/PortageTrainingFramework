@@ -198,7 +198,7 @@ LDM := $(and ${USE_LDM},${LDM}\#L)
 
 # Parameters to use Lexicalized Distortion Models.
 LDM_PARAMS  := back-lex\#m\#L:back-lex\#s\#L:back-lex\#d\#L:fwd-lex\#m\#L:fwd-lex\#s\#L:fwd-lex\#d\#L
-endif
+endif # USE_LDM
 
 ifdef USE_HLDM
 HLDM ?= $(wildcard models/ldm/hldm.*.${SRC_LANG}2${TGT_LANG}.gz)
@@ -210,7 +210,7 @@ HLDM := $(and ${USE_HLDM},${HLDM}\#H)
 
 # Parameters to use Hierarchical Lexicalized Distortion Models.
 HLDM_PARAMS := back-hlex\#m\#H:back-hlex\#s\#H:back-hlex\#d\#H:fwd-hlex\#m\#H:fwd-hlex\#s\#H:fwd-hlex\#d\#H
-endif
+endif # USE_HLDM
 
 ifdef USE_SPARSE
 SPARSE ?= models/sparse/model
@@ -232,6 +232,7 @@ $(warning No LMs available. Have you trained at least one language model?)
 endif
 $(info LMs: ${LMS})
 
+ifdef USE_COARSELM
 COARSE_LM_SEARCH ?= models/coarselm/*_${TGT_LANG}-${n}[-.]*tplm
 COARSE_LM_SPECS ?= $(foreach n, ${COARSELM_NCLS_LIST}, \
                       $(foreach lm, $(wildcard ${COARSE_LM_SEARCH}), \
@@ -239,7 +240,9 @@ COARSE_LM_SPECS ?= $(foreach n, ${COARSELM_NCLS_LIST}, \
                       ) \
                    )
 $(info Coarse LMs: ${COARSE_LM_SPECS})
+endif # USE_COARSELM
 
+ifdef USE_BILM
 define BILM_SPECS_PYSCRIPT
 from __future__ import print_function, unicode_literals, division, absolute_import
 import re
@@ -271,6 +274,7 @@ endef
 
 BILM_SPECS := $(shell python -c '${BILM_SPECS_PYSCRIPT}')
 $(info BiLMs: ${BILM_SPECS})
+endif # USE_BILM
 
 
 ${UNTUNED_DECODING_MODEL}: SHELL=${LOCAL_SHELL}

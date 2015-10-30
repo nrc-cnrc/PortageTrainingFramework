@@ -66,7 +66,7 @@ all:  SHELL=${LOCAL_SHELL}
 all:  ${PT_TYPES:_cpt=_wam}
 all:  $(and ${USE_LDM}, ldm_wam)
 all:  $(and ${USE_HLDM}, hldm_wam)
-all:  $(and ${BILM_SPEC}, bilm_wam)
+all:  $(and ${USE_BILM}, bilm_wam)
 
 
 

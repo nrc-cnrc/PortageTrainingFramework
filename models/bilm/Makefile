@@ -51,10 +51,13 @@ MODULE_NAME ?= bilm
 # What is the lm language.
 LM_LANG ?= ${SRC_LANG}2${TGT_LANG}
 
-# What word class granularities should be used for the coarse LM(s)?
-# Multiple coarse LMs with different granularites may be trained. For example,
-# a typical choice is 200 & 800 for a coarse LM combo.
-COARSELM_NCLS_LIST ?=
+# What specifications should be used for the (coarse) BiLM(s)?
+# "word" indicates a word-based BiLM.
+# Coarse BiLM specifications take the form: NNNbi-NNNs-NNNt where NNN is the
+# word class granularity. Examples: 400bi-400s-400t, 400s-400t, 400bi
+# Multiple BiLM specifications are permitted. Each will be applied to each
+# corpus listed in TRAIN_BILM.
+BILM_SPEC ?=
 
 # What type of LMs to build
 # For coarse LMs, valid LM types are:
@@ -110,8 +113,8 @@ help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "In Makefile.params, define LM_TOOLKIT=SRI, LM_TOOLKIT=MIT" \
 	      "to specify the LM toolkit to use."
-	@echo "Also in Makefile.params, define COARSELM_NCLS_LIST to specify" \
-	      "the word class granularities to use."
+	@echo "Also in Makefile.params, define BILM_SPEC to provide" \
+	      "the (coarse) BiLM specifications."
 	@echo
 	@echo "To train your coarse language models, type: make all"
 	@echo

@@ -210,21 +210,16 @@ USE_HLDM = 1
 # Train and use a sparse model
 USE_SPARSE = 1
 
-# Word class granularities for coarse LMs.
-# Defining COARSELM_NCLS_LIST triggers word class training and coarse LM training.
-# If defined, COARSELM_NCLS_LIST must contain integer values.
-# We recommend combining a 200-class coarse LM with an 800-class one:
-COARSELM_NCLS_LIST = 200 800
+# Train and use coarse LMs.
+# If enabled, by default this will add 200-class and 800-class coarse LMs.
+# Comment out to disable using coarse LMs; uncomment to enable.
+USE_COARSELM = 1
 
-# Specifications for BiLMs.
-# Defining BILM_SPEC triggers BiLM training.
-# "word" indicates a word-based BiLM.
-# Coarse BiLM specifications take the form: NNNbi-NNNs-NNNt where NNN is the
-# word class granularity. Examples: 400bi-400s-400t, 400s-400t, 400bi,
-# 400bi-100s-200t
-# Multiple BiLM specifications are permitted. Each will be applied to each
-# corpus listed in TRAIN_BILM.
-#BILM_SPEC = 400bi-400s-400t
+# Train and use (coarse) BiLMs.
+# If enabled, by default this will train a 400bi-400s-400t coarse BiLM
+# (400 bitoken classes with 400 src word classes and 400 tgt word classes).
+# Comment out to disable using BiLMs (default); uncomment to enable.
+#USE_BILM = 1
 
 # Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
@@ -501,11 +496,19 @@ ifdef USE_SPARSE
 endif
 TRAIN_SPARSE := $(strip ${TRAIN_SPARSE})
 
+# Word class granularities for coarse LMs.
+# Defining COARSELM_NCLS_LIST triggers word class training too.
+# If defined, COARSELM_NCLS_LIST must contain integer values.
+# We recommend using a 200-class coarse LM and an 800-class coarse LM.
+ifdef USE_COARSELM
+   COARSELM_NCLS_LIST ?= 200 800
+endif
+COARSELM_NCLS_LIST := $(strip ${COARSELM_NCLS_LIST})
+
 # By default, we assume that the user wants to use the TRAIN_LM corpora
 # for coarse LM too.
-COARSELM_NCLS_LIST := $(strip ${COARSELM_NCLS_LIST})
-ifdef COARSELM_NCLS_LIST
-	TRAIN_COARSELM ?= ${TRAIN_LM}
+ifdef USE_COARSELM
+   TRAIN_COARSELM ?= ${TRAIN_LM}
 endif
 TRAIN_COARSELM := $(strip ${TRAIN_COARSELM})
 
@@ -515,15 +518,27 @@ TRAIN_COARSELM := $(strip ${TRAIN_COARSELM})
 # from TUNE_DECODE. To tune the discount parameters for coarse LMs, define
 # TUNE_COARSELM below. By default, we assume the user wants to use the same
 # dev set to tune the coarse LMs as was used to turn the normal word LM.
-ifdef COARSELM_NCLS_LIST
-TUNE_COARSELM ?= ${TUNE_LM}
+ifdef USE_COARSELM
+   TUNE_COARSELM ?= ${TUNE_LM}
 endif
 TUNE_COARSELM := $(strip ${TUNE_COARSELM})
 
+# Specifications for BiLMs.
+# "word" indicates a word-based BiLM.
+# Coarse BiLM specifications take the form: NNNbi-NNNs-NNNt where NNN is the
+# word class granularity. Examples: 400bi-400s-400t, 400s-400t, 400bi
+# Multiple BiLM specifications are permitted. Each will be applied to each
+# corpus listed in TRAIN_BILM.
+# If you enable BiLMs, we suggest a 400bi-400s-400t coarse BiLM 
+# (400 bitoken classes with 400 src word classes and 400 tgt word classes).
+ifdef USE_BILM
+   BILM_SPEC ?= 400bi-400s-400t
+endif
+BILM_SPEC := $(strip ${BILM_SPEC})
+
 # By default, we assume that the user wants to use the TRAIN_TM corpora
 # for BiLMs too.
-BILM_SPEC := $(strip ${BILM_SPEC})
-ifdef BILM_SPEC
+ifdef USE_BILM
 	TRAIN_BILM ?= ${TRAIN_TM}
 endif
 TRAIN_BILM := $(strip ${TRAIN_BILM})
@@ -535,8 +550,8 @@ BILM_NCLS_LIST := $(patsubst %s,%, $(patsubst %t,%, $(filter %s %t, $(subst -, ,
 # from TUNE_DECODE. To tune the discount parameters for BiLMs, define
 # TUNE_BILM below. By default, we assume the user wants to use the same
 # dev set to tune the BiLMs as was used to turn the normal word LM.
-ifdef BILM_SPEC
-TUNE_BILM ?= ${TUNE_LM}
+ifdef USE_BILM
+   TUNE_BILM ?= ${TUNE_LM}
 endif
 TUNE_BILM := $(strip ${TUNE_BILM})
 
@@ -617,7 +632,7 @@ endif
 LOCAL_SHELL = /bin/bash
 
 
-# Auto-detecting if PortageII was compiled with ICU.
+# Auto-detect if PortageII was compiled with ICU.
 ifeq (${MAKELEVEL},0)
    PORTAGE_VERSION:=$(shell portage_info -version)
    ifeq (${PORTAGE_VERSION},)
@@ -651,22 +666,24 @@ endif
 ########################################
 # VALIDATION
 
-ifdef DO_CE
-ifeq (${TUNE_CE},)
-$(error When asking for confidence estimation, you must also define a TUNE_CE!)
-endif
-ifneq (${REFERENCE_INDICES},)
-$(error Multiple references is not supported with confidence estimation!)
-endif
+ifeq (${SRC_LANG},)
+$(error You must provide a SRC_LANG!)
 endif
 
-ifdef DO_RESCORING
-ifeq (${TUNE_RESCORE},)
-$(error When asking for rescoring, you must also define a TUNE_RESCORE!)
+ifeq (${TGT_LANG},)
+$(error You must provide a TGT_LANG!)
 endif
-ifdef TC_USE_SRC_MODELS
-$(error When asking for rescoring, you must not define TC_USE_SRC_MODELS!)
+
+ifeq (${SRC_LANG},${TGT_LANG})
+$(error SRC_LANG=${SRC_LANG} cannot be the same as TGT_LANG=${TGT_LANG}!)
 endif
+
+ifeq (${SRC_LOCALE_COUNTRY},)
+$(error You must provide a SRC_LOCALE_COUNTRY!)
+endif
+
+ifeq (${TGT_LOCALE_COUNTRY},)
+$(error You must provide a TGT_LOCALE_COUNTRY!)
 endif
 
 ifeq ($(strip ${TRAIN_LM} ${LM_PRETRAINED_TGT_LMS} ${MIXLM} ${MIXLM_PRETRAINED_TGT_LMS}),)
@@ -679,28 +696,50 @@ endif
 
 ifdef USE_MIXTM
 ifeq (${MIXTM_TRAIN_MIX},)
-$(error With a mixtm, you must always define a training corpus for training the mixture weights)
+$(error With a MixTM, you must define a training corpus (MIXTM_TRAIN_MIX) for training the mixture weights)
 endif
 ifneq ($(words ${MIXTM_TRAIN_MIX}),1)
-$(error You cannot provide more than one corpora in MIXTM_TRAIN_MIX)
+$(error You must not provide more than one corpus in MIXTM_TRAIN_MIX)
 endif
 ifeq (${TUNE_MIXTM},)
-$(error With a mixtm, you must always define a tuning corpus for tuning the mixture weights)
+$(error With a MixTM, you must define a tuning corpus (TUNE_MIXTM) for tuning the mixture weights)
 endif
 ifneq ($(filter FAST_ALIGN,${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES}),)
 ifeq (${UNITTESTING},)
-$(error Mixtm with fast_align is not implemented.)
-# There is no force align with fast_align.  To create TUNE_MIXTM's word
+$(error MixTM with fast_align is not implemented.)
+# There is no force align with fast_align. To create TUNE_MIXTM's word
 # alignment file, we would have to create a fast_align model with train then we
 # would train a second model where we concatenate train + TUNE_MIXTM from which
 # we would only keep the word alignment file for the subset of TUNE_MIXTM.
 endif
 endif
+endif # USE_MIXTM
+
+ifeq (${TUNE_DECODE},)
+$(error You must always define a tuning corpus to train the decoder)
+endif
+
+ifdef DO_CE
+ifeq (${TUNE_CE},)
+$(error When asking for confidence estimation, you must also define a TUNE_CE)
+endif
+ifneq (${REFERENCE_INDICES},)
+$(error Multiple references is not supported with confidence estimation)
+endif
+endif
+
+ifdef DO_RESCORING
+ifeq (${TUNE_RESCORE},)
+$(error When asking for rescoring, you must also define a TUNE_RESCORE)
+endif
+ifdef TC_USE_SRC_MODELS
+$(error When asking for rescoring, you must not define TC_USE_SRC_MODELS)
+endif
 endif
 
 ifdef DO_TRUECASING
 ifeq (${TRAIN_TC},)
-$(error With truecasing, you must always define a training corpus for truecasing models)
+$(error With truecasing, you must define a training corpus (TRAIN_TC) for training the truecasing model)
 endif
 # Check the SRC_LOCALE and TGT_LOCALE if needed for truecasing, but only once.
 ifdef TC_USE_SRC_MODELS
@@ -736,31 +775,37 @@ endif # DO_TRUECASING
 
 ifdef USE_LDM
 ifeq (${TRAIN_LDM},)
-$(error With USE_LDM, you must always define a training corpus for training the distortion model)
+$(error With USE_LDM, you must define a training corpus (TRAIN_LDM) for training the distortion model)
 endif
 endif
 
 ifdef USE_HLDM
 ifeq (${TRAIN_HLDM},)
-$(error With USE_HLDM, you must always define a training corpus for training the distortion model)
+$(error With USE_HLDM, you must define a training corpus (TRAIN_HLDM) for training the distortion model)
 endif
 endif
 
 ifdef USE_SPARSE
 ifeq (${TRAIN_SPARSE},)
-$(error With USE_SPARSE, you must define a training corpus for sparse features using TRAIN_SPARSE)
+$(error With USE_SPARSE, you must define a training corpus (TRAIN_SPARSE) for training the sparse features)
 endif
 endif
 
-ifdef COARSELM_NCLS_LIST
+ifdef USE_COARSELM
 ifeq (${TRAIN_COARSELM},)
-$(error With COARSELM_NCLS_LIST, you must define a training corpus (TRAIN_COARSELM) for training the coarse LM(s))
+$(error With USE_COARSELM, you must define a training corpus (TRAIN_COARSELM) for training the coarse LM(s))
+endif
+ifeq (${COARSELM_NCLS_LIST},)
+$(error With USE_COARSELM, you must define word class granularities (COARSELM_NCLS_LIST) for training the coarse LM(s))
 endif
 endif
 
-ifdef BILM_SPEC
+ifdef USE_BILM
 ifeq (${TRAIN_BILM},)
-$(error With BILM_SPEC, you must define a training corpus (TRAIN_BILM) for training the BiLM(s))
+$(error With USE_BILM, you must define a training corpus (TRAIN_BILM) for training the BiLM(s))
+endif
+ifeq (${BILM_SPEC},)
+$(error With USE_BILM, you must define BiLM specification(s) (BILM_SPEC) for training the BiLM(s))
 endif
 endif
 
@@ -768,30 +813,6 @@ ifdef WCL_NCLS_LIST
 ifeq (${TRAIN_WCL},)
 $(error With WCL_NCLS_LIST, you must define a training corpus (TRAIN_WCL) for training the word classes)
 endif
-endif
-
-ifeq (${TUNE_DECODE},)
-$(error You must always define a tuning corpus to train the decoder)
-endif
-
-ifeq (${SRC_LANG},)
-$(error You must provide a SRC_LANG!)
-endif
-
-ifeq (${TGT_LANG},)
-$(error You must provide a TGT_LANG!)
-endif
-
-ifeq (${SRC_LANG},${TGT_LANG})
-$(error SRC_LANG=${SRC_LANG} cannot be the same as TGT_LANG=${TGT_LANG}!)
-endif
-
-ifeq (${SRC_LOCALE_COUNTRY},)
-$(error You must provide a SRC_LOCALE_COUNTRY!)
-endif
-
-ifeq (${TGT_LOCALE_COUNTRY},)
-$(error You must provide a TGT_LOCALE_COUNTRY!)
 endif
 
 # Warn the user that the IBM4 feature is not available to him since he doesn't have mgiza.

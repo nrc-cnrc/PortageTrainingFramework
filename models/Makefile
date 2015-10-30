@@ -274,7 +274,7 @@ endif
 
 .PHONY: coarselm
 coarselm: SHELL=${LOCAL_SHELL}
-ifdef COARSELM_NCLS_LIST
+ifdef USE_COARSELM
 models: coarselm
 
 portageLive: portageLive_models_coarselm
@@ -290,7 +290,7 @@ endif
 
 .PHONY: bilm
 bilm: SHELL=${LOCAL_SHELL}
-ifdef BILM_SPEC
+ifdef USE_BILM
 models: bilm
 
 portageLive: portageLive_models_bilm
