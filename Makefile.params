@@ -188,8 +188,8 @@ TEST_SET      ?= test1 test2
 #USE_STATIC_MIXLM ?= 1
 
 # Train and apply rescoring if this variable is defined.
-# Comment out to disable rescoring; uncomment to enable.
 # Expensive!  Use only if the last small BLEU increment is important to you.
+# Comment out to disable rescoring; uncomment to enable.
 #DO_RESCORING = 1
 
 # Tune and apply confidence estimation if this variable is defined.
@@ -197,17 +197,18 @@ TEST_SET      ?= test1 test2
 #DO_CE = 1
 
 # Train and use a Lexicalized Distortion Model (LDM).
-# Comment out to disable using an LDM; uncomment to enable.
 # Expensive!  Use only if you know it's worthwhile.
+# Comment out to disable using an LDM; uncomment to enable.
 #USE_LDM = 1
 
 # Train and use a Hierarchical Lexicalized Distortion Model (HLDM).
-# Comment out to disable using an HLDM; uncomment to enable.
 # Expensive!  Use only if you know it's worthwhile.
 # HLDM seems to be quite effective in most scenarios, so we enable it by default.
+# Comment out to disable using an HLDM; uncomment to enable.
 USE_HLDM = 1
 
 # Train and use a sparse model
+# Comment out to disable using a sparse model; uncomment to enable.
 USE_SPARSE = 1
 
 # Train and use coarse LMs.
@@ -224,17 +225,6 @@ USE_COARSELM = 1
 # Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
 DO_TRUECASING = 1
-
-# Source language locale used during truecasing.
-# If the default of ${SRC_LANG}_${SRC_LOCALE_COUNTRY}.UTF-8 is not correct,
-# uncomment the following and declare the correct string here.
-#SRC_LOCALE ?= ${SRC_LANG}_${SRC_LOCALE_COUNTRY}.UTF-8
-#SRC_LOCALE ?= da_DK.utf8
-
-# Target language locale used during truecasing.
-# If the default of ${TGT_LANG}_${TGT_LOCALE_COUNTRY}.UTF-8 is not correct,
-# uncomment the following and declare the correct string here.
-#TGT_LOCALE ?= ${TGT_LANG}_${TGT_LOCALE_COUNTRY}.UTF-8
 
 # If USE_SIGPRUNING is set, phrase tables will be filtered using significance
 # pruning before they are used.  Significance pruning removes phrase pairs that
@@ -262,6 +252,8 @@ DO_TRUECASING = 1
 #TOKENIZER_ch := { set -o pipefail; iconv -c -f UTF-8 -t CN-GB | ictclas_preprocessing.pl | ictclas | ictclas_postprocessing.pl | iconv -c -f CN-GB -t UTF-8; }
 # Or do Chinese segmentation using the LDC-based segmenter we distribute:
 #TOKENIZER_ch := chinese_segmenter.pl
+# Do Arabic tokenization in Portage (using precomputed MADA map; requires MADA):
+#TOKENIZER_ar ?= tokenize_plugin ar
 
 
 # Defining what detokenizers we want to use:
@@ -472,6 +464,24 @@ else
                        $(if ${USE_MIXTM}, mix_cpt))
 endif
 
+# Determine whether TMs will include the alignment (a=) field or not.
+# This field is used for truecasing and tags transfer.
+TMS_WITH_ALIGNMENT_FIELD ?= 1
+
+# Define the significance threshold for significance pruning.
+# Usually the default of a+e is the ideal value.
+# SIG_THRESHOLD must be a positive real number or a pre-defined constant:
+# 'a+e' (alpha + epsilon) is the significance threshold such that <1,1,1> 
+#       phrase pairs are filtered out.
+# 'a-e' (alpha - epsilon) is the significance threshold such that <1,1,1> 
+#       phrase pairs are kept.
+# Note: a (alpha) is the significance level of <1,1,1> phrase pairs, as
+# discussed in Johnson et al, EMNLP 2007.
+ifdef USE_SIGPRUNING
+   SIG_THRESHOLD ?= a+e
+endif
+SIG_THRESHOLD := $(strip ${SIG_THRESHOLD})
+
 # By default, we assume that the user wants to use the corpora listed in 
 # TRAIN_TM and MIXTM to build the Lexicalized Distortion Model (LDM).
 ifdef USE_LDM
@@ -601,16 +611,25 @@ endif
 
 ifdef TC_USE_SRC_MODELS
 TRUECASING_NC1_SRC_LM  ?= ${TRAIN_TC}_${SRC_LANG}.nc1.binlm${GZ}
+
+# Source language locale used during truecasing.
+# If the default of ${SRC_LANG}_${SRC_LOCALE_COUNTRY}.UTF-8 is not correct,
+# uncomment the following and declare the correct string here.
+# For example:
+#SRC_LOCALE ?= da_DK.utf8
+#SRC_LOCALE ?= ${SRC_LANG}_${SRC_LOCALE_COUNTRY}.UTF-8
+
+# Target language locale used during truecasing.
+# If the default of ${TGT_LANG}_${TGT_LOCALE_COUNTRY}.UTF-8 is not correct,
+# uncomment the following and declare the correct string here.
+#TGT_LOCALE ?= ${TGT_LANG}_${TGT_LOCALE_COUNTRY}.UTF-8
+
 # Make sure the source and target language locales are set.
 SRC_LOCALE ?= ${SRC_LANG}_${SRC_LOCALE_COUNTRY}.UTF-8
 SRC_LOCALE := $(strip ${SRC_LOCALE})
 TGT_LOCALE ?= ${TGT_LANG}_${TGT_LOCALE_COUNTRY}.UTF-8
 TGT_LOCALE := $(strip ${TGT_LOCALE})
-endif
-
-# Determines whether TMs will include the alignment (a=) field or not.
-# This field is used for truecasing and tags transfer.
-TMS_WITH_ALIGNMENT_FIELD ?= 1
+endif # TC_USE_SRC_MODELS
 
 # When working with TMX files, we assume the language code in the TMX is the
 # upper case of $SRC_LANG/$TGT_LANG followed by '-' (hyphen) followed by
