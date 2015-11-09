@@ -124,7 +124,7 @@ $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS}):  %/${L2_2_
 # FORCE ALIGN
 
 # We'll need to force align the corpora used to "tune" the mixtm.
-FORCE_ALIGN_SET := $(sort ${TUNE_MIXTM_FINAL} ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET})
+FORCE_ALIGN_SET := $(sort ${TUNE_MIXTM_FINAL} ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TUNE_BILM} ${TEST_SET})
 ifdef MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
 # We also need to force align all corpora used in mixtm when using 1wam.
 # By adding the MIXTM to FORCE_ALIGN_SET, we effectively tell make to use the

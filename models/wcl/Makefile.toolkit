@@ -46,7 +46,7 @@ MKCLS_OPTS ?= -n2
 	   -c${WCL_NCLS} \
 	   -V$@ \
 	   $(filter %_${WCL_LANG}${LANGX} %_${WCL_LANG}${LANGXZ}, $^) \
-	&> log.$(basename $@)
+	&> log.wcl.$(basename $@)
 else
 W2V_OPTS ?= -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 -min-count 1
 %.classes:
@@ -60,7 +60,7 @@ W2V_OPTS ?= -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 -
 	   -classes ${WCL_NCLS} \
 	   -output $@ \
 	   -train all-${WCL_NCLS}_${WCL_LANG}${LANGX} \
-	&> log.$(basename $@)
+	&> log.wcl.$(basename $@)
 	_LOCAL=1 sed -i -e 's/ /\t/' $@
 	_LOCAL=1 ${RM} all-${WCL_NCLS}_${WCL_LANG}${LANGX}
 endif

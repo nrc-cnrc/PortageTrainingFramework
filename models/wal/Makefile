@@ -164,6 +164,10 @@ def which_wam(c):
    if c in set("${TUNE_MIXTM_FINAL}".strip().split()):
       return which_wam("${MIXTM_TRAIN_MIX}")
 
+   # Special case where TUNE_BILM can not have a ibm model thus it needs to use TRAIN_BILM.
+   if c in set("${TUNE_BILM}".strip().split()):
+      return which_wam("${TRAIN_BILM}")
+
    if len("${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}"):
       if c in mixWamCorpora:
          return "mixwam"
@@ -209,6 +213,11 @@ with open(".Makefile.deps", "w") as df:
 
    # Special case for mixtm tuning.
    for corpora in set("${TUNE_MIXTM_FINAL}".strip().split()):
+      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
+         createRules(corpora, wam, corpora+"${L1}", corpora+"${L2}")
+
+   # Special case for BiLM tuning.
+   for corpora in set("${TUNE_BILM}".strip().split()):
       for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
          createRules(corpora, wam, corpora+"${L1}", corpora+"${L2}")
 
@@ -275,7 +284,7 @@ with open(".Makefile.deps", "w") as df:
    #####################################
    # BILM
    WAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
-   addModelsToMetaTarget(wamType("bilm"), "$(sort ${TRAIN_BILM})", WAMs)
+   addModelsToMetaTarget(wamType("bilm"), "$(sort ${TRAIN_BILM} ${TUNE_BILM})", WAMs)
 
 
    #####################################

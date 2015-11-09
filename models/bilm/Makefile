@@ -95,16 +95,22 @@ FILES_TO_BE_LOCKED = $(addsuffix *, ${LM_NAMES})
 vpath %${CORPUS_EXT} ${CORPORA_DIR}
 vpath %${CORPUS_EXT:.gz=} ${CORPORA_DIR}
 
+# Locate corpus directories for IBM4 in subdirectories of the ibm module.
+vpath %/${SRC_LANG}.lc ../ibm ../wal
+vpath %/${TGT_LANG}.lc ../ibm ../wal
+
 # Locate the classes files in the wcl module
 vpath %.classes ../wcl
 
-# Locate the Word Alignment (wal) files in the tm directory
+# Locate the Word Alignment (wal) files in the wal module
 vpath %.align.gz ../wal
 
 
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
+.SUFFIXES:
 .SECONDARY:
+
 
 
 ########################################
@@ -154,16 +160,23 @@ src_lang = "${SRC_LANG}"
 tgt_lang = "${TGT_LANG}"
 lm_lang = "${SRC_LANG}2${TGT_LANG}"
 corpus_ext = "${CORPUS_EXT}"
+corpus_ext_nogz = "${CORPUS_EXT:.gz=}"
 align = "${MERGED_CPT_JPT_TYPES}"
 lm_desc = "${LM_DESC}"
-corpus_ext_nogz = corpus_ext[:-3] if corpus_ext.endswith(".gz") else corpus_ext
 
 spec_re = re.compile("^(?:([0-9]+)bi)?-?(?:([0-9]+)s)?-?(?:([0-9]+)t)?$$")
+
+alignments = align.lower().split()
+cinfo = [("ibm4.", "/")] if "ibm4" in alignments else []
+if len(alignments) > 1 or len(cinfo) == 0: cinfo.append(("", "_"))
 
 with open("Makefile.deps", "w") as df:
    w2c_corp = []
    bit_corp = []
    bit_cmpts = []
+   corp_stems = train_bilm.split()
+   if tune_bilm:
+      corp_stems.append(tune_bilm)
    for spec in bilm_specs.split():
       m = spec_re.match(spec)
       if m is None and spec != "word":
@@ -174,26 +187,39 @@ with open("Makefile.deps", "w") as df:
       else:
          bit_ncls = src_ncls = tgt_ncls = None
       src_spec = "-{0}s".format(src_ncls) if src_ncls else ""
-      tgt_spec = "-{0}t".format(tgt_ncls) if src_ncls else ""
-      cx = "{ss}{ts}_{l}{cext}".format(ss=src_spec, ts=tgt_spec, l=lm_lang, cext=corpus_ext)
+      tgt_spec = "-{0}t".format(tgt_ncls) if tgt_ncls else ""
       wcl_corp = []
       bit_cls = "bitoks.all{ss}{ts}.{l}.{ncls}.classes".format(
-                ss=src_spec, ts=tgt_spec, l=lm_lang, ncls=bit_ncls)
-      for c in train_bilm.split():
-         # Dependencies for creating bitokens files with corpus text optionally mapped to word classes
-         sc = "{c}{ss}_{sl}{cext}".format(c=c, ss=src_spec, sl=src_lang, cext=corpus_ext)
-         tc = "{c}{ts}_{tl}{cext}".format(c=c, ts=tgt_spec, tl=tgt_lang, cext=corpus_ext)
-         if src_ncls:
-            print("{sc}: {c}_{sl}{cext} {sl}.{ncls}.classes".format(
-                  sc=sc, c=c, sl=src_lang, cext=corpus_ext, ncls=src_ncls), file=df)
-            w2c_corp.append(sc)
-         if tgt_ncls:
-            print("{tc}: {c}_{tl}{cext} {tl}.{ncls}.classes".format(
-                  tc=tc, c=c, tl=tgt_lang, cext=corpus_ext, ncls=tgt_ncls), file=df)
-            w2c_corp.append(tc)
+                   ss=src_spec, ts=tgt_spec, l=lm_lang, ncls=bit_ncls)
+      # Bitokens files may need to be created for each training corpus file,
+      # and also for the tune_bilm file if used for LM parameter tuning
+      # Separate bitokens files are needed for IBM4 alignment matching the
+      # training corpora used for IBM4 alignment.
+      for c in corp_stems:
+         dcext = corpus_ext_nogz if c == tune_bilm else corpus_ext
+         for ap, sep in cinfo:
+            ocext = ".lc" if ap == "ibm4." else dcext
+            # Dependencies for creating bitokens files with corpus text optionally mapped to word classes
+            if src_ncls:
+               sc = "{ap}{c}{ss}_{sl}{cext}".format(ap=ap, c=c, ss=src_spec, sl=src_lang, cext=dcext)
+               print("{sc}: {c}{sep}{sl}{cext} {sl}.{ncls}.classes".format(
+                     sc=sc, c=c, sep=sep, sl=src_lang, cext=ocext, ncls=src_ncls), file=df)
+               w2c_corp.append(sc)
+            if tgt_ncls:
+               tc = "{ap}{c}{ts}_{tl}{cext}".format(ap=ap, c=c, ts=tgt_spec, tl=tgt_lang, cext=dcext)
+               print("{tc}: {c}{sep}{tl}{cext} {tl}.{ncls}.classes".format(
+                     ap=ap, tc=tc, c=c, sep=sep, tl=tgt_lang, cext=ocext, ncls=tgt_ncls), file=df)
+               w2c_corp.append(tc)
          # Bitokens files are created for each alignment used
          corp = []
-         for a in align.lower().split():
+         cx = "{ss}{ts}_{l}{cext}".format(ss=src_spec, ts=tgt_spec, l=lm_lang, cext=dcext)
+         for a in alignments:
+            ap, sep = cinfo[0 if a == "ibm4" else -1]
+            ocext = ".lc" if ap == "ibm4." else dcext
+            sap, ssep, scext = (ap, "_", dcext) if src_ncls else ("", sep, ocext)
+            sc = "{ap}{c}{ss}{sep}{sl}{cext}".format(ap=sap, c=c, ss=src_spec, sep=ssep, sl=src_lang, cext=scext)
+            tap, tsep, tcext = (ap, "_", dcext) if tgt_ncls else ("", sep, ocext)
+            tc = "{ap}{c}{ts}{sep}{tl}{cext}".format(ap=tap, c=c, ts=tgt_spec, sep=tsep, tl=tgt_lang, cext=tcext)
             print("bitokens.{a}.{c}{cx}: {sc} {tc} {c}.{a}.{l}.align.gz".format(
                   a=a, c=c, cx=cx, sc=sc, tc=tc, l=lm_lang), file=df)
             corp.append("bitokens.{a}.{c}{cx}".format(a=a, c=c, cx=cx))
@@ -204,7 +230,8 @@ with open("Makefile.deps", "w") as df:
          if bit_ncls:
             print("bitokens.{c}-{ncls}bi{cx}: bitokens.{c}{cx} {cls}".format(
                   cls=bit_cls, c=c, cx=cx, ncls=bit_ncls), file=df)
-            wcl_corp.append("bitokens.{c}{cx}".format(c=c, cx=cx))
+            if c != tune_bilm:
+               wcl_corp.append("bitokens.{c}{cx}".format(c=c, cx=cx))
             w2c_corp.append("bitokens.{c}-{ncls}bi{cx}".format(c=c, cx=cx, ncls=bit_ncls))
       # Dependencies for creating word classes of bitokens
       if bit_ncls:
@@ -214,38 +241,11 @@ with open("Makefile.deps", "w") as df:
          print("portageLive: {cls}".format(cls=bit_cls), file=df)
       # Dependencies for LM parameter tuning
       if tune_bilm:
-         # Dependencies for creating bitokens files for LM parameter tuning with text optionally mapped to word classes
-         sc = "{c}{ss}_{sl}{cext}".format(c=tune_bilm, ss=src_spec, sl=src_lang,
-                                          cext=corpus_ext if src_ncls else corpus_ext_nogz)
-         tc = "{c}{ts}_{tl}{cext}".format(c=tune_bilm, ts=tgt_spec, tl=tgt_lang,
-                                          cext=corpus_ext if tgt_ncls else corpus_ext_nogz)
-         if src_ncls:
-            print("{sc}: {c}_{sl}{cext} {sl}.{ncls}.classes".format(
-                  sc=sc, c=tune_bilm, sl=src_lang, cext=corpus_ext_nogz, ncls=src_ncls), file=df)
-            w2c_corp.append(sc)
-         if tgt_ncls:
-            print("{tc}: {c}_{tl}{cext} {tl}.{ncls}.classes".format(
-                  tc=tc, c=tune_bilm, tl=tgt_lang, cext=corpus_ext_nogz, ncls=tgt_ncls), file=df)
-            w2c_corp.append(tc)
-         # Bitokens files are created for each alignment used
-         corp = []
-         for a in align.lower().split():
-            print("bitokens.{a}.{c}{cx}: {sc} {tc} {c}.{a}.{l}.align.gz".format(
-                  a=a, c=tune_bilm, cx=cx, sc=sc, tc=tc, l=lm_lang), file=df)
-            corp.append("bitokens.{a}.{c}{cx}".format(a=a, c=tune_bilm, cx=cx))
-         bit_cmpts.extend(corp)
-         print("bitokens.{c}{cx}: {deps}".format(c=tune_bilm, cx=cx, deps=" ".join(corp)), file=df)
-         bit_corp.append("bitokens.{c}{cx}".format(c=tune_bilm, cx=cx))
-         # Dependencies for mapping bitokens files for LM parameter tuning to word classes of bitokens
-         if bit_ncls:
-            print("bitokens.{c}-{ncls}bi{cx}: bitokens.{c}{cx} {cls}".format(
-                  cls=bit_cls, c=tune_bilm, cx=cx, ncls=bit_ncls), file=df)
-            w2c_corp.append("bitokens.{c}-{ncls}bi{cx}".format(c=tune_bilm, cx=cx, ncls=bit_ncls))
          # BiLM file depends on the tune bitokens file.
          for c in train_bilm.split():
             s = "-{0}".format(spec) if spec != "word" else ""
-            print("{c}{s}_{l}{ld}.lm.gz: bitokens.{c}{s}_{l}{cext}".format(
-                  c=tune_bilm, s=s, l=lm_lang, cext=corpus_ext, ld=lm_desc), file=df)
+            print("bitokens.{c}{s}_{l}{ld}.lm.gz: bitokens.{t}{s}_{l}{cext}".format(
+                  c=c, t=tune_bilm, s=s, l=lm_lang, cext=corpus_ext_nogz, ld=lm_desc), file=df)
 
    print("MAPPED_CORP_FILES ?= {0}".format(" ".join(w2c_corp)), file=df)
    print("BITOKENS_CMPTS_FILES ?= {0}".format(" ".join(bit_cmpts)), file=df)
@@ -257,19 +257,24 @@ $(shell python -c '${DEPS_PYSCRIPT}')
 include Makefile.deps
 
 .INTERMEDIATE: ${MAPPED_CORP_FILES}
-${MAPPED_CORP_FILES}: SHELL=${LOCAL_SHELL}
-${MAPPED_CORP_FILES}: %${CORPUS_EXT}:
-	word2class -no-error $(filter %${CORPUS_EXT}, $+) $(filter %.classes, $+) | gzip > $@
+$(filter-out %.gz, ${MAPPED_CORP_FILES}): SHELL=${LOCAL_SHELL}
+$(filter %.gz, ${MAPPED_CORP_FILES}): SHELL=${FRAMEWORK_SHELL}
+${MAPPED_CORP_FILES}: %:
+	$(if $(filter %.gz,$@),RP_PSUB_OPTS="-${CPUS} -N $@") \
+	${TIME_MEM} \
+	word2class -no-error $(filter-out %.classes, $+) $(filter %.classes, $+) $@ 2> log.$(@:.gz=)
 
 ${BITOKENS_CMPTS_FILES}: SHELL=${FRAMEWORK_SHELL}
-${BITOKENS_CMPTS_FILES}: bitokens.%.gz:
-	RP_PSUB_OPTS="-${CPUS} -N $@" \
+$(filter-out %.gz, ${BITOKENS_CMPTS_FILES}): SHELL=${LOCAL_SHELL}
+$(filter %.gz, ${BITOKENS_CMPTS_FILES}): SHELL=${FRAMEWORK_SHELL}
+${BITOKENS_CMPTS_FILES}: bitokens.%:
+	$(if $(filter %.gz,$@),RP_PSUB_OPTS="-${CPUS} -N $@") \
 	${TIME_MEM} \
-	word_align_tool -fin sri -fout bilm -t -v $+ $@
+	word_align_tool -fin sri -fout bilm -t -v $+ $@ 2> log.${@:.gz=}
 
 # Combine component bitokens files for multiple alignments
 ${BITOKENS_CORP_FILES}: SHELL=${LOCAL_SHELL}
-${BITOKENS_CORP_FILES}: bitokens.%.gz:
+${BITOKENS_CORP_FILES}: bitokens.%:
 	cat $+ > $@
 
 
@@ -292,10 +297,12 @@ clean.content: SHELL=${LOCAL_SHELL}
 
 clean.content:
 	${RM} Makefile.deps
-	${RM} bitokens.*.gz *_${SRC_LANG}${CORPUS_EXT} *_${TGT_LANG}${CORPUS_EXT}
+	${RM} -r *.tplm
+	${RM} bitokens.* 
+	${RM} *_${SRC_LANG}${CORPUS_EXT} *_${TGT_LANG}${CORPUS_EXT}
+	${RM} *_${SRC_LANG}${CORPUS_EXT:.gz=} *_${TGT_LANG}${CORPUS_EXT:.gz=}
 	${RM} *.classes *.classes.cats
 	${RM} *.lm.gz *.binlm.gz
-	${RM} -r *.tplm
 
 
 clean.logs: SHELL=${LOCAL_SHELL}
@@ -331,18 +338,6 @@ else
 portageLive:
 	@echo "No BiLMs defined, nothing to do." >&2
 endif
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
