@@ -258,9 +258,9 @@ Here is an overview of the \PS process, as described in the following
 sections:
 \begin{enumerate}
 \item Corpus preparation (\S\ref{CorpusPreparation}) includes
-      tokenization,
       alignment,
       corpus splitting (\S\ref{Splitting}),
+      tokenization (\S\ref{Tokenizing}),
       and
       lowercasing (\S\ref{Lowercasing}).
 \item Model training (\S\ref{Training}) includes
@@ -301,7 +301,7 @@ the CD).
 To begin, let's go over some definitions of text formats:
 \begin{description}
   \item[Plain text] is just normal text in a flat file without formatting.
-  \item[Tokenized ] text has spaces separating tokens, as in \texttt{I 'm green
+  \item[Tokenized] text has spaces separating tokens, as in \texttt{I 'm green
   , you 're yellow !} Words and punctuation marks are tokens.
   \item[One-paragraph-per-line] (OPPL) text is fairly standard since line-wrapping is
   typically automatic nowadays.
@@ -323,7 +323,9 @@ If your data exists in the form of a translation memory or an aligned bitext,
 our \code{tmx-prepro} module can help you extract your data and prepare it for
 training \PS. See \TODO{document how to get tmx-prepro}.
 
-We don't actually perform any of the steps mentioned above in this toy example
+This tutorial start from sentence-aligned plain text, as you would get from our
+\code{tmx-prepro} module extracting data from a TMX file.
+We don't perform data clean up and sentence alignment here,
 because they are highly dependent on your actual data and what other tools you
 already have.  You should plan to invest some time in preprocessing your data
 well if you want to obtain good results with \PS.
@@ -340,9 +342,9 @@ us to both simplify the framework and make it more robust at the same time.
 
 \subsection{Splitting the Corpus} \label{Splitting}
 
-The corpus, which we assume you have tokenized and sentence aligned, as
+The corpus, which we assume you have sentence aligned, as
 discussed above, must be split into separate portions in order to run
-experiments. Distinct, non-overlapping sub-corpora are required for model
+experiments.  Distinct, non-overlapping sub-corpora are required for model
 training (see \S\ref{Training}), for tuning decoder weights (\S\ref{COW}) and
 rescoring weights (\S\ref{RAT}), for confidence estimation (if you use it;
 \S\ref{CE}), and for testing (\S\ref{Testing}).\footnote{In this example, we
@@ -352,7 +354,10 @@ separate tuning set, which can be reused as a test set, but not as a decoder or
 rescoring tuning set.} Typically, the tuning (or ``dev'', for development) and
 testing sets contain around 2000 segments each.  If the corpus is chronological,
 then it is a good idea to choose these sets from the most recent material,
-which is likely to resemble future text more closely.
+which is likely to resemble future text more closely.\footnote{ Our
+\code{tmx-prepro} module can automate splitting your corpus if you're
+starting form a TMX file. It uses random sampling by default for your dev and
+test sets.}
 
 Ideally, the splitting of a corpus should take into account its structure and
 nature, so these steps are not handled by the experimental framework. For the
@@ -367,32 +372,36 @@ links) into your copy's corpora directory:
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment}
-   > \textbf{cp $PORTAGE/test-suite/tutorial-data/*.al* corpora/}
-   > \textbf{wc_stats corpora/*.al* | expand-auto.pl}
+   > \textbf{cp $PORTAGE/test-suite/tutorial-data/*.raw* corpora/}
+   > \textbf{wc_stats corpora/*.raw* | expand-auto.pl}
       #Lines   #Words   #Char     [...]   filename
-      100      2115     11589     [...]   corpora/dev1_en.al
-      100      2330     13680     [...]   corpora/dev1_fr.al
-      100      2095     11462     [...]   corpora/dev2_en.al
-      100      2443     13905     [...]   corpora/dev2_fr.al
-      100      2383     13061     [...]   corpora/dev3_en.al
-      100      2840     16209     [...]   corpora/dev3_fr.al
-      8896     182273   981921    [...]   corpora/lm-train_en.al.gz
-      8893     208404   1178207   [...]   corpora/lm-train_fr.al.gz
-      100      2379     13292     [...]   corpora/test1_en.al
-      100      2616     15622     [...]   corpora/test1_fr.al
-      100      2383     13061     [...]   corpora/test2_en.al
-      100      2840     16209     [...]   corpora/test2_fr.al
-      8892     182186   981455    [...]   corpora/tm-train_en.al.gz
-      8892     208400   1178176   [...]   corpora/tm-train_fr.al.gz
+      100      1912     11284     [...]   corpora/dev1_en.raw
+      100      2026     13276     [...]   corpora/dev1_fr.raw
+      100      1912     11176     [...]   corpora/dev2_en.raw
+      100      2116     13474     [...]   corpora/dev2_fr.raw
+      100      2156     12733     [...]   corpora/dev3_en.raw
+      100      2461     15728     [...]   corpora/dev3_fr.raw
+      8896     163417   954012    [...]   corpora/lm-train_en.raw.gz
+      8893     178680   1139422   [...]   corpora/lm-train_fr.raw.gz
+      100      2174     12981     [...]   corpora/test1_en.raw
+      100      2267     15171     [...]   corpora/test1_fr.raw
+      100      2156     12733     [...]   corpora/test2_en.raw
+      100      2461     15728     [...]   corpora/test2_fr.raw
+      8892     163338   953554    [...]   corpora/tm-train_en.raw.gz
+      8892     178677   1139392   [...]   corpora/tm-train_fr.raw.gz
 
-      36573    805687   4457849   [...]   TOTAL
-      [...]
+      36573    705753   4320664   [...]   TOTAL
 \end{alltt}
 \end{small}
 
 In your own experiments, the files you need to copy into \code{corpora}
-should be plain text, truecase, tokenized, sentence-split and
-sentence-aligned, just like the ones we provide here.
+should be plain text, truecase, sentence-split and sentence-aligned, just like
+the ones we provide here. If your corpora are already tokenized, call your
+files \code{*.al} and \code{*.al.gz} instead of \code{*.raw} and
+\code{*.raw.gz}: the framework will automatically skip tokenization with those
+file extensions.\footnote{Previous versions of this tutorial started from
+tokenized \code{*.al*} files, but changed it to reflect the more common
+situation where the corpus is not yet tokenized.}
 
 Although the framework does not support compressed dev and test files, the
 training files can and should be compressed, as shown here.  Most programs and
@@ -484,6 +493,23 @@ Most commands in the framework produce logs called
 \code{log.\emph{output-file-name}}.  If you encounter errors, look for
 explanations in these log files, that's usually where the error messages will
 end up.  Again, for brevity, we don't show these log files in this document.
+
+\subsection{Tokenization} \label{Tokenizing}
+
+This step is skipped if you're using tokenized data (with \code{.al} and
+\code{.al.gz} extensions), but since we're starting from raw text, the
+framework automatically recognizes that it needs to tokenize it.
+
+By default, the \PS tokenizer is used (\code{utokenize.pl}), with a
+preprocessing script thart separates slash-separated words
+(\code{fix-slashes.pl}) because those are seldom/rarely meant to stay together.
+
+\begin{small}
+\begin{alltt}
+   > \textbf{cd toy.experiment/corpora}
+   > \textbf{make tok}
+\end{alltt}
+\end{small}
 
 \subsection{Lowercasing and Adding Escapes} \label{Lowercasing}
 
