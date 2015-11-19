@@ -1,42 +1,19 @@
 # vim:noet:ts=3:nowrap
 #
 # @author Samuel Larkin
-# @file Makefile.dm
-# @brief Train Lexicalized Distortion Models.
-#        How to make targets.
+# @file Makefile.toolkit
+# @brief Makefile targets and recipes to create Lexicalized Distortion Models.
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2010, Sa Majeste la Reine du Chef du Canada
-# Copyright 2010, Her Majesty in Right of Canada
+# Copyright 2010, 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2010, 2015, Her Majesty in Right of Canada
 
 LDM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
--include ${LDM_DIR_PFX}../../Makefile.params
+# We assume the top level Makefile.params has already been included.
 include ${LDM_DIR_PFX}../Makefile.definition
-
-# Default languages
-SRC_LANG ?= en
-TGT_LANG ?= fr
-
-# Default language corpora extension.
-LANGX  ?= .lc
-LANGXZ ?= ${LANGX}.gz
-
-# Language file extension.
-L1  ?= _${SRC_LANG}${LANGX}
-L2  ?= _${TGT_LANG}${LANGX}
-L1X ?= _${SRC_LANG}${LANGXZ}
-L2X ?= _${TGT_LANG}${LANGXZ}
-
-# IBM / HMM models extension.
-L1_GIVEN_L2  ?= ${SRC_LANG}_given_${TGT_LANG}
-L1_GIVEN_L2X ?= ${L1_GIVEN_L2}.gz
-
-# conditional phrase table extension.
-L1_2_L2  ?= ${SRC_LANG}2${TGT_LANG}
-L1_2_L2X ?= ${L1_2_L2}.gz
 
 # Maximum phrase length.
 M ?= 8
@@ -80,15 +57,11 @@ HLDM_MODEL_PFX ?= hldm
 DONT_USE_FILLUP ?=
 
 
-
 ########################################
 # FUNCTIONS.
-# Joins two parallel lists of words.
-interleave = $(strip $(subst \, , $(join ${1}, $(addprefix \, $(join $2, $(addprefix \, $3))))))
 
 # Adds the hierarchical lexicalized distortion model's option.
 ADD_HLDM_OPTS = $(and $(findstring ${HLDM_MODEL_PFX}, $1), -hier)
-
 
 
 ########################################
@@ -115,13 +88,12 @@ ADD_HLDM_OPTS = $(and $(findstring ${HLDM_MODEL_PFX}, $1), -hier)
 			$(filter %align.gz, $+)) \
 		-merge 'merge_multi_column_counts -' \
 		'dmcount -ext -v -m ${M} $(call ADD_HLDM_OPTS, $@) \
-			$(call interleave, \
+			$(call interleave3, \
 				$(filter %${L1X}, $+), \
 				$(filter %${L2X}, $+), \
 				$(filter %.align.gz, $+)) \
 			| li-sort.sh > $@' \
 	&> log.$(basename $@)
-
 
 
 ########################################
@@ -141,7 +113,6 @@ sort_count_files = $(filter $1, $(foreach a,${POSSIBLE_WORD_ALIGNMENT_MODELS}, $
 	> $@
 
 
-
 ########################################
 # How to make a lexicalized distortion model a tightly packed version.
 # You must provide this target:
@@ -150,7 +121,6 @@ sort_count_files = $(filter $1, $(foreach a,${POSSIBLE_WORD_ALIGNMENT_MODELS}, $
 %.tpldm:
 	RP_PSUB_OPTS="-${ESTIM_CPUS}" \
 	${TIME_MEM} textldm2tpldm.sh $< &> log.$@
-
 
 
 ################################################################################

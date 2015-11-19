@@ -1,20 +1,19 @@
 # vim:noet:ts=3:nowrap:filetype=make
 
 # @file Makefile.toolkit
-# @brief This file contains commands to create Significance Pruned Joint Phrase Tables.
+# @brief Makefile targets and recipes to create Significance Pruned Joint Phrase Tables.
 #
 # @author Samuel Larkin
 #
 # Traitement multilingue de textes / Multilingual Text Processing
-# Technologies de l'information et des communications /
-#    Information and Communications Technologies
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2015, Her Majesty in Right of Canada
 
 SIG_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
--include ${SIG_DIR_PFX}../../Makefile.params
+# We assume the top level Makefile.params has already been included.
 include ${SIG_DIR_PFX}../Makefile.definition
 
 # Options for merge_multi_column_counts
@@ -26,10 +25,9 @@ ifdef TMS_WITH_ALIGNMENT_FIELD
 endif
 
 # Given the user's configuration, what is the minimal set of model types that
-# # we need to produce.
+# we need to produce.
 EXPECTED_MODEL_TYPES := $(strip $(sort ${MERGED_CPT_JPT_TYPES}))
 EXPECTED_MODEL_TYPES_PFX := $(foreach m, ${EXPECTED_MODEL_TYPES}, ${${m}_MODEL_PFX})
-
 
 
 ########################################
@@ -51,7 +49,6 @@ ${SIG_MODEL_PFX}.merged%${JOINTX}:
 ${SIG_MODEL_PFX}.merged%${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${SIG_MODEL_PFX}.merged%${RJOINTX}:
 	${TIME_MEM} merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
-
 
 
 ${SIG_MODEL_PFX}.%.${JOINTX}: SHELL=${FRAMEWORK_SHELL}
@@ -88,7 +85,6 @@ ${SIG_MODEL_PFX}.%.${JOINTX}:
 #		$(filter %${L1} %${L1X}, $+) \
 #		$@ \
 #		&> >(bzip2 > log.${@:.gz=}.bz2)
-
 
 
 ########################################

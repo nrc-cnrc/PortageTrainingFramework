@@ -1,7 +1,7 @@
 # vim:noet:ts=3:nowrap
 
 # @file Makefile.toolkit
-# @brief
+# @brief Master toolkit with common targets and recipes for all modules.
 #
 # @author Samuel Larkin
 #
@@ -68,7 +68,6 @@ unlock:
 	-chmod u+w ${FILES_TO_BE_LOCKED}
 
 
-
 ########################################
 # Hide logs.
 .PHONY: hide_logs_sub
@@ -77,7 +76,6 @@ hide_logs_sub:
 	mkdir -p .logs
 	-mv log.* run-parallel-logs-* .logs
 	-ls * | egrep '\.[joe][0-9]{1,6}' | xargs -i mv {} .logs
-
 
 
 ########################################
@@ -91,8 +89,6 @@ resource_summary_sub:
 	| xargs time-mem-tally.pl -no-dir -m ${MODULE_NAME} \
 	| second-to-hms.pl \
 	| expand-auto.pl
-
-
 
 
 

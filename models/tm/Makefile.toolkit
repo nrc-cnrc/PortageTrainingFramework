@@ -1,35 +1,20 @@
 # vim:noet:ts=3:nowrap
 
 # @file Makefile.toolkit
-# @brief This file contains commands to build Conditional Phrase Tables.
+# @brief Makefile targets and recipes to build Conditional Phrase Tables.
 #
 # @author Samuel Larkin
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2010, 2012, 2015, Sa Majeste la Reine du Chef du Canada /
 # Copyright 2010, 2012, 2015, Her Majesty in Right of Canada
 
 TM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
--include ${TM_DIR_PFX}../../Makefile.params
+# We assume the top level Makefile.params has already been included.
 include ${TM_DIR_PFX}../Makefile.definition
-
-
-ifeq (${SRC_LANG},)
-$(error You MUST define SRC_LANG)
-endif
-
-ifeq (${TGT_LANG},)
-$(error You MUST define TGT_LANG)
-endif
-
-# This is already done in ../../Makefile.params, and we should not use
-# $(shell ...) in cluster mode, so we don't want to run this all the time.
-# Lets define a parallelism level if the user forgets about it.
-#NUM_LOCAL_CPUS := $(shell grep processor /proc/cpuinfo | \wc -l)
-#PARALLELISM_LEVEL_TM ?= ${NUM_LOCAL_CPUS}
 
 # We don't need to sort if we are using -reduce-mem and sorted jpts which is
 # the case in the framework.
@@ -59,7 +44,6 @@ CPT_INDICATOR_PFX ?= ${CPT_MODEL_PFX}.PI
 CPT_PI_SMOOTHERS ?= -s '0:KNSmoother 3' -s ZNSmoother -a '1-100:PureIndicator'
 PI_SMOOTHERS_DESCRIPTION ?= -kn3-zn
 
-
 # MIXTURE TRANSLATION MODEL
 MIX_CPUS ?= 1
 
@@ -83,7 +67,6 @@ endif
 #   them to L1 & L2.
 # - We also need to remove the hardcoded SHELL variable in this script to use
 #   the FRAMEWORK_SHELL of the portage.simple.framework.
-
 
 
 ########################################
@@ -111,7 +94,6 @@ ${CPT_MIX_PFX}%${L2_2_L1X}:
 		$(filter %${L2_2_L1X}, $+) \
 		$(filter %.${JOINTX}, $+) \
 		&> log.${@:.gz=}
-
 
 
 ########################################
@@ -150,7 +132,6 @@ ${CPT_INDICATOR_PFX}%${L2_2_L1X}:
 		-ibm_l1_given_l2  $(filter %${L2_GIVEN_L1X}, $+) \
 		$| \
 		&> log.${@:.gz=}
-
 
 
 ########################################
@@ -196,7 +177,6 @@ ${CPT_MODEL_PFX}%${L2_2_L1X}:
 		${JOINT2COND_PHRASE_TABLE_OPTION} \
 		$(filter %.${RJOINTX}, $+) \
 		&> log.${@:.gz=}
-
 
 
 ################################################################################

@@ -1,22 +1,20 @@
 # vim:noet:ts=3:nowrap:filetype=make
+
 # @file Makefile.toolkit
-# @brief This file contains commands to create Joint Phrase Tables.
+# @brief Makefile targets and recipes to create Joint Phrase Tables.
 #
 # @author Samuel Larkin
 #
 # Traitement multilingue de textes / Multilingual Text Processing
-# Technologies de l'information et des communications /
-#    Information and Communications Technologies
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2015, Her Majesty in Right of Canada
 
-
 JPT_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
--include ${JPT_DIR_PFX}../../Makefile.params
+# We assume the top level Makefile.params has already been included.
 include ${JPT_DIR_PFX}../Makefile.definition
-
 
 # Maximum phrase length.
 M ?= 8
@@ -44,7 +42,6 @@ EXPECTED_MODEL_TYPES := $(strip $(sort ${MERGED_CPT_JPT_TYPES}))
 EXPECTED_MODEL_TYPES_PFX := $(foreach m, ${EXPECTED_MODEL_TYPES}, ${${m}_MODEL_PFX})
 
 
-
 ########################################
 # JPT MODELS
 # WARNING: The following two targets must precede the target to generate jpts.
@@ -56,8 +53,6 @@ ${JPT_MODEL_PFX}.merged%${JOINTX}:
 ${JPT_MODEL_PFX}.merged%${RJOINTX}: SHELL=${FRAMEWORK_SHELL}
 ${JPT_MODEL_PFX}.merged%${RJOINTX}:
 	${TIME_MEM} merge_multi_column_counts ${MERGE_COUNT_OPTIONS} $@ $(filter %.${RJOINTX}, $+) &> log.${@:.gz=}
-
-
 
 ${JPT_MODEL_PFX}.%.${JOINTX}:  SHELL=${FRAMEWORK_SHELL}
 ${JPT_MODEL_PFX}.${IBM1_MODEL_PFX}%:  JPT_MODEL_TYPE = -ibm 1
@@ -78,7 +73,6 @@ ${JPT_MODEL_PFX}.%.${JOINTX}:
 		$(filter %${L2_GIVEN_L1X}, $+) $(filter %${L1_GIVEN_L2X}, $+) \
 		$(call interleave3, $(filter %${L1} %${L1X},$+), $(filter %${L2} %${L2X},$+), $(filter %.${L1_2_L2}.align.gz,$+)) \
 		&> log.${@:.gz=}
-
 
 
 ########################################

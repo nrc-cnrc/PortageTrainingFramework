@@ -1,24 +1,20 @@
 # vim:noet:ts=3:nowrap
 
 # @file Makefile.toolkit
-# @brief This file contains commands to genereate Word Alignment Models.
+# @brief Makefile targets and recipes to generate Word Alignment Models.
 #
 # @author Samuel Larkin
 #
 # Traitement multilingue de textes / Multilingual Text Processing
-# Technologies de l'information et des communications /
-#    Information and Communications Technologies
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2015, Her Majesty in Right of Canada
 
-
 IBM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
--include ${IBM_DIR_PFX}../../Makefile.params
+# We assume the top level Makefile.params has already been included.
 include ${IBM_DIR_PFX}../Makefile.definition
-
-
 
 # What program to use to train models.
 CAT ?= cat.sh
@@ -48,7 +44,6 @@ ${IBM1_MODEL_PFX}.%.gz:
 		&> log.${@:.gz=}
 
 
-
 ########################################
 # IBM2 MODELS
 ${IBM2_MODEL_PFX}%${L1_GIVEN_L2X}: IBM2_DIR=-r
@@ -67,7 +62,6 @@ ${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		$@ \
 		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
 		&> log.${@:.gz=}
-
 
 
 ########################################
@@ -90,7 +84,6 @@ ${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		&> log.${@:.gz=}
 
 
-
 ########################################
 # HMM2 MODELS
 ${HMM2_MODEL_PFX}%${L1_GIVEN_L2X}: HMM2_DIR=-r
@@ -109,7 +102,6 @@ ${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		$@ \
 		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
 		&> log.${@:.gz=}
-
 
 
 ########################################
@@ -132,7 +124,6 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 		$@ \
 		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
 		&> log.${@:.gz=}
-
 
 
 ########################################
@@ -168,7 +159,6 @@ ${FAST_ALIGN_MODEL_PFX}.%.${L1_GIVEN_L2X}:
 		-c >(fast_align_normalize_ttable.py | train_ibm -tobin - $@) \
 		2> log.$(notdir ${@:.gz=}) \
 	| gzip > ${FAST_ALIGN_MODEL_PFX}/$*.${L2_2_L1}.fast_align.gz
-
 
 
 ################################################################################
@@ -312,6 +302,4 @@ ${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb 
 	| gzip > tmp.$@
 	train_ibm -tobin tmp.$@ $@ 2> log.${@:.gz=}
 	rm -f tmp.$@
-
-
 
