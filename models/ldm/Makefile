@@ -1,33 +1,31 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
+
+# @file Makefile.dm
+# @brief Dependencies to create Lexicalized Distortion Models.
 #
 # @author Samuel Larkin
-# @file Makefile.dm
-# @brief Train Lexicalized Distortion Models.
-#        In this file we only state the dependencies.
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2010, Sa Majeste la Reine du Chef du Canada
-# Copyright 2010, Her Majesty in Right of Canada
-
+# Copyright 2010, 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2010, 2015, Her Majesty in Right of Canada
 
 LDM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
-
-# User specific configuration.
-MAKEFILE_PARAMS ?= Makefile.params
--include ${LDM_DIR_PFX}${MAKEFILE_PARAMS}
 
 # Mandatory include: master config file.
 include ${LDM_DIR_PFX}../../Makefile.params
 
-# Default toolkit.
+# Include and override parameters with user specific config file.
+MAKEFILE_PARAMS ?= Makefile.params
+-include ${LDM_DIR_PFX}${MAKEFILE_PARAMS}
+
+# Include the master toolkit.
 include ${LDM_DIR_PFX}../../Makefile.toolkit
 
-# Always include the toolkit last.
+# Include the toolkit for building Distortion Models.
 include ${LDM_DIR_PFX}Makefile.toolkit
-
 
 # What is this module's name.
 MODULE_NAME ?= ldm
@@ -80,7 +78,6 @@ vpath %.align.gz  ${LDM_DIR_PFX}../wal/
 all:
 
 
-
 ########################################
 # LEXICALIZED DISTORTION MODEL.
 ifdef USE_LDM
@@ -100,7 +97,6 @@ ${LDM_FILE}:  LDM_FILTER_CMD=egrep -v '\|( 0)* 1( 0)* 1( 0)*$$'
 endif
 
 
-
 ########################################
 # HIERARCHICAL LEXICALIZED DISTORTION MODEL.
 ifdef USE_HLDM
@@ -118,7 +114,6 @@ hldm:
 ifdef HLDM_FILTER_SINGLETONS
 ${HLDM_FILE}:  LDM_FILTER_CMD=egrep -v '\|( 0)* 1( 0)* 1( 0)*$$'
 endif
-
 
 
 #################################################################################
@@ -187,6 +182,7 @@ with open(".Makefile.deps", "w") as df:
 
    print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
 endef
+
 #$(info WORD ALIGNMENT: ${DEPS.PYSCRIPT})
 $(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.deps
@@ -195,7 +191,6 @@ include .Makefile.deps
 # Pick up filtered corpora for (h)ldm models based on IBM4.
 %.ibm4${COUNTSX}:  L1X := ${SRC_LANG}.lc
 %.ibm4${COUNTSX}:  L2X := ${TGT_LANG}.lc
-
 
 
 ########################################
@@ -210,8 +205,6 @@ clean.tpldm:
 	${RM} -r *.tpldm
 
 
-
-
 ################################################################################
 # HELPERS.
 ########################################
@@ -222,7 +215,6 @@ clean.tpldm:
 # Disabled because it breaks the building of ldm.counts if actually invoked.
 #%${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}:
 #	[[ -f "../tm/$@" ]] || ${MAKE} -C ../tm $@
-
 
 
 ########################################
@@ -238,7 +230,6 @@ help:
 	@echo
 	@echo "The main targets in this Makefile are:"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
-
 
 
 ########################################
@@ -261,13 +252,11 @@ hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
-
 ########################################
 # Resources Summary
 .PHONY:  time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
-
 
 
 ########################################
@@ -288,11 +277,6 @@ else
 portageLive:
 	@echo "Not using a lexicalized distortion model." >&2
 endif
-
-
-
-
-
 
 
 

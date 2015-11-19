@@ -20,15 +20,16 @@ include ../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
-include Makefile.toolkit
-
-# Include the master toolkit
+# Include the master toolkit.
 include ../../Makefile.toolkit
+
+# Include the MixLM toolkit.
+include Makefile.toolkit
 
 # Override the default LM ORDER setting in the LM Makefile.toolkit
 ORDER ?= 5
 
-# Include the LM toolkit
+# Include the LM toolkit.
 include ../lm/Makefile.toolkit
 
 
@@ -48,12 +49,13 @@ MIXLM_COMPONENTS := $(strip ${MIXLM} $(notdir ${MIXLM_PRETRAINED_TGT_LMS}))
 TUNE_SETS = ${TUNE_DECODE} $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})
 
 .DEFAULT_GOAL := help
-.DELETE_ON_ERROR:
 # We don't need to keep %.distances %.weights
 #.INTERMEDIATE: components_${SRC_LANG}, components_${TGT_LANG}
 .INTERMEDIATE: $(addsuffix .distances, ${TUNE_SETS})
 .INTERMEDIATE: $(addsuffix .weights, ${TUNE_SETS})
 .SECONDARY:
+.SUFFIXES:
+.DELETE_ON_ERROR:
 
 
 # Watch out for already trained lms.

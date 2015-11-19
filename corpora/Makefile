@@ -1,9 +1,10 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
-#
-# @author Samuel Larkin
+
 # @file Makefile
 # @brief Simple preprocessing of corpora, mainly lowercasing.
+#
+# @author Samuel Larkin
 #
 # Technologies langagieres interactives / Interactive Language Technologies
 # Inst. de technologie de l'information / Institute for Information Technology
@@ -11,15 +12,14 @@
 # Copyright 2008, Sa Majeste la Reine du Chef du Canada
 # Copyright 2008, Her Majesty in Right of Canada
 
-
 # Mandatory include: master config file.
 include ../Makefile.params
 
-# Include the config file.
+# Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
-# Lastly include the master toolkit
+# Include the master toolkit.
 include ../Makefile.toolkit
 
 # If your files are not tokenize, they should have the RAWX extentsion.
@@ -117,11 +117,10 @@ help:
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
-.DELETE_ON_ERROR:
-.SUFFIXES:
 # .SECONDARY is required when train_??.al is not gzipped
 .SECONDARY:
-
+.SUFFIXES:
+.DELETE_ON_ERROR:
 
 
 # What are the final ouptut so we can manipulate them as a whole.
@@ -290,7 +289,6 @@ tok.tgt:  tok.${TGT_LANG}
 tok.${TGT_LANG}:  $(filter %_${TGT_LANG}${ALIGNX}${GZ} %_${TGT_LANG}${ALIGNX}, ${TOK})
 
 
-
 ########################################
 # TRUECASE.
 # Define what corpora we need truecased/tokenized for the truecase model.
@@ -309,7 +307,6 @@ tc: ${TC}
 %${TCX}${GZ}: %${ALIGNX}${GZ}
 	@${check_utf8}
 	ln -fs $< $@
-
 
 
 ########################################
@@ -331,7 +328,6 @@ ${TUNE_MIXTM_MULTIPLE_REFERENCES}_${SRC_LANG}${LANGX}:  $(call CREATE_REFERENCE_
 	| tee >(cut -f1 --delimiter= > $@) \
 	| cut -f2 --delimiter= > $(@:_${SRC_LANG}${LANGX}=_${TGT_LANG}${LANGX})
 endif
-
 
 
 ########################################
@@ -433,13 +429,11 @@ endif
 	zcat $< | ${TIME_MEM} $(or ${LOWERCASE_${TGT_LANG}}, ${LOWERCASE}) ${LOG_STDERR} | gzip > $@
 
 
-
 ########################################
 # Shortcut to only create final translation models' corpora.
 .PHONY: tm
 tm: SHELL=${LOCAL_SHELL}
 tm: ${TM_LC}
-
 
 
 ########################################
@@ -456,7 +450,6 @@ rule: ${RULE}
 	@$(check_utf8)
 	${RP_SHELL_OPTS} ${TIME_MEM} \
 	$(or ${MARK_RULE_${SRC_LANG}}, ${MARK_RULE_DEFAULT}) < $< > $@ ${LOG_STDERR}
-
 
 
 # NOTE: here TRANSLATE_SET must contain the prefix only.
@@ -480,7 +473,6 @@ _LOCAL=1 file ${FILE_OPTS} $< | egrep -qi 'charset=utf-8|ASCII' || echo "WARNING
 endef
 
 
-
 ifeq ("${SRC_LANG}","ch")
 ../models/portageLive/plugins:
 	mkdir -p $@
@@ -492,7 +484,6 @@ endif
 .PHONY: portageLive
 portageLive:
 	@true
-
 
 
 ########################################
@@ -515,7 +506,6 @@ clean.logs:
 # Hide logs from user's view into .logs
 hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
-
 
 
 ################################################################################
@@ -544,7 +534,6 @@ ifndef TOKENIZER_${TGT_LANG}
 $(error You must define TOKENIZER_${TGT_LANG})
 endif
 endif
-
 
 
 # Verify the presence of the target language model's corpus file.
@@ -655,14 +644,12 @@ endif
 endif
 
 
-
 ################################################################################
 # HELPERS
 
 # Auto compress files.
 %.gz:  %
 	cat $< | gzip > $@
-
 
 
 .PHONY: debug
@@ -704,4 +691,3 @@ unittest1:  export DO_CE = 1
 unittest1:  export TC_USE_SRC_MODELS = 1
 unittest1:
 	${MAKE} all
-

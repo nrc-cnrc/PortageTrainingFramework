@@ -1,32 +1,32 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
+
+# @file Makefile
+# @brief Tune/train a rescoring model.
 #
 # @author Samuel Larkin
-# @file Makefile
-# @brief Tunes/trains a rescoring model.
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, Her Majesty in Right of Canada
-
+# Copyright 2008, 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2015, Her Majesty in Right of Canada
 
 # Mandatory include: master config file.
 include ../../Makefile.params
 
-# Include the config file.
+# Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
-# Lastly include the master toolkit
+# Include the master toolkit.
 include ../../Makefile.toolkit
-
 
 # What is this module's name.
 MODULE_NAME ?= rescore
 
 # Define languages info.
+# SRC_LANG and TGT_LANG are defined in the master Makefile.params.
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
 SRCX  ?= _${SRC_LANG}${LANGX}
@@ -89,7 +89,6 @@ endif
 endif
 
 
-
 .DEFAULT_GOAL := help
 .SECONDARY:
 .SUFFIXES:
@@ -101,10 +100,8 @@ vpath %${TGTX}  ${CORPORA_DIR}
 vpath %${RULEX} ${CORPORA_DIR}
 
 
-
 .PHONY: all
 all: train
-
 
 
 .PHONY: help
@@ -118,14 +115,12 @@ help:
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
-
 # What the user can expect from this module.
 .PHONY: list_final_output
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
 	@echo "${RESCORING_MODEL}"
-
 
 
 ########################################
@@ -148,13 +143,11 @@ hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
-
 ########################################
 # Resources Summary
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
-
 
 
 ########################################
@@ -165,7 +158,6 @@ check_decoding_model: SHELL=${LOCAL_SHELL}
 check_decoding_model:
 	@[[ -e ${DECODING_MODEL_DIR}/${DECODING_MODEL} ]] \
 	|| ! echo "ERROR: No decoding model (${DECODING_MODEL}) available. Please train ${DECODING_MODEL_DIR} first!" >&2
-
 
 
 ########################################
@@ -182,7 +174,6 @@ ${UNTUNED_RESCORING_MODEL}: ${RESCORING_MODEL_TEMPLATE}
 	      -e "s#HMM\\(.\\)BKW#${IBM_DIR}/hmm\\1.${SRC_GIVEN_TGTX}#" \
 	| egrep -v '^#' \
 	>> $@
-
 
 
 ########################################
@@ -216,7 +207,6 @@ clean.rescore_train:
 	${RM} -r gen-features-parallel-output.* workdir-${TUNE_RESCORE_RULE}-${NBEST_SIZE}best
 
 
-
 ########################################
 # Create a specific canoe.ini per test set.
 # You could add some specific target if you need to customize a decoding model
@@ -238,7 +228,6 @@ clean.decoding.model:
 	${RM} ${DECODING_MODEL}.*
 
 
-
 ########################################
 # Sparse models need tuned weights
 ifdef USE_SPARSE
@@ -258,7 +247,6 @@ clean.sparse:
 	${RM} rmodels_sparse*.wts.gz
 
 
-
 ################################################################################
 # HELPERS
 
@@ -268,7 +256,6 @@ clean.sparse:
 configtool: SHELL=${LOCAL_SHELL}
 configtool: ${DECODING_MODEL_DIR}/${DECODING_MODEL}
 	configtool check $<
-
 
 
 ########################################

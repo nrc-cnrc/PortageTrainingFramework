@@ -18,16 +18,15 @@
 # Mandatory include: master config file.
 include ../../Makefile.params
 
-# Include the config file.
+# Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
-# Include the master toolkit
+# Include the master toolkit.
 include ../../Makefile.toolkit
 
-# Include the wcl toolkit
+# Include the WCL toolkit.
 include Makefile.toolkit
-
 
 # What is this module's name?
 MODULE_NAME ?= wcl
@@ -51,6 +50,8 @@ vpath %${CORPUS_EXT} ${CORPORA_DIR}
 
 
 .DEFAULT_GOAL := help
+#.SECONDARY:
+.SUFFIXES:
 .DELETE_ON_ERROR:
 
 
@@ -109,7 +110,6 @@ clean: SHELL=${LOCAL_SHELL}
 clean: clean.content clean.logs
 
 clean.content: SHELL=${LOCAL_SHELL}
-
 clean.content:
 	${RM} *.classes *.classes.cats
 

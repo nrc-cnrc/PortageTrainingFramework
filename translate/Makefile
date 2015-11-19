@@ -15,18 +15,18 @@
 # Mandatory include: master config file.
 include ../Makefile.params
 
-# Include the config file.
+# Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
-# Lastly include the master toolkit
+# Include the master toolkit.
 include ../Makefile.toolkit
-
 
 # What is this module's name.
 MODULE_NAME ?= translate
 
 # Define languages info.
+# SRC_LANG and TGT_LANG are defined in the master Makefile.params.
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
 SRCX  ?= _${SRC_LANG}${LANGX}
@@ -36,7 +36,8 @@ SRCTCX ?= _${SRC_LANG}${ALIGNX}
 TGTTCX ?= _${TGT_LANG}${ALIGNX}
 
 # Define any value to the following variable if you are doing rescoring.
-# If you are rescoring, there are some step that can be skipped to save cpu
+# DO_RESCORING is normally defined in the master Makefile.params file.
+# If you are rescoring, there are some steps that can be skipped to save cpu
 # power :D.
 #DO_RESCORING = 1
 
@@ -44,6 +45,7 @@ TGTTCX ?= _${TGT_LANG}${ALIGNX}
 ENCODING ?= UTF-8
 
 # Source language locale.
+# SRC_LOCALE is normally defined in the master Makefile.params file.
 SRC_LOCALE ?= ${SRC_LANG}_${SRC_LOCALE_COUNTRY}.${ENCODING}
 # SRC_COUNTRY_CODE should be the same as SRC_LOCALE_COUNTRY, but the following
 # definition handles the situation where the SRC_LOCALE has been defined, and

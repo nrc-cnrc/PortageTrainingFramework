@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
-#
+
 # @file Makefile
 # @brief Train coarse language model files.
 #
@@ -12,15 +12,14 @@
 # Copyright 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2015, Her Majesty in Right of Canada
 
-
 # Mandatory include: master config file.
 include ../../Makefile.params
 
-# Include the config file.
+# Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
-# Include the master toolkit
+# Include the master toolkit.
 include ../../Makefile.toolkit
 
 # Override the default SMOOTHER setting in the LM Makefile.toolkit
@@ -39,9 +38,8 @@ endif
 # Typically we use a higher order for coarse LMs than for regular word-based LMs.
 ORDER ?= 8
 
-# Include the LM toolkit
+# Include the LM toolkit.
 include ../lm/Makefile.toolkit
-
 
 # What is this module's name?
 MODULE_NAME ?= coarselm
@@ -87,8 +85,9 @@ vpath %.classes ../wcl
 
 
 .DEFAULT_GOAL := help
-.DELETE_ON_ERROR:
 .SECONDARY:
+.SUFFIXES:
+.DELETE_ON_ERROR:
 
 
 ########################################
@@ -221,23 +220,6 @@ else
 portageLive:
 	@echo "No coarse LMs defined, nothing to do." >&2
 endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

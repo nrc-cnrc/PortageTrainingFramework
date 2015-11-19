@@ -6,21 +6,20 @@
 # @brief Master makefile for the framework, handles dependencies between modules.
 #
 # Traitement multilingue de textes / Multilingual Text Processing
-# Technologies de l'information et des communications /
-#    Information and Communications Technologies
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2008, 2012, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, 2012 Her Majesty in Right of Canada
+# Copyright 2008, 2012, Her Majesty in Right of Canada
 
 # Mandatory include: master config file.
 include Makefile.params
 
-# Lastly include the master toolkit
+# Include the master toolkit.
 include Makefile.toolkit
 
 .DEFAULT_GOAL := help
-.DELETE_ON_ERROR:
 .SUFFIXES:
+.DELETE_ON_ERROR:
 
 .PHONY: all
 all: SHELL=${LOCAL_SHELL}
@@ -51,7 +50,6 @@ endif
 	@echo
 	@echo "The main targets in this Makefile are:"
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
-
 
 
 .PHONY: doc
@@ -102,7 +100,6 @@ corpora: check_setup
 	${MAKE} -C corpora all
 
 
-
 # Create the Language Models (LM, MixLM, CoarseLM, BiLM).
 # Create the word classes required for CoarseLM (wcl)
 # Create the Lexicalized Distortion Models (LDM).
@@ -116,11 +113,9 @@ models lm mixlm wcl coarselm bilm ldm sparse tc tm: %: corpora
 	${MAKE} -C models $@ DO_UPDATE_PRETRAINED_LINKS=1
 
 
-
 .PHONY: tune_main
 tune_main: SHELL=${LOCAL_SHELL}
 tune_main: tune_variant		# tune_variant tunes the main variant
-
 
 
 # Tune and test using multiple alternate tuning variants, if necessary.
@@ -132,7 +127,6 @@ ifneq ($(strip ${TEST_SET}),)
 all: $(addprefix eval., ${TUNE_DECODE_VARIANTS})
 endif
 endif
-
 
 
 TUNE_VARIANT_LIST := tune_variant $(addprefix tune_variant., ${TUNE_DECODE_VARIANTS})
@@ -148,7 +142,6 @@ ${TUNE_LIST}: %: models
 	${MAKE} -C models $@
 
 
-
 .PHONY: translate $(addprefix translate., ${TUNE_DECODE_VARIANTS})
 # Apply tuned weights to the test sets
 translate $(addprefix translate., ${TUNE_DECODE_VARIANTS}): SHELL=${LOCAL_SHELL}
@@ -160,13 +153,11 @@ translate $(addprefix translate., ${TUNE_DECODE_VARIANTS}): translate%: tune_var
 	${MAKE} -C translate$* all TUNE_VARIANT_TAG=$*
 
 
-
 .PHONY: eval $(addprefix eval., ${TUNE_DECODE_VARIANTS})
 # Get BLEU scores for the test set(s)
 eval $(addprefix eval., ${TUNE_DECODE_VARIANTS}): SHELL=${LOCAL_SHELL}
 eval $(addprefix eval., ${TUNE_DECODE_VARIANTS}): eval%: translate%
 	${MAKE} -C translate$* bleu TUNE_VARIANT_TAG=$*
-
 
 
 .PHONY: check_setup
@@ -184,7 +175,6 @@ endif
 log.INSTALL_SUMMARY: SHELL=${LOCAL_SHELL}
 log.INSTALL_SUMMARY:
 	cat `dirname $$(which train_ibm)`/INSTALL_SUMMARY >log.INSTALL_SUMMARY
-
 
 
 ########################################
@@ -224,7 +214,6 @@ prepare.corpora:
 	${MAKE} -C corpora -f ${PREPARE_CORPORA_MAKEFILE} all
 
 
-
 ########################################
 # Resource Summary
 .PHONY: resource_summary
@@ -242,7 +231,6 @@ time-mem:
 	@time-mem-tally.pl `find models translate translate.* -type f -name log.\* -o -name \*.log | sort` \
 	| second-to-hms.pl \
 	| expand-auto.pl
-
 
 
 DU_DIRS = models/ibm/{ibm,hmm}* models/jpt/jpt* models/tm/cpt* models/*lm/*lm*
@@ -273,11 +261,6 @@ summary: time-mem
 	   echo "Disk usage for portageLive models:"; \
 	   du -hL models/portageLive; \
 	fi
-
-
-
-
-
 
 
 

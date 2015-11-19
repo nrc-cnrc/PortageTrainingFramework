@@ -1,22 +1,18 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap:filetype=make
+
 # @file Makefile
-# @brief This file contains dependencies to create Joint Phrase Tables.
+# @brief Dependencies to create Joint Phrase Tables.
 #
 # @author Samuel Larkin
 #
 # Traitement multilingue de textes / Multilingual Text Processing
-# Technologies de l'information et des communications /
-#    Information and Communications Technologies
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2015, Her Majesty in Right of Canada
 
-
 JPT_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
-
-# Source file requirements.
-# <PREFIX>_<LANGUAGE>.<LANGX>
 
 # Mandatory include: master config file.
 include ${JPT_DIR_PFX}../../Makefile.params
@@ -25,13 +21,11 @@ include ${JPT_DIR_PFX}../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${JPT_DIR_PFX}${MAKEFILE_PARAMS}
 
-# This is the Makefile that contains all targets required to build Translation
-# Models and some variable's defintion that might be used by the user in its
-# Makefile.params.
-include ${JPT_DIR_PFX}Makefile.toolkit
-
-# Lastly include the master toolkit
+# Include the master toolkit.
 include ${JPT_DIR_PFX}../../Makefile.toolkit
+
+# Include the toolkit for building JPT models.
+include ${JPT_DIR_PFX}Makefile.toolkit
 
 # What is this module's name.
 MODULE_NAME ?= jpt
@@ -77,7 +71,7 @@ MAIN_TARGETS :=  all  clean  help  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT
 $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained):  %_model:  %_jpt
 
 
-pretrained_jpt:  # There is no dependency for pretrained models.
+pretrained_jpt:  # No dependencies for pretrained models.
 
 merged_jpt:
 
@@ -85,7 +79,6 @@ mix_jpt:  ${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
 mix_jpt:  $(foreach c, ${MIXTM}, ${JPT_MERGED_PFX}.$c.${JOINTX})
 
 indicator_jpt:
-
 
 
 ########################################
@@ -102,8 +95,6 @@ help:
 	@echo
 	@echo "Expected output files are:"
 	@sed -e 's/  */\n/g' <<< "${EXPECTED_FILES}"
-
-
 
 
 ########################################
@@ -124,13 +115,11 @@ hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
-
 ########################################
 # Resources Summary
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
-
 
 
 ################################################################################
@@ -248,9 +237,11 @@ with open(".Makefile.deps", "w") as df:
 
    print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
 endef
+
 #$(info JPT: ${DEPS.PYSCRIPT})
 $(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.deps
+
 
 ${JPT_MODEL_PFX}.${IBM4_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
 ${JPT_MODEL_PFX}.${IBM4_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
@@ -260,9 +251,6 @@ ifdef USE_MIXTM
 %.${TUNE_MIXTM_FINAL}.${JOINTX}:  GEN_JPT_PARALLEL_OPTIONS =
 %.${TUNE_MIXTM_FINAL}.${JOINTX}:  JPT_MODEL_TYPE =
 endif  # ifdef USE_MIXTM
-
-
-
 
 
 ################################################################################

@@ -1,20 +1,18 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap:filetype=make
+
 # @file Makefile
-# @brief This file contains dependencies to create Significance Pruned Joint Phrase Tables.
+# @brief Dependencies to create Significance Pruned Joint Phrase Tables.
 #
 # @author Samuel Larkin
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2015, Sa Majeste la Reine du Chef du Canada /
 # Copyright 2015, Her Majesty in Right of Canada
 
 SIG_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
-
-# Source file requirements.
-# <PREFIX>_<LANGUAGE>.<LANGX>
 
 # Mandatory include: master config file.
 include ${SIG_DIR_PFX}../../Makefile.params
@@ -23,13 +21,11 @@ include ${SIG_DIR_PFX}../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${SIG_DIR_PFX}${MAKEFILE_PARAMS}
 
-# This is the Makefile that contains all targets required to build Translation
-# Models and some variable's defintion that might be used by the user in its
-# Makefile.params.
-include ${SIG_DIR_PFX}Makefile.toolkit
-
-# Lastly include the master toolkit
+# Include the master toolkit.
 include ${SIG_DIR_PFX}../../Makefile.toolkit
+
+# Include the toolkit for building Significance Pruned JPTs.
+include ${SIG_DIR_PFX}Makefile.toolkit
 
 # What is this module's name.
 MODULE_NAME ?= sig
@@ -75,7 +71,6 @@ all:
 endif
 
 
-
 MAIN_TARGETS :=  all  clean  help  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained)
 $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained):  %_model:  %_sig
 
@@ -89,7 +84,6 @@ mix_sig:
 
 # Dependencies for sub cpt are defined in the python code.
 indicator_sig:
-
 
 
 ########################################
@@ -106,8 +100,6 @@ help:
 	@echo
 	@echo "Expected output files are:"
 	@sed -e 's/  */\n/g' <<< "${EXPECTED_FILES}"
-
-
 
 
 ########################################
@@ -128,13 +120,11 @@ hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
-
 ########################################
 # Resources Summary
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
-
 
 
 ################################################################################
@@ -230,6 +220,7 @@ with open(".Makefile.deps", "w") as df:
 
    print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
 endef
+
 #$(info SIG: ${DEPS.PYSCRIPT})
 $(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.deps
@@ -238,7 +229,6 @@ include .Makefile.deps
 # % should match a corpora-stem
 ${SIG_MODEL_PFX}.${IBM4_MODEL_PFX}.%.${JOINTX}:  override L1X = ${SRC_LANG}.lc
 ${SIG_MODEL_PFX}.${IBM4_MODEL_PFX}.%.${JOINTX}:  override L2X = ${TGT_LANG}.lc
-
 
 
 ################################################################################

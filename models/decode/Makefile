@@ -1,32 +1,32 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
+
+# @file Makefile
+# @brief Tune/train a decoding model.
 #
 # @author Samuel Larkin
-# @file Makefile
-# @brief Tunes/trains a decoding model.
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, Her Majesty in Right of Canada
-
+# Copyright 2008, 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2015, Her Majesty in Right of Canada
 
 # Mandatory include: master config file.
 include ../../Makefile.params
 
-# Include the config file.
+# Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
-# Lastly include the master toolkit
+# Include the master toolkit.
 include ../../Makefile.toolkit
-
 
 # What is this module's name.
 MODULE_NAME ?= decode
 
 # Define languages info.
+# SRC_LANG and TGT_LANG are defined in the master Makefile.params.
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
 SRCX  ?= ${RULEX}
@@ -107,9 +107,9 @@ endif
 endif
 
 
-
 .DEFAULT_GOAL := help
 .SECONDARY:
+.SUFFIXES:
 .DELETE_ON_ERROR:
 
 # Threre are two differents vpath for heldout because in the chinese case for example the src_ext != tgt_ext
@@ -120,10 +120,8 @@ vpath %${RULES}  ${CORPORA_DIR}
 vpath ${DECODING_MODEL_TEMPLATE} ${TEMPLATE_DIR}
 
 
-
 .PHONY: all
 all: train
-
 
 
 .PHONY: help
@@ -137,14 +135,12 @@ help:
 	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
 
 
-
 # What the user can expect from this module.
 .PHONY: list_final_output
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output:"
 	@echo "${DECODING_MODEL}"
-
 
 
 ########################################
@@ -167,13 +163,11 @@ hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
-
 ########################################
 # Resources Summary
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
-
 
 
 ########################################
@@ -183,7 +177,6 @@ check_template: SHELL=${LOCAL_SHELL}
 check_template:
 	@[[ -f ${TEMPLATE_DIR}/${DECODING_MODEL_TEMPLATE} ]] \
 	|| ! echo "ERROR: Cannot find this template: ${DECODING_MODEL_TEMPLATE}" >&2
-
 
 
 ########################################
@@ -307,7 +300,6 @@ clean.canoe.ini:
 	${RM} ${DECODING_MODEL} tmp.${UNTUNED_DECODING_MODEL} rmodels_sparse*.wts.gz
 
 
-
 ########################################
 # Training a decoding model.
 .PHONY: train
@@ -399,6 +391,7 @@ clean.sparseWtsLive:
 endif
 
 
+
 ################################################################################
 # HELPERS
 .PHONY: testsuite
@@ -461,7 +454,6 @@ unittest5:  ${DECODING_MODEL}
 	|| ! echo "Recommended practice is to use Lattice Mira for tuning but the framework is not using it by default" >&2
 
 
-
 testsuite:  tune_with_tplms.testcase
 tune_with_tplms.testcase:  export TRAIN_LM := lm-train sublm3
 tune_with_tplms.testcase:  export MIXLM := sublm1 sublm2 sublm3 lm-train
@@ -493,4 +485,3 @@ tune_with_tplms.testcase:
 	[[ `configtool list-all-files canoe.ini.cow | grep -c '.tplm$$'` -eq 10 ]] || ! echo "$@ should be using 10 tplm."
 	[[ `configtool list-bilm canoe.ini.cow | grep -c bilm-train` -eq 1 ]] || ! echo "$@ failed to use bilm."
 	[[ `configtool list-bilm canoe.ini.cow | cut -f 1 -d ';' | grep -c '.tplm$$'` -eq 1 ]] || ! echo "$@ should be using 10 tplm."
-

@@ -1,21 +1,19 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
+
+# @file Makefile
+# @brief Dependencies to create Conditional Phrase Tables.
 #
 # @author Samuel Larkin
-# @file Makefile
-# @brief Train phrase tables.
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2008, 2012, 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2008, 2012, 2015, Her Majesty in Right of Canada
 
 TM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
-$(info TM_DIR_PFX: ${TM_DIR_PFX})
-
-# Source file requirements.
-# <PREFIX>_<LANGUAGE>.<LANGX>
+#$(info TM_DIR_PFX: ${TM_DIR_PFX})
 
 # Variables we use from ../../Makefile.params:
 # PT_TYPES indicates what type of phrase table we want to generate.
@@ -27,13 +25,11 @@ include ${TM_DIR_PFX}../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${TM_DIR_PFX}${MAKEFILE_PARAMS}
 
-# This is the Makefile that contains all targets required to build Translation
-# Models and some variable's defintion that might be used by the user in its
-# Makefile.params.
-include ${TM_DIR_PFX}Makefile.toolkit
-
-# Lastly include the master toolkit
+# Include the master toolkit.
 include ${TM_DIR_PFX}../../Makefile.toolkit
+
+# Include the toolkit for building Translation Models.
+include ${TM_DIR_PFX}Makefile.toolkit
 
 # What is this module's name.
 MODULE_NAME ?= tm
@@ -42,6 +38,7 @@ MODULE_NAME ?= tm
 CORPORA_DIR ?= ${TM_DIR_PFX}../../corpora
 
 # We need a dev set for tuning the mixture weights in a mixtm.
+# TUNE_MIXTM is defined in the master Makefile.params.
 #TUNE_MIXTM ?= ${TUNE_DECODE}
 
 # This script might produce directory and we want to easily remove them.
@@ -94,7 +91,6 @@ MAIN_TARGETS :=  all  clean  help  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT
 $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained):  %_model:  %_cpt
 
 
-
 ########################################
 # HELP OPTIONS
 .PHONY: help
@@ -111,13 +107,11 @@ help:
 	@sed -e 's/  */\n/g' <<< "$(strip $(foreach pt,${PT_TYPES}, ${${pt}_list}))"
 
 
-
 # What the user can expect from this module.
 .PHONY: list_final_output
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output: $(addsuffix _list,${PT_TYPES})
 	@echo "are the expected final outputs."
-
 
 
 ########################################
@@ -138,13 +132,11 @@ hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
-
 ########################################
 # Resources Summary
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
-
 
 
 ################################################################################
@@ -203,10 +195,10 @@ with open(".Makefile.cpt.deps", "w") as df:
          print("{m}_cpt_list += {filename}".format(m=wam, filename=filename), file=df)
 
 endef
+
 #$(info CPT: ${DEPS.PYSCRIPT})
 $(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.cpt.deps
-
 
 
 ################################################################################
@@ -256,7 +248,6 @@ ${pretrained_cpt_paths}: %:
 	@! echo "ERROR: Pre-trained TM file $@ does not exist."
 
 
-
 ################################################################################
 # MERGED CONDITIONAL PHRASE TABLES
 # requires: MERGED_CPT_ZN_MODEL & MERGED_CPT_JPT_TYPES to be properly defined.
@@ -298,9 +289,6 @@ endef
 #$(info MERGED CPT: ${DEPS.PYSCRIPT})
 $(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.merged_cpt.deps
-
-
-
 
 
 ################################################################################
@@ -345,8 +333,6 @@ ${CPT_MIX_PFX}.${L2_2_L1X}:  | ${MIX_CPT_META_DEPS}
 ${CPT_MIX_PFX}.${L2_2_L1X}:  $(foreach c, ${MIXTM}, ${MERGED_CPT_PREFIX}.$c.${L2_2_L1X}) \
                              $(foreach c, $(notdir ${MIXTM_PRETRAINED_TMS}), $c)
 ${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
-
-
 
 
 ################################################################################
@@ -399,12 +385,6 @@ clean.indicator:
 	${RM} -r j2m j2mr
 
 
-
-
-
-
-
-
 ################################################################################
 # Let's do some validation when the user wants a merged_cpt.
 ifeq ($(filter merged_cpt, ${PT_TYPES}),merged_cpt)
@@ -433,7 +413,6 @@ endif
 %_cpt_list: ; @echo ${$@}
 
 
-
 ################################################################################
 # Tightly Packed Phrase Tables.
 # We need the full file names to be able to trigger all tppt.
@@ -448,8 +427,5 @@ tppt portageLive: SHELL=${LOCAL_SHELL}
 tppt portageLive: ${tppt_list}
 
 
-
-
 # Add the unittest targets.
 -include Makefile.unittests
-

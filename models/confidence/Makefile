@@ -12,19 +12,24 @@
 # Copyright 2010, Sa Majeste la Reine du Chef du Canada /
 # Copyright 2010, Her Majesty in Right of Canada
 
+# Mandatory include: master config file.
+include ../../Makefile.params
 
-
-# Include the config file.
+# Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
+# Include the master toolkit.
+include ../../Makefile.toolkit
+
+# Include variable definitions needed for building the CE model.
+include Makefile.definition
+
+# Include the CE toolkit.
+include Makefile.toolkit
+
 # What is this module's name.
 MODULE_NAME ?= confidence
-
-include ../../Makefile.params
-include ../../Makefile.toolkit
-include Makefile.definition
-include Makefile.toolkit
 
 # Confidence Estimation model's name.
 CE_MODEL_NAME ?= ce_model
@@ -47,7 +52,6 @@ $(warning You must set DO_CE in Makefile.params, or some required models will no
 endif
 
 
-
 .DEFAULT_GOAL := help
 .SECONDARY:
 .SUFFIXES:
@@ -55,7 +59,6 @@ endif
 
 .PHONY: all
 all: train
-
 
 
 .PHONY: help
@@ -89,13 +92,11 @@ hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
-
 ########################################
 # Resources Summary
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
-
 
 
 ########################################
@@ -134,14 +135,12 @@ clean.sparse:
 ce-notm${INIX}: ce-notm${TEMPLATEX} ${CANOE_MODEL}
 
 
-
 ########################################
 # Tuning a confidence model.
 .PHONY: train
 train: ${CE_MODEL_NAME}${CEMX}
 
 ${CE_MODEL_NAME}${CEMX}: ce-notm${INIX} ${TUNE_CE_SRC} ${TUNE_CE_TGT}
-
 
 
 ########################################
@@ -176,4 +175,3 @@ else
 portageLive:
 	$(error ERROR: the portageLive target should not be called when DO_CE is not set.)
 endif
-

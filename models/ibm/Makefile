@@ -1,22 +1,18 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap:filetype=make
+
 # @file Makefile
-# @brief This file contains dependencies to create Word Alignment Models.
+# @brief Dependencies to create Word Alignment Models.
 #
 # @author Samuel Larkin
 #
 # Traitement multilingue de textes / Multilingual Text Processing
-# Technologies de l'information et des communications /
-#    Information and Communications Technologies
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2015, Her Majesty in Right of Canada
 
-
 IBM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
-
-# Source file requirements.
-# <PREFIX>_<LANGUAGE>.<LANGX>
 
 # Mandatory include: master config file.
 include ${IBM_DIR_PFX}../../Makefile.params
@@ -25,13 +21,11 @@ include ${IBM_DIR_PFX}../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${IBM_DIR_PFX}${MAKEFILE_PARAMS}
 
-# This is the Makefile that contains all targets required to build Phrase
-# Alignment Models and some variable's defintion that might be used by the user
-# in its Makefile.params.
-include ${IBM_DIR_PFX}Makefile.toolkit
-
-# Lastly include the master toolkit
+# Include the master toolkit.
 include ${IBM_DIR_PFX}../../Makefile.toolkit
+
+# Include the toolkit for building Phrase Alignment Models.
+include ${IBM_DIR_PFX}Makefile.toolkit
 
 # What is this module's name.
 MODULE_NAME ?= ibm
@@ -69,7 +63,6 @@ all:  $(and ${USE_HLDM}, hldm_wam)
 all:  $(and ${USE_BILM}, bilm_wam)
 
 
-
 ########################################
 # HELP OPTIONS
 .PHONY: help
@@ -84,7 +77,6 @@ help:
 	@echo
 	@echo "Expected output files are:"
 	@sed -e 's/  */\n/g' <<< "${EXPECTED_FILES}"
-
 
 
 MAIN_TARGETS :=  all  clean  help  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained)
@@ -112,8 +104,6 @@ endif
 fast_align_wam:  # Dependencies for sub cpt are defined in the python code.
 
 
-
-
 ########################################
 # Clean up
 .PHONY: clean clean.content clean.logs hide.logs
@@ -132,13 +122,11 @@ hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
-
 ########################################
 # Resources Summary
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
-
 
 
 ################################################################################
@@ -326,20 +314,15 @@ endif
 endif
 
 
-
 ################################################################################
 # DEBUGGING
 .PHONY:  debug
 debug:  word_alignment_models
 
 
-
 ifdef MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
 $(info ibm module using globbal word alignment model for mixture.)
 endif
-
-
-
 
 
 

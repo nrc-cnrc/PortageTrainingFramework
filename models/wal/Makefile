@@ -1,22 +1,18 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap:filetype=make
+
 # @file Makefile
-# @brief This file contains dependencies to create Word Alignment for corpora.
+# @brief Dependencies to create Word Alignment files for corpora.
 #
 # @author Samuel Larkin
 #
 # Traitement multilingue de textes / Multilingual Text Processing
-# Technologies de l'information et des communications /
-#    Information and Communications Technologies
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
 # Copyright 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2015, Her Majesty in Right of Canada
 
-
 WAL_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
-
-# Source file requirements.
-# <PREFIX>_<LANGUAGE>.<LANGX>
 
 # Mandatory include: master config file.
 include ${WAL_DIR_PFX}../../Makefile.params
@@ -25,13 +21,11 @@ include ${WAL_DIR_PFX}../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${WAL_DIR_PFX}${MAKEFILE_PARAMS}
 
-# This is the Makefile that contains all targets required to build Phrase
-# Alignment Models and some variable's defintion that might be used by the user
-# in its Makefile.params.
-include ${WAL_DIR_PFX}Makefile.toolkit
-
-# Lastly include the master toolkit
+# Include the master toolkit.
 include ${WAL_DIR_PFX}../../Makefile.toolkit
+
+# Include the toolkit for building Alignment files.
+include ${WAL_DIR_PFX}Makefile.toolkit
 
 # What is this module's name.
 MODULE_NAME ?= wal
@@ -80,7 +74,6 @@ all:  $(and ${USE_HLDM}, hldm_wal)
 all:  $(and ${USE_BILM}, bilm_wal)
 
 
-
 MAIN_TARGETS :=  all  clean  help  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained)
 $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained):  %_model:  %_wal
 
@@ -112,7 +105,6 @@ help:
 	@sed -e 's/  */\n/g' <<< "${EXPECTED_FILES}"
 
 
-
 ########################################
 # Clean up
 .PHONY: clean clean.content clean.logs hide.logs
@@ -131,13 +123,11 @@ hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
 
 
-
 ########################################
 # Resources Summary
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
-
 
 
 ########################################
@@ -295,11 +285,10 @@ with open(".Makefile.deps", "w") as df:
 
    print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
 endef
+
 #$(info ALIGNMENT: ${DEPS.PYSCRIPT})
 $(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.deps
-
-
 
 
 ################################################################################
@@ -309,9 +298,6 @@ debugAll:  alignment_files
 debug:  $(addsuffix _alignment, $(filter-out ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}))
 debugIBM4:  ${IBM4_MODEL_PFX}_alignment
 
-
-
 ifdef MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
 $(info ibm module using globbal word alignment model for mixture.)
 endif
-

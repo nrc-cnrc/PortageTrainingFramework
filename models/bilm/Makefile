@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
-#
+
 # @file Makefile
 # @brief Train non-coarse/coarse bidirectional language models (BiLM).
 #
@@ -15,11 +15,11 @@
 # Mandatory include: master config file.
 include ../../Makefile.params
 
-# Include the config file.
+# Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
-# Include the master toolkit
+# Include the master toolkit.
 include ../../Makefile.toolkit
 
 # Override the default SMOOTHER setting in the LM Makefile.toolkit
@@ -38,12 +38,11 @@ endif
 # Typically we use a higher order for coarse BiLMs than for regular word-based BiLMs.
 ORDER ?= 6
 
-# Include the LM toolkit
+# Include the LM toolkit.
 include ../lm/Makefile.toolkit
 
-# Include the WCL toolkit
+# Include the WCL toolkit.
 include ../wcl/Makefile.toolkit
-
 
 # What is this module's name?
 MODULE_NAME ?= bilm
@@ -110,7 +109,6 @@ vpath %.align.gz ../wal
 .DELETE_ON_ERROR:
 .SUFFIXES:
 .SECONDARY:
-
 
 
 ########################################
@@ -341,7 +339,6 @@ endif
 
 
 
-
 ################################################################################
 # TestSuite
 .PHONY:  testsuite
@@ -359,4 +356,3 @@ tplm.testcase:
 	${MAKE} -C ../wal all
 	time ${MAKE} -j 11 ${TESTCASE_OPTS} all
 	\ls -d bitokens.*.tplm || ! echo "Missing tplm." >&2
-

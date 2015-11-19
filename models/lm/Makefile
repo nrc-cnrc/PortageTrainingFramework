@@ -12,7 +12,6 @@
 # Copyright 2008, 2015, Sa Majeste la Reine du Chef du Canada
 # Copyright 2008, 2015, Her Majesty in Right of Canada
 
-
 LM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
 # Mandatory include: master config file.
@@ -22,12 +21,11 @@ include ${LM_DIR_PFX}../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${LM_DIR_PFX}${MAKEFILE_PARAMS}
 
-# Include the master toolkit
+# Include the master toolkit.
 include ${LM_DIR_PFX}../../Makefile.toolkit
 
-# Include the LM toolkit
+# Include the LM toolkit.
 include ${LM_DIR_PFX}Makefile.toolkit
-
 
 # What is this module's name.
 MODULE_NAME ?= lm
@@ -84,6 +82,7 @@ vpath %.marked.gz ${CORPORA_DIR}
 
 
 .DEFAULT_GOAL := help
+.SUFFIXES:
 .DELETE_ON_ERROR:
 
 
@@ -290,21 +289,6 @@ ppx.irstlm: $(foreach lm_name, ${LM_NAMES}, $(addprefix ppx.irstlm.${lm_name}, .
 ppx.irstlm.%: SHELL=${FRAMEWORK_SHELL}
 ppx.irstlm.%: ${PPX_TEST_SET} %
 	compile-lm $* --eval=$< >& $(basename $@)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

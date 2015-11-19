@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
-#
+
 # @file Makefile
 # @brief Train a truecasing model.
 #
@@ -12,24 +12,22 @@
 # Copyright 2008, 2011, Sa Majeste la Reine du Chef du Canada
 # Copyright 2008, 2011, Her Majesty in Right of Canada
 
-
 # Mandatory include: master config file.
 include ../../Makefile.params
 
-# Include the config file.
+# Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
 
-# Lastly include the master toolkit
+# Include the master toolkit.
 include ../../Makefile.toolkit
 
 # Override the default LM ORDER setting in the LM Makefile.toolkit
 # Typical lms for truecasing are 3g.
 ORDER ?= 3
 
-# Include the LM toolkit
+# Include the LM toolkit.
 include ../lm/Makefile.toolkit
-
 
 # What is this module's name.
 MODULE_NAME ?= tc
@@ -78,9 +76,10 @@ vpath %${SCX} ${CORPORA_DIR}
 
 
 .DEFAULT_GOAL := help
-.DELETE_ON_ERROR:
 #.INTERMEDIATE: ${TRAIN_LM}_${TGT_LANG}${LANGX}.marked.gz
 .SECONDARY:
+.SUFFIXES:
+.DELETE_ON_ERROR:
 
 
 .PHONY: help

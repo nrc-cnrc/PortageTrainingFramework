@@ -1,9 +1,10 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
-#
-# @author Eric Joanis
+
 # @file Makefile
 # @brief Trains sparse models, building the required data files.
+#
+# @author Eric Joanis
 #
 # Traitement multilingue de textes / Multilingual Text Processing
 # Tech. de l'information et des communications / Information and Communications Tech.
@@ -17,6 +18,18 @@ include ../../Makefile.params
 # Include and override parameters with user specific config file.
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${MAKEFILE_PARAMS}
+
+# Include the master toolkit.
+include ../../Makefile.toolkit
+
+# What is this module's name.
+MODULE_NAME ?= sparse
+
+
+.DEFAULT_GOAL := help
+#.SECONDARY:
+.SUFFIXES:
+.DELETE_ON_ERROR:
 
 ########################################
 # ALL

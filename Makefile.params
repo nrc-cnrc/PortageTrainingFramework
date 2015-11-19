@@ -21,9 +21,9 @@ endif
 ################################################################################
 # User definable variables
 
-# This is the from/source language (must be two lowercase letters)
+# Source/from language (must be two lowercase letters)
 SRC_LANG ?= en
-# This is the to/target language (must be two lowercase letters)
+# Target/to language (must be two lowercase letters)
 TGT_LANG ?= fr
 
 # Source locale country code (two uppercase letters).
@@ -655,7 +655,7 @@ LOCAL_SHELL = /bin/bash
 ifeq (${MAKELEVEL},0)
    PORTAGE_VERSION:=$(shell portage_info -version)
    ifeq (${PORTAGE_VERSION},)
-      $(warning Cannot find portage_info; make sure some version Portage is installed.)
+      $(warning Cannot find portage_info; make sure a version of PortageII is installed.)
    endif
 endif
 ifeq ($(strip $(shell portage_info -with-icu > /dev/null && echo "true")),true)
@@ -671,7 +671,6 @@ endif
 
 
 # We include src_lang specific configuration just before we validate the configuration.
-$(info MAKEFILE_LIST: ${MAKEFILE_LIST})
 -include $(dir $(lastword ${MAKEFILE_LIST}))Makefile.params.${SRC_LANG}
 
 

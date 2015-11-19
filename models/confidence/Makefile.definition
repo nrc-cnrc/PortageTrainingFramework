@@ -1,7 +1,7 @@
 # vim:noet:ts=3:nowrap
 
 # @file Makefile.definition
-# @brief Variables' definition for confidence estimation tuning.
+# @brief Variable definitions for confidence estimation tuning.
 #
 # @author Samuel Larkin
 #
@@ -11,11 +11,11 @@
 # Copyright 2010, Sa Majeste la Reine du Chef du Canada /
 # Copyright 2010, Her Majesty in Right of Canada
 
-
 # What is this module's name.
 MODULE_NAME ?= confidence
 
 # Define languages info.
+# SRC_LANG and TGT_LANG are defined in the master Makefile.params.
 #SRC_LANG ?= en
 #TGT_LANG ?= fr
 SRCX  ?= _${SRC_LANG}${LANGX}
