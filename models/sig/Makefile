@@ -71,8 +71,12 @@ all:
 endif
 
 
-MAIN_TARGETS :=  all  clean  help  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained)
+MAIN_TARGETS :=  all clean help
+
 $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained):  %_model:  %_sig
+MODEL_TARGETS := $(sort $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS}))
+MODEL_TARGETS += "\n " $(addsuffix _model, indicator mix merged pretrained)
+
 
 # Nothing to be done for pretrained models.
 pretrained_sig:
@@ -93,13 +97,10 @@ help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Create Significance Pruned Joint Frequency Phrase Table models."
 	@echo
-	@echo "To train your models, type: make all"
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@echo ${MAIN_TARGETS}
-	@echo
-	@echo "Expected output files are:"
-	@sed -e 's/  */\n/g' <<< "${EXPECTED_FILES}"
+	@echo "To train the significance pruned models, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
+	@echo -e " " ${MODEL_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
 ########################################
@@ -126,6 +127,8 @@ hide.logs: hide_logs_sub
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
+MAIN_TARGETS += time-mem
+
 
 ################################################################################
 # SIGNIFICANCE PRUNING JOINT PHRASE TABLES
@@ -144,6 +147,7 @@ clean.sig:
 sigs:  SHELL=${LOCAL_SHELL}
 sigs:  $(addsuffix _sig, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 sigs:  merged_sig
+
 
 define DEPS.PYSCRIPT
 from __future__ import print_function
@@ -175,27 +179,29 @@ with open(".Makefile.deps", "w") as df:
          sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
          print("{mergedModelFileName}:  {sigFileName}".format(mergedModelFileName=mergedModelFileName, sigFileName=sigFileName), file=df)
 
-
+   sig_types = "${PT_TYPES:_cpt=_sig}".split()
+   
    #############################################################################
    # META LEVEL TARGETS
    #####################################
    # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_siq
    WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}"
    WAMs = set(WAMs.strip().split())
+   expected_wams = "${EXPECTED_MODEL_TYPES_PFX}".split()
    for corpora in set("${TRAIN_TM}".strip().split()):
       for wam in WAMs:
          sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
          print("{m}_sig:  {sigFileName}".format(m=wam, sigFileName=sigFileName), file=df)
-         expectedFiles.add(sigFileName)
-
+	 if wam in expected_wams:
+            expectedFiles.add(sigFileName)
 
    #####################################
    # MERGED
    for corpora in "${TRAIN_TM}".strip().split():
       mergedFileName = "${SIG_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
       print("merged_sig:  {mergedFileName}".format(mergedFileName=mergedFileName), file=df)
-      expectedFiles.add(mergedFileName)
-
+      if "merged_sig" in sig_types:
+         expectedFiles.add(mergedFileName)
 
    #####################################
    # MIXTURE
@@ -203,8 +209,14 @@ with open(".Makefile.deps", "w") as df:
    for corpora in "${MIX_WAMS}".strip().split():
       mergedFileName = "${SIG_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
       print("mix_sig:  {mergedFileName}".format(mergedFileName=mergedFileName), file=df)
-      expectedFiles.add(mergedFileName)
+      if "mix_sig" in sig_types:
+         expectedFiles.add(mergedFileName)
 
+   expected_wams = "${EXPECTED_MODEL_TYPES_PFX}".split()
+   for corpora in "${MIX_WAMS}".split():
+      for wam in expected_wams:
+         sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+         expectedFiles.add(sigFileName)
 
    #####################################
    # INDICATOR
@@ -215,8 +227,8 @@ with open(".Makefile.deps", "w") as df:
       for wam in indicatorWAMs:
          sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
          print("indicator_sig:  {sigFileName}".format(sigFileName=sigFileName), file=df)
-         expectedFiles.add(sigFileName)
-
+         if "indicator_sig" in sig_types:
+            expectedFiles.add(sigFileName)
 
    print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
 endef

@@ -74,8 +74,11 @@ all:  $(and ${USE_HLDM}, hldm_wal)
 all:  $(and ${USE_BILM}, bilm_wal)
 
 
-MAIN_TARGETS :=  all  clean  help  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained)
+MAIN_TARGETS :=  all clean help
+
 $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained):  %_model:  %_wal
+MODEL_TARGETS := $(sort $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS}))
+MODEL_TARGETS += "\n " $(addsuffix _model, indicator mix merged pretrained)
 
 
 pretrained_wal:
@@ -96,13 +99,10 @@ help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Create Word Alignment Files for the corpora."
 	@echo
-	@echo "To train your models, type: make all"
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@echo ${MAIN_TARGETS}
-	@echo
-	@echo "Expected output files are:"
-	@sed -e 's/  */\n/g' <<< "${EXPECTED_FILES}"
+	@echo "To create the word alignment files, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
+	@echo -e " " ${MODEL_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
 ########################################
@@ -128,6 +128,8 @@ hide.logs: hide_logs_sub
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
+
+MAIN_TARGETS += time-mem
 
 
 ########################################
@@ -222,61 +224,58 @@ with open(".Makefile.deps", "w") as df:
 
    #############################################################################
    # META LEVEL TARGETS
-   def addModelsToMetaTarget(target, CORPORA, WAMs):
-      for corpora in set(CORPORA.strip().split()):
-         for wam in set(WAMs.strip().split()):
-            alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corpora)
+   def addModelsToMetaTarget(target, corpora, wams, expected=True):
+      for corp in set(corpora.strip().split()):
+         for wam in set(wams.strip().split()):
+            alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
             print("{target}_wal:  {alignment}".format(target=target(wam), alignment=alignmentFileName), file=df)
-            expectedFiles.add(alignmentFileName)
+	    if expected:
+               expectedFiles.add(alignmentFileName)
 
-   def wamType(*args):
-     if len(args):
-        return lambda wam: args[0]
-     else:
-        return lambda wam: wam
+   def wamType(wam_type=None):
+      return (lambda wam: wam) if wam_type is None else (lambda wam: wam_type)
 
+   pt_types = "${PT_TYPES:_cpt=}".split()
 
    #####################################
    # LEXICALIZED DISTORTION MODELS
    WAMs = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX})"
    addModelsToMetaTarget(wamType("ldm"), "$(sort ${TRAIN_LDM})", WAMs)
 
-
    #####################################
    # HIERARCHICAL LEXICALIZED DISTORTION MODELS
    WAMs = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX})"
    addModelsToMetaTarget(wamType("hldm"), "$(sort ${TRAIN_HLDM})", WAMs)
 
-
    #####################################
    # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam
-   WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}"
-   addModelsToMetaTarget(wamType(), "$(sort ${TRAIN_TM})", WAMs)
+   wams = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
+   addModelsToMetaTarget(wamType(), "$(sort ${TRAIN_TM})", wams)
 
+   wams = "$(filter-out ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
+   addModelsToMetaTarget(wamType(), "$(sort ${TRAIN_TM})", wams, False)
 
    #####################################
    # MIXTURE
    WAMs = "${EXPECTED_MODEL_TYPES_PFX}"
-   addModelsToMetaTarget(wamType("mix"), "$(sort ${TUNE_MIXTM_FINAL} ${MIX_WAMS})", WAMs)
-
+   expected = "mix" in pt_types
+   addModelsToMetaTarget(wamType("mix"), "$(sort ${TUNE_MIXTM_FINAL} ${MIX_WAMS})", WAMs, expected)
 
    #####################################
    # INDICATOR
    WAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
-   addModelsToMetaTarget(wamType("indicator"), "$(sort ${ALL_TMS})", WAMs)
-
+   expected = "indicator" in pt_types
+   addModelsToMetaTarget(wamType("indicator"), "$(sort ${ALL_TMS})", WAMs, expected)
 
    #####################################
    # BILM
    WAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
    addModelsToMetaTarget(wamType("bilm"), "$(sort ${TRAIN_BILM} ${TUNE_BILM})", WAMs)
 
-
    #####################################
    # FORCE ALIGN
    WAMs = "${IBM4_MODEL_PFX}"
    addModelsToMetaTarget(wamType("ibm4_force_align"), "$(sort ${FORCE_ALIGN_SET})", WAMs)
-
 
    print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
 endef

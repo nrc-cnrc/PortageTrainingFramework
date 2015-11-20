@@ -128,15 +128,18 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 
 ########################################
 # Fast Align
+${FAST_ALIGN_MODEL_PFX}: SHELL=${LOCAL_SHELL}
 ${FAST_ALIGN_MODEL_PFX}:
 	mkdir -p $@
 
+${FAST_ALIGN_MODEL_PFX}/mixwam.${SRC_LANG}_${TGT_LANG}.glued:  SHELL=${LOCAL_SHELL}
 ${FAST_ALIGN_MODEL_PFX}/mixwam.${SRC_LANG}_${TGT_LANG}.glued:  | ${FAST_ALIGN_MODEL_PFX}
 	fast_align_glue_corpora.py \
 		<(zcat -f $(sort $(filter %${L1X}, $+))) \
 		<(zcat -f $(sort $(filter %${L2X}, $+))) \
 	> $@
 
+${FAST_ALIGN_MODEL_PFX}/%.${SRC_LANG}_${TGT_LANG}.glued:  SHELL=${LOCAL_SHELL}
 ${FAST_ALIGN_MODEL_PFX}/%.${SRC_LANG}_${TGT_LANG}.glued:  %${L1X}  %${L2X}  | ${FAST_ALIGN_MODEL_PFX}
 	fast_align_glue_corpora.py $+ > $@
 
@@ -175,8 +178,10 @@ debug_giza:  $(addsuffix /${TGT_LANG}.lc, ${ALL_WAMS})
 
 .INTERMEDIATE:  1wam${L1X} 1wam${L2X}
 # how to create the 1wam filtered corpora pair for IBM4.
+1wam${L1X}:  SHELL=${LOCAL_SHELL}
 1wam${L1X}:  ${MIXTM:=${L1X}}
 	zcat -f $+ | gzip > $@
+1wam${L2X}:  SHELL=${LOCAL_SHELL}
 1wam${L2X}:  ${MIXTM:=${L2X}}
 	zcat -f $+ | gzip > $@
 

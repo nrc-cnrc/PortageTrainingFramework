@@ -67,8 +67,11 @@ vpath %.align.gz  ${JPT_DIR_PFX}../wal/
 all:  SHELL=${LOCAL_SHELL}
 all:  ${PT_TYPES:_cpt=_model}
 
-MAIN_TARGETS :=  all  clean  help  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained)
+MAIN_TARGETS :=  all clean help
+
 $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained):  %_model:  %_jpt
+MODEL_TARGETS := $(sort $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS}))
+MODEL_TARGETS += "\n " $(addsuffix _model, indicator mix merged pretrained)
 
 
 pretrained_jpt:  # No dependencies for pretrained models.
@@ -88,13 +91,10 @@ help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Create Joint Frequency Phrase Table Models."
 	@echo
-	@echo "To train your models, type: make all"
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@echo ${MAIN_TARGETS}
-	@echo
-	@echo "Expected output files are:"
-	@sed -e 's/  */\n/g' <<< "${EXPECTED_FILES}"
+	@echo "To train the JPT models, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
+	@echo -e " " ${MODEL_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
 ########################################
@@ -120,6 +120,8 @@ hide.logs: hide_logs_sub
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
+
+MAIN_TARGETS += time-mem
 
 
 ################################################################################
@@ -193,6 +195,7 @@ with open(".Makefile.deps", "w") as df:
          print("{jptFileName}:  {c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corpora, jptFileName=jptFileName), file=df)
          print("{jptFileName}:  {s}  {t}".format(jptFileName=jptFileName, **corporaNames(corpora, wam, "${L1}", "${L2}")), file=df)
 
+   jpt_types = "${PT_TYPES:_cpt=_jpt}".split()
 
    #############################################################################
    # META LEVEL TARGETS
@@ -200,28 +203,35 @@ with open(".Makefile.deps", "w") as df:
    # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_jpt
    WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}"
    WAMs = set(WAMs.strip().split())
+   expected_wams = "${EXPECTED_MODEL_TYPES_PFX}".split()
    for corpora in "$(sort ${TRAIN_TM})".strip().split():
       for wam in WAMs:
          jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
          print("{m}_jpt:  {jptFileName}".format(m=wam, jptFileName=jptFileName), file=df)
-         expectedFiles.add(jptFileName)
-
+	 if wam in expected_wams:
+	    expectedFiles.add(jptFileName)
 
    #####################################
    # MERGED
    for corpora in set("${TRAIN_TM}".strip().split()):
       mergedFileName = "${JPT_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
       print("merged_jpt:  {mergedFileName}".format(mergedFileName=mergedFileName), file=df)
-      expectedFiles.add(mergedFileName)
-
+      if "merged_jpt" in jpt_types:
+         expectedFiles.add(mergedFileName)
 
    #####################################
    # MIXTURE
    for corpora in set("${MIX_WAMS}".strip().strip().split()):
       mergedFileName = "${JPT_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
       print("mix_jpt:  {mergedFileName}".format(mergedFileName=mergedFileName), file=df)
-      expectedFiles.add(mergedFileName)
+      if "mix_jpt" in jpt_types:
+         expectedFiles.add(mergedFileName)
 
+   expected_wams = "${EXPECTED_MODEL_TYPES_PFX}".split()
+   for corpora in "${MIX_WAMS}".split():
+      for wam in expected_wams:
+         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+         expectedFiles.add(jptFileName)
 
    #####################################
    # INDICATOR
@@ -232,8 +242,8 @@ with open(".Makefile.deps", "w") as df:
       for wam in indicatorWAMs:
          jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
          print("indicator_jpt:  {jptFileName}".format(jptFileName=jptFileName), file=df)
-         expectedFiles.add(jptFileName)
-
+         if "indicator_jpt" in jpt_types:
+            expectedFiles.add(jptFileName)
 
    print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
 endef

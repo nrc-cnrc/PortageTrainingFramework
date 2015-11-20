@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap:filetype=make
-#
+
 # @file Makefile
 # @brief Train MixLM files.
 #
@@ -48,6 +48,13 @@ MIXLM_COMPONENTS := $(strip ${MIXLM} $(notdir ${MIXLM_PRETRAINED_TGT_LMS}))
 
 TUNE_SETS = ${TUNE_DECODE} $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})
 
+# Watch out for already trained lms.
+vpath %_${SRC_LANG}${LANGX} ../../corpora
+vpath %_${SRC_LANG}${LANGXZ} ../../corpora
+vpath %_${TGT_LANG}${LANGX} ../../corpora
+vpath %_${TGT_LANG}${LANGXZ} ../../corpora
+
+
 .DEFAULT_GOAL := help
 # We don't need to keep %.distances %.weights
 #.INTERMEDIATE: components_${SRC_LANG}, components_${TGT_LANG}
@@ -58,30 +65,26 @@ TUNE_SETS = ${TUNE_DECODE} $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})
 .DELETE_ON_ERROR:
 
 
-# Watch out for already trained lms.
-vpath %_${SRC_LANG}${LANGX} ../../corpora
-vpath %_${SRC_LANG}${LANGXZ} ../../corpora
-vpath %_${TGT_LANG}${LANGX} ../../corpora
-vpath %_${TGT_LANG}${LANGXZ} ../../corpora
-
+MAIN_TARGETS :=  all clean help
 
 ########################################
 # SETUP
-ifneq ($(filter-out clean clean.content clean.logs, ${MAKECMDGOALS}),)
+ifneq ($(filter-out help clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
 $(info ln -fs ${MODEL_DIR})
 $(shell ln -fs ${MODEL_DIR})
 endif
 
 ########################################
-
-
 .PHONY: help
 help: SHELL=${LOCAL_SHELL}
 help:
-	@echo "To train your mix language models, type: make all"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	${HELP_LM_TOOLKIT}
+	@echo "To train the mixture language models (MixLM), type: make all"
+	${HELP_LIST_MAIN_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
+########################################
 .PHONY: all
 all: SHELL=${LOCAL_SHELL}
 ifdef MIXLM_COMPONENTS
@@ -89,7 +92,7 @@ all:  mixlm
 all:  tplm
 else
 all:
-	@echo "No MixLMs defined, nothing to do."
+	@echo "No MixLMs defined, so nothing to do."
 endif
 
 
@@ -122,6 +125,8 @@ hide.logs: hide_logs_sub
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
+
+MAIN_TARGETS += time-mem
 
 ########################################
 
@@ -159,8 +164,8 @@ sublm.${TGT_LANG}: ${MIXLM_TGT_MODELS}
 # Create Language Models.
 # If for some reason one of the sublm was already created in models/lm, don't
 # recreate it, just link to it; otherwise build it here in the mixlm directory.
-$(info LMDIR_SRC_MODELS: ${LMDIR_SRC_MODELS})
-$(info LMDIR_TGT_MODELS: ${LMDIR_TGT_MODELS})
+#$(info LMDIR_SRC_MODELS: ${LMDIR_SRC_MODELS})
+#$(info LMDIR_TGT_MODELS: ${LMDIR_TGT_MODELS})
 ${LMDIR_SRC_MODELS} ${LMDIR_TGT_MODELS}: %.tplm:
 	ln -sf "${LM_DIR}/$@" .
 
@@ -185,6 +190,8 @@ $(notdir ${MIXLM_PRETRAINED_LMS}):
 	@$(if $(filter-out %.tplm, $@),! echo "ERROR: Name of pre-trained LM file must end with .tplm: $<")
 	ln -sf $< .
 
+EXPECTED_FILES := $(addsuffix .mixlm, ${TUNE_SETS})
+
 .PHONY: mixlm
 mixlm: $(addsuffix .mixlm, ${TUNE_SETS})
 
@@ -208,6 +215,9 @@ TPLMS :=  ${MIXLM_TGT_MODELS:.binlm${GZ}=.tplm} $(notdir ${MIXLM_PRETRAINED_TGT_
 .PHONY:  tplm
 tplm:  ${TPLMS}
 
+EXPECTED_FILES += ${TPLMS}
+
+
 ########################################
 # Transform the MixLM model for PortageLive
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/mixlm
@@ -222,28 +232,10 @@ portageLive:  ${TPLMS}
 		> ${PORTAGE_LIVE_DEST_DIR}/${TUNE_DECODE}${PLIVE_DECODE_VARIANT}.mixlm	
 else
 portageLive:
-	@echo "No MixLMs defined, nothing to do." >&2
+	@echo "No MixLMs defined, so nothing to do for portageLive." >&2
 endif
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+MAIN_TARGETS += portageLive
 
 
 
@@ -263,4 +255,3 @@ tplm.testcase:
 	[[ `\ls -d {lm-train,sublm1,sublm2,sublm3}_{en,fr}-kn-5g.tplm | \wc -l` -eq 8 ]] || ! echo "$* should produce 8 tplm." >&2
 	[[ `find -type l -name generic1.0_\*.tplm | \wc -l` -eq 2 ]] || ! echo "$* should have linked two generic tplm." >&2
 	[[ `cut -f 1 dev1.mixlm | grep -c '.tplm$$'` -eq 5 ]] || ! echo "$* should create a mixlm file with 5 tplm." >&2
-

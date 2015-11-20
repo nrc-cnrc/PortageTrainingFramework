@@ -58,29 +58,17 @@ vpath %${L2}  ${CORPORA_DIR}
 .PHONY: all
 all:  SHELL=${LOCAL_SHELL}
 all:  ${PT_TYPES:_cpt=_wam}
-all:  $(and ${USE_LDM}, ldm_wam)
-all:  $(and ${USE_HLDM}, hldm_wam)
-all:  $(and ${USE_BILM}, bilm_wam)
+all:  $(if ${USE_LDM}, ldm_wam)
+all:  $(if ${USE_HLDM}, hldm_wam)
+all:  $(if ${USE_BILM}, bilm_wam)
 
 
-########################################
-# HELP OPTIONS
-.PHONY: help
-help: SHELL=${LOCAL_SHELL}
-help:
-	@echo "Train word alignment models."
-	@echo
-	@echo "To train your models, type: make all"
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@echo ${MAIN_TARGETS}
-	@echo
-	@echo "Expected output files are:"
-	@sed -e 's/  */\n/g' <<< "${EXPECTED_FILES}"
+MAIN_TARGETS :=  all clean help
 
-
-MAIN_TARGETS :=  all  clean  help  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained)
 $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained):  %_model:  %_wam
+MODEL_TARGETS := $(sort $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS}))
+MODEL_TARGETS += "\n " $(addsuffix _model, indicator mix merged pretrained)
+
 
 # Nothing to be done for pretrained models.
 pretrained_wam:
@@ -102,6 +90,19 @@ indicator_wam:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GIVEN_L1X}  ${${MERGED_
 endif
 
 fast_align_wam:  # Dependencies for sub cpt are defined in the python code.
+
+
+########################################
+# HELP OPTIONS
+.PHONY: help
+help: SHELL=${LOCAL_SHELL}
+help:
+	@echo "Train word alignment models."
+	@echo
+	@echo "To train the word alignment models, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
+	@echo -e " " ${MODEL_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
 ########################################
@@ -127,6 +128,8 @@ hide.logs: hide_logs_sub
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
+
+MAIN_TARGETS += time-mem
 
 
 ################################################################################
@@ -241,70 +244,76 @@ with open(".Makefile.deps", "w") as df:
 
    #############################################################################
    # META LEVEL TARGETS
-   def addModelsToMetaTarget(target, CORPORA, WAMs):
-      for corpora in set(CORPORA.strip().split()):
-         corpora = which_wam(corpora)  # switch to mixwam if MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
-         for wam in set(WAMs.strip().split()):
-            forwardName  = forwardModel(corpora, wam)
-            backwardName = backwardModel(corpora, wam)
+   def addModelsToMetaTarget(target, corpora, wams, expected=True):
+      for corpus in set(corpora.strip().split()):
+         corp = which_wam(corpus)  # switch to mixwam if MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
+         for wam in set(wams.strip().split()):
+            forwardName  = forwardModel(corp, wam)
+            backwardName = backwardModel(corp, wam)
             print("{target}_wam:  {f}  {b}".format(target=target(wam), f=forwardName, b=backwardName), file=df)
-            expectedFiles.add(forwardName)
-            expectedFiles.add(backwardName)
+	    if expected:
+               expectedFiles.add(forwardName)
+               expectedFiles.add(backwardName)
+               if forwardName.startswith("ibm2"):
+                  expectedFiles.add(forwardName[:-2]+"pos.gz")
+                  expectedFiles.add(backwardName[:-2]+"pos.gz")
+               elif forwardName.startswith("hmm3"):
+                  expectedFiles.add(forwardName[:-2]+"dist.gz")
+                  expectedFiles.add(backwardName[:-2]+"dist.gz")
 
 
-   def wamType(*args):
-     if len(args):
-        return lambda wam: args[0]
-     else:
-        return lambda wam: wam
+   def wamType(wam_type=None):
+      return (lambda wam: wam) if wam_type is None else (lambda wam: wam_type)
+
+   pt_types = "${PT_TYPES:_cpt=}".split()
 
    #####################################
    # LEXICALIZED DISTORTION MODELS
-   WAMs = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX})"
-   addModelsToMetaTarget(wamType("ldm"), "$(sort ${TRAIN_LDM})",  WAMs)
-
+   wams = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX})"
+   addModelsToMetaTarget(wamType("ldm"), "$(sort ${TRAIN_LDM})",  wams)
 
    #####################################
    # HIERARCHICAL LEXICALIZED DISTORTION MODELS
-   WAMs = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX})"
-   addModelsToMetaTarget(wamType("hldm"), "$(sort ${TRAIN_HLDM})", WAMs)
-
+   wams = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX})"
+   addModelsToMetaTarget(wamType("hldm"), "$(sort ${TRAIN_HLDM})", wams)
 
    #####################################
    # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam
-   WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}"
-   addModelsToMetaTarget(wamType(), "$(sort ${TRAIN_TM})", WAMs)
+   wams = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
+   addModelsToMetaTarget(wamType(), "$(sort ${TRAIN_TM})", wams)
 
+   wams = "$(filter-out ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
+   addModelsToMetaTarget(wamType(), "$(sort ${TRAIN_TM})", wams, False)
 
    #####################################
    # MERGED
-   addModelsToMetaTarget(wamType("merged"), "$(sort ${TRAIN_TM})", "${EXPECTED_MODEL_TYPES_PFX}")
-
+   wams = "${EXPECTED_MODEL_TYPES_PFX}"
+   expected = "merged" in pt_types
+   addModelsToMetaTarget(wamType("merged"), "$(sort ${TRAIN_TM})", wams, expected)
 
    #####################################
    # MIXTURE
-   mixWAMs = "${EXPECTED_MODEL_TYPES_PFX}"
-   addModelsToMetaTarget(wamType("mix"), "$(sort ${MIX_WAMS})", mixWAMs)
-
+   wams = "${EXPECTED_MODEL_TYPES_PFX}"
+   expected = "mix" in pt_types
+   addModelsToMetaTarget(wamType("mix"), "$(sort ${MIX_WAMS})", wams, expected)
 
    #####################################
    # INDICATOR
-   indicatorWAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
-   addModelsToMetaTarget(wamType("indicator"), "${ALL_TMS}", indicatorWAMs)
-
+   wams = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
+   expected = "indicator" in pt_types
+   addModelsToMetaTarget(wamType("indicator"), "${ALL_TMS}", wams, expected)
 
    #####################################
    # BILM
-   WAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
-   addModelsToMetaTarget(wamType("bilm"), "${TRAIN_BILM}", indicatorWAMs)
-
+   wams = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
+   addModelsToMetaTarget(wamType("bilm"), "${TRAIN_BILM}", wams)
 
    print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
 endef
+
 #$(info WORD ALIGNMENT: ${DEPS.PYSCRIPT})
 $(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.deps
-
 
 
 ifdef MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
@@ -319,9 +328,8 @@ endif
 .PHONY:  debug
 debug:  word_alignment_models
 
-
 ifdef MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
-$(info ibm module using globbal word alignment model for mixture.)
+$(info ibm module using global word alignment model for mixture.)
 endif
 
 

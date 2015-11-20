@@ -87,8 +87,11 @@ vpath %.gz                          ${TM_DIR_PFX}  ${TM_DIR_PFX}mixtm
 all: SHELL=${LOCAL_SHELL}
 all: pretrained_cpt ${PT_TYPES}
 
-MAIN_TARGETS :=  all  clean  help  $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained)
+MAIN_TARGETS :=  all clean help
+
 $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS} indicator mix merged pretrained):  %_model:  %_cpt
+MODEL_TARGETS := $(sort $(addsuffix _model, ${POSSIBLE_WORD_ALIGNMENT_MODELS}))
+MODEL_TARGETS += "\n " $(addsuffix _model, indicator mix merged pretrained)
 
 
 ########################################
@@ -98,20 +101,18 @@ help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Train translation models."
 	@echo
-	@echo "To train your models, type: make all"
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@echo ${MAIN_TARGETS}
-	@echo
-	@echo "Expected output files are:"
-	@sed -e 's/  */\n/g' <<< "$(strip $(foreach pt,${PT_TYPES}, ${${pt}_list}))"
+	@echo "To train the translation models, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
+	@echo -e " " ${MODEL_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
 # What the user can expect from this module.
 .PHONY: list_final_output
 list_final_output: SHELL=${LOCAL_SHELL}
-list_final_output: $(addsuffix _list,${PT_TYPES})
-	@echo "are the expected final outputs."
+list_final_output:
+	@echo "Expected final output(s):"
+	@echo "${EXPECTED_FILES}"
 
 
 ########################################
@@ -137,6 +138,8 @@ hide.logs: hide_logs_sub
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
+
+MAIN_TARGETS += time-mem
 
 
 ################################################################################
@@ -185,7 +188,6 @@ with open(".Makefile.cpt.deps", "w") as df:
          filename = "${CPT_MODEL_PFX}.{m}${SMOOTHERS_DESCRIPTION}.{c}.${L1_2_L2X}".format(c=corpora, m=wam)
          # Create meta-level dependencies between cpts and their jpts or sigs.
          print("{m}_cpt:  {filename}".format(m=wam, filename=filename), file=df)
-         expectedFiles.add(filename)
 
    # Lets have a separate loop to build %_cpt_list, a list of cpt to convert to tppt.
    WAMs = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()
@@ -193,6 +195,9 @@ with open(".Makefile.cpt.deps", "w") as df:
       for wam in set(WAMs):
          filename = "${CPT_MODEL_PFX}.{m}${SMOOTHERS_DESCRIPTION}.{c}.${L1_2_L2X}".format(c=corpora, m=wam)
          print("{m}_cpt_list += {filename}".format(m=wam, filename=filename), file=df)
+         expectedFiles.add(filename)
+
+   print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
 
 endef
 
@@ -219,6 +224,7 @@ trigger.update.pretrained.links:
 	${RM} .*.tstamp mixtm/.*.tstamp
 
 pretrained_cpt_list = $(notdir ${TM_PRETRAINED_TMS})
+EXPECTED_FILES += ${pretrained_cpt_list}
 
 # Target to create symbolic links to pre-trained conditional phrase tables.
 .PHONY: pretrained_cpt
@@ -258,6 +264,7 @@ MERGED_CPT_JPT_TYPES ?= IBM2 HMM3
 
 # Let's define what are the merged cpt file names.
 merged_cpt_list := $(foreach c, ${TRAIN_TM}, ${MERGED_CPT_PREFIX}.$c.${L1_2_L2X})
+EXPECTED_FILES += $(if $(filter merged_cpt, ${PT_TYPES}), ${merged_cpt_list})
 
 # Meta target that will create the merged conditional phrase tables.
 .PHONY: merged_cpt
@@ -305,6 +312,7 @@ clean.mix:
 	${RM} -r mixtm
 
 mix_cpt_list = ${CPT_MIX_PFX}.${L1_2_L2X}
+EXPECTED_FILES += $(if $(filter mix_cpt, ${PT_TYPES}), ${mix_cpt_list})
 
 MIX_CPT_META_DEPS := $(filter-out mix_cpt, ${PT_TYPES})
 
@@ -372,6 +380,7 @@ endif
 
 # Let's define what are the indicator cpt file names.
 indicator_cpt_list = ${INDICATOR_MODEL_PFX}.${L1_2_L2X}
+EXPECTED_FILES += $(if $(filter indicator_cpt, ${PT_TYPES}), ${indicator_cpt_list})
 
 .PHONY: indicator_cpt
 indicator_cpt:  ${indicator_cpt_list}
@@ -425,6 +434,8 @@ tppt_list := $(addsuffix .tppt, $(basename $(foreach a, $(PT_TYPES:=_list) pretr
 .PHONY: tppt
 tppt portageLive: SHELL=${LOCAL_SHELL}
 tppt portageLive: ${tppt_list}
+
+MAIN_TARGETS += portageLive
 
 
 # Add the unittest targets.

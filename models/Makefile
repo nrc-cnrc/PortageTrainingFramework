@@ -1,16 +1,16 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
 
-# @file Controls making all models.
+# @file Makefile
 # @brief A focal point to train all models.
 #
 # @author Samuel Larkin
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2009, 2012 Sa Majeste la Reine du Chef du Canada /
-# Copyright 2009, 2012 Her Majesty in Right of Canada
+# Copyright 2009, 2012, 2015, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2009, 2012, 2015, Her Majesty in Right of Canada
 
 MODEL_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 
@@ -31,14 +31,16 @@ endif
 _PLIVE_DECODE_VARIANT := $(strip $(if ${PLIVE_DECODE_VARIANT}, .${PLIVE_DECODE_VARIANT}))
 
 
-
 .DEFAULT_GOAL := help
 .SUFFIXES:
 
+
+MAIN_TARGETS :=  all clean help
+
+########################################
 .PHONY: all
 all: SHELL=${LOCAL_SHELL}
 all: tune
-
 
 
 ########################################
@@ -46,18 +48,14 @@ all: tune
 .PHONY: help
 help: SHELL=${LOCAL_SHELL}
 help:
-ifeq (${LM_TOOLKIT},IRST)
-	@echo "Please run the following in order for this framework to run properly:"
-	@echo "   export PATH=${IRSTLM}/bin:\$$PATH"
-	@echo "   export IRSTLM=${IRSTLM}"
-	@echo
-endif
-	${LIST_ALL_CORPORA}
+	${HELP_IRSTLM}
+	${HELP_LIST_ALL_CORPORA}
 	@echo
 	@echo "To train your models, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
 	@echo
-	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo "Additional module targets in this Makefile are:"
+	@echo " " $(sort ${MODULE_TARGETS})
 
 
 ########################################
@@ -93,7 +91,6 @@ ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 endif
 
 
-
 ########################################
 # Resource Summary
 .PHONY: time-mem
@@ -103,6 +100,7 @@ time-mem:
 	| second-to-hms.pl \
 	| expand-auto.pl
 
+MAIN_TARGETS += time-mem
 
 
 ################################################################################
@@ -111,6 +109,7 @@ time-mem:
 models: SHELL=${LOCAL_SHELL}
 models: lm mixlm tm
 
+MAIN_TARGETS += models
 
 # NOTE: For lm, tm, we first trigger an update of the symbolic links to
 # pre-trained models, if using pre-trained models. This is done before
@@ -120,7 +119,6 @@ models: lm mixlm tm
 ifeq (${MAKELEVEL},0)
 DO_UPDATE_PRETRAINED_LINKS ?= 1
 endif
-
 
 .PHONY: lm
 # Create the Language Model (LM).
@@ -135,6 +133,7 @@ endif
 endif
 	${MAKE} -C lm all LM_LANG=$*
 
+MODULE_TARGETS += lm
 
 
 .PHONY: mixlm
@@ -145,12 +144,16 @@ mixlm: SHELL=${LOCAL_SHELL}
 mixlm: lm
 	${MAKE} -C $@ all
 
+MODULE_TARGETS += mixlm
+
 
 .PHONY: ibm
 # Create Word Alignment Models (ibm).
 ibm: SHELL=${LOCAL_SHELL}
 ibm:
 	${MAKE} -C $@ all
+
+MODULE_TARGETS += ibm
 
 
 .PHONY: wal
@@ -159,6 +162,8 @@ wal: SHELL=${LOCAL_SHELL}
 wal:  ibm
 	${MAKE} -C $@ all
 
+MODULE_TARGETS += wal
+
 
 .PHONY: jpt
 # Create Joint frequency Phrase Tables (jpt).
@@ -166,12 +171,16 @@ jpt: SHELL=${LOCAL_SHELL}
 jpt:  wal
 	${MAKE} -C $@ all
 
+MODULE_TARGETS += jpt
+
 
 .PHONY: sig
 # Create Significance Pruned Joint frequency Phrase Tables (sig).
 sig: SHELL=${LOCAL_SHELL}
 sig:  jpt
 	${MAKE} -C $@ all
+
+MODULE_TARGETS += sig
 
 
 .PHONY: tm
@@ -185,6 +194,7 @@ endif
 endif
 	${MAKE} -C $@ all
 
+MODULE_TARGETS += tm
 
 
 # Tuning targets don't need to depend on models when invoked from main Makefile
@@ -200,13 +210,12 @@ TUNE_VARIANTS := tune_variant $(addprefix tune_variant., ${TUNE_DECODE_VARIANTS}
 tune: SHELL=${LOCAL_SHELL}
 tune: ${TUNE_VARIANTS}
 
-
+MAIN_TARGETS += tune
 
 .PHONY: ${TUNE_VARIANTS}
 # Tune models for a variant (the main one (i.e. decode) or an alternate (e.g. decode.a).
 ${TUNE_VARIANTS}: SHELL=${LOCAL_SHELL}
 ${TUNE_VARIANTS}: tune_variant%: decode%
-
 
 
 .PHONY: cow decode
@@ -215,6 +224,8 @@ cow decode: SHELL=${LOCAL_SHELL}
 cow: decode
 decode: ${MODELS_DEPENDENCY}
 	${MAKE} -C $@ all
+
+MODULE_TARGETS += decode
 
 # Tune multiple decoding variants, if necessary.
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
@@ -237,9 +248,17 @@ endif
 # Run RAT to tune the rescoring model.
 rat rescore: SHELL=${LOCAL_SHELL}
 rat: rescore
+ifdef DO_RESCORING
 rescore: decode
 	${MAKE} -C $@ all
 
+MODULE_TARGETS += rescore
+
+tune_variant: rescore		# tune_variant is the main variant
+else
+rescore:
+	@echo "Not training the a rescoring model." >&2
+endif
 
 
 ################################################################################
@@ -248,6 +267,8 @@ rescore: decode
 ldm: SHELL=${LOCAL_SHELL}
 ifneq ("","${USE_LDM}${USE_HLDM}")
 models: ldm
+
+MODULE_TARGETS += ldm
 
 portageLive: portageLive_models_ldm
 portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_ldm
@@ -265,6 +286,8 @@ sparse: SHELL=${LOCAL_SHELL}
 ifdef USE_SPARSE
 models: sparse
 
+MODULE_TARGETS += sparse
+
 sparse: jpt
 	${MAKE} -C $@ all
 else
@@ -277,6 +300,8 @@ endif
 coarselm: SHELL=${LOCAL_SHELL}
 ifdef USE_COARSELM
 models: coarselm
+
+MODULE_TARGETS += coarselm
 
 portageLive: portageLive_models_coarselm
 portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_coarselm
@@ -311,6 +336,8 @@ bilm: SHELL=${LOCAL_SHELL}
 ifdef USE_BILM
 models: bilm
 
+MODULE_TARGETS += bilm
+
 portageLive: portageLive_models_bilm
 portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_bilm
 
@@ -326,6 +353,8 @@ endif
 wcl: SHELL=${LOCAL_SHELL}
 ifdef WCL_NCLS_LIST
 models: wcl
+
+MODULE_TARGETS += wcl
 
 portageLive: portageLive_models_wcl
 portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_wcl
@@ -367,6 +396,8 @@ portageLive_models_lm_src:
 confidence: decode
 	${MAKE} -C $@ all
 
+MODULE_TARGETS += confidence
+
 # Tune multiple confidence variants, if necessary.
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 .PHONY: $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
@@ -384,12 +415,13 @@ confidence:
 endif
 
 
-
 .PHONY: tc
 # Create models for truecasing (TC).
 tc: SHELL=${LOCAL_SHELL}
 ifdef DO_TRUECASING
 models: tc
+
+MODULE_TARGETS += tc
 
 portageLive: portageLive_models_tc
 portageLive/soap-translate.sh: portageLive_models_tc
@@ -400,13 +432,6 @@ else
 tc:
 	@echo "Not training the truecasing models." >&2
 endif
-
-
-
-ifdef DO_RESCORING
-tune_variant: rescore		# tune_variant is the main variant
-endif
-
 
 
 ########################################
@@ -421,6 +446,8 @@ portageLive:
 	ln -sf ../prime.sh $@
 	pwd > $@/README
 	portage_info >> $@/README
+
+MAIN_TARGETS += portageLive
 
 portageLive: portageLive/soap-translate.sh
 portageLive/soap-translate.sh: SHELL=${LOCAL_SHELL}
@@ -437,16 +464,12 @@ portageLive_models_%: SHELL=${LOCAL_SHELL}
 portageLive_models_%:
 	${MAKE} -C $* portageLive
 
-
-
 .PHONY:  portageLive_fixedTerms
 portageLive:  portageLive_fixedTerms
 portageLive_fixedTerms:  SHELL=${LOCAL_SHELL}
 portageLive_fixedTerms:  portageLive_plugins
 portageLive_fixedTerms:
 	prep-fixedTerms-layout.sh portageLive
-
-
 
 PLUGINS := $(notdir $(wildcard ../plugins/*))
 .PHONY:  portageLive_plugins
@@ -457,18 +480,11 @@ $(addprefix portageLive/plugins/, ${PLUGINS}):  portageLive/plugins/%:
 	mkdir -p $(dir $@)
 	cd $(dir $@) && ln -fs ../../../plugins/$*
 
-
-
 .PHONY: clean.portageLive
 clean clean.content: clean.portageLive
 clean.portageLive: SHELL=${LOCAL_SHELL}
 clean.portageLive:
 	${RM} -r portageLive
-
-
-
-
-
 
 
 

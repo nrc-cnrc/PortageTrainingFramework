@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
-#
+
 # @file Makefile
 # @brief Train word classes for use by other modules
 #
@@ -55,14 +55,15 @@ vpath %${CORPUS_EXT} ${CORPORA_DIR}
 .DELETE_ON_ERROR:
 
 
+MAIN_TARGETS :=  all clean help
+
 ########################################
 .PHONY: help
 help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "To train word classes, type: make all"
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #' | sort
+	${HELP_LIST_MAIN_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
 ########################################
@@ -81,15 +82,14 @@ $(error TRAIN_WCL and WCL_NCLS_LIST must both be defined to train word classes)
 endif
 endif
 
-
 define DEPS.PYSCRIPT
 from __future__ import print_function
 
 with open(".Makefile.deps", "w") as df:
-   wcls_targets = []
+   expected_files = []
    def writeDependencies(n, l, corpora):
       target = "{l}.{n}.classes".format(l=l, n=n)
-      wcls_targets.append(target)
+      expected_files.append(target)
       print("{l}.{n}.classes:  WCL_NCLS := {n}".format(l=l, n=n), file=df)
       print("{l}.{n}.classes:  WCL_LANG := {l}".format(l=l, n=n), file=df)
       for c in corpora:
@@ -102,19 +102,19 @@ with open(".Makefile.deps", "w") as df:
       for l in languages:
          writeDependencies(n, l, corpora)
 
-   print("WCLS_TARGETS := {}".format(" ".join(wcls_targets)), file=df)
+   print("EXPECTED_FILES := {}".format(" ".join(expected_files)), file=df)
 endef
 
 #$(info  WCL_DEPS: ${DEPS.PYSCRIPT})
 $(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.deps
 
+#$(info WCL_NCLS_LIST: ${WCL_NCLS_LIST})
+#$(info LANGUAGES: ${SRC_LANG} ${TGT_LANG})
+#$(info CORPORA: ${TRAIN_WCL})
+#$(info TARGETS: ${EXPECTED_FILES})
 
-$(info WCL_NCLS_LIST: ${WCL_NCLS_LIST})
-$(info LANGUAGES: ${SRC_LANG} ${TGT_LANG})
-$(info CORPORA: ${TRAIN_WCL})
-$(info TARGETS: ${WCLS_TARGETS})
-all:  ${WCLS_TARGETS}
+all:  ${EXPECTED_FILES}
 
 ########################################
 # What the user can expect from this module.
@@ -122,7 +122,7 @@ all:  ${WCLS_TARGETS}
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
-	@echo -e -n "" ${WCLS_TARGETS}
+	@echo ${EXPECTED_FILES}
 
 
 ########################################
@@ -153,6 +153,8 @@ hide.logs: hide_logs_sub
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
+MAIN_TARGETS += time-mem
+
 
 ########################################
 # Transform the WCL model for PortageLive
@@ -166,21 +168,20 @@ ${PORTAGE_LIVE_DEST_DIR}:
 .PHONY:  portageLive
 portageLive:  SHELL=${LOCAL_SHELL}
 
+MAIN_TARGETS += portageLive
 
 clean.content:  clean.portageLive
 .PHONY:  clean.portageLive
 clean.portageLive:  SHELL=${LOCAL_SHELL}
 clean.portageLive:
-	${RM} ${WCLS_TARGETS:.classes=.mmcls}
-
+	${RM} ${EXPECTED_FILES:.classes=.mmcls}
 
 ifneq (${TRAIN_WCL},)
 portageLive:  | ${PORTAGE_LIVE_DEST_DIR}
-portageLive:  ${WCLS_TARGETS:.classes=.mmcls}
+portageLive:  ${EXPECTED_FILES:.classes=.mmcls}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../wcl/, $+) .
 else
 portageLive:
-	@echo "No word classes defined, nothing to do." >&2
+	@echo "No word classes defined, so nothing to do for portageLive." >&2
 endif
-

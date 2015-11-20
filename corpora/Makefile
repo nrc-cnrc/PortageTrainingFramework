@@ -6,11 +6,11 @@
 #
 # @author Samuel Larkin
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, Her Majesty in Right of Canada
+# Copyright 2008, 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2015, Her Majesty in Right of Canada
 
 # Mandatory include: master config file.
 include ../Makefile.params
@@ -98,11 +98,16 @@ vpath %${ALIGNX} ${ALIGN_CORPORA_DIR}
 vpath %${RAWX}   ${RAW_CORPORA_DIR}
 
 
-# This Makefile should display some help message if the user doesn't specify a
-# target.
 .DEFAULT_GOAL := help
+# .SECONDARY is required when train_??.al is not gzipped
+.SECONDARY:
+.SUFFIXES:
+.DELETE_ON_ERROR:
 
 
+MAIN_TARGETS :=  all clean help
+
+########################################
 # Help message
 .PHONY: help
 help: SHELL=${LOCAL_SHELL}
@@ -113,20 +118,17 @@ help:
 	@echo "To prepare the corpora, type: make all"
 	@echo
 	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo ${MAIN_TARGETS}
+	@echo
+	@echo "Expected output files are:"
+	@sed -e 's/  */\n/g' <<< "$(strip ${EXPECTED_FILES})"
 
 
-# .SECONDARY is required when train_??.al is not gzipped
-.SECONDARY:
-.SUFFIXES:
-.DELETE_ON_ERROR:
-
-
-# What are the final ouptut so we can manipulate them as a whole.
-LIST_FINAL_OUTPUT += ${LC} ${RULE}
+# What are the final ouptut so we can manipulate them as a whole?
+EXPECTED_FILES += ${LC} ${RULE}
 
 # After this Makefile, the following targets/files are precious.
-FILES_TO_BE_LOCKED = ${LIST_FINAL_OUTPUT}
+FILES_TO_BE_LOCKED = ${EXPECTED_FILES}
 
 # Defines all that needs to be done by this makefile.
 .PHONY: all
@@ -135,21 +137,22 @@ all: lc
 all: rule
 ifdef DO_TRUECASING
 all: tc
-LIST_FINAL_OUTPUT += ${TC}
+EXPECTED_FILES += ${TC}
 endif
 ifdef TRANSLATE_SET
 all: translate
-LIST_FINAL_OUTPUT += ${TRANSLATE_SET_LIST}
+EXPECTED_FILES += ${TRANSLATE_SET_LIST}
 endif
 
 # What the user can expect from this module.
 .PHONY: list_final_output
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
-	@echo "Expected final output files are:"
+	@echo "Expected final output(s):"
 	@echo ${LC}
 	@echo ${RULE}
 	@echo ${TC}
+	@echo ${TRANSLATE_SET_LIST}
 
 
 # Arrange to run recipes for processing small files using a local shell;
@@ -460,6 +463,7 @@ _LOCAL=1 file ${FILE_OPTS} $< | egrep -qi 'charset=utf-8|ASCII' || echo "WARNING
 endef
 
 
+########################################
 ifeq ("${SRC_LANG}","ch")
 ../models/portageLive/plugins:
 	mkdir -p $@
@@ -468,9 +472,12 @@ ifeq ("${SRC_LANG}","ch")
 	chmod +x $@
 portageLive:  ../models/portageLive/plugins/predecode_plugin
 endif
+
 .PHONY: portageLive
 portageLive:
 	@true
+
+MAIN_TARGETS += portageLive
 
 
 ########################################
@@ -642,7 +649,7 @@ endif
 .PHONY: debug
 debug: SHELL=${LOCAL_SHELL}
 debug:
-	@echo "LIST_FINAL_OUTPUT: ${LIST_FINAL_OUTPUT}"
+	@echo "EXPECTED_FILES: ${EXPECTED_FILES}"
 	@echo "LC: ${LC}"
 	@echo "TRAIN_TC: ${TRAIN_TC}"
 	@echo "TC: ${TC}"

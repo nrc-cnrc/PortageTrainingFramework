@@ -2,7 +2,7 @@
 # vim:noet:ts=3:nowrap
 
 # @file Makefile
-# @brief Trains sparse models, building the required data files.
+# @brief Train sparse models, building the required data files.
 #
 # @author Eric Joanis
 #
@@ -31,12 +31,24 @@ MODULE_NAME ?= sparse
 .SUFFIXES:
 .DELETE_ON_ERROR:
 
+
+MAIN_TARGETS :=  all clean help
+
 ########################################
-# ALL
+.PHONY: help
+help: SHELL=${LOCAL_SHELL}
+help:
+	@echo "To train the sparse features model, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
+
+
+########################################
 # Define all the work to be done here.
 .PHONY: all
 all: SHELL=${LOCAL_SHELL}
 all: model.templates
+
 
 ########################################
 # Clean up
@@ -55,6 +67,16 @@ clean.logs:
 # Hide logs from user's view into .logs
 hide.logs: SHELL=${LOCAL_SHELL}
 hide.logs: hide_logs_sub
+
+
+########################################
+# Resources Summary
+.PHONY: time-mem
+time-mem: SHELL=${LOCAL_SHELL}
+time-mem: resource_summary_sub
+
+MAIN_TARGETS += time-mem
+
 
 ########################################
 # Sparse features
@@ -79,6 +101,9 @@ data: model
 model.templates: model data
 	palminer -v -pop -m model >& log.$@
 
+EXPECTED_FILES := model model.templates model.numex model.feats.gz model.freqs.gz \
+                  model.voc.gz model.wts.gz model.wtsums.gz data.*
+
 
 ########################################
 # Transform models for PortageLive
@@ -87,6 +112,7 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/sparse
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}
 
+MAIN_TARGETS += portageLive
 
 portageLive:  clean.${PORTAGE_LIVE_DEST_DIR}
 
@@ -99,7 +125,6 @@ portageLive_model_data:  portageLive_mmcls
 portageLive_model_data:  | ${PORTAGE_LIVE_DEST_DIR}
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../sparse/data.* .
 	for f in ${PORTAGE_LIVE_DEST_DIR}/*.mmcls; do g=$${f%%.mmcls}; [[ -L $$g ]] && rm $$g; done
-
 
 portageLive:  portageLive_mmcls
 .PHONY: portageLive_mmcls
@@ -129,9 +154,8 @@ portageLive:   $(addprefix ${PORTAGE_LIVE_DEST_DIR}/, model.feats.gz  model.freq
 ${PORTAGE_LIVE_DEST_DIR}/model.%:
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -s ../../../sparse/model.$*
 
-
-.PHONY:  clean.portageLive
 clean.content:  clean.portageLive
+.PHONY:  clean.portageLive
 clean.portageLive:  SHELL=${LOCAL_SHELL}
 clean.portageLive:
 	${RM} *.mmcls

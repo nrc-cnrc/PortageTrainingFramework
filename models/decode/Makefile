@@ -97,13 +97,9 @@ FILES_TO_BE_LOCKED = ${DECODING_MODEL}
 
 ########################################
 # SETUP
-ifneq (${MAKECMDGOALS},clean)
-ifneq (${MAKECMDGOALS},clean.content)
-ifneq (${MAKECMDGOALS},clean.logs)
+ifneq ($(filter-out help clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
 $(info ln -fs ${MODEL_DIR})
 $(shell ln -fs ${MODEL_DIR})
-endif
-endif
 endif
 
 
@@ -120,27 +116,31 @@ vpath %${RULES}  ${CORPORA_DIR}
 vpath ${DECODING_MODEL_TEMPLATE} ${TEMPLATE_DIR}
 
 
+MAIN_TARGETS :=  all clean help
+
+########################################
 .PHONY: all
 all: train
 
 
+########################################
 .PHONY: help
 help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Tune a system."
 	@echo
-	@echo "To tune your models, type: make all"
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo "To tune the models, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
+########################################
 # What the user can expect from this module.
 .PHONY: list_final_output
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output:"
-	@echo "${DECODING_MODEL}"
+	@echo "${EXPECTED_FILES}"
 
 
 ########################################
@@ -169,6 +169,8 @@ hide.logs: hide_logs_sub
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
+MAIN_TARGETS += time-mem
+
 
 ########################################
 # Is the template present?
@@ -183,11 +185,13 @@ check_template:
 # Create canoe.ini from template.
 ifdef USE_LDM
 LDM ?= $(wildcard models/ldm/ldm.*.${SRC_LANG}2${TGT_LANG}.gz)
-ifeq ("","$(or $(strip ${LDM}),$(findstring clean,${MAKECMDGOALS}))")
+ifneq ($(filter-out clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
+ifeq ($(strip ${LDM}),)
 $(warning No LDMs available. Have you trained at least a distortion model?)
 endif
+endif
 $(info LDM: ${LDM})
-LDM := $(and ${USE_LDM},${LDM}\#L)
+LDM := $(if ${USE_LDM},${LDM}\#L)
 
 # Parameters to use Lexicalized Distortion Models.
 LDM_PARAMS  := back-lex\#m\#L:back-lex\#s\#L:back-lex\#d\#L:fwd-lex\#m\#L:fwd-lex\#s\#L:fwd-lex\#d\#L
@@ -197,8 +201,10 @@ endif # USE_LDM
 
 ifdef USE_HLDM
 HLDM ?= $(wildcard models/ldm/hldm.*.${SRC_LANG}2${TGT_LANG}.gz)
-ifeq ("","$(or $(strip ${HLDM}),$(findstring clean,${MAKECMDGOALS}))")
+ifneq ($(filter-out clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
+ifeq ($(strip ${HLDM}),)
 $(warning No HLDMs available. Have you trained at least a distortion model?)
+endif
 endif
 $(info HLDM: ${HLDM})
 HLDM := $(and ${USE_HLDM},${HLDM}\#H)
@@ -217,18 +223,21 @@ endif
 # NOTE: We need to keep the checks here AND in the target UNTUNED_DECODING_MODEL.
 CPT_SEARCH := models/tm/cpt.*${SRC_LANG}2${TGT_LANG}.gz
 CPTS ?= $(wildcard ${CPT_SEARCH})
-ifeq ("","$(or $(strip ${CPTS}),$(findstring clean,${MAKECMDGOALS}))")
+ifneq ($(filter-out clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
+ifeq ($(strip ${CPTS}),)
 $(warning No CPTs available. Have you trained at least one translation model?)
+endif
 endif
 $(info CPTs: ${CPTS})
 
 LM_SEARCH := models/lm/*_${TGT_LANG}[-.]*.tplm models/mixlm/${TUNE_DECODE}.mixlm
 LMS  ?= $(wildcard ${LM_SEARCH})
-ifeq ("","$(or $(strip ${LMS}),$(findstring clean,${MAKECMDGOALS}))")
+ifneq ($(filter-out clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
+ifeq ($(strip ${LMS}),)
 $(warning No LMs available. Have you trained at least one language model?)
 endif
+endif
 $(info LMs: ${LMS})
-
 
 
 ifdef USE_COARSELM
@@ -238,9 +247,8 @@ COARSE_LM_SPECS ?= $(foreach n, ${COARSELM_NCLS_LIST}, \
                          DynMap;wordClasses-models/wcl/${TGT_LANG}.${n}.classes;${lm} \
                       ) \
                    )
-$(info Coarse LMs: ${COARSE_LM_SPECS})
+$(info Coarse LMs: $(strip ${COARSE_LM_SPECS}))
 endif # USE_COARSELM
-
 
 
 ifdef USE_BILM
@@ -278,22 +286,20 @@ $(info BiLMs: ${BILM_SPECS})
 endif # USE_BILM
 
 
-
 ifneq (${USE_PRETRAINED_NNJMS},)
 NNJMS := $(wildcard models/nnjm/*/model)
-ifeq ("","$(or $(strip ${NNJMS}),$(findstring clean,${MAKECMDGOALS}))")
+ifneq ($(filter-out clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
+ifeq ($(strip ${NNJMS}),)
 $(error Could not find pretrained NNJMs)
-else
+endif
+endif
 $(info NNJMs: ${NNJMS})
 endif
-endif
-
 
 
 # This is a helper to be able to use spaces.
 SPACE :=
 SPACE +=
-
 
 
 ${UNTUNED_DECODING_MODEL}: SHELL=${LOCAL_SHELL}
@@ -329,6 +335,9 @@ clean.canoe.ini:
 
 ########################################
 # Training a decoding model.
+
+EXPECTED_FILES = ${DECODING_MODEL}
+
 .PHONY: train
 train: ${DECODING_MODEL}
 ${DECODING_MODEL}: SHELL=${FRAMEWORK_SHELL}
@@ -368,7 +377,6 @@ clean.tune:
 	${RM} decode-config
 
 
-
 ################################################################################
 # Instructions for portageLive
 # NOTE: you cannot apply weights if you plan to do some rescoring.
@@ -376,37 +384,35 @@ clean.tune:
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive
 CANOE_LIVE            ?= ${PORTAGE_LIVE_DEST_DIR}/${DECODING_MODEL}
 
-
 .PHONY: portageLive
-portageLive:  SHELL=${LOCAL_SHELL}
-portageLive:  ${CANOE_LIVE}
+portageLive: SHELL=${LOCAL_SHELL}
+portageLive: ${CANOE_LIVE}
 
+MAIN_TARGETS += portageLive
 
-${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
+${PORTAGE_LIVE_DEST_DIR}: SHELL=${LOCAL_SHELL}
 ${PORTAGE_LIVE_DEST_DIR}:
 	mkdir -p $@
 
 .PHONY: portageLive_models
-portageLive_models_%:  SHELL=${LOCAL_SHELL}
+portageLive_models_%: SHELL=${LOCAL_SHELL}
 portageLive_models_%:
 	${MAKE} -C ../$* portageLive
 
-
-${CANOE_LIVE}:  SHELL=${LOCAL_SHELL}
-${CANOE_LIVE}:  portageLive_models_lm
-${CANOE_LIVE}:  portageLive_models_tm
-${CANOE_LIVE}:  portageLive_models_ldm
-${CANOE_LIVE}:  | ${PORTAGE_LIVE_DEST_DIR}
-${CANOE_LIVE}:  ${DECODING_MODEL}
+${CANOE_LIVE}: SHELL=${LOCAL_SHELL}
+${CANOE_LIVE}: portageLive_models_lm
+${CANOE_LIVE}: portageLive_models_tm
+${CANOE_LIVE}: portageLive_models_ldm
+${CANOE_LIVE}: | ${PORTAGE_LIVE_DEST_DIR}
+${CANOE_LIVE}: ${DECODING_MODEL}
 	configtool -p tp $< > $@
 	sed -e 's#\(wordClasses-models/wcl/.*\).classes;#\1.mmcls;#' \
 	    -e 's#\(;cls(\(src\|tgt\|tgt/src\))=models[^=]*\).classes#\1.mmcls#g' \
 	    --in-place $@
 	configtool check $@
 
-
-clean.content:  clean.portageLive
-.PHONY:  clean.portageLive
+clean.content: clean.portageLive
+.PHONY: clean.portageLive
 clean.portageLive: SHELL=${LOCAL_SHELL}
 clean.portageLive:
 	${RM} ${CANOE_LIVE}
@@ -414,20 +420,21 @@ clean.portageLive:
 ifdef USE_SPARSE
 SPARSE_WTS ?= rmodels_sparse_model.wts.gz
 SPARSE_WTS_LIVE ?= ${PORTAGE_LIVE_DEST_DIR}/${SPARSE_WTS}
-${CANOE_LIVE}:  ${SPARSE_WTS_LIVE}
-${CANOE_LIVE}:  portageLive_models_sparse
-${SPARSE_WTS_LIVE}:  SHELL=${LOCAL_SHELL}
-${SPARSE_WTS_LIVE}:  | ${PORTAGE_LIVE_DEST_DIR}
+${CANOE_LIVE}: ${SPARSE_WTS_LIVE}
+${CANOE_LIVE}: portageLive_models_sparse
+${SPARSE_WTS_LIVE}: SHELL=${LOCAL_SHELL}
+${SPARSE_WTS_LIVE}: | ${PORTAGE_LIVE_DEST_DIR}
 ${SPARSE_WTS_LIVE}:
 	ln -s ../decode/${SPARSE_WTS} $@
 
-clean.portageLive:  clean.sparseWtsLive
-clean.sparseWtsLive:  SHELL=${LOCAL_SHELL}
+clean.portageLive: clean.sparseWtsLive
+clean.sparseWtsLive: SHELL=${LOCAL_SHELL}
 clean.sparseWtsLive:
 	${RM} ${SPARSE_WTS_LIVE}
 endif
 
-
+# Output a blank line after listing all models.
+$(info )
 
 ################################################################################
 # HELPERS

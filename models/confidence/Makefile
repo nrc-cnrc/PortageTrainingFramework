@@ -6,11 +6,11 @@
 #
 # @author Samuel Larkin
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2010, Sa Majeste la Reine du Chef du Canada /
-# Copyright 2010, Her Majesty in Right of Canada
+# Copyright 2010, 2015, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2010, 2015, Her Majesty in Right of Canada
 
 # Mandatory include: master config file.
 include ../../Makefile.params
@@ -36,19 +36,17 @@ CE_MODEL_NAME ?= ce_model
 
 ########################################
 # SETUP
-ifneq (${MAKECMDGOALS},clean)
-ifneq (${MAKECMDGOALS},clean.content)
-ifneq (${MAKECMDGOALS},clean.logs)
+ifneq ($(filter-out help clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
 $(info ln -fs ${MODEL_DIR})
 $(shell ln -fs ${MODEL_DIR})
-endif
-endif
 endif
 
 # Make sure the user set up this framework to generate proper models for
 # Confidence Estimation.
+ifneq ($(filter-out help clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
 ifndef DO_CE
 $(warning You must set DO_CE in Makefile.params, or some required models will not be built automatically.)
+endif
 endif
 
 
@@ -57,6 +55,10 @@ endif
 .SUFFIXES:
 .DELETE_ON_ERROR:
 
+
+MAIN_TARGETS :=  all clean help
+
+########################################
 .PHONY: all
 all: train
 
@@ -66,10 +68,12 @@ help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Tune a Confidence Estimation Model."
 	@echo
-	@echo "To tune your CE model, type: make all"
+	@echo "In Makefile.params, define DO_CE to enable confidence estimation."
+	@echo "Also, define TUNE_CE to specify a dev set for tuning the CE model."
 	@echo
-	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo "To tune the CE model, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
 ########################################
@@ -97,6 +101,8 @@ hide.logs: hide_logs_sub
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
+
+MAIN_TARGETS += time-mem
 
 
 ########################################
@@ -137,6 +143,9 @@ ce-notm${INIX}: ce-notm${TEMPLATEX} ${CANOE_MODEL}
 
 ########################################
 # Tuning a confidence model.
+
+EXPECTED_FILES = ${CE_MODEL_NAME}${CEMX}
+
 .PHONY: train
 train: ${CE_MODEL_NAME}${CEMX}
 
@@ -176,9 +185,7 @@ portageLive:
 	$(error ERROR: the portageLive target should not be called when DO_CE is not set.)
 endif
 
-
-
-
+MAIN_TARGETS += portageLive
 
 
 

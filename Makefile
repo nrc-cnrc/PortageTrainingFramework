@@ -1,15 +1,16 @@
 #!/usr/bin/make -rf
 # vim:noet:ts=3:nowrap
-#
-# @author Samuel Larkin
+
 # @file Makefile
 # @brief Master makefile for the framework, handles dependencies between modules.
+#
+# @author Samuel Larkin
 #
 # Traitement multilingue de textes / Multilingual Text Processing
 # Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, 2012, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, 2012, Her Majesty in Right of Canada
+# Copyright 2008, 2012, 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2012, 2015, Her Majesty in Right of Canada
 
 # Mandatory include: master config file.
 include Makefile.params
@@ -17,10 +18,15 @@ include Makefile.params
 # Include the master toolkit.
 include Makefile.toolkit
 
+
 .DEFAULT_GOAL := help
 .SUFFIXES:
 .DELETE_ON_ERROR:
 
+
+MAIN_TARGETS :=  all clean help
+
+########################################
 .PHONY: all
 all: SHELL=${LOCAL_SHELL}
 all: tune_main
@@ -31,30 +37,30 @@ all:
 	@echo "Training, tuning and translating using the framework are all done."
 
 
+########################################
 .PHONY: help
 help: SHELL=${LOCAL_SHELL}
 help:
-ifeq (${LM_TOOLKIT},IRST)
-	@echo "Please run the following in order for this framework to run properly:"
-	@echo "   export PATH=${IRSTLM}/bin:\$$PATH"
-	@echo "   export IRSTLM=${IRSTLM}"
-	@echo
-endif
-	${LIST_ALL_CORPORA}
-	@echo "   test set: ${TEST_SET}"
+	${HELP_IRSTLM}
+	${HELP_LIST_ALL_CORPORA}
+	@echo "  test set: ${TEST_SET}"
 ifneq ($(strip ${TRANSLATE_SET}),)
-	@echo "   translate set: ${TRANSLATE_SET}"
+	@echo "  translate set: ${TRANSLATE_SET}"
 endif
 	@echo
 	@echo "To run the framework, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
 	@echo
-	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo "Additional targets in this Makefile include:"
+	@echo -e  " " ${OTHER_TARGETS}
 
 
+########################################
 .PHONY: doc
 doc: SHELL=${LOCAL_SHELL}
 doc: tutorial.pdf
+
+MAIN_TARGETS += doc
 
 %.pdf: SHELL=${LOCAL_SHELL}
 %.pdf: %.tex
@@ -65,6 +71,7 @@ doc: tutorial.pdf
 	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
 	TEXINPUTS=${PORTAGE}/texmf: pdflatex -interaction=batchmode $<
+
 
 ########################################
 # Clean up
@@ -91,13 +98,14 @@ clean.doc:
 	${RM} tutorial.{aux,log,toc,out}
 
 
-
 ########################################
 # Prepare the corpora.
 .PHONY: corpora
 corpora: SHELL=${LOCAL_SHELL}
 corpora: check_setup
 	${MAKE} -C corpora all
+
+OTHER_TARGETS += corpora
 
 
 # Create the Language Models (LM, MixLM, CoarseLM, BiLM).
@@ -112,10 +120,14 @@ models lm mixlm wcl coarselm bilm ldm sparse tc tm: SHELL=${LOCAL_SHELL}
 models lm mixlm wcl coarselm bilm ldm sparse tc tm: %: corpora
 	${MAKE} -C models $@ DO_UPDATE_PRETRAINED_LINKS=1
 
+OTHER_TARGETS += models lm mixlm wcl coarselm bilm ldm sparse tc tm
+
 
 .PHONY: tune_main
 tune_main: SHELL=${LOCAL_SHELL}
 tune_main: tune_variant		# tune_variant tunes the main variant
+
+OTHER_TARGETS += "\n  tune_main"
 
 
 # Tune and test using multiple alternate tuning variants, if necessary.
@@ -141,6 +153,8 @@ ${TUNE_LIST}: SHELL=${LOCAL_SHELL}
 ${TUNE_LIST}: %: models
 	${MAKE} -C models $@
 
+OTHER_TARGETS += decode confidence tune rescore
+
 
 .PHONY: translate $(addprefix translate., ${TUNE_DECODE_VARIANTS})
 # Apply tuned weights to the test sets
@@ -152,6 +166,8 @@ translate $(addprefix translate., ${TUNE_DECODE_VARIANTS}): translate%: tune_var
 	fi
 	${MAKE} -C translate$* all TUNE_VARIANT_TAG=$*
 
+OTHER_TARGETS += translate
+
 
 .PHONY: eval $(addprefix eval., ${TUNE_DECODE_VARIANTS})
 # Get BLEU scores for the test set(s)
@@ -159,11 +175,15 @@ eval $(addprefix eval., ${TUNE_DECODE_VARIANTS}): SHELL=${LOCAL_SHELL}
 eval $(addprefix eval., ${TUNE_DECODE_VARIANTS}): eval%: translate%
 	${MAKE} -C translate$* bleu TUNE_VARIANT_TAG=$*
 
+OTHER_TARGETS += eval
+
 
 .PHONY: check_setup
 check_setup: SHELL=${LOCAL_SHELL}
 check_setup:
 	${MAKE} -C models/lm check_setup
+
+MAIN_TARGETS += check_setup
 
 
 ########################################
@@ -203,6 +223,8 @@ endif
 	@echo "     ssh <REMOTE_HOST> plive-optimize-pretrained.sh <DEST_DIR_ON_REMOTE_HOST>"
 	@echo "or   plive-optimize-pretrained.sh <DEST_DIR_ON_LOCAL_HOST>"
 
+MAIN_TARGETS += portageLive
+
 # convenient synonyms
 portagelive: portageLive
 PortageLive: portageLive
@@ -226,6 +248,8 @@ resource_summary:
 	@${MAKE} --no-print-directory -s -C models time-mem
 	@${MAKE} --no-print-directory -s -C translate time-mem
 
+OTHER_TARGETS += resource_summary
+
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: export PORTAGE_INTERNAL_CALL=1
@@ -234,6 +258,8 @@ time-mem:
 	@time-mem-tally.pl `find models translate translate.* -type f -name log.\* -o -name \*.log | sort` \
 	| second-to-hms.pl \
 	| expand-auto.pl
+
+MAIN_TARGETS += time-mem
 
 
 DU_DIRS = models/ibm/{ibm,hmm}* models/jpt/jpt* models/tm/cpt* models/*lm/*lm*
@@ -265,6 +291,7 @@ summary: time-mem
 	   du -hL models/portageLive; \
 	fi
 
+MAIN_TARGETS += summary
 
 
 ################################################################################

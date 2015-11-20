@@ -9,8 +9,8 @@
 # Traitement multilingue de textes / Multilingual Text Processing
 # Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, 2011, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, 2011, Her Majesty in Right of Canada
+# Copyright 2008, 2011, 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2011, 2015, Her Majesty in Right of Canada
 
 # Mandatory include: master config file.
 include ../../Makefile.params
@@ -82,43 +82,44 @@ vpath %${SCX} ${CORPORA_DIR}
 .DELETE_ON_ERROR:
 
 
+MAIN_TARGETS :=  all clean help
+
+########################################
 .PHONY: help
 help: SHELL=${LOCAL_SHELL}
 help:
-	@echo "Train a language model and a map for truecasing."
+	@echo "Train language model(s) and map for truecasing."
 	@echo
-	@echo "In Makefile.params, define LM_TOOLKIT=SRI, LM_TOOLKIT=MIT" \
-	      "or LM_TOOLKIT=IRST to specify the LM toolkit to use."
-	@echo "Your truecasing corpus is: ${TRAIN_LM}_${TGT_LANG}${TCX}"
+	${HELP_LM_TOOLKIT}
+	@echo "The truecasing corpus is: ${TRAIN_LM}_${TGT_LANG}${TCX}"
 	@echo
-	@echo "To train your truecasing model, type: make all"
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo "To train the truecasing model, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
+########################################
 .PHONY: all
 all: SHELL=${LOCAL_SHELL}
 ifdef DO_TRUECASING
-all: ${TRUECASING_MAP}
-all: ${TRUECASING_LM}
+EXPECTED_FILES := ${TRUECASING_MAP} ${TRUECASING_LM}
 ifdef TC_USE_SRC_MODELS
-all: ${TRUECASING_NC1_SRC_LM}
+EXPECTED_FILES += ${TRUECASING_NC1_SRC_LM}
 endif
+all: ${EXPECTED_FILES}
 else
 all:
-	@echo "Nothing to do, user asked not to do truecasing." >&2
+	@echo "User asked not to do truecasing, so nothing to do." >&2
 endif
 
 
+########################################
 # What the user can expect from this module.
 .PHONY: list_final_output
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
-	@echo "${TRUECASING_LM}"
-	@echo "${TRUECASING_MAP}"
-	@echo "${TRUECASING_NC1_SRC_LM}"
+	@echo "${EXPECTED_FILES}"
 
 
 ########################################
@@ -156,6 +157,8 @@ hide.logs: hide_logs_sub
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
+MAIN_TARGETS += time-mem
+
 
 ########################################
 # Transform the truecasing models for PortageLive
@@ -175,6 +178,8 @@ portageLive:
 ifdef TC_USE_SRC_MODELS
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../tc/$(filter %nc1.tplm, $+) nc1-lm.${SRC_LANG}.tplm
 endif
+
+MAIN_TARGETS += portageLive
 
 
 ########################################

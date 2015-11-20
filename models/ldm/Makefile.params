@@ -13,6 +13,11 @@
 
 # User defines for models/ldm/.
 
+# NOTE:
+# You must define USE_LDM and/or USE_HLDM in the master Makefile.params in
+# order for the framework to build and, more importantly, use [Hierarchical]
+# Lexicalized Distortion Models.
+
 # When the corpus is too large and dmestm can't run in available memory, we can
 # filter out singleton phrase pairs from the LDM model.  Set this variable to
 # enable this filter.
@@ -26,6 +31,9 @@
 # Maximum phrase length.
 #M = 8
 
+# Define this variable if you don't want to merge your ldm counts in a fillup manner.
+#DONT_USE_FILLUP ?= 1
+
 # How many jobs to create when creating the counts.
 #PARALLELISM_LEVEL_LDM ?= 30
 
@@ -37,13 +45,5 @@
 
 # Number of cpus to use to create the final model.
 #ESTIM_CPUS ?= 4
-
-# Define this variable if you don't want to merge your ldm counts in a fillup manner.
-#DONT_USE_FILLUP ?= 1
-
-# NOTE:
-# You must define USE_LDM and/or USE_HLDM in the master Makefile.params in
-# order for the framework to build and, more importantly, use [Hierarchical]
-# Lexicalized Distortion Models.
 
 

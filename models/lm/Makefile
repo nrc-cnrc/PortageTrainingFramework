@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 # vim:noet:ts=3:nowrap
-#
+
 # @file Makefile
 # @brief Train language model files.
 #
@@ -86,25 +86,19 @@ vpath %.marked.gz ${CORPORA_DIR}
 .DELETE_ON_ERROR:
 
 
+MAIN_TARGETS :=  all clean help
+
 ########################################
 .PHONY: help
 help: SHELL=${LOCAL_SHELL}
 help:
-ifeq (${LM_TOOLKIT},IRST)
-	@echo "Please run the following in order for this framework to run properly:"
-	@echo "   export PATH=${IRSTLM_BIN_DIR}:\$$PATH"
-	@echo "   export IRSTLM=${IRSTLM}"
+	${HELP_IRSTLM}
+	${HELP_LM_TOOLKIT}
+	@echo "To train the language models, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 	@echo
-endif
-	@echo "In Makefile.params, define LM_TOOLKIT=SRI, LM_TOOLKIT=MIT" \
-	      "or LM_TOOLKIT=IRST to specify the LM toolkit to use."
-	@echo
-	@echo "To train your language models, type: make all"
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #' | sort
-	@echo
-	@echo "Note: you can build some other LM by defining TRAIN_LM=<corpora_prefix>."
+	@echo "Note: you can build some other LM by defining TRAIN_LM=<corpus_prefix>."
 
 
 ########################################
@@ -129,7 +123,10 @@ ifneq ($(filter-out ${VALID_LM_TYPES}, ${LM_TYPES}),)
 $(error Invalid LM_TYPES: $(filter-out ${VALID_LM_TYPES}, ${LM_TYPES}))
 endif
 
-all: $(foreach x, ${LM_EXTS}, $(addsuffix $x, ${LM_NAMES}))
+EXPECTED_FILES = $(foreach x, ${LM_EXTS}, $(addsuffix $x, ${LM_NAMES}))
+
+all: ${EXPECTED_FILES}
+
 
 # Corpus dependencies for LM files.
 $(foreach c, ${CORPORA_NAMES}, \
@@ -152,7 +149,7 @@ endif
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
-	@echo "$(foreach x, ${LM_EXTS}, $(addsuffix $x, ${LM_NAMES}))"
+	@echo "${EXPECTED_FILES}"
 
 
 ########################################
@@ -187,6 +184,8 @@ hide.logs: hide_logs_sub
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
+MAIN_TARGETS += time-mem
+
 
 ########################################
 # Transform the LM model for PortageLive
@@ -200,8 +199,10 @@ portageLive: $(addsuffix .tplm, ${LM_NAMES}) $(notdir ${LM_PRETRAINED_TGT_LMS:.b
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../lm/, $+) .
 else
 portageLive:
-	@echo "No regular LMs defined, nothing to do." >&2
+	@echo "No regular LMs defined, so nothing to do for portageLive." >&2
 endif
+
+MAIN_TARGETS += portageLive
 
 
 ########################################

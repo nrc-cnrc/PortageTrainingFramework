@@ -80,12 +80,8 @@ RAT_TRANS_CPUS ?= 1
 
 ########################################
 # SETUP
-ifneq (${MAKECMDGOALS},clean)
-ifneq (${MAKECMDGOALS},clean.content)
-ifneq (${MAKECMDGOALS},clean.logs)
+ifneq ($(filter-out help clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
 $(shell ln -fs ${MODEL_DIR})
-endif
-endif
 endif
 
 
@@ -100,6 +96,9 @@ vpath %${TGTX}  ${CORPORA_DIR}
 vpath %${RULEX} ${CORPORA_DIR}
 
 
+MAIN_TARGETS :=  all clean help
+
+########################################
 .PHONY: all
 all: train
 
@@ -112,7 +111,10 @@ help:
 	@echo "To train rescoring, type: make all"
 	@echo
 	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo ${MAIN_TARGETS}
+	@echo
+	@echo "Expected output files are:"
+	@sed -e 's/  */\n/g' <<< "$(strip ${EXPECTED_FILES})"
 
 
 # What the user can expect from this module.
@@ -120,7 +122,7 @@ help:
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
-	@echo "${RESCORING_MODEL}"
+	@echo "${EXPECTED_FILES}"
 
 
 ########################################
@@ -148,6 +150,8 @@ hide.logs: hide_logs_sub
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
+
+MAIN_TARGETS += time-mem
 
 
 ########################################
@@ -178,6 +182,9 @@ ${UNTUNED_RESCORING_MODEL}: ${RESCORING_MODEL_TEMPLATE}
 
 ########################################
 # Train a rescoring model
+
+EXPECTED_FILES = ${RESCORING_MODEL}
+
 .PHONY: train
 train: ${RESCORING_MODEL}
 

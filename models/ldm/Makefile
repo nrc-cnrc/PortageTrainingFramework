@@ -74,6 +74,10 @@ vpath %.align.gz  ${LDM_DIR_PFX}../wal/
 .SUFFIXES:
 .SECONDARY:
 
+
+MAIN_TARGETS :=  all clean help
+
+########################################
 .PHONY:  all
 all:
 
@@ -130,11 +134,21 @@ def corporaNames(corpora, wam, sx="${L1X}", tx="${L2X}"):
 # What will we use for the LDM is description.
 ldmDescription = "+".join("$(call sort_aligners,${AVAILABLE_WORD_ALIGNMENT_MODELS})".strip().split())
 
+expectedFiles = set()
+
 # Lexicalized distortion model file name.
 ldmFile = "${LDM_MODEL_PFX}.{name}.${L1_2_L2X}".format(name=ldmDescription)
 
+if "${USE_LDM}":
+   expectedFiles.add(ldmFile)
+   expectedFiles.add(ldmFile[:-2]+"bkoff")
+
 # Hirarchical Lexicalized distortion model file name.
 hldmFile = "${HLDM_MODEL_PFX}.{name}.${L1_2_L2X}".format(name=ldmDescription)
+
+if "${USE_HLDM}":
+   expectedFiles.add(hldmFile)
+   expectedFiles.add(hldmFile[:-2]+"bkoff")
 
 # What is required to build a tpldm.
 def tpldmRules(required, ldmFile):
@@ -145,12 +159,11 @@ def tpldmRules(required, ldmFile):
       print("portageLive:  {file}".format(file=tpldmFile), file=df)
 
 with open(".Makefile.deps", "w") as df:
-   expectedFiles = set()
    print("ldm:   {file}".format(file=ldmFile), file=df)
    print("hldm:  {file}".format(file=hldmFile), file=df)
 
-   tpldmRules("${USE_LDM}" != "", ldmFile)
-   tpldmRules("${USE_HLDM}" != "", hldmFile)
+   tpldmRules("${USE_LDM}", ldmFile)
+   tpldmRules("${USE_HLDM}", hldmFile)
 
    # To generate (h)ldm count files we need alignment files.
    # To generate (h)ldm count files we need the source corpus and the target corpus
@@ -167,19 +180,15 @@ with open(".Makefile.deps", "w") as df:
          print("{counts}:  {s}  {t}".format(counts=countFilename, **corporaNames(corpora, wam)), file=df)
          print("{counts}:  {alignment}".format(counts=countFilename, alignment=alignment), file=df)
 
-   #############################################################################
-   #
    for wam in set("${AVAILABLE_WORD_ALIGNMENT_MODELS}".strip().split()):
       countFilename = "${LDM_MODEL_PFX}.{w}${COUNTSX}".format(w=wam)
       print("ldm.counts:  {counts}".format(counts=countFilename), file=df)
       print("{ldmFile}:  {counts}".format(ldmFile=ldmFile, counts=countFilename), file=df)
-      expectedFiles.add(countFilename)
 
       countFilename = "${HLDM_MODEL_PFX}.{w}${COUNTSX}".format(w=wam)
       print("hldm.counts:  {counts}".format(counts=countFilename), file=df)
       print("{hldmFile}:  {counts}".format(hldmFile=hldmFile, counts=countFilename), file=df)
-      expectedFiles.add(countFilename)
-
+   
    print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
 endef
 
@@ -205,31 +214,18 @@ clean.tpldm:
 	${RM} -r *.tpldm
 
 
-################################################################################
-# HELPERS.
-########################################
-# Word alignment models.
-# These targets will most likely not be called since the framework should have
-# taken care of creating those models in the first place.
-# They are here to be to try make -n before running the framework.
-# Disabled because it breaks the building of ldm.counts if actually invoked.
-#%${TGT_GIVEN_SRCX} %${SRC_GIVEN_TGTX}:
-#	[[ -f "../tm/$@" ]] || ${MAKE} -C ../tm $@
-
-
 ########################################
 # HELP OPTIONS
 .PHONY:  help
 help: SHELL=${LOCAL_SHELL}
 help:
-	@echo "Train a lexicalized distortion model."
+	@echo "Train a (hierarchical) lexicalized distortion model."
 	@echo
-	@echo "To train your distortion model, type: make all"
+	@echo "To train the distortion model, type: make all"
 	@echo
-	@echo "Have a look at Makefile.params in the current directory to enable custom tweaks."
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo "See ./Makefile.params to enable custom settings."
+	${HELP_LIST_MAIN_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
 ########################################
@@ -258,6 +254,8 @@ hide.logs: hide_logs_sub
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
+MAIN_TARGETS += time-mem
+
 
 ########################################
 # What is needed for PortageLive.
@@ -275,8 +273,10 @@ portageLive:
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../ldm/, $+) .
 else
 portageLive:
-	@echo "Not using a lexicalized distortion model." >&2
+	@echo "Not using a lexicalized distortion model, so nothing to do for portageLive." >&2
 endif
+
+MAIN_TARGETS += portageLive
 
 
 

@@ -3,13 +3,13 @@
 #
 # @author Samuel Larkin
 # @file Makefile
-# @brief Translates, rescores, truecases and detokenizes documents.
+# @brief Translate, rescore, truecase and detokenize documents.
 #
-# Technologies langagieres interactives / Interactive Language Technologies
-# Inst. de technologie de l'information / Institute for Information Technology
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, 2012 Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, 2012 Her Majesty in Right of Canada
+# Copyright 2008, 2012, 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2012, 2015, Her Majesty in Right of Canada
 
 
 # Mandatory include: master config file.
@@ -135,12 +135,6 @@ endif
 endif
 
 
-.DEFAULT_GOAL := help
-.SECONDARY:
-.SECONDEXPANSION:
-.SUFFIXES:
-.DELETE_ON_ERROR:
-
 # Tells make where to find files that we've made in previous scripts/modules.
 vpath %${LANGX} ${CORPORA_DIR}
 vpath %${SRCX}  ${CORPORA_DIR}
@@ -156,6 +150,16 @@ vpath ${TRUECASING_LM}   ${TRUECASING_DIR} models/tc
 vpath ${TRUECASING_MAP}  ${TRUECASING_DIR} models/tc
 
 
+.DEFAULT_GOAL := help
+.SECONDARY:
+.SECONDEXPANSION:
+.SUFFIXES:
+.DELETE_ON_ERROR:
+
+
+MAIN_TARGETS :=  all clean help
+
+########################################
 .PHONY: all
 all:  SHELL=${LOCAL_SHELL}
 all: final_result
@@ -163,7 +167,7 @@ all: final_result
 
 
 ########################################
-# Depending on the user's input,
+# Depending on the user's settings in Makefile.params,
 # - should do or not do truecasing;
 # - should do or not rescoring.
 ifdef DO_RESCORING
@@ -184,12 +188,12 @@ endif
 .PHONY: final_result
 final_result: SHELL=${LOCAL_SHELL}
 
-FINAL_RESULT += $(addsuffix .translation, ${TEST_SET})
+EXPECTED_FILES += $(addsuffix .translation, ${TEST_SET})
 ifdef TRANSLATE_SET
-FINAL_RESULT += $(addsuffix .translation, ${TRANSLATE_SET})
+EXPECTED_FILES += $(addsuffix .translation, ${TRANSLATE_SET})
 endif
 
-final_result: ${FINAL_RESULT}
+final_result: ${EXPECTED_FILES}
 
 # The final outputs will be named *.translation.
 %.translation:  SHELL=${LOCAL_SHELL}
@@ -202,29 +206,32 @@ final_result: ${FINAL_RESULT}
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
-	@echo "${FINAL_RESULT}"
+	@echo "${EXPECTED_FILES}"
 
 
-# An alias that indicate what/how to translate the translation set without rescoring.
+# Alias for translating the translation set without rescoring.
 .PHONY: translate
 translate: out
 
-# An alias to translate and rescore the translation set.
+MAIN_TARGETS += translate
+
+# Alias for translating and rescoring the translation set.
 .PHONY: rescore
 rescore: rat
 
+MAIN_TARGETS += rescore
 
-# This is where we would document this module's help.
+
+########################################
 .PHONY: help
 help: SHELL=${LOCAL_SHELL}
 help:
 	@echo "Translate the following test sets: $(addsuffix _${SRC_LANG}, ${TEST_SET})"
 	@echo
-	@echo "To translate your test sets, type: make all"
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo "To translate the test sets, type: make all"
 	@echo "Most likely you want to run either: make all or make translate."
+	${HELP_LIST_MAIN_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
 ########################################
@@ -251,6 +258,8 @@ hide.logs: hide_logs_sub
 .PHONY: time-mem
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
+
+MAIN_TARGETS += time-mem
 
 
 ########################################
@@ -509,6 +518,8 @@ clean.ce:
 	${RM} ${CONFIDENCE_MODEL}
 	${RM} *.ce
 
+MAIN_TARGETS += confidence
+
 
 ################################################################################
 # TRUECASING
@@ -562,17 +573,11 @@ ${CLEAN_TC_LIST}: clean.truecasing.%.guard:
 	${RM} $*.tc.detok
 	${RM} canoe_tc_tmp_*.tm
 
+MAIN_TARGETS += tc
+
 
 ################################################################################
 # HELPERS
-
-########################################
-# General detokenizeer.
-%.detok: SHELL=${LOCAL_SHELL}
-%.detok: %
-	@echo "Detokenizing $(notdir ${CURDIR})/$<"
-	${DETOKENIZER} < $< > $@
-
 
 ########################################
 # Check the canoe.ini config file.
@@ -580,6 +585,27 @@ ${CLEAN_TC_LIST}: clean.truecasing.%.guard:
 configtool: SHELL=${LOCAL_SHELL}
 configtool: ${DECODING_MODEL_TEMPLATE}
 	configtool check $<
+
+
+########################################
+# Hook to perform detokenization
+.PHONY: detok
+detok: out.detok
+ifdef DO_TRUECASING
+detok: tc.detok
+endif
+ifdef DO_RESCORING
+detok: rat.detok
+endif
+
+MAIN_TARGETS += detok
+
+########################################
+# How to detokenize.
+%.detok: SHELL=${LOCAL_SHELL}
+%.detok: %
+	@echo "Detokenizing $(notdir ${CURDIR})/$<"
+	${DETOKENIZER} < $< > $@
 
 
 ########################################
@@ -594,18 +620,7 @@ bleu:
 	@echo "Lowercase BLEU scores for $(notdir ${CURDIR})/:"
 	grep Human *.bleu
 
-
-########################################
-# Hook to perform detokenization
-.PHONY: detok
-detok: out.detok
-ifdef DO_TRUECASING
-detok: tc.detok
-endif
-ifdef DO_RESCORING
-detok: rat.detok
-endif
-
+MAIN_TARGETS += bleu
 
 ########################################
 # How to calculate BLEU.
@@ -616,7 +631,6 @@ endif
 %.bleu:
 	@echo "Calculating BLEU for $(notdir ${CURDIR})/$@"
 	bleumain -c $(filter-out %${TGTX}, $+) $(filter %${TGTX}, $+) > $@
-
 
 ########################################
 # Compare BLEU with another system.
@@ -630,16 +644,7 @@ COMPARE_TO ?= UNDEFINED/
 
 
 ########################################
-# Tries to run all targets in this Makefile mainly to check the syntax of all
-# targets.
-.PHONY: full
-full: out.bleu
-full: out.detok.bleu
-full: rat.bleu
-full: rat.detok.bleu
-full: configtool
-
-
+# Produce OOV statistics
 .PHONY: oov
 oov: $(addsuffix .woov, ${TEST_SET})
 # NOTE: we do not explicitely declare the dependency on %.out.oov since it is a
@@ -651,3 +656,14 @@ oov: $(addsuffix .woov, ${TEST_SET})
 	@echo -e -n "$*\t`egrep Human $(filter %.bleu, $+)`"
 	@perl -e 'printf "\tOOV: %6.6f%%\n", 100 * `egrep -o  "<OOV>[^<]+</OOV>" < $*.out.oov | \wc -l` / `\wc -w < $<`'
 
+MAIN_TARGETS += oov
+
+
+########################################
+# Try running all targets in this Makefile, mainly to check syntax.
+.PHONY: full
+full: out.bleu
+full: out.detok.bleu
+full: rat.bleu
+full: rat.detok.bleu
+full: configtool

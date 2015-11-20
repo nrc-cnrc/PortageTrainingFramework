@@ -2,15 +2,15 @@
 # vim:noet:ts=3:nowrap
 
 # @file Makefile
-# @brief Tune/train a decoding model.
+# @brief Tune/train an NNJM model.
 #
 # @author Samuel Larkin
 #
 # Traitement multilingue de textes / Multilingual Text Processing
 # Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, 2015, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, 2015, Her Majesty in Right of Canada
+# Copyright 2016, Sa Majeste la Reine du Chef du Canada
+# Copyright 2016, Her Majesty in Right of Canada
 
 NNJM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 #$(info NNJM_DIR_PFX: ${NNJM_DIR_PFX})
@@ -39,26 +39,30 @@ NNJM_PRETRAINED_NNJMS_FIXED := $(foreach f, ${NNJM_PRETRAINED_NNJMS}, $(call fix
 .SUFFIXES:
 .DELETE_ON_ERROR:
 
+
+MAIN_TARGETS :=  all clean help
+
+########################################
 .PHONY: help
 help: SHELL=${LOCAL_SHELL}
 help:
-	@echo "Train NNJMs."
+	@echo "Use pre-trained NNJMs."
 	@echo
-	@echo "To train your models, type: make all"
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #'
+	@echo "To configure the models, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
 
 
+########################################
 .PHONY:  all
+all: SHELL=${LOCAL_SHELL}
 all:
 
-
-$(info USE_PRETRAINED_NNJMS: ${USE_PRETRAINED_NNJMS})
-$(info NNJM_PRETRAINED_NNJMS_FIXED: ${NNJM_PRETRAINED_NNJMS_FIXED})
-
+#$(info USE_PRETRAINED_NNJMS: ${USE_PRETRAINED_NNJMS})
+#$(info NNJM_PRETRAINED_NNJMS_FIXED: ${NNJM_PRETRAINED_NNJMS_FIXED})
 
 
+########################################
+# Clean up
 .PHONY:  clean
 clean:  SHELL = ${LOCAL_SHELL}
 clean:  clean.content
@@ -70,12 +74,9 @@ clean.content:
 	${RM} cpt.delme  pretrained.*
 
 .PHONY:  clean.logs
+clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	@true
-
-
-
-
 
 
 define DEPS.PYSCRIPT
@@ -110,15 +111,15 @@ endef
 #$(info NNJM dependencies generator: ${DEPS.PYSCRIPT})
 
 
-
 ifneq (${USE_PRETRAINED_NNJMS},)
-$(info USING PRETRAINED NNJMS)
+$(info Using pre-trained NNJMS)
 PRETRAINED_NNJMS_LIST := $(shell python -c '${DEPS.PYSCRIPT}')
 $(info PRETRAINED_NNJMS_LIST: ${PRETRAINED_NNJMS_LIST})
 include .Makefile.deps
 
-.PHONY:  pretrained
 all:  pretrained
+.PHONY:  pretrained
+pretrained: SHELL=${LOCAL_SHELL}
 
 ${PRETRAINED_NNJMS_LIST}:  SHELL=${LOCAL_SHELL}
 ${PRETRAINED_NNJMS_LIST}:
@@ -128,30 +129,21 @@ ${PRETRAINED_NNJMS_LIST}:
 %.validate:
 	configtool "args: -nnjm-file $*" <<< '[lmodel-file] /dev/null [ttable-multi-prob] cpt.delme' | configtool check
 
-
-
 # A temporary phrase table to allow us to use configtool check to valid the
 # NNJM models.
 .INTERMEDIATE:  cpt.delme
+cpt.delme: SHELL=${LOCAL_SHELL}
 cpt.delme:
 	echo "a ||| a ||| 1 1" > $@
-
 
 #.PHONY:  clean.symlinks
 #clean.content:  clean.symlinks
 #clean.symlinks:
 #	${RM} ${PRETRAINED_NNJMS_LIST}
-
-
-
-portageLive:  | ${PORTAGE_LIVE_DEST_DIR}
 else
-$(info NOT USING NNJM)
+$(info Not using NNJMs)
 all:
-	@echo "Not using NNJM, nothing to do." >&2
-
-portageLive:
-	@echo "Not using NNJM, nothing to do." >&2
+	@echo "Not using NNJMs, so nothing to do." >&2
 endif
 
 
@@ -171,39 +163,38 @@ pretrained.are.memory.mapped:  $(addsuffix .is.memory.mapped, ${NNJM_PRETRAINED_
 	|| ! echo "Error: tgtclasses should be memory mapped in $*" >&2
 
 
-
 ########################################
 # Portage Live
 ${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
 ${PORTAGE_LIVE_DEST_DIR}:
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 
-
 .PHONY:  portageLive
 portageLive:  SHELL=${LOCAL_SHELL}
+ifneq (${USE_PRETRAINED_NNJMS},)
+portageLive:  | ${PORTAGE_LIVE_DEST_DIR}
+else
+portageLive:
+	@echo "Not using NNJMs, so nothing to do for portageLive." >&2
+endif
 
+${PORTAGE_LIVE_DEST_DIR}/%: SHELL=${LOCAL_SHELL}
 ${PORTAGE_LIVE_DEST_DIR}/%:
 	ln -fs ../../../nnjm/$< $@
 
+MAIN_TARGETS += portageLive
 
 .PHONY:  clean.portageLive
 clean.content:  clean.portageLive
+clean.portageLive: SHELL=${LOCAL_SHELL}
 clean.portageLive:
 	${RM} -fr ${PORTAGE_LIVE_DEST_DIR}
-
-
-
-
-
-
-
 
 
 
 ################################################################################
 # TestSuite
 .PHONY:  testsuite
-
 
 testsuite:  one_pretrained_testcase
 .PHONY:  one_pretrained_testcase
@@ -214,8 +205,6 @@ one_pretrained_testcase:
 	${MAKE} portageLive
 	[[ `\ls -d ${PORTAGE_LIVE_DEST_DIR}/pretrained.* | \wc -l` -eq 1 ]] || ! echo "Error: Expecting 1 NNJM model." >&2
 	[[ -L ${PORTAGE_LIVE_DEST_DIR}/pretrained.PTGSH-163a ]] || ! echo "Error: Missing NNJM model symlink." >&2
-
-
 
 testsuite:  multiple_pretrained_testcase
 .PHONY:  multiple_pretrained_testcase

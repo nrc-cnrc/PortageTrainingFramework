@@ -688,7 +688,7 @@ endif
 
 
 ########################################
-# LANGUAGE'S SPECIFICITIES
+# LANGUAGE SPECIFICS
 ifeq (${SRC_LANG},ar)
    DONT_LOWERCASE_SRC = 1
 endif
@@ -853,3 +853,9 @@ $(error You cannot use the IBM4 feature since you don't have mgiza installed.)
 endif
 endif
 
+
+########################################
+# Finally, output a blank line.
+ifeq (${MAKELEVEL},0)
+$(info )
+endif

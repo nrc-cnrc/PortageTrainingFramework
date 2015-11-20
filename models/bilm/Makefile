@@ -30,7 +30,7 @@ SMOOTHER ?= kn
 else ifeq (${LM_TOOLKIT}, SRI)
 SMOOTHER ?= wb
 else
-$(error LM Toolkit for building coarse LMs must be MIT or SRI; invalid LM toolkit: ${LM_TOOLKIT})
+$(error LM Toolkit for building (coarse) BiLMs must be MIT or SRI; invalid LM toolkit: ${LM_TOOLKIT})
 endif
 
 # Override the default LM ORDER setting in the LM Makefile.toolkit
@@ -66,13 +66,13 @@ LM_TYPES ?= binlm
 # We must create tplm for tuning.
 LM_TYPES := $(sort ${LM_TYPES} tplm)
 
-$(info TRAIN_BILM: ${TRAIN_BILM})
+#$(info TRAIN_BILM: ${TRAIN_BILM})
 
 # What are the corpora names and extension and what files define these corpora.
 CORPORA_NAMES ?= $(addprefix bitokens., \
                     $(foreach s, $(filter-out word, ${BILM_SPEC}), $(addsuffix -$s_${LM_LANG}, ${TRAIN_BILM})) \
                     $(if $(filter word, ${BILM_SPEC}), $(addsuffix _${LM_LANG}, ${TRAIN_BILM})) )
-$(info CORPORA_NAMES: ${CORPORA_NAMES})
+#$(info CORPORA_NAMES: ${CORPORA_NAMES})
 
 # This indicates the corpus extension and looks like .tok.al.gz
 CORPUS_EXT  ?= ${LANGXZ}
@@ -111,19 +111,19 @@ vpath %.align.gz ../wal
 .SECONDARY:
 
 
+MAIN_TARGETS :=  all clean help
+
 ########################################
 .PHONY: help
 help: SHELL=${LOCAL_SHELL}
 help:
-	@echo "In Makefile.params, define LM_TOOLKIT=SRI, LM_TOOLKIT=MIT" \
-	      "to specify the LM toolkit to use."
-	@echo "Also in Makefile.params, define BILM_SPEC to provide" \
-	      "the (coarse) BiLM specifications."
+	${HELP_LM_TOOLKIT_2}
+	@echo "In Makefile.params, define USE_BILM to enable BiLM training."
+	@echo "Also, define BILM_SPEC to provide different (coarse) BiLM specifications."
 	@echo
-	@echo "To train your coarse language models, type: make all"
-	@echo
-	@echo "The main targets in this Makefile are:"
-	@cat $(firstword $(MAKEFILE_LIST)) | egrep '^.PHONY:' | sed 's#^.PHONY: #   #' | sort
+	@echo "To train the (coarse) BiLM, type: make all"
+	${HELP_LIST_MAIN_TARGETS}
+	${HELP_LIST_EXPECTED_FILES}
 
 
 ########################################
@@ -141,7 +141,9 @@ ifneq ($(filter-out ${VALID_LM_TYPES}, ${LM_TYPES}),)
 $(error Invalid LM_TYPES: $(filter-out ${VALID_LM_TYPES}, ${LM_TYPES}))
 endif
 
-all: $(foreach x, ${LM_EXTS}, $(addsuffix $x, ${LM_NAMES}))
+EXPECTED_FILES = $(foreach x, ${LM_EXTS}, $(addsuffix $x, ${LM_NAMES}))
+
+all: ${EXPECTED_FILES}
 
 # Corpus dependencies for BiLM files.
 $(foreach c, ${CORPORA_NAMES}, \
@@ -238,6 +240,7 @@ with open(".Makefile.deps", "w") as df:
          print("{cls}: {bits}".format(cls=bit_cls, bits=" ".join(wcl_corp)), file=df)
          bit_mmcls=bit_cls.rsplit(".", 1)[0] + ".mmcls"
          print("portageLive: {mmcls}".format(mmcls=bit_mmcls), file=df)
+         print("EXPECTED_FILES += {cls}".format(cls=bit_cls), file=df)
       # Dependencies for LM parameter tuning
       if tune_bilm:
          # BiLM file depends on the tune bitokens file.
@@ -252,7 +255,6 @@ with open(".Makefile.deps", "w") as df:
 endef
 
 $(shell python -c '${DEPS.PYSCRIPT}')
-
 include .Makefile.deps
 
 .INTERMEDIATE: ${MAPPED_CORP_FILES}
@@ -283,7 +285,7 @@ ${BITOKENS_CORP_FILES}: bitokens.%:
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
-	@echo "$(foreach x, ${LM_EXTS}, $(addsuffix $x, ${LM_NAMES}))"
+	@echo "${EXPECTED_FILES}"
 
 
 ########################################
@@ -321,6 +323,8 @@ hide.logs: hide_logs_sub
 time-mem: SHELL=${LOCAL_SHELL}
 time-mem: resource_summary_sub
 
+MAIN_TARGETS += time-mem
+
 
 ########################################
 # Transform the BiLM model(s) for PortageLive
@@ -340,9 +344,10 @@ portageLive:
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../bilm/, $+) .
 else
 portageLive:
-	@echo "No BiLMs defined, nothing to do." >&2
+	@echo "No BiLMs defined, so nothing to do for portageLive." >&2
 endif
 
+MAIN_TARGETS += portageLive
 
 
 ################################################################################
