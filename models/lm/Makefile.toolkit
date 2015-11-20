@@ -240,8 +240,8 @@ endif
 ########################################
 # qARPA format
 
-%.qlm: SHELL=${FRAMEWORK_SHELL}
-%.qlm: %.lm.gz
+%.qlm.gz: SHELL=${FRAMEWORK_SHELL}
+%.qlm.gz: %.lm.gz
 	@_LOCAL=1 echo "  qARPA $< to $@"
 	RP_PSUB_OPTS="-${LM_CPUS} -N $@" \
 	${TIME_MEM} \

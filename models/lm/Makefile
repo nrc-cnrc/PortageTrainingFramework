@@ -269,7 +269,8 @@ ${pretrained_lm_paths}: %:
 # All valid/possible LMs
 .PHONY: all_lm
 all_lm: SHELL=${LOCAL_SHELL}
-	${MAKE} LM_TYPES="${VALID_LM_TYPES}
+all_lm:
+	${MAKE} all LM_TYPES="${VALID_LM_TYPES}"
 
 ################################################################################
 # The following targets are unmaintained and were used for initial testing of
