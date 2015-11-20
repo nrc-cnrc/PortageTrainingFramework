@@ -201,13 +201,8 @@ with open(".Makefile.deps", "w") as df:
       for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
          print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corpora, A="${IBM4_FORCE_ALIGN_WAM}"), file=df)
 
-   # Special case for mixtm tuning.
-   for corpora in set("${TUNE_MIXTM_FINAL}".strip().split()):
-      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
-         createRules(corpora, wam, corpora+"${L1}", corpora+"${L2}")
-
-   # Special case for BiLM tuning.
-   for corpora in set("${TUNE_BILM}".strip().split()):
+   # Special case for mixtm and BiLM tuning.
+   for corpora in set("${TUNE_MIXTM_FINAL} ${TUNE_BILM}".strip().split()):
       for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
          createRules(corpora, wam, corpora+"${L1}", corpora+"${L2}")
 
