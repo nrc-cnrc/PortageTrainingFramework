@@ -300,7 +300,7 @@ PARALLELISM_LEVEL_PORTAGELIVE ?= 1
 #NOCLUSTER ?= 1
 
 # Automatically detects if we are on a cluster.
-ifeq ($(strip $(shell which-test.sh qsub && echo "true")),true)
+ifeq ($(strip $(shell on-cluster.sh && echo "true")),true)
    USING_CLUSTER ?= 1
 endif
 ifdef NOCLUSTER
