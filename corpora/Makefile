@@ -159,8 +159,7 @@ SMALL_SETS := ${HELDOUT_SET} ${TUNE_MIXTM} ${TUNE_MIXTM_MULTIPLE_REFERENCES}
 IS_SMALL_SET = $(findstring $(basename $@), $(addsuffix _${SRC_LANG}, ${SMALL_SETS}) \
                                             $(addsuffix _${TGT_LANG}, ${SMALL_SETS}))
 
-CORPUS_SHELL = $(if ${IS_SMALL_SET},${LOCAL_SHELL},${FRAMEWORK_SHELL})
-RP_SHELL_OPTS = $(if  ${IS_SMALL_SET},,RP_PSUB_OPTS="-1")
+CORPUS_SHELL = $(if ${IS_SMALL_SET},${LOCAL_SHELL},$(if ${USING_CLUSTER},${FRAMEWORK_SHELL} -psub "-cpus 1 -mem 4",${FRAMEWORK_SHELL}))
 # Don't run time-mem when processing small files.
 TIME_MEM = $(if ${IS_SMALL_SET},,time-mem)
 LOG_STDERR = $(if ${IS_SMALL_SET},,2> log.$(@:${GZ}=))
@@ -208,7 +207,6 @@ TOK += ${SRC_TOK_LIST}
 ${SRC_TOK_LIST}: SHELL=${CORPUS_SHELL}
 ${SRC_TOK_LIST}: %${ALIGNX}: %${RAWX}
 	@${check_utf8}
-	${RP_SHELL_OPTS} ${TIME_MEM} \
 	${TOKENIZER_${SRC_LANG}} < $< > $@ ${LOG_STDERR}
 
 
@@ -226,14 +224,12 @@ TOK += ${TGT_TOK_LIST}
 ${TGT_TOK_LIST}: SHELL=${CORPUS_SHELL}
 ${TGT_TOK_LIST}: %${ALIGNX}: %${RAWX}
 	@${check_utf8}
-	${RP_SHELL_OPTS} ${TIME_MEM} \
 	${TOKENIZER_${TGT_LANG}} < $< > $@ ${LOG_STDERR}
 
 
 ## Compress the source/language corpora if needed.
 $(addsuffix ${GZ}, ${SRC_TOK_LIST} ${TGT_TOK_LIST}): SHELL=${CORPUS_SHELL}
 $(addsuffix ${GZ}, ${SRC_TOK_LIST} ${TGT_TOK_LIST}): %${GZ}: %
-	${RP_SHELL_OPTS} \
 	cat $< | ${TIME_MEM} gzip > $@ ${LOG_STDERR}.gzip
 
 
@@ -245,7 +241,6 @@ TOK += ${SRC_TOKZ_LIST}
 
 ${SRC_TOKZ_LIST}: SHELL=${LOCAL_SHELL}
 ${SRC_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
-	RP_PSUB_OPTS="-1" \
 	parallelize.pl \
 		-nolocal \
 		-psub -1 \
@@ -261,7 +256,6 @@ TOK += ${TGT_TOKZ_LIST}
 
 ${TGT_TOKZ_LIST}: SHELL=${LOCAL_SHELL}
 ${TGT_TOKZ_LIST}: %${ALIGNX}${GZ}: %${RAWX}${GZ}
-	RP_PSUB_OPTS="-1" \
 	parallelize.pl \
 		-nolocal \
 		-psub -1 \
@@ -403,13 +397,11 @@ else
 %${SRC_LANG}${LANGX}: SHELL=${CORPUS_SHELL}
 %${SRC_LANG}${LANGX}: %${SRC_LANG}${ALIGNX}
 	@$(check_utf8)
-	${RP_SHELL_OPTS} \
 	cat $< | ${TIME_MEM} $(or ${LOWERCASE_${SRC_LANG}}, ${LOWERCASE}) ${LOG_STDERR} > $@
 
 %${SRC_LANG}${LANGXZ}: SHELL=${CORPUS_SHELL}
 %${SRC_LANG}${LANGXZ}: %${SRC_LANG}${ALIGNX}${GZ}
 	@$(check_utf8)
-	${RP_SHELL_OPTS} \
 	set -o pipefail; \
 	zcat $< | ${TIME_MEM} $(or ${LOWERCASE_${SRC_LANG}}, ${LOWERCASE}) ${LOG_STDERR} | gzip > $@
 
@@ -418,13 +410,11 @@ endif
 %${TGT_LANG}${LANGX}: SHELL=${CORPUS_SHELL}
 %${TGT_LANG}${LANGX}: %${TGT_LANG}${ALIGNX}
 	@$(check_utf8)
-	${RP_SHELL_OPTS} \
 	cat $< | ${TIME_MEM} $(or ${LOWERCASE_${TGT_LANG}}, ${LOWERCASE}) ${LOG_STDERR} > $@
 
 %${TGT_LANG}${LANGXZ}: SHELL=${CORPUS_SHELL}
 %${TGT_LANG}${LANGXZ}: %${TGT_LANG}${ALIGNX}${GZ}
 	@$(check_utf8)
-	${RP_SHELL_OPTS} \
 	set -o pipefail; \
 	zcat $< | ${TIME_MEM} $(or ${LOWERCASE_${TGT_LANG}}, ${LOWERCASE}) ${LOG_STDERR} | gzip > $@
 
@@ -448,7 +438,7 @@ rule: ${RULE}
 %${RULEX}: SHELL=${CORPUS_SHELL}
 %${RULEX}: %_${SRC_LANG}${LANGX}
 	@$(check_utf8)
-	${RP_SHELL_OPTS} ${TIME_MEM} \
+	${TIME_MEM} \
 	$(or ${MARK_RULE_${SRC_LANG}}, ${MARK_RULE_DEFAULT}) < $< > $@ ${LOG_STDERR}
 
 
