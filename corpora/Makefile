@@ -61,15 +61,14 @@ ALIGN_CORPORA_DIR ?= .
 RAW_CORPORA_DIR ?= .
 
 # Let's allow for different tokenizer based on language.
-#TODO the pipe method is broken because it gets called with time-mem; fix how tokenizing is called, then come back here are re-activate fix-slashes.pl
-#TOKENIZER_en ?= { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=en; }
-#TOKENIZER_fr ?= { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=fr; }
-#TOKENIZER_da ?= { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=da; }
-#TOKENIZER_es ?= { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=es; }
-TOKENIZER_en ?= utokenize.pl -noss -lang=en
-TOKENIZER_fr ?= utokenize.pl -noss -lang=fr
-TOKENIZER_da ?= utokenize.pl -noss -lang=da
-TOKENIZER_es ?= utokenize.pl -noss -lang=es
+TOKENIZER_en ?= { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=en; }
+TOKENIZER_fr ?= { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=fr; }
+TOKENIZER_da ?= { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=da; }
+TOKENIZER_es ?= { set -o pipefail; fix-slashes.pl | utokenize.pl -noss -lang=es; }
+#TOKENIZER_en ?= utokenize.pl -noss -lang=en
+#TOKENIZER_fr ?= utokenize.pl -noss -lang=fr
+#TOKENIZER_da ?= utokenize.pl -noss -lang=da
+#TOKENIZER_es ?= utokenize.pl -noss -lang=es
 TOKENIZER_ar ?= tokenize_plugin ar
 ifdef USE_ICTCLAS
 #TOKENIZER_ch ?= ictclas_run.sh
