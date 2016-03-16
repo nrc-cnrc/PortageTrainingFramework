@@ -175,3 +175,67 @@ else
 portageLive:
 	$(error ERROR: the portageLive target should not be called when DO_CE is not set.)
 endif
+
+
+
+
+
+
+
+################################################################################
+# TESTSUITE
+.PHONY:  testsuite
+
+################################################################################
+# UNITTESTS
+
+.PHONY:  mixtm_1wam_ce_testcase
+testsuite:  mixtm_1wam_ce_testcase
+mixtm_1wam_ce_testcase:  export SRC_LANG := fr
+mixtm_1wam_ce_testcase:  export TGT_LANG := en
+mixtm_1wam_ce_testcase:  export MIXTM := tm-train1 tm-train2
+mixtm_1wam_ce_testcase:  export TUNE_CE := dev3
+mixtm_1wam_ce_testcase:  export DO_CE := 1
+mixtm_1wam_ce_testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL := 1
+mixtm_1wam_ce_testcase:  export MERGED_CPT_JPT_TYPES := IBM2 HMM3
+mixtm_1wam_ce_testcase:  export MERT_MAX_ITER := 3
+mixtm_1wam_ce_testcase:  export INIX := .mixtm_1wam_ce_testcase
+mixtm_1wam_ce_testcase:
+	touch canoe.ini.cow
+	${MAKE} ce-notm${INIX}
+	[[ -s ce-notm${INIX} ]] || ! echo "ERROR: Was unable to instanciate a CE template." >&2
+	[[ `grep -c mixwam ce-notm${INIX}` -eq 8 ]] || ! echo "ERROR: CE model should be using IBM mixwam." >&2
+
+.PHONY:  mixtm_ce_testcase
+testsuite:  mixtm_ce_testcase
+mixtm_ce_testcase:  export SRC_LANG := fr
+mixtm_ce_testcase:  export TGT_LANG := en
+mixtm_ce_testcase:  export MIXTM := tm-train1 tm-train2
+mixtm_ce_testcase:  export TUNE_CE := dev3
+mixtm_ce_testcase:  export DO_CE := 1
+mixtm_ce_testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL :=
+mixtm_ce_testcase:  export MERGED_CPT_JPT_TYPES := IBM2 HMM3
+mixtm_ce_testcase:  export MERT_MAX_ITER := 3
+mixtm_ce_testcase:  export INIX := .mixtm_ce_testcase
+mixtm_ce_testcase:
+	touch canoe.ini.cow
+	${MAKE} ce-notm${INIX}
+	[[ -s ce-notm${INIX} ]] || ! echo "ERROR: Was unable to instanciate a CE template." >&2
+	[[ `grep -c tm-train ce-notm${INIX}` -eq 8 ]] || ! echo "ERROR: CE model should be using IBM tm-train." >&2
+
+.PHONY:  1wam_ce_testcase
+testsuite:  1wam_ce_testcase
+1wam_ce_testcase:  export SRC_LANG := fr
+1wam_ce_testcase:  export TGT_LANG := en
+1wam_ce_testcase:  export TRAIN_TM := tm-train1 tm-train2 tm-train3
+1wam_ce_testcase:  export MIXTM :=
+1wam_ce_testcase:  export TUNE_CE := dev3
+1wam_ce_testcase:  export DO_CE := 1
+1wam_ce_testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL := 1
+1wam_ce_testcase:  export MERGED_CPT_JPT_TYPES := IBM2 HMM3
+1wam_ce_testcase:  export INIX := .1wam_ce_testcase
+1wam_ce_testcase:
+	touch canoe.ini.cow
+	${MAKE} ce-notm${INIX}
+	[[ -s ce-notm${INIX} ]] || ! echo "ERROR: Was unable to instanciate a CE template." >&2
+	[[ `grep -c 'tm-train1' ce-notm${INIX}` -eq 8 ]] || ! echo "ERROR: CE model should be using IBM tm-train1." >&2

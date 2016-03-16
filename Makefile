@@ -301,3 +301,24 @@ unittest3:
 	[[ `find models/ldm -maxdepth 1  -name ldm.* -size +21c | \wc -l` -eq 4 ]] || ! echo "Missing some Lexicalized Distortion Model files." >&2
 	[[ `find models/ldm -maxdepth 1  -name hldm.* -size +21c | \wc -l` -eq 4 ]] || ! echo "Missing some Hierarchical Lexicalized Distortion Model files." >&2
 
+
+########################################
+# Unittest MIXTM, 1WAM & CONFIDENCE ESTIMATION.
+.PHONY: unittest4
+unittest5:  mixtm_1wam_ce_testcase
+
+.PHONY:  mixtm_1wam_ce_testcase
+mixtm_1wam_ce_testcase:  export SRC_LANG := fr
+mixtm_1wam_ce_testcase:  export TGT_LANG := en
+mixtm_1wam_ce_testcase:  export MIXTM := tm-train1 tm-train2
+mixtm_1wam_ce_testcase:  export TUNE_CE := dev3
+mixtm_1wam_ce_testcase:  export DO_CE := 1
+mixtm_1wam_ce_testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL := 1
+mixtm_1wam_ce_testcase:  export MERGED_CPT_JPT_TYPES := IBM2 HMM3
+mixtm_1wam_ce_testcase:  export MERT_MAX_ITER := 3
+mixtm_1wam_ce_testcase:
+	${MAKE} confidence
+	[[ -s models/confidence/ce-notm.ini ]] || ! echo "ERROR: Was unable to instanciate a CE template." >&2
+	[[ `grep -c mixwam models/confidence/ce-notm.ini` -eq 8 ]] || ! echo "ERROR: CE model should be using IBM mixwam." >&2
+	[[ -s models/confidence/ce_model.cem ]] || ! echo "ERROR: Was unable to train a CE model." >&2
+	${MAKE} -C models/confidence testsuite
