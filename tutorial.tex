@@ -323,7 +323,7 @@ If your data exists in the form of a translation memory or an aligned bitext,
 our \code{tmx-prepro} module can help you extract your data and prepare it for
 training \PS. See \TODO{document how to get tmx-prepro}.
 
-This tutorial start from sentence-aligned plain text, as you would get from our
+This tutorial starts from sentence-aligned plain text, as you would get from our
 \code{tmx-prepro} module extracting data from a TMX file.
 We don't perform data clean up and sentence alignment here,
 because they are highly dependent on your actual data and what other tools you
@@ -354,7 +354,7 @@ separate tuning set, which can be reused as a test set, but not as a decoder or
 rescoring tuning set.} Typically, the tuning (or ``dev'', for development) and
 testing sets contain around 2000 segments each.  If the corpus is chronological,
 then it is a good idea to choose these sets from the most recent material,
-which is likely to resemble future text more closely.\footnote{ Our
+which is likely to resemble future text more closely.\footnote{Our
 \code{tmx-prepro} module can automate splitting your corpus if you're
 starting form a TMX file. It uses random sampling by default for your dev and
 test sets.}
@@ -400,7 +400,7 @@ the ones we provide here. If your corpora are already tokenized, call your
 files \code{*.al} and \code{*.al.gz} instead of \code{*.raw} and
 \code{*.raw.gz}: the framework will automatically skip tokenization with those
 file extensions.\footnote{Previous versions of this tutorial started from
-tokenized \code{*.al*} files, but changed it to reflect the more common
+tokenized \code{*.al*} files, but we changed it to reflect the more common
 situation where the corpus is not yet tokenized.}
 
 Although the framework does not support compressed dev and test files, the
@@ -508,6 +508,7 @@ preprocessing script thart separates slash-separated words
 \begin{alltt}
    > \textbf{cd toy.experiment/corpora}
    > \textbf{make tok}
+   [commands to tokenize the dev, test and train files in both languages]
 \end{alltt}
 \end{small}
 
@@ -703,6 +704,7 @@ themselves:
    57 word mapping errors.
    2058 of 2115 words mapped to word classes.
    Warning: Output contains 57 word class mapping errors (<unk>).
+   [...]
 \end{alltt}
 \end{small}
 
@@ -730,8 +732,7 @@ sequence of tokens:
 \end{small}
 
 The whole sequence above, starting at \code{word2class}, is repeated with 800
-classes instead of 200, since we train both a 200 class and an 800 class coarse
-LM.
+classes, since we train both a 200 class and an 800 class coarse LM.
 
 When the decoder uses a coarse model, it applies the same mapping from tokens
 to classes before querying the LM, giving us a probability for class
@@ -796,6 +797,7 @@ improve readability.
         | perl -ne 'use encoding "UTF-8"; s/^[^[:lower:]]+$/{\bs}n/; print $_ unless /^$/;' \bs
         | utokenize.pl -pretok -paraline -ss -p -lang=en \bs
         | gzip > lm-train_en.tokss.gz
+   [...]
 \end{alltt}
 \end{small}
 
@@ -810,6 +812,7 @@ important for case normalization.
 \begin{alltt}
    zcat -f lm-train_en.tokss.gz | filter-nc1.py -enc UTF-8 \bs
         | reverse.pl | gzip > lm-train_en.revtokss.gz
+   [...]
 \end{alltt}
 \end{small}
 
@@ -822,6 +825,7 @@ LM.
    Creating ARPA text format lm-train_en.nc1.lm.gz
    [commands to train case-normalizing target-language LM lm-train_en.nc1.lm.gz]
    arpalm2binlm lm-train_en.nc1.lm.gz lm-train_en.nc1.binlm.gz
+   [...]
 \end{alltt}
 \end{small}
 
@@ -834,6 +838,7 @@ The actual commands used depend on your LM toolkit.
    normc1 -ignore 1 -extended -notitle -loc en_CA.UTF-8 lm-train_en.nc1.binlm.gz \bs
         lm-train_en.tokss.gz \bs
         | perl -pe 's/(.)$/$1 /; s/(.){\bs}n/$1/' | gzip > lm-train_en.nc1.gz
+   [...]
 \end{alltt}
 \end{small}
 
@@ -844,6 +849,7 @@ Next, the \code{normc1} program uses the case-normalizing LM to produce
 \begin{alltt}
    zcat -f lm-train_en.nc1.gz |  utf8_casemap -c l \bs
         | compile_truecase_map lm-train_en.nc1.gz - > lm-train_en.map
+   [...]
 \end{alltt}
 \end{small}
 
@@ -858,6 +864,7 @@ found in the normalized-case file, along with their distribution.
    Creating ARPA text format lm-train_en-kn-3g.lm.gz
    [commands to train truecasing LM lm-train_en-kn-3g.lm.gz]
    arpalm2binlm lm-train_en-kn-3g.lm.gz lm-train_en-kn-3g.binlm.gz
+   [...]
 \end{alltt}
 \end{small}
 
@@ -1406,6 +1413,7 @@ the type of data that will be needed to enumerate all feature instances:
 
 \begin{small}
 \begin{alltt}
+   > \textbf{cd toy.experiment/models/sparse}
    > \textbf{cat model.specs}
    [DistCurrentSrcFirstWord] auto:mkcls:<corp>_<srclang>.<srcext>:20:2
    [DistCurrentSrcFirstWord] auto:mkcls:<corp>_<srclang>.<srcext>:50:2
@@ -1507,14 +1515,14 @@ them to the files already there:
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment}
-   > \textbf{cp $PORTAGE/test-suite/tutorial-data/mix/*.al* corpora/}
+   > \textbf{cp $PORTAGE/test-suite/tutorial-data/mix/*.raw* corpora/}
    > \textbf{ls corpora/*train?_*}
-   corpora/lm-train1_en.al.gz  corpora/tm-train1_en.al.gz
-   corpora/lm-train1_fr.al.gz  corpora/tm-train1_fr.al.gz
-   corpora/lm-train2_en.al.gz  corpora/tm-train2_en.al.gz
-   corpora/lm-train2_fr.al.gz  corpora/tm-train2_fr.al.gz
-   corpora/lm-train3_en.al.gz  corpora/tm-train3_en.al.gz
-   corpora/lm-train3_fr.al.gz  corpora/tm-train3_fr.al.gz
+   corpora/lm-train1_en.raw.gz  corpora/tm-train1_en.raw.gz
+   corpora/lm-train1_fr.raw.gz  corpora/tm-train1_fr.raw.gz
+   corpora/lm-train2_en.raw.gz  corpora/tm-train2_en.raw.gz
+   corpora/lm-train2_fr.raw.gz  corpora/tm-train2_fr.raw.gz
+   corpora/lm-train3_en.raw.gz  corpora/tm-train3_en.raw.gz
+   corpora/lm-train3_fr.raw.gz  corpora/tm-train3_fr.raw.gz
    \end{alltt}
 \end{small}
 
@@ -1551,9 +1559,16 @@ in fact the union of the three pretend domains, so we'll throw in
 
 Having done this, you should also comment out the definition of
 \code{TRAIN_LM}, since we'll use the mixture LM instead of the regular LM.
-Unfortunately, doing so disables the default definition of \code{TRAIN_TC}, so
-we need to set that explicity: \code{TRAIN_TC = lm-train1}, thus using the
-in-domain corpus for truecasing.
+Unfortunately, doing so disables the default definition of \code{TRAIN_TC} and
+\code{TRAIN_COARSELM}, so we need to set them explicity:
+\begin{small}
+\begin{alltt}
+   TRAIN_TC = lm-train1
+   TRAIN_COARSELM = lm-train1
+\end{alltt}
+\end{small}
+Note that in each case, we used \code{lm-train1}, which means using the
+in-domain corpus for truecasing and the coarse language model.
 
 With the variables defined as discussed, training of the MixLM is automatic,
 but we'll break it down a bit.
@@ -1596,7 +1611,6 @@ highest weight.
 
 \begin{small}
 \begin{alltt}
-   [... continued from above]
    [commands to create lm-train1_en-kn-5g.lm.gz and .tplm]
    [commands to create lm-train2_en-kn-5g.lm.gz and .tplm]
    [commands to create lm-train3_en-kn-5g.lm.gz and .tplm]
@@ -1707,7 +1721,6 @@ to the next.
 
 \begin{small}
 \begin{alltt}
-   [... continued from above]
    [in wal/ and jpt/: commands to create *.align.gz and jpt.* for the dev1 set,
     using IBM2, HMM3 and IBM4 models from tm-train1, assumed to be in domain]
    [in jpt/:]
