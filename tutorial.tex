@@ -621,6 +621,8 @@ configured in the framework via the \code{TUNE_LM} parameter in
 
 \subsection{Creating a Coarse Language Model} \label{coarseLM}
 
+\TODO{Add coarse LM paper to ann. bib}
+
 In \PS 3.0, we added the capacity to train and use coarse language models:
 language models that are trained and queried not on sequences of words, but
 rather on sequences of classes of words. These models have a useful capacity of
@@ -642,9 +644,6 @@ LMs, one with 200 classes and one with 800 classes.
 Before training the coarse LMs themselves, we need to learn word classes on the
 target language vocabulary. We use Google's free, open source \code{word2vec}
 tool to learn these classes from the corpora.
-
-\TODO{Once the race condition has been fixed in framwork/models/wcl, adjust the
-quoted commands below accordingly.}
 
 \begin{small}
 \begin{alltt}
@@ -779,8 +778,8 @@ determine the case for the output of the decoder.  Then case patterns observed
 in the source sentence, including the first word, are transfered to the
 truecased output of the decoder.
 
-\TODO{Think about whether this whole section should be simplified with only the
-final model files listed, but not the commands used.}
+%\TODO{Think about whether this whole section should be simplified with only the
+%final model files listed, but not the commands used.}
 
 Running \code{make tc} at the root of the framework will build all necessary
 files and models.  Breaking with the convention in rest of this document, we'll
@@ -927,9 +926,9 @@ material.
 
 \subsubsection{Creating a Translation Model Using IBM2 Alignments} \label{IBM2}
 
-\TODO{Think about whether I should reorganize this code around the directory
-structure instead of the alighment model: a IBM section, a WAL section, a JPT
-section, and then the TM section. This would probably be easier to follow.}
+%\TODO{Think about whether I should reorganize this code around the directory
+%structure instead of the alighment model: a IBM section, a WAL section, a JPT
+%section, and then the TM section. This would probably be easier to follow.}
 
 \subsubsection*{Training IBM2 Models}
 
@@ -1466,9 +1465,9 @@ for the literature on sparse features, how they work and what they mean.
 You can also refer to \code{doc/sparse-features.README} for the nitty-gritty
 of sparse features in \PS.
 
-\TODO{Add the paper on sparse features in ann. biblio}
+%\TODO{Add the paper on sparse features in ann. biblio}
 
-\TODO{Add the paper on DHDM in ann. biblio}
+%\TODO{Add the paper on DHDM in ann. biblio}
 
 \subsection{Mixture Models and Domain Adaptation} \label{MIX}
 
@@ -1772,6 +1771,8 @@ see the highest weight assigned to your in-domain component.
 
 \subsubsection{Generic and Pre-trained Models} \label{Generic}
 
+%\TODO{This section is too hard to use. We need a concrete and explicit example, at least showing the use of generic 1.0 as background LM.}
+
 So far we assumed that all the models are trained locally, in the current
 instance of the framework.  Sometimes, you might have models already trained in
 other instances of the framework, or coming from generic models for which you
@@ -1783,7 +1784,7 @@ variable.  The source-side pre-trained language models are also required,
 to tune the mixture weights, and should have the same name except for the
 language code.
 
-\TODO{Have default tutorial use generic LM.}
+%\TODO{Have default tutorial use generic LM. For 3.1?}
 
 Similarly, generic phrase tables and pre-trained phrase tables from other
 domains can be included in your MixTMs by adding the name(s) of the of the CPT
