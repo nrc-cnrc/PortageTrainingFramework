@@ -196,9 +196,12 @@ endif
 	@echo "You now have all that is needed for PortageLive."
 	@echo "From the framework root, run one of the following commands to"
 	@echo "transfer the PortageLive models to your server:"
-	@echo "rsync -Larz models/portageLive/* <REMOTE_HOST>:<DEST_DIR_ON_REMOTE_HOST>"
-	@echo "scp -r models/portageLive/* <REMOTE_HOST>:<DEST_DIR_ON_REMOTE_HOST>"
-	@echo "cp -Lr models/portageLive/* <DEST_DIR_ON_LOCAL_HOST>"
+	@echo "     rsync -Larz models/portageLive/* <REMOTE_HOST>:<DEST_DIR_ON_REMOTE_HOST>"
+	@echo "or   scp -r models/portageLive/* <REMOTE_HOST>:<DEST_DIR_ON_REMOTE_HOST>"
+	@echo "or   cp -Lr models/portageLive/* <DEST_DIR_ON_LOCAL_HOST>"
+	@echo "Afterwards, optimize pretrained models on each PortageLive server:"
+	@echo "     ssh <REMOTE_HOST> plive-optimize-pretrained.sh <DEST_DIR_ON_REMOTE_HOST>"
+	@echo "or   plive-optimize-pretrained.sh <DEST_DIR_ON_LOCAL_HOST>"
 
 # convenient synonyms
 portagelive: portageLive
