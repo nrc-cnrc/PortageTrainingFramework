@@ -325,3 +325,23 @@ mixtm_1wam_ce_testcase:
 	[[ `grep -c mixwam models/confidence/ce-notm.ini` -eq 8 ]] || ! echo "ERROR: CE model should be using IBM mixwam." >&2
 	[[ -s models/confidence/ce_model.cem ]] || ! echo "ERROR: Was unable to train a CE model." >&2
 	${MAKE} -C models/confidence testsuite
+
+
+
+########################################
+.PHONY:  lm_pretrained_tescase
+lm_pretrained_tescase:  ptgsh_295
+
+.PHONY:  ptgsh_295
+ptgsh_295:  export ORDER := 3
+ptgsh_295:  export SRC_LANG := en
+ptgsh_295:  export TGT_LANG := fr
+ptgsh_295:  export TRAIN_LM := lm-train
+ptgsh_295:  export MIXLM :=
+ptgsh_295:  export MIXLM_PRETRAINED_TGT_LMS :=
+#ptgsh_295:  export TRAIN_COARSELM :=
+ptgsh_295:  export TRAIN_BILM :=
+ptgsh_295:  export USE_COARSELM :=
+ptgsh_295:  export LM_PRETRAINED_TGT_LMS :=
+ptgsh_295:
+	${MAKE} -C models/lm $@

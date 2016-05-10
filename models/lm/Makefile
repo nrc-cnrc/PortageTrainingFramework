@@ -212,7 +212,7 @@ clean.content: clean.pretrained
 .PHONY: clean.pretrained
 clean.pretrained: SHELL=${LOCAL_SHELL}
 clean.pretrained:
-	${RM} $(foreach p, $(notdir ${LM_PRETRAINED_LMS}), $p ${p:.binlm.gz=.tplm}) .*.tstamp
+	${RM} $(sort $(foreach p, $(notdir ${LM_PRETRAINED_LMS}), $p ${p:.binlm.gz=.tplm} ${p:.tplm=.binlm.gz}) .*.tstamp)
 
 LM_PRETRAINED_SRC_LMS ?= $(subst _${TGT_LANG},_${SRC_LANG}, ${LM_PRETRAINED_TGT_LMS})
 LM_PRETRAINED_LMS ?= ${LM_PRETRAINED_SRC_LMS} ${LM_PRETRAINED_TGT_LMS}
@@ -253,9 +253,9 @@ $(foreach f, ${pretrained_lm_paths}, \
 $(foreach p, $(notdir ${pretrained_lm_paths}), .$p.tstamp): SHELL=${LOCAL_SHELL}
 $(foreach p, $(notdir ${pretrained_lm_paths}), .$p.tstamp): .%.tstamp:
 	@[[ ! -e $* ]] || [[ -L $* ]] || ! echo "ERROR: LM $* already exists as a normal file."
-	@$(if $(filter-out %.binlm.gz, $*),! echo "ERROR: Name of pre-trained LM file must end with .binlm.gz: $<")
+	@$(if $(filter-out %.binlm.gz %.tplm, $*),! echo "ERROR: Name of pre-trained LM file must end with .binlm.gz or .tplm: $<")
 	ln -sf $< .
-	[[ ! -d ${<:.binlm.gz=.tplm} ]] || ln -sf ${<:.binlm.gz=.tplm} .
+	#[[ -L $(notdir $<) ]] || [[ ! -d ${<:.binlm.gz=.tplm} ]] || ln -sf ${<:.binlm.gz=.tplm} .
 	touch $@
 
 ${pretrained_lm_paths}: SHELL=${LOCAL_SHELL}
@@ -307,3 +307,24 @@ tplm.testcase:
 	time ${MAKE} -j 11 ${TESTCASE_OPTS} all
 	[[ `\ls -d {lm-train,sublm3}_fr-kn-5g.tplm | \wc -l` -eq 2 ]] || ! echo "$* should produce 2 tplm [200, 800]" >&2
 
+
+
+.PHONY:  ptgsh_295
+ptgsh_295:  ptgsh_295_bin
+ptgsh_295:  ptgsh_295_tplm
+
+.PHONY:  ptgsh_295_bin
+ptgsh_295_bin:  export LM_PRETRAINED_TGT_LMS := ${PORTAGE}/models/generic-model/v1.0/dvd_v1.0/lm/generic1.0_${TGT_LANG}.binlm.gz
+ptgsh_295_bin:
+	${MAKE} clean.pretrained
+	${MAKE} pretrained.${TGT_LANG}
+	[[ -L $(notdir ${LM_PRETRAINED_TGT_LMS}) ]] || ! echo "Error: pretrained generic binlm model was not symlinked." >&2
+	[[ -f .$(notdir ${LM_PRETRAINED_TGT_LMS}).tstamp ]] || ! echo "Error: pretrained generic model timestamp was not created." >&2
+
+.PHONY:  ptgsh_295_tplm
+ptgsh_295_tplm:  export LM_PRETRAINED_TGT_LMS := ${PORTAGE}/models/generic-model/v1.0/dvd_v1.0/lm/generic1.0_${TGT_LANG}.tplm
+ptgsh_295_tplm:  ptgsh_295_bin
+	${MAKE} clean.pretrained
+	${MAKE} pretrained.${TGT_LANG}
+	[[ -L $(notdir ${LM_PRETRAINED_TGT_LMS}) ]] || ! echo "Error: pretrained generic tplm model was not symlinked." >&2
+	[[ -f .$(notdir ${LM_PRETRAINED_TGT_LMS}).tstamp ]] || ! echo "Error: pretrained generic model timestamp was not created." >&2
