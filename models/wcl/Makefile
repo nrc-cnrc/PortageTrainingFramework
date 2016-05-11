@@ -81,18 +81,38 @@ $(error TRAIN_WCL and WCL_NCLS_LIST must both be defined to train word classes)
 endif
 endif
 
-all: $(foreach n, ${WCL_NCLS_LIST}, ${SRC_LANG}.$n.classes ${TGT_LANG}.$n.classes)
 
-$(foreach n, ${WCL_NCLS_LIST}, \
-   $(foreach l, ${SRC_LANG} ${TGT_LANG},  \
-		$(eval \
-			$l.$n.classes: WCL_NCLS=$n) \
-		$(eval \
-			$l.$n.classes: WCL_LANG=$l) \
-		$(eval \
-			$l.$n.classes: $(addsuffix _$l${CORPUS_EXT}, ${TRAIN_WCL})) \
-	) \
-)
+define DEPS.PYSCRIPT
+from __future__ import print_function
+
+with open(".Makefile.deps", "w") as df:
+	wcls_targets = []
+	def writeDependencies(n, l, corpora):
+		target = "{l}.{n}.classes".format(l=l, n=n)
+		wcls_targets.append(target)
+		print("{l}.{n}.classes:  WCL_NCLS := {n}".format(l=l, n=n), file=df)
+		print("{l}.{n}.classes:  WCL_LANG := {l}".format(l=l, n=n), file=df)
+		for c in corpora:
+			print("{l}.{n}.classes:  {c}_{l}${CORPUS_EXT}".format(c=c, l=l, n=n), file=df)
+
+	wcl_ncls_list = set("${WCL_NCLS_LIST}".strip().split())
+	languages = set("${SRC_LANG} ${TGT_LANG}".strip().split())
+	corpora = set("${TRAIN_WCL}".strip().split())
+	for n in wcl_ncls_list:
+		for l in languages:
+			writeDependencies(n, l, corpora)
+
+	print("WCLS_TARGETS := {}".format(" ".join(wcls_targets)), file=df)
+endef
+
+#$(info  WCL_DEPS: ${DEPS.PYSCRIPT})
+$(shell python -c '${DEPS.PYSCRIPT}')
+include .Makefile.deps
+
+
+$(info WCL_NCLS_LIST: ${WCL_NCLS_LIST})
+$(info WCLS_TARGETS: ${WCLS_TARGETS})
+all:  ${WCLS_TARGETS}
 
 ########################################
 # What the user can expect from this module.
@@ -100,7 +120,7 @@ $(foreach n, ${WCL_NCLS_LIST}, \
 list_final_output: SHELL=${LOCAL_SHELL}
 list_final_output:
 	@echo "Expected final output(s):"
-	@echo -e -n "" $(foreach n, ${WCL_NCLS_LIST}, "${SRC_LANG}.$n.classes ${TGT_LANG}.$n.classes\n")
+	@echo -e -n "" ${WCLS_TARGETS}
 
 
 ########################################
@@ -138,7 +158,7 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/wcl
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}
 ifneq (${TRAIN_WCL},)
-portageLive: $(foreach n, ${WCL_NCLS_LIST}, ${SRC_LANG}.$n.classes ${TGT_LANG}.$n.classes)
+portageLive:  ${WCLS_TARGETS}
 	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../wcl/, $+) .
