@@ -378,26 +378,33 @@ CANOE_LIVE            ?= ${PORTAGE_LIVE_DEST_DIR}/${DECODING_MODEL}
 
 
 .PHONY: portageLive
-portageLive: SHELL=${LOCAL_SHELL}
-portageLive: ${CANOE_LIVE}
+portageLive:  SHELL=${LOCAL_SHELL}
+portageLive:  ${CANOE_LIVE}
 
+
+${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
+${PORTAGE_LIVE_DEST_DIR}:
+	mkdir -p $@
 
 .PHONY: portageLive_models
-portageLive_models_%: SHELL=${LOCAL_SHELL}
+portageLive_models_%:  SHELL=${LOCAL_SHELL}
 portageLive_models_%:
 	${MAKE} -C ../$* portageLive
 
 
-${CANOE_LIVE}: SHELL=${LOCAL_SHELL}
-${CANOE_LIVE}: portageLive_models_lm portageLive_models_tm portageLive_models_ldm
-${CANOE_LIVE}: ${DECODING_MODEL}
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+${CANOE_LIVE}:  SHELL=${LOCAL_SHELL}
+${CANOE_LIVE}:  portageLive_models_lm
+${CANOE_LIVE}:  portageLive_models_tm
+${CANOE_LIVE}:  portageLive_models_ldm
+${CANOE_LIVE}:  | ${PORTAGE_LIVE_DEST_DIR}
+${CANOE_LIVE}:  ${DECODING_MODEL}
 	configtool -p tp $< > $@
+	sed --in-place 's#\(wordClasses-models/wcl/.*\).classes;#\1.mmcls;#' $@
 	configtool check $@
 
 
-clean.content: clean.portageLive
-.PHONY: clean.portageLive
+clean.content:  clean.portageLive
+.PHONY:  clean.portageLive
 clean.portageLive: SHELL=${LOCAL_SHELL}
 clean.portageLive:
 	${RM} ${CANOE_LIVE}
@@ -405,14 +412,15 @@ clean.portageLive:
 ifdef USE_SPARSE
 SPARSE_WTS ?= rmodels_sparse_model.wts.gz
 SPARSE_WTS_LIVE ?= ${PORTAGE_LIVE_DEST_DIR}/${SPARSE_WTS}
-${CANOE_LIVE}: ${SPARSE_WTS_LIVE} portageLive_models_sparse
-${SPARSE_WTS_LIVE}: SHELL=${LOCAL_SHELL}
+${CANOE_LIVE}:  ${SPARSE_WTS_LIVE}
+${CANOE_LIVE}:  portageLive_models_sparse
+${SPARSE_WTS_LIVE}:  SHELL=${LOCAL_SHELL}
+${SPARSE_WTS_LIVE}:  | ${PORTAGE_LIVE_DEST_DIR}
 ${SPARSE_WTS_LIVE}:
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	ln -s ../decode/${SPARSE_WTS} $@
 
-clean.portageLive: clean.sparseWtsLive
-clean.sparseWtsLive: SHELL=${LOCAL_SHELL}
+clean.portageLive:  clean.sparseWtsLive
+clean.sparseWtsLive:  SHELL=${LOCAL_SHELL}
 clean.sparseWtsLive:
 	${RM} ${SPARSE_WTS_LIVE}
 endif

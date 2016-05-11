@@ -66,6 +66,15 @@ W2V_OPTS ?= -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 -
 endif
 
 
+
+########################################
+# Converting classes files to memory mapped classes files.
+%.mmcls:  SHELL=${LOCAL_SHELL}
+%.mmcls:  %.classes
+	wordClasses2MMmap $< $@
+
+
+
 ################################################################################
 # HELPERS
 ########################################

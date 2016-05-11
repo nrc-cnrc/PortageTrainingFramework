@@ -86,8 +86,52 @@ model.templates: model data
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/sparse
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}
-portageLive: model.templates
-portageLive:
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
-	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
-	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../sparse/{model*,data.*} .
+
+
+portageLive:  clean.${PORTAGE_LIVE_DEST_DIR}
+
+portageLive:  portageLive_model_data
+.PHONY:  portageLive_model_data
+portageLive_model_data:  SHELL=${LOCAL_SHELL}
+portageLive_model_data:  ${PORTAGE_LIVE_DEST_DIR}/model
+portageLive_model_data:  ${PORTAGE_LIVE_DEST_DIR}/model.templates
+portageLive_model_data:  portageLive_mmcls
+portageLive_model_data:  | ${PORTAGE_LIVE_DEST_DIR}
+	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../sparse/data.* .
+	for f in ${PORTAGE_LIVE_DEST_DIR}/*.mmcls; do g=$${f%%.mmcls}; [[ -L $$g ]] && rm $$g; done
+
+
+portageLive:  portageLive_mmcls
+.PHONY: portageLive_mmcls
+portageLive_mmcls:  SHELL=${LOCAL_SHELL}
+portageLive_mmcls:  model
+	for f in data.mkcls*; do  [[ $$f =~ .cats$$ ]] || [[ $$f =~ .mmcls$$ ]] || [[ -s $$f.mmcls ]] || wordClasses2MMmap $$f $$f.mmcls; done
+
+${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
+${PORTAGE_LIVE_DEST_DIR}:
+	mkdir -p $@
+
+clean.${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
+clean.${PORTAGE_LIVE_DEST_DIR}:  clean.%:  | %
+	${RM} -r $*/*
+
+portageLive:  ${PORTAGE_LIVE_DEST_DIR}/model
+${PORTAGE_LIVE_DEST_DIR}/model:  SHELL=${LOCAL_SHELL}
+${PORTAGE_LIVE_DEST_DIR}/model:  model  | ${PORTAGE_LIVE_DEST_DIR}
+	sed '/^data.mkcls/ s/.mmcls$$//;  /^data.mkcls/ s/$$/.mmcls/' < $< > $@
+
+portageLive:  ${PORTAGE_LIVE_DEST_DIR}/model.templates
+${PORTAGE_LIVE_DEST_DIR}/model.templates:  SHELL=${LOCAL_SHELL}
+${PORTAGE_LIVE_DEST_DIR}/model.templates:  model.templates  | ${PORTAGE_LIVE_DEST_DIR}
+	sed '/data.mkcls/ s/.mmcls$$//;  /data.mkcls/ s/$$/.mmcls/' < $< > $@
+
+portageLive:   $(addprefix ${PORTAGE_LIVE_DEST_DIR}/, model.feats.gz  model.freqs.gz  model.numex  model.specs  model.voc.gz  model.wts.gz  model.wtsums.gz)
+${PORTAGE_LIVE_DEST_DIR}/model.%:
+	cd ${PORTAGE_LIVE_DEST_DIR} && ln -s ../../../sparse/model.$*
+
+
+.PHONY:  clean.portageLive
+clean.content:  clean.portageLive
+clean.portageLive:  SHELL=${LOCAL_SHELL}
+clean.portageLive:
+	${RM} *.mmcls

@@ -280,6 +280,7 @@ models: coarselm
 
 portageLive: portageLive_models_coarselm
 portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_coarselm
+portageLive_models_coarselm:  portageLive_models_wcl
 
 coarselm: wcl
 	${MAKE} -C $@ all

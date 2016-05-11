@@ -111,7 +111,9 @@ include .Makefile.deps
 
 
 $(info WCL_NCLS_LIST: ${WCL_NCLS_LIST})
-$(info WCLS_TARGETS: ${WCLS_TARGETS})
+$(info LANGUAGES: ${SRC_LANG} ${TGT_LANG})
+$(info CORPORA: ${TRAIN_WCL})
+$(info TARGETS: ${WCLS_TARGETS})
 all:  ${WCLS_TARGETS}
 
 ########################################
@@ -155,11 +157,26 @@ time-mem: resource_summary_sub
 ########################################
 # Transform the WCL model for PortageLive
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/wcl
-.PHONY: portageLive
-portageLive: SHELL=${LOCAL_SHELL}
+
+${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
+${PORTAGE_LIVE_DEST_DIR}:
+	mkdir -p $@
+
+
+.PHONY:  portageLive
+portageLive:  SHELL=${LOCAL_SHELL}
+
+
+clean.content:  clean.portageLive
+.PHONY:  clean.portageLive
+clean.portageLive:  SHELL=${LOCAL_SHELL}
+clean.portageLive:
+	${RM} ${WCLS_TARGETS:.classes=.mmcls}
+
+
 ifneq (${TRAIN_WCL},)
-portageLive:  ${WCLS_TARGETS}
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+portageLive:  | ${PORTAGE_LIVE_DEST_DIR}
+portageLive:  ${WCLS_TARGETS:.classes=.mmcls}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../wcl/, $+) .
 else
