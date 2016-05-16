@@ -86,6 +86,7 @@ clean.content clean.logs hide.logs: %:
 	${MAKE} -C coarselm $@
 	${MAKE} -C bilm $@
 	${MAKE} -C wcl $@
+	${MAKE} -C nnjm $@
 ifneq ($(strip ${TUNE_DECODE_VARIANTS}),)
 	${RM} -r $(addprefix decode., ${TUNE_DECODE_VARIANTS})
 	${RM} -r $(addprefix confidence., ${TUNE_DECODE_VARIANTS})
@@ -285,6 +286,21 @@ coarselm: wcl
 else
 coarselm:
 	@echo "Not training coarse language models." >&2
+endif
+
+
+.PHONY:  nnjm
+nnjm:  SHELL=${LOCAL_SHELL}
+ifdef USE_PRETRAINED_NNIMS
+models:  nnjm
+
+PortageLive:  portageLive_models_nnjm
+
+nnjm:
+	${MAKE} -C $@ all
+else
+nnjm:
+	@echo "Not using pretrained nnjms." >&2
 endif
 
 

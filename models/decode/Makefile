@@ -56,7 +56,7 @@ TUNE_DECODE_SRC  := ${TUNE_DECODE}${SRCX}
 TUNE_DECODE_TGTS  := $(call CREATE_REFERENCE_NAMES, ${TUNE_DECODE})
 
 # Specific PSUB options
-PSUB_OPTS ?= 
+PSUB_OPTS ?=
 
 # Extra canoe parameters that a user would want to include in its canoe.ini.
 # i.e. -d 1:1:1:1:1:1:1 -load-first
@@ -193,6 +193,8 @@ LDM := $(and ${USE_LDM},${LDM}\#L)
 LDM_PARAMS  := back-lex\#m\#L:back-lex\#s\#L:back-lex\#d\#L:fwd-lex\#m\#L:fwd-lex\#s\#L:fwd-lex\#d\#L
 endif # USE_LDM
 
+
+
 ifdef USE_HLDM
 HLDM ?= $(wildcard models/ldm/hldm.*.${SRC_LANG}2${TGT_LANG}.gz)
 ifeq ("","$(or $(strip ${HLDM}),$(findstring clean,${MAKECMDGOALS}))")
@@ -204,6 +206,8 @@ HLDM := $(and ${USE_HLDM},${HLDM}\#H)
 # Parameters to use Hierarchical Lexicalized Distortion Models.
 HLDM_PARAMS := back-hlex\#m\#H:back-hlex\#s\#H:back-hlex\#d\#H:fwd-hlex\#m\#H:fwd-hlex\#s\#H:fwd-hlex\#d\#H
 endif # USE_HLDM
+
+
 
 ifdef USE_SPARSE
 SPARSE ?= models/sparse/model
@@ -225,6 +229,8 @@ $(warning No LMs available. Have you trained at least one language model?)
 endif
 $(info LMs: ${LMS})
 
+
+
 ifdef USE_COARSELM
 COARSE_LM_SEARCH ?= models/coarselm/*_${TGT_LANG}-${n}[-.]*tplm
 COARSE_LM_SPECS ?= $(foreach n, ${COARSELM_NCLS_LIST}, \
@@ -234,6 +240,8 @@ COARSE_LM_SPECS ?= $(foreach n, ${COARSELM_NCLS_LIST}, \
                    )
 $(info Coarse LMs: ${COARSE_LM_SPECS})
 endif # USE_COARSELM
+
+
 
 ifdef USE_BILM
 define BILM_SPECS_PYSCRIPT
@@ -270,6 +278,24 @@ $(info BiLMs: ${BILM_SPECS})
 endif # USE_BILM
 
 
+
+ifneq (${USE_PRETRAINED_NNIMS},)
+NNJMS := $(wildcard models/nnjm/*/model)
+ifeq ("","$(or $(strip ${NNJMS}),$(findstring clean,${MAKECMDGOALS}))")
+$(error Could not find pretrained NNJMs)
+else
+$(info NNJMs: ${NNJMS})
+endif
+endif
+
+
+
+# This is a helper to be able to use spaces.
+SPACE :=
+SPACE +=
+
+
+
 ${UNTUNED_DECODING_MODEL}: SHELL=${LOCAL_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	@ls ${CPT_SEARCH} &> /dev/null \
@@ -286,6 +312,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS}:${DM_EXTRAS} \
 	      -lex-dist-model-file ${LDM}:${HLDM} \
 	      $(if ${BILM_SPEC}, -bilm-file ${BILM_SPECS}) \
+	      $(if ${USE_PRETRAINED_NNIMS}, -nnjm-file $(subst ${SPACE},:, ${NNJMS})) \
 	      $(and ${USE_SPARSE}, -sparse-model ${SPARSE} -force-shift-reduce) \
 	      ${CANOE_INI_EXTRAS} \
 	  " - \

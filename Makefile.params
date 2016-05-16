@@ -115,6 +115,13 @@ TRAIN_TM      ?= tm-train
 # => MIXTM_TRAIN_MIX = first word of MIXTM
 #MIXTM_TRAIN_MIX ?= subtm1
 
+# NNJM_PRETRAINED_NNJMS specifiies file paths to additional pre-trained Neural
+# Network Joint Models to use in your canoe.ini.  The NNJM's filename must be
+# 'model' and it should use memory mapped class files.
+# Paths may be absolute or relative to the location of this Makefile.params file.
+#NNJM_PRETRAINED_NNJMS ?= ${PORTAGE}/models/generic-model/v2.0/gc.ca.models/framelab.en2fr/models/nnjm/gc.ca.ibm4/model
+#NNJM_PRETRAINED_NNJMS ?= ${PORTAGE}/corpora/bac-lac/filtered/corpora-version-2/portage-framelab.en2fr/models/nnjm/PTGSH-163a/model ${PORTAGE}/corpora/bac-lac/filtered/corpora-version-2/portage-framelab.en2fr/models/nnjm/PTGSH-163b/model
+
 # TRAIN_LDM is used to train a Lexicalized Distortion Model (LDM)
 # (the word alignment models are needed).
 # By default, we use the corpora listed in TRAIN_TM and MIXTM; if you want to
@@ -221,6 +228,12 @@ USE_COARSELM = 1
 # (400 bitoken classes with 400 src word classes and 400 tgt word classes).
 # Comment out to disable using BiLMs (default); uncomment to enable.
 #USE_BILM = 1
+
+# Trigger the inclusion of pretrained NNJM models.
+# If you define NNJM_PRETRAINED_NNJMS, it will automatically trigger adding
+# pretrained NNJM to your canoe.ini.  If you defined NNJM_PRETRAINED_NNJMS but
+# want to disable the feature anyway, comment the following line.
+USE_PRETRAINED_NNIMS ?= $(strip ${NNJM_PRETRAINED_NNJMS})
 
 # Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
