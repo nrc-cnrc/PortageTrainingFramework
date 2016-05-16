@@ -295,6 +295,7 @@ ifdef USE_PRETRAINED_NNIMS
 models:  nnjm
 
 PortageLive:  portageLive_models_nnjm
+portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_nnjm
 
 nnjm:
 	${MAKE} -C $@ all
@@ -429,7 +430,7 @@ portageLive/soap-translate.sh: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 	chmod 755 $@
 
 # We need this dependency since decode will copy the tplms for portageLive.
-portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_lm portageLive_models_mixlm portageLive_models_tm
+portageLive_models_decode${_PLIVE_DECODE_VARIANT}:  portageLive_models_lm  portageLive_models_mixlm  portageLive_models_tm
 
 portageLive_models_%: SHELL=${LOCAL_SHELL}
 portageLive_models_%:
