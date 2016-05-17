@@ -158,6 +158,7 @@ SMALL_SETS := ${HELDOUT_SET} ${TUNE_MIXTM} ${TUNE_MIXTM_MULTIPLE_REFERENCES}
 IS_SMALL_SET = $(findstring $(basename $@), $(addsuffix _${SRC_LANG}, ${SMALL_SETS}) \
                                             $(addsuffix _${TGT_LANG}, ${SMALL_SETS}))
 
+# CORPUS_SHELL always uses minimal resources per worker when submitting to the cluster
 CORPUS_SHELL = $(if ${IS_SMALL_SET},${LOCAL_SHELL},$(if ${USING_CLUSTER},${FRAMEWORK_SHELL} -psub "-cpus 1 -mem 4",${FRAMEWORK_SHELL}))
 # Don't run time-mem when processing small files.
 TIME_MEM = $(if ${IS_SMALL_SET},,time-mem)
@@ -401,8 +402,7 @@ else
 %${SRC_LANG}${LANGXZ}: SHELL=${CORPUS_SHELL}
 %${SRC_LANG}${LANGXZ}: %${SRC_LANG}${ALIGNX}${GZ}
 	@$(check_utf8)
-	set -o pipefail; \
-	zcat $< | ${TIME_MEM} $(or ${LOWERCASE_${SRC_LANG}}, ${LOWERCASE}) ${LOG_STDERR} | gzip > $@
+	set -o pipefail; zcat $< | ${TIME_MEM} $(or ${LOWERCASE_${SRC_LANG}}, ${LOWERCASE}) ${LOG_STDERR} | gzip > $@
 
 endif
 
@@ -414,8 +414,7 @@ endif
 %${TGT_LANG}${LANGXZ}: SHELL=${CORPUS_SHELL}
 %${TGT_LANG}${LANGXZ}: %${TGT_LANG}${ALIGNX}${GZ}
 	@$(check_utf8)
-	set -o pipefail; \
-	zcat $< | ${TIME_MEM} $(or ${LOWERCASE_${TGT_LANG}}, ${LOWERCASE}) ${LOG_STDERR} | gzip > $@
+	set -o pipefail; zcat $< | ${TIME_MEM} $(or ${LOWERCASE_${TGT_LANG}}, ${LOWERCASE}) ${LOG_STDERR} | gzip > $@
 
 
 ########################################
@@ -437,8 +436,7 @@ rule: ${RULE}
 %${RULEX}: SHELL=${CORPUS_SHELL}
 %${RULEX}: %_${SRC_LANG}${LANGX}
 	@$(check_utf8)
-	${TIME_MEM} \
-	$(or ${MARK_RULE_${SRC_LANG}}, ${MARK_RULE_DEFAULT}) < $< > $@ ${LOG_STDERR}
+	${TIME_MEM} $(or ${MARK_RULE_${SRC_LANG}}, ${MARK_RULE_DEFAULT}) < $< > $@ ${LOG_STDERR}
 
 
 # NOTE: here TRANSLATE_SET must contain the prefix only.
