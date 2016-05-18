@@ -80,7 +80,7 @@ clean: clean.content clean.logs
 
 clean.content: SHELL=${LOCAL_SHELL}
 clean.content:
-	${RM} canoe.ini.cow *${CEMX} ce-notm.ini models
+	${RM} canoe.ini.cow *${CEMX} ce-notm.ini models ce-notm*testcase
 	${RM} -r ${CE_WORKDIR_PRX}*
 
 clean.logs: SHELL=${LOCAL_SHELL}

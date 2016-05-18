@@ -308,17 +308,21 @@ unittest3:
 ########################################
 # Unittest MIXTM, 1WAM & CONFIDENCE ESTIMATION.
 .PHONY: unittest4
-unittest5:  mixtm_1wam_ce_testcase
+unittest4:  mixtm_1wam_ce_testcase
 
 .PHONY:  mixtm_1wam_ce_testcase
 mixtm_1wam_ce_testcase:  export SRC_LANG := fr
 mixtm_1wam_ce_testcase:  export TGT_LANG := en
 mixtm_1wam_ce_testcase:  export MIXTM := tm-train1 tm-train2
+#mixtm_1wam_ce_testcase:  export MIXTM := tm-train1 tm-train2 tm-train3
 mixtm_1wam_ce_testcase:  export TUNE_CE := dev3
 mixtm_1wam_ce_testcase:  export DO_CE := 1
 mixtm_1wam_ce_testcase:  export MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL := 1
 mixtm_1wam_ce_testcase:  export MERGED_CPT_JPT_TYPES := IBM2 HMM3
 mixtm_1wam_ce_testcase:  export MERT_MAX_ITER := 3
+mixtm_1wam_ce_testcase:  export USE_HLDM :=
+mixtm_1wam_ce_testcase:  export USE_SPARSE :=
+mixtm_1wam_ce_testcase:  export USE_COARSELM :=
 mixtm_1wam_ce_testcase:
 	${MAKE} confidence
 	[[ -s models/confidence/ce-notm.ini ]] || ! echo "ERROR: Was unable to instanciate a CE template." >&2
