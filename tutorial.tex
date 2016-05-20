@@ -250,9 +250,7 @@ protecting it from hangup signals.\tipend
 
 \subsection{Overview of the Process}
 
-\TODO{Hide or remove rescoring stuff from here.}
-
-\TODO{Once the new sections are added for the new \PS features, put links here.}
+%\TODO{Hide or remove rescoring stuff from here.}
 
 Here is an overview of the \PS process, as described in the following
 sections:
@@ -321,10 +319,11 @@ Processing} in the user manual.
 
 If your data exists in the form of a translation memory or an aligned bitext,
 our \code{tmx-prepro} module can help you extract your data and prepare it for
-training \PS. See \TODO{document how to get tmx-prepro}.
+training \PS.\footnote{Starting with version 3.0, you can find the
+\code{tmx-prepro} module at the root of the \PS CD.}
 
-This tutorial starts from sentence-aligned plain text, as you would get from our
-\code{tmx-prepro} module extracting data from a TMX file.
+This tutorial starts from sentence-aligned plain text, as you would get from
+the \code{tmx-prepro} module extracting data from a TMX file.
 We don't perform data clean up and sentence alignment here,
 because they are highly dependent on your actual data and what other tools you
 already have.  You should plan to invest some time in preprocessing your data
@@ -621,7 +620,7 @@ configured in the framework via the \code{TUNE_LM} parameter in
 
 \subsection{Creating a Coarse Language Model} \label{coarseLM}
 
-\TODO{Add coarse LM paper to ann. bib}
+%\TODO{Add coarse LM paper to ann. bib}
 
 In \PS 3.0, we added the capacity to train and use coarse language models:
 language models that are trained and queried not on sequences of words, but
