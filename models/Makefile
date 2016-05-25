@@ -292,7 +292,7 @@ endif
 
 .PHONY:  nnjm
 nnjm:  SHELL=${LOCAL_SHELL}
-ifdef USE_PRETRAINED_NNIMS
+ifdef USE_PRETRAINED_NNJMS
 models:  nnjm
 
 PortageLive:  portageLive_models_nnjm

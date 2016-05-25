@@ -279,7 +279,7 @@ endif # USE_BILM
 
 
 
-ifneq (${USE_PRETRAINED_NNIMS},)
+ifneq (${USE_PRETRAINED_NNJMS},)
 NNJMS := $(wildcard models/nnjm/*/model)
 ifeq ("","$(or $(strip ${NNJMS}),$(findstring clean,${MAKECMDGOALS}))")
 $(error Could not find pretrained NNJMs)
@@ -312,7 +312,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS}:${DM_EXTRAS} \
 	      -lex-dist-model-file ${LDM}:${HLDM} \
 	      $(if ${BILM_SPEC}, -bilm-file ${BILM_SPECS}) \
-	      $(if ${USE_PRETRAINED_NNIMS}, -nnjm-file $(subst ${SPACE},:, ${NNJMS})) \
+	      $(if ${USE_PRETRAINED_NNJMS}, -nnjm-file $(subst ${SPACE},:, ${NNJMS})) \
 	      $(and ${USE_SPARSE}, -sparse-model ${SPARSE} -force-shift-reduce) \
 	      ${CANOE_INI_EXTRAS} \
 	  " - \

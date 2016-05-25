@@ -54,7 +54,7 @@ help:
 all:
 
 
-$(info USE_PRETRAINED_NNIMS: ${USE_PRETRAINED_NNIMS})
+$(info USE_PRETRAINED_NNJMS: ${USE_PRETRAINED_NNJMS})
 $(info NNJM_PRETRAINED_NNJMS_FIXED: ${NNJM_PRETRAINED_NNJMS_FIXED})
 
 
@@ -111,7 +111,7 @@ endef
 
 
 
-ifneq (${USE_PRETRAINED_NNIMS},)
+ifneq (${USE_PRETRAINED_NNJMS},)
 $(info USING PRETRAINED NNJMS)
 PRETRAINED_NNJMS_LIST := $(shell python -c '${DEPS.PYSCRIPT}')
 $(info PRETRAINED_NNJMS_LIST: ${PRETRAINED_NNJMS_LIST})
@@ -207,7 +207,7 @@ clean.portageLive:
 
 testsuite:  one_pretrained_testcase
 .PHONY:  one_pretrained_testcase
-one_pretrained_testcase:  export USE_PRETRAINED_NNIMS := 1
+one_pretrained_testcase:  export USE_PRETRAINED_NNJMS := 1
 one_pretrained_testcase:  export NNJM_PRETRAINED_NNJMS := ${PORTAGE}/corpora/bac-lac/filtered/corpora-version-2/portage-framelab.en2fr/models/nnjm/PTGSH-163a/model
 one_pretrained_testcase:
 	${MAKE} clean
@@ -219,7 +219,7 @@ one_pretrained_testcase:
 
 testsuite:  multiple_pretrained_testcase
 .PHONY:  multiple_pretrained_testcase
-multiple_pretrained_testcase:  export USE_PRETRAINED_NNIMS := 1
+multiple_pretrained_testcase:  export USE_PRETRAINED_NNJMS := 1
 multiple_pretrained_testcase:  export NNJM_PRETRAINED_NNJMS := ${PORTAGE}/corpora/bac-lac/filtered/corpora-version-2/portage-framelab.en2fr/models/nnjm/PTGSH-163a/model ${PORTAGE}/corpora/bac-lac/filtered/corpora-version-2/portage-framelab.en2fr/models/nnjm/PTGSH-163b/model
 multiple_pretrained_testcase:
 	${MAKE} clean
