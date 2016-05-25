@@ -147,7 +147,7 @@ all: $(foreach x, ${LM_EXTS}, $(addsuffix $x, ${LM_NAMES}))
 $(foreach c, ${CORPORA_NAMES}, \
    $(eval $(call LM_CORP_DEP,${c}${LM_DESC},${c}${CORPUS_EXT})))
 
-define DEPS_PYSCRIPT
+define DEPS.PYSCRIPT
 from __future__ import print_function, unicode_literals, division, absolute_import
 import re
 
@@ -250,9 +250,9 @@ with open(".Makefile.deps", "w") as df:
    print("BITOKENS_CORP_FILES ?= {0}".format(" ".join(bit_corp)), file=df)
 endef
 
-$(shell python -c '${DEPS_PYSCRIPT}')
+$(shell python -c '${DEPS.PYSCRIPT}')
 
-include Makefile.deps
+include .Makefile.deps
 
 .INTERMEDIATE: ${MAPPED_CORP_FILES}
 $(filter-out %.gz, ${MAPPED_CORP_FILES}): SHELL=${LOCAL_SHELL}
