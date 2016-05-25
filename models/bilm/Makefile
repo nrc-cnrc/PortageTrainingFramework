@@ -168,7 +168,7 @@ alignments = align.lower().split()
 cinfo = [("ibm4.", "/")] if "ibm4" in alignments else []
 if len(alignments) > 1 or len(cinfo) == 0: cinfo.append(("", "_"))
 
-with open("Makefile.deps", "w") as df:
+with open(".Makefile.deps", "w") as df:
    w2c_corp = []
    bit_corp = []
    bit_cmpts = []
