@@ -86,23 +86,23 @@ define DEPS.PYSCRIPT
 from __future__ import print_function
 
 with open(".Makefile.deps", "w") as df:
-	wcls_targets = []
-	def writeDependencies(n, l, corpora):
-		target = "{l}.{n}.classes".format(l=l, n=n)
-		wcls_targets.append(target)
-		print("{l}.{n}.classes:  WCL_NCLS := {n}".format(l=l, n=n), file=df)
-		print("{l}.{n}.classes:  WCL_LANG := {l}".format(l=l, n=n), file=df)
-		for c in corpora:
-			print("{l}.{n}.classes:  {c}_{l}${CORPUS_EXT}".format(c=c, l=l, n=n), file=df)
+   wcls_targets = []
+   def writeDependencies(n, l, corpora):
+      target = "{l}.{n}.classes".format(l=l, n=n)
+      wcls_targets.append(target)
+      print("{l}.{n}.classes:  WCL_NCLS := {n}".format(l=l, n=n), file=df)
+      print("{l}.{n}.classes:  WCL_LANG := {l}".format(l=l, n=n), file=df)
+      for c in corpora:
+         print("{l}.{n}.classes:  {c}_{l}${CORPUS_EXT}".format(c=c, l=l, n=n), file=df)
 
-	wcl_ncls_list = set("${WCL_NCLS_LIST}".strip().split())
-	languages = set("${SRC_LANG} ${TGT_LANG}".strip().split())
-	corpora = set("${TRAIN_WCL}".strip().split())
-	for n in wcl_ncls_list:
-		for l in languages:
-			writeDependencies(n, l, corpora)
+   wcl_ncls_list = set("${WCL_NCLS_LIST}".strip().split())
+   languages = set("${SRC_LANG} ${TGT_LANG}".strip().split())
+   corpora = set("${TRAIN_WCL}".strip().split())
+   for n in wcl_ncls_list:
+      for l in languages:
+         writeDependencies(n, l, corpora)
 
-	print("WCLS_TARGETS := {}".format(" ".join(wcls_targets)), file=df)
+   print("WCLS_TARGETS := {}".format(" ".join(wcls_targets)), file=df)
 endef
 
 #$(info  WCL_DEPS: ${DEPS.PYSCRIPT})
