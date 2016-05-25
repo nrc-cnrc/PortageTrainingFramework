@@ -399,7 +399,9 @@ ${CANOE_LIVE}:  portageLive_models_ldm
 ${CANOE_LIVE}:  | ${PORTAGE_LIVE_DEST_DIR}
 ${CANOE_LIVE}:  ${DECODING_MODEL}
 	configtool -p tp $< > $@
-	sed --in-place 's#\(wordClasses-models/wcl/.*\).classes;#\1.mmcls;#' $@
+	sed -e 's#\(wordClasses-models/wcl/.*\).classes;#\1.mmcls;#' \
+	    -e 's#\(;cls(\(src\|tgt\|tgt/src\))=models[^=]*\).classes#\1.mmcls#g' \
+	    --in-place $@
 	configtool check $@
 
 

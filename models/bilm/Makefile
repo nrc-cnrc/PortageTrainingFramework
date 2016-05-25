@@ -236,7 +236,7 @@ with open("Makefile.deps", "w") as df:
          print("{cls}: WCL_NCLS={ncls}".format(cls=bit_cls, ncls=bit_ncls), file=df)
          print("{cls}: WCL_LANG={l}".format(cls=bit_cls, l=lm_lang), file=df)
          print("{cls}: {bits}".format(cls=bit_cls, bits=" ".join(wcl_corp)), file=df)
-         print("portageLive: {cls}".format(cls=bit_cls), file=df)
+         print("portageLive: {cls}.mmcls".format(cls=bit_cls[:-8]), file=df)
       # Dependencies for LM parameter tuning
       if tune_bilm:
          # BiLM file depends on the tune bitokens file.
