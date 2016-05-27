@@ -236,7 +236,8 @@ with open(".Makefile.deps", "w") as df:
          print("{cls}: WCL_NCLS={ncls}".format(cls=bit_cls, ncls=bit_ncls), file=df)
          print("{cls}: WCL_LANG={l}".format(cls=bit_cls, l=lm_lang), file=df)
          print("{cls}: {bits}".format(cls=bit_cls, bits=" ".join(wcl_corp)), file=df)
-         print("portageLive: {cls}.mmcls".format(cls=bit_cls[:-8]), file=df)
+         bit_mmcls=bit_cls.rsplit(".", 1)[0] + ".mmcls"
+         print("portageLive: {mmcls}".format(mmcls=bit_mmcls), file=df)
       # Dependencies for LM parameter tuning
       if tune_bilm:
          # BiLM file depends on the tune bitokens file.
@@ -324,12 +325,17 @@ time-mem: resource_summary_sub
 ########################################
 # Transform the BiLM model(s) for PortageLive
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/bilm
+
+${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
+${PORTAGE_LIVE_DEST_DIR}:
+	mkdir -p $@
+
 .PHONY: portageLive
-portageLive: SHELL=${LOCAL_SHELL}
+portageLive:  SHELL=${LOCAL_SHELL}
 ifneq (${TRAIN_BILM},)
-portageLive: $(addsuffix .tplm, ${LM_NAMES})
+portageLive:  $(addsuffix .tplm, ${LM_NAMES})
+portageLive:  | ${PORTAGE_LIVE_DEST_DIR}
 portageLive:
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../bilm/, $+) .
 else
