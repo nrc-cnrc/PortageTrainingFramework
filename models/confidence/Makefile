@@ -151,7 +151,7 @@ portageLive: SHELL=${LOCAL_SHELL}
 portageLive: ${CE_MODEL_NAME}${CEMX}
 	mkdir -p ../portageLive
 	mkdir -p tmp.live && tar -C tmp.live -zxvf $<
-	sed -i -e 's/binlm.gz/tplm/' tmp.live/model
+	sed --in-place -e 's/binlm.gz/tplm/' tmp.live/model
 	MODELS=(`egrep -o '[^/]+\.tplm' tmp.live/model | tr "\n" " "`); \
 	if [[ $$MODELS ]]; then \
 		${MAKE} -C ../../${LM_DIR} -f ../lm/Makefile $${MODELS[@]}; \
@@ -168,7 +168,7 @@ portageLive: ${CE_MODEL_NAME}${CEMX}
 		mkdir -p ../portageLive/${IBM_DIR}; \
 		cd ../portageLive/${IBM_DIR} && ln -fs $${MODELS[@]} .; \
 	fi
-	sed -i -e 's/tm\/mixtm/tm/' tmp.live/model
+	sed --in-place -e 's#tm/mixtm#tm#' tmp.live/model
 	cd tmp.live && tar zcf ../../portageLive/$< *
 	rm -r tmp.live
 else
