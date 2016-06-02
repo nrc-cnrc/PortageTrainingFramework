@@ -50,9 +50,6 @@ endif
 # define DONT_LOWERCASE_SRC in ./Makefile.params
 #DONT_LOWERCASE_SRC = 1
 
-UTF8 := $(if $(findstring Darwin, ${OSTYPE}),UTF-8,utf8)
-export LC_ALL = en_CA.${UTF8}
-
 
 # Where are the aligned corpora to process.
 ALIGN_CORPORA_DIR ?= .
