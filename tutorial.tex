@@ -620,13 +620,12 @@ configured in the framework via the \code{TUNE_LM} parameter in
 
 \subsection{Creating a Coarse Language Model} \label{coarseLM}
 
-%\TODO{Add coarse LM paper to ann. bib}
-
 In \PS 3.0, we added the capacity to train and use coarse language models:
 language models that are trained and queried not on sequences of words, but
 rather on sequences of classes of words. These models have a useful capacity of
 abstraction: similar words and likely in similar contexts and unlikely in
-similar context.
+similar context.\footnote{See Stewart et al (AMTA 2014) and the annotated
+bibliography included with the \PS user manual for full details on coarse LMs.}
 
 Empirically, we get the best results when we combine a coarse LM model trained
 on 200 word classes with one trained on 800 classes. These models capture
@@ -1361,7 +1360,12 @@ can, for example, make reordering choices based on the presence of a highly
 frequent word at the beginning or at the end of a phrase pair. Thus, the model
 could learn that a particular preposition triggers reordering. Other sparse
 features pay attention to various characteristics of phrase pairs that might
-indicate how reliable they are.
+indicate how reliable they are.\footnote{The annotated bibliography included
+with the \PS user manual summarizes the literature on sparse features,
+discussing how they work and what they mean. See, in particular, Hopkins and
+May (EMNLP 2011), Cherry and Foster (NAACL 2012), and Cherry (NAACL-HLT 2013).
+You can also refer to \code{doc/sparse-features.README} for the nitty-gritty of
+sparse features in \PS.}
 
 Turning on sparse features increases the quality of the translations produced
 by \PS, at a minimal computing cost, and is always recommended. Therefore
@@ -1458,15 +1462,6 @@ These commands build frequency bins, vocabularies of most frequent source and
 target words, classes of source and target words, and the list of most
 frequently unaligned words, as required by one or the other of the sparse
 feature templates.
-
-Please refer to the annotated bibliography included with the \PS user manual
-for the literature on sparse features, how they work and what they mean.
-You can also refer to \code{doc/sparse-features.README} for the nitty-gritty
-of sparse features in \PS.
-
-%\TODO{Add the paper on sparse features in ann. biblio}
-
-%\TODO{Add the paper on DHDM in ann. biblio}
 
 \subsection{Mixture Models and Domain Adaptation} \label{MIX}
 
@@ -2971,4 +2966,7 @@ vary on different systems and are shown in this document only as an indication
 of the type of output to expect, especially given the trivial size of the
 corpus used.
 
+\section*{Bibliography}
+The bibliography for this document is found in the \PS user manual under
+section ``annotated bibliography''.
 \end{document}
