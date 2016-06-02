@@ -71,7 +71,7 @@ clean.content:
 
 .PHONY:  clean.logs
 clean.logs:
-	@true
+	${RM} .Makefile*.deps
 
 
 

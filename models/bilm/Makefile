@@ -168,7 +168,7 @@ alignments = align.lower().split()
 cinfo = [("ibm4.", "/")] if "ibm4" in alignments else []
 if len(alignments) > 1 or len(cinfo) == 0: cinfo.append(("", "_"))
 
-with open("Makefile.deps", "w") as df:
+with open(".Makefile.deps", "w") as df:
    w2c_corp = []
    bit_corp = []
    bit_cmpts = []
@@ -251,8 +251,7 @@ with open("Makefile.deps", "w") as df:
 endef
 
 $(shell python -c '${DEPS_PYSCRIPT}')
-
-include Makefile.deps
+include .Makefile.deps
 
 .INTERMEDIATE: ${MAPPED_CORP_FILES}
 $(filter-out %.gz, ${MAPPED_CORP_FILES}): SHELL=${LOCAL_SHELL}
@@ -308,6 +307,7 @@ clean.logs:
 	${RM} log.*
 	${RM} run-parallel-logs-*
 	${RM} -r .logs
+	${RM} .Makefile*.deps
 
 # Hide logs from user's view into .logs
 hide.logs: SHELL=${LOCAL_SHELL}
