@@ -3,7 +3,6 @@
 *.tppt
 *.tpldm
 log.*
-Makefile*.deps
 .Makefile*.deps
 
 *.aux
@@ -14,6 +13,9 @@ Makefile*.deps
 
 .*.tstamp
 
+# patterns for job submission files
+*.[ejo][0-9][0-9][0-9][0-9]*
+
 run-p.*/
 canoe-parallel.*/
 
@@ -22,6 +24,9 @@ corpora/*.al
 corpora/*.lc
 corpora/*.rule
 corpora/*.id
+
+models/bilm/*.lc
+models/bilm/bitoks.*.classes
 
 models/coarselm/*.lc
 
@@ -39,6 +44,8 @@ models/decode/summary*
 models/decode/foos/
 models/decode/logs/
 
+models/ibm/*/
+
 models/ldm/*.bkoff
 
 models/mixlm/models
@@ -49,17 +56,19 @@ models/mixlm/components_*
 
 models/portageLive/
 
+models/sparse/model*
+models/sparse/data*
+models/sparse/*build-model.cmds*
+
 models/tc/*.map
 models/tc/vocabMap2tpt.*
 
 models/tm/mixtm/
 models/tm/*/
 
-models/wcl/*.classes
+models/wal/*/
 
-models/sparse/model*
-models/sparse/data*
-models/sparse/*build-model.cmds*
+models/wcl/*.classes
 
 translate/models
 translate/canoe.ini.cow.*
