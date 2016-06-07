@@ -204,12 +204,10 @@ TEST_SET      ?= test1 test2
 #DO_CE = 1
 
 # Train and use a Lexicalized Distortion Model (LDM).
-# Expensive!  Use only if you know it's worthwhile.
 # Comment out to disable using an LDM; uncomment to enable.
 #USE_LDM = 1
 
 # Train and use a Hierarchical Lexicalized Distortion Model (HLDM).
-# Expensive!  Use only if you know it's worthwhile.
 # HLDM seems to be quite effective in most scenarios, so we enable it by default.
 # Comment out to disable using an HLDM; uncomment to enable.
 USE_HLDM = 1

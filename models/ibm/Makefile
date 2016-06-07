@@ -117,6 +117,7 @@ clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	${RM} run-parallel-log* log.* run-p.*
 	${RM} -r .logs
+	${RM} .Makefile*.deps
 
 # Hide logs from user's view into .logs
 hide.logs: SHELL=${LOCAL_SHELL}

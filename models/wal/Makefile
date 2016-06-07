@@ -117,6 +117,7 @@ clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	${RM} parallelize.pl.* run-parallel-log* log.* run-p.*
 	${RM} -r .logs
+	${RM} .Makefile*.deps
 
 # Hide logs from user's view into .logs
 hide.logs: SHELL=${LOCAL_SHELL}
@@ -142,6 +143,8 @@ clean.alignment_files:  SHELL=${LOCAL_SHELL}
 clean.alignment_files:
 	${RM} *.align.gz
 	${RM} -r ${ALL_WAMS}
+	$(if ${FORCE_ALIGN_SET},${RM} -r ${FORCE_ALIGN_SET})
+
 
 .PHONY: alignment_files  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 alignment_files:  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})

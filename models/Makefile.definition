@@ -11,12 +11,6 @@
 # Copyright 2015, Sa Majeste la Reine du Chef du Canada /
 # Copyright 2015, Her Majesty in Right of Canada
 
-
-UTF8 = $(if $(findstring Darwin, ${OSTYPE}),UTF-8,utf8)
-export LANG   = en_CA.${UTF8}
-export LC_ALL = en_CA.${UTF8}
-
-
 # sort is used to remove duplicate or else dependencies are duplicated.
 ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
 ALL_TMS := $(sort ${ALL_TMS})

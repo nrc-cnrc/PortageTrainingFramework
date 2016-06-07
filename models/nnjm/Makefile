@@ -76,7 +76,7 @@ clean.content:
 .PHONY:  clean.logs
 clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
-	@true
+	${RM} .Makefile*.deps
 
 
 define DEPS.PYSCRIPT
