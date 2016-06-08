@@ -150,7 +150,7 @@ $(foreach c, ${CORPORA_NAMES}, \
    $(eval $(call LM_CORP_DEP,${c}${LM_DESC},${c}${CORPUS_EXT})))
 
 define DEPS.PYSCRIPT
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import print_function
 import re
 
 bilm_specs = "${BILM_SPEC}"
@@ -249,9 +249,9 @@ with open(".Makefile.deps", "w") as df:
             print("bitokens.{c}{s}_{l}{ld}.lm.gz: bitokens.{t}{s}_{l}{cext}".format(
                   c=c, t=tune_bilm, s=s, l=lm_lang, cext=corpus_ext_nogz, ld=lm_desc), file=df)
 
-   print("MAPPED_CORP_FILES ?= {0}".format(" ".join(w2c_corp)), file=df)
-   print("BITOKENS_CMPTS_FILES ?= {0}".format(" ".join(bit_cmpts)), file=df)
-   print("BITOKENS_CORP_FILES ?= {0}".format(" ".join(bit_corp)), file=df)
+   print("MAPPED_CORP_FILES ?=", *w2c_corp, file=df)
+   print("BITOKENS_CMPTS_FILES ?=", *bit_cmpts, file=df)
+   print("BITOKENS_CORP_FILES ?=", *bit_corp, file=df)
 endef
 
 $(shell python -c '${DEPS.PYSCRIPT}')

@@ -85,24 +85,23 @@ endif
 define DEPS.PYSCRIPT
 from __future__ import print_function
 
+wcl_ncls_list = set("${WCL_NCLS_LIST}".split())
+languages = set("${SRC_LANG} ${TGT_LANG}".split())
+corpora = set("${TRAIN_WCL}".split())
+corpus_ext = "${CORPUS_EXT}"
+
 with open(".Makefile.deps", "w") as df:
    expected_files = []
-   def writeDependencies(n, l, corpora):
-      target = "{l}.{n}.classes".format(l=l, n=n)
-      expected_files.append(target)
-      print("{l}.{n}.classes:  WCL_NCLS := {n}".format(l=l, n=n), file=df)
-      print("{l}.{n}.classes:  WCL_LANG := {l}".format(l=l, n=n), file=df)
-      for c in corpora:
-         print("{l}.{n}.classes:  {c}_{l}${CORPUS_EXT}".format(c=c, l=l, n=n), file=df)
-
-   wcl_ncls_list = set("${WCL_NCLS_LIST}".strip().split())
-   languages = set("${SRC_LANG} ${TGT_LANG}".strip().split())
-   corpora = set("${TRAIN_WCL}".strip().split())
    for n in wcl_ncls_list:
       for l in languages:
-         writeDependencies(n, l, corpora)
+         target="{l}.{n}.classes".format(l=l, n=n)
+         print("{t}: WCL_NCLS := {n}".format(t=target, n=n), file=df)
+         print("{t}: WCL_LANG := {l}".format(t=target, l=l), file=df)
+         cfiles = " ".join("{c}_{l}{x}".format(c=c, l=l, x=corpus_ext) for c in corpora)
+         print("{t}: {cf}".format(t=target, cf=cfiles), file=df)
+         expected_files.append(target)
 
-   print("EXPECTED_FILES := {}".format(" ".join(expected_files)), file=df)
+   print("EXPECTED_FILES :=", *expected_files, file=df)
 endef
 
 #$(info  WCL_DEPS: ${DEPS.PYSCRIPT})
@@ -141,6 +140,7 @@ clean.logs:
 	${RM} log.* core*
 	${RM} run-parallel-logs-*
 	${RM} -r .logs run-p.*
+	${RM} .Makefile*.deps
 
 # Hide logs from user's view into .logs
 hide.logs: SHELL=${LOCAL_SHELL}

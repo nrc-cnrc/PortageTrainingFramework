@@ -153,39 +153,34 @@ word_alignment_models:  $(addsuffix .mixwam.${L1_GIVEN_L2X}, ${POSSIBLE_WORD_ALI
 define DEPS.PYSCRIPT
 from __future__ import print_function
 
-mixWamCorpora = set("${TUNE_MIXTM_FINAL} ${MIXTM} ${MIXTM_TRAIN_MIX}".strip().split())
+mixWamCorpora = set("${TUNE_MIXTM_FINAL} ${MIXTM} ${MIXTM_TRAIN_MIX}".split())
 def which_wam(c):
-   if len("${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}"):
-      if c in mixWamCorpora:
-         return "mixwam"
-      else:
-         return c
-   else:
-      return c
+   if len("${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}") and c in mixWamCorpora:
+      return "mixwam"
+   return c
 
-def modelName(corpora, wam, direction):
-   return "{m}.{c}.{d}".format(m=wam, c=corpora, d=direction)
+def modelName(corpus, wam, direction):
+   return "{m}.{c}.{d}".format(m=wam, c=corpus, d=direction)
 
-def forwardModel(corpora, wam):
-   return modelName(corpora, wam, "${L2_GIVEN_L1X}")
+def forwardModel(corpus, wam):
+   return modelName(corpus, wam, "${L2_GIVEN_L1X}")
 
-def backwardModel(corpora, wam):
-   return modelName(corpora, wam, "${L1_GIVEN_L2X}")
+def backwardModel(corpus, wam):
+   return modelName(corpus, wam, "${L1_GIVEN_L2X}")
 
 with open(".Makefile.deps", "w") as df:
    expectedFiles = set()
 
    # the meta target for word alignment model depends on word alignment model files.
    # both forward and backward word alignment models require source and target corpora.
-   WAMs = "$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
-   WAMs = set(WAMs.strip().split())
-   for wam in WAMs:
+   wams = "$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
+   for wam in set(wams.split()):
       # TODO:  Can we really get mixwam in ALL_WAMS?
-      for corpora in set("$(filter-out mixwam, ${ALL_WAMS})".strip().split()):
-         forwardName  = forwardModel(corpora, wam)
-         backwardName = backwardModel(corpora, wam)
-         print("{f}:  {c}${L1X}  {c}${L2X}".format(c=corpora, f=forwardName), file=df)
-         print("{b}:  {c}${L1X}  {c}${L2X}".format(c=corpora, b=backwardName), file=df)
+      for corp in set("$(filter-out mixwam, ${ALL_WAMS})".split()):
+         forwardName  = forwardModel(corp, wam)
+         backwardName = backwardModel(corp, wam)
+         print("{f}:  {c}${L1X}  {c}${L2X}".format(c=corp, f=forwardName), file=df)
+         print("{b}:  {c}${L1X}  {c}${L2X}".format(c=corp, b=backwardName), file=df)
 
       # TODO Why do we create those rules?  These look like the rules for mixwam execpt for more corpora.
       # This seems to be required in tm.
@@ -193,32 +188,32 @@ with open(".Makefile.deps", "w") as df:
       # This mega global wam is used when indicator_cpt & len(TRAIN_TM) > 1
       forwardName  = "{m}.${L2_GIVEN_L1X}".format(m=wam)
       backwardName = "{m}.${L1_GIVEN_L2X}".format(m=wam)
-      for corpora in set("${ALL_TMS}".strip().split()):
-         print("{f}:  {c}${L1X}  {c}${L2X}".format(c=corpora, f=forwardName), file=df)
-         print("{b}:  {c}${L1X}  {c}${L2X}".format(c=corpora, b=backwardName), file=df)
+      for corp in set("${ALL_TMS}".split()):
+         print("{f}:  {c}${L1X}  {c}${L2X}".format(c=corp, f=forwardName), file=df)
+         print("{b}:  {c}${L1X}  {c}${L2X}".format(c=corp, b=backwardName), file=df)
 
       # How to build a mixwam
       forwardName  = forwardModel("mixwam", wam)
       backwardName = backwardModel("mixwam", wam)
-      for corpora in set("${MIXTM} ${MIXTM_TRAIN_MIX}".strip().split()):
-         print("{f}:  {c}${L1X}  {c}${L2X}".format(c=corpora, f=forwardName), file=df)
-         print("{b}:  {c}${L1X}  {c}${L2X}".format(c=corpora, b=backwardName), file=df)
+      for corp in set("${MIXTM} ${MIXTM_TRAIN_MIX}".split()):
+         print("{f}:  {c}${L1X}  {c}${L2X}".format(c=corp, f=forwardName), file=df)
+         print("{b}:  {c}${L1X}  {c}${L2X}".format(c=corp, b=backwardName), file=df)
 
 #   # Note that corpora dependencies for IBM4 models are hardcoded in Makefile.toolkit.
-#   for wam in "$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split():
+#   for wam in "$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split():
 #      # TODO: should we exclude MIXTM from here in case the user asked for a global word alignment model?
-#      for corpora in "${ALL_WAMS}".strip().split():
-#         forwardName  = forwardModel(corpora, wam)
-#         backwardName = backwardModel(corpora, wam)
+#      for corp in "${ALL_WAMS}".split():
+#         forwardName  = forwardModel(corp, wam)
+#         backwardName = backwardModel(corp, wam)
 #         print("{m}_wam:  {f}  {b}".format(m=wam, f=forwardName, b=backwardName), file=df)
 
    ########################################
    # FAST ALIGN
    for wam in ("${FAST_ALIGN_MODEL_PFX}",):
-      for corpora in set("$(filter-out mixwam, ${ALL_WAMS})".strip().split()):
-         forwardName  = forwardModel(corpora, wam)
-         backwardName = backwardModel(corpora, wam)
-         glued = "${FAST_ALIGN_MODEL_PFX}/" + corpora + ".${SRC_LANG}_${TGT_LANG}.glued"
+      for corp in set("$(filter-out mixwam, ${ALL_WAMS})".split()):
+         forwardName  = forwardModel(corp, wam)
+         backwardName = backwardModel(corp, wam)
+         glued = "${FAST_ALIGN_MODEL_PFX}/" + corp + ".${SRC_LANG}_${TGT_LANG}.glued"
          print("{f}:  {g}".format(f=forwardName, g=glued), file=df)
          print("{b}:  {g}".format(b=backwardName, g=glued), file=df)
 
@@ -228,9 +223,9 @@ with open(".Makefile.deps", "w") as df:
       glued = "${FAST_ALIGN_MODEL_PFX}/mixwam.${SRC_LANG}_${TGT_LANG}.glued"
       print("{f}:  {g}".format(f=forwardName, g=glued), file=df)
       print("{b}:  {g}".format(b=backwardName, g=glued), file=df)
-      for corpora in set("${MIXTM} ${MIXTM_TRAIN_MIX}".strip().split()):
-         print("{g}:  {c}".format(g=glued, c=corpora+"${L1X}"), file=df)
-         print("{g}:  {c}".format(g=glued, c=corpora+"${L2X}"), file=df)
+      for corp in set("${MIXTM} ${MIXTM_TRAIN_MIX}".split()):
+         print("{g}:  {c}".format(g=glued, c=corp+"${L1X}"), file=df)
+         print("{g}:  {c}".format(g=glued, c=corp+"${L2X}"), file=df)
 
       # How to build a global wam.
       forwardName  = "{m}.${L2_GIVEN_L1X}".format(m=wam)
@@ -238,17 +233,17 @@ with open(".Makefile.deps", "w") as df:
       glued = "${FAST_ALIGN_MODEL_PFX}/${SRC_LANG}_${TGT_LANG}.glued"
       print("{f}:  {g}".format(f=forwardName, g=glued), file=df)
       print("{b}:  {g}".format(b=backwardName, g=glued), file=df)
-      for corpora in set("${ALL_TMS}".strip().split()):
-         print("{g}:  {c}".format(g=glued, c=corpora+"${L1X}"), file=df)
-         print("{g}:  {c}".format(g=glued, c=corpora+"${L2X}"), file=df)
+      for corp in set("${ALL_TMS}".split()):
+         print("{g}:  {c}".format(g=glued, c=corp+"${L1X}"), file=df)
+         print("{g}:  {c}".format(g=glued, c=corp+"${L2X}"), file=df)
 
 
    #############################################################################
    # META LEVEL TARGETS
    def addModelsToMetaTarget(target, corpora, wams, expected=True):
-      for corpus in set(corpora.strip().split()):
+      for corpus in set(corpora.split()):
          corp = which_wam(corpus)  # switch to mixwam if MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
-         for wam in set(wams.strip().split()):
+         for wam in set(wams.split()):
             forwardName  = forwardModel(corp, wam)
             backwardName = backwardModel(corp, wam)
             print("{target}_wam:  {f}  {b}".format(target=target(wam), f=forwardName, b=backwardName), file=df)
@@ -270,33 +265,33 @@ with open(".Makefile.deps", "w") as df:
 
    #####################################
    # LEXICALIZED DISTORTION MODELS
-   wams = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX})"
-   addModelsToMetaTarget(wamType("ldm"), "$(sort ${TRAIN_LDM})",  wams)
+   wams = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX}"
+   addModelsToMetaTarget(wamType("ldm"), "${TRAIN_LDM}",  wams)
 
    #####################################
    # HIERARCHICAL LEXICALIZED DISTORTION MODELS
-   wams = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX})"
-   addModelsToMetaTarget(wamType("hldm"), "$(sort ${TRAIN_HLDM})", wams)
+   wams = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX}"
+   addModelsToMetaTarget(wamType("hldm"), "${TRAIN_HLDM}", wams)
 
    #####################################
    # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam
    wams = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
-   addModelsToMetaTarget(wamType(), "$(sort ${TRAIN_TM})", wams)
+   addModelsToMetaTarget(wamType(), "${TRAIN_TM}", wams)
 
    wams = "$(filter-out ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
-   addModelsToMetaTarget(wamType(), "$(sort ${TRAIN_TM})", wams, False)
+   addModelsToMetaTarget(wamType(), "${TRAIN_TM}", wams, False)
 
    #####################################
    # MERGED
    wams = "${EXPECTED_MODEL_TYPES_PFX}"
    expected = "merged" in pt_types
-   addModelsToMetaTarget(wamType("merged"), "$(sort ${TRAIN_TM})", wams, expected)
+   addModelsToMetaTarget(wamType("merged"), "${TRAIN_TM}", wams, expected)
 
    #####################################
    # MIXTURE
    wams = "${EXPECTED_MODEL_TYPES_PFX}"
    expected = "mix" in pt_types
-   addModelsToMetaTarget(wamType("mix"), "$(sort ${MIX_WAMS})", wams, expected)
+   addModelsToMetaTarget(wamType("mix"), "${MIX_WAMS}", wams, expected)
 
    #####################################
    # INDICATOR
@@ -309,7 +304,7 @@ with open(".Makefile.deps", "w") as df:
    wams = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
    addModelsToMetaTarget(wamType("bilm"), "${TRAIN_BILM}", wams)
 
-   print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
+   print("EXPECTED_FILES :=", *sorted(expectedFiles), file=df)
 endef
 
 #$(info WORD ALIGNMENT: ${DEPS.PYSCRIPT})

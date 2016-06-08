@@ -125,14 +125,14 @@ endif
 define DEPS.PYSCRIPT
 from __future__ import print_function
 
-def corporaNames(corpora, wam, sx="${L1X}", tx="${L2X}"):
+def corporaNames(corp, wam, sx="${L1X}", tx="${L2X}"):
    if wam == "${IBM4_MODEL_PFX}":
-      return {"s" : corpora+"/${SRC_LANG}.lc", "t":corpora+"/${TGT_LANG}.lc"}
+      return {"s" : corp+"/${SRC_LANG}.lc", "t":corp+"/${TGT_LANG}.lc"}
    else:
-      return {"s" : corpora+sx, "t":corpora+tx}
+      return {"s" : corp+sx, "t":corp+tx}
 
 # What will we use for the LDM is description.
-ldmDescription = "+".join("$(call sort_aligners,${AVAILABLE_WORD_ALIGNMENT_MODELS})".strip().split())
+ldmDescription = "+".join("$(call sort_aligners,${AVAILABLE_WORD_ALIGNMENT_MODELS})".split())
 
 expectedFiles = set()
 
@@ -167,20 +167,20 @@ with open(".Makefile.deps", "w") as df:
 
    # To generate (h)ldm count files we need alignment files.
    # To generate (h)ldm count files we need the source corpus and the target corpus
-   for wam in set("${POSSIBLE_WORD_ALIGNMENT_MODELS}".strip().split()):
-      for corpora in set("${TRAIN_LDM}".strip().split()):
+   for wam in set("${POSSIBLE_WORD_ALIGNMENT_MODELS}".split()):
+      for corp in set("${TRAIN_LDM}".split()):
          countFilename = "${LDM_MODEL_PFX}.{w}${COUNTSX}".format(w=wam)
-         alignment = "{c}.{m}.${L1_2_L2}.align.gz".format(c=corpora, m=wam)
-         print("{counts}:  {s}  {t}".format(counts=countFilename, **corporaNames(corpora, wam)), file=df)
+         alignment = "{c}.{m}.${L1_2_L2}.align.gz".format(c=corp, m=wam)
+         print("{counts}:  {s}  {t}".format(counts=countFilename, **corporaNames(corp, wam)), file=df)
          print("{counts}:  {alignment}".format(counts=countFilename, alignment=alignment), file=df)
 
-      for corpora in set("${TRAIN_HLDM}".strip().split()):
+      for corp in set("${TRAIN_HLDM}".split()):
          countFilename = "${HLDM_MODEL_PFX}.{w}${COUNTSX}".format(w=wam)
-         alignment = "{c}.{m}.${L1_2_L2}.align.gz".format(c=corpora, m=wam)
-         print("{counts}:  {s}  {t}".format(counts=countFilename, **corporaNames(corpora, wam)), file=df)
+         alignment = "{c}.{m}.${L1_2_L2}.align.gz".format(c=corp, m=wam)
+         print("{counts}:  {s}  {t}".format(counts=countFilename, **corporaNames(corp, wam)), file=df)
          print("{counts}:  {alignment}".format(counts=countFilename, alignment=alignment), file=df)
 
-   for wam in set("${AVAILABLE_WORD_ALIGNMENT_MODELS}".strip().split()):
+   for wam in set("${AVAILABLE_WORD_ALIGNMENT_MODELS}".split()):
       countFilename = "${LDM_MODEL_PFX}.{w}${COUNTSX}".format(w=wam)
       print("ldm.counts:  {counts}".format(counts=countFilename), file=df)
       print("{ldmFile}:  {counts}".format(ldmFile=ldmFile, counts=countFilename), file=df)
@@ -189,7 +189,7 @@ with open(".Makefile.deps", "w") as df:
       print("hldm.counts:  {counts}".format(counts=countFilename), file=df)
       print("{hldmFile}:  {counts}".format(hldmFile=hldmFile, counts=countFilename), file=df)
    
-   print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
+   print("EXPECTED_FILES :=", *sorted(expectedFiles), file=df)
 endef
 
 #$(info WORD ALIGNMENT: ${DEPS.PYSCRIPT})

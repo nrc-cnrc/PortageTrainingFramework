@@ -153,83 +153,78 @@ alignment_files:  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 define DEPS.PYSCRIPT
 from __future__ import print_function
 
-mixWamCorpora = set("${TUNE_MIXTM_FINAL} ${MIXTM} ${MIXTM_TRAIN_MIX}".strip().split())
+mixWamCorpora = set("${TUNE_MIXTM_FINAL} ${MIXTM} ${MIXTM_TRAIN_MIX}".split())
 def which_wam(c):
    # Special case where TUNE_MIXTM_FINAL can not have a ibm model thus it needs to use MIXTM_TRAIN_MIX.
-   if c in set("${TUNE_MIXTM_FINAL}".strip().split()):
+   if c in set("${TUNE_MIXTM_FINAL}".split()):
       return which_wam("${MIXTM_TRAIN_MIX}")
 
    # Special case where TUNE_BILM can not have a ibm model thus it needs to use TRAIN_BILM.
-   if c in set("${TUNE_BILM}".strip().split()):
+   if c in set("${TUNE_BILM}".split()):
       return which_wam("${TRAIN_BILM}")
 
-   if len("${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}"):
-      if c in mixWamCorpora:
-         return "mixwam"
-      else:
-         return c
-   else:
-         return c
+   if len("${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}") and c in mixWamCorpora:
+      return "mixwam"
+   return c
 
 def writeDeps(alignmentFileName, source, target, d1, d2):
    print("{alignmentFileName}:  {s}  {t}".format(alignmentFileName=alignmentFileName, s=source, t=target), file=df)
    print("{alignmentFileName}:  {d1}  {d2}".format(alignmentFileName=alignmentFileName, d1=d1, d2=d2), file=df)
 
-def createRules(corpora, wam, source, target):
-   alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corpora)
-   d1 = "{m}.{c}.${L2_GIVEN_L1X}".format(m=wam, c=which_wam(corpora))
-   d2 = "{m}.{c}.${L1_GIVEN_L2X}".format(m=wam, c=which_wam(corpora))
+def createRules(corp, wam, source, target):
+   alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
+   d1 = "{m}.{c}.${L2_GIVEN_L1X}".format(m=wam, c=which_wam(corp))
+   d2 = "{m}.{c}.${L1_GIVEN_L2X}".format(m=wam, c=which_wam(corp))
    writeDeps(alignmentFileName, source, target, d1, d2)
-
 
 with open(".Makefile.deps", "w") as df:
    expectedFiles = set()
 
    # Default rules except for IBM4 & fast_align that are third-party aligners.
-   for corpora in set("${ALL_WAMS}".strip().split()):
-      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
-         createRules(corpora, wam, corpora+"${L1X}", corpora+"${L2X}")
+   for corp in set("${ALL_WAMS}".split()):
+      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
+         createRules(corp, wam, corp+"${L1X}", corp+"${L2X}")
 
    # For IBM4.
-   for corpora in set("${ALL_WAMS} ${FORCE_ALIGN_SET}".strip().split()):
-      for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
-         alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corpora)
-         source = corpora + "/${SRC_LANG}.lc"
-         target = corpora + "/${TGT_LANG}.lc"
-         d1 = corpora + "/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz"
-         d2 = corpora + "/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz"
+   for corp in set("${ALL_WAMS} ${FORCE_ALIGN_SET}".split()):
+      for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
+         alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
+         source = corp + "/${SRC_LANG}.lc"
+         target = corp + "/${TGT_LANG}.lc"
+         d1 = corp + "/${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz"
+         d2 = corp + "/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz"
          writeDeps(alignmentFileName, source, target, d1, d2)
 
    # For IBM4.
    # For the devs & tests, we want to use the first TRAIN_TM as IBM4 models.
-   for corpora in set("$(filter-out ${TUNE_MIXTM_FINAL}, ${FORCE_ALIGN_SET})".strip().split()):
-      for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
-         print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corpora, A="${IBM4_FORCE_ALIGN_WAM}"), file=df)
+   for corp in set("$(filter-out ${TUNE_MIXTM_FINAL}, ${FORCE_ALIGN_SET})".split()):
+      for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
+         print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corp, A="${IBM4_FORCE_ALIGN_WAM}"), file=df)
 
    # Special case for mixtm and BiLM tuning.
-   for corpora in set("${TUNE_MIXTM_FINAL} ${TUNE_BILM}".strip().split()):
-      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
-         createRules(corpora, wam, corpora+"${L1}", corpora+"${L2}")
+   for corp in set("${TUNE_MIXTM_FINAL} ${TUNE_BILM}".split()):
+      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
+         createRules(corp, wam, corp+"${L1}", corp+"${L2}")
 
    # FAST ALIGN
    # source and target must be of the form %${L1x} and %${L2X}
-   for corpora in set("${ALL_WAMS}".strip().split()):
-      for wam in set("$(filter ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()):
-         alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corpora)
-         source = corpora + "${L1X}"
-         target = corpora + "${L2X}"
+   for corp in set("${ALL_WAMS}".split()):
+      for wam in set("$(filter ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
+         alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
+         source = corp + "${L1X}"
+         target = corp + "${L2X}"
          # How unfortunate that we need to specify the %.fast_align.gz dependencies
          # in the Makefile and cannot to so in Makefile.toolkit.
-         fal1 = corpora + ".${L2_2_L1}.fast_align.gz"
-         fal2 = corpora + ".${L1_2_L2}.fast_align.gz"
+         fal1 = corp + ".${L2_2_L1}.fast_align.gz"
+         fal2 = corp + ".${L1_2_L2}.fast_align.gz"
          writeDeps(alignmentFileName, source, target, fal1, fal2)
 
 
    #############################################################################
    # META LEVEL TARGETS
    def addModelsToMetaTarget(target, corpora, wams, expected=True):
-      for corp in set(corpora.strip().split()):
-         for wam in set(wams.strip().split()):
+      for corp in set(corpora.split()):
+         for wam in set(wams.split()):
             alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
             print("{target}_wal:  {alignment}".format(target=target(wam), alignment=alignmentFileName), file=df)
 	    if expected:
@@ -242,45 +237,45 @@ with open(".Makefile.deps", "w") as df:
 
    #####################################
    # LEXICALIZED DISTORTION MODELS
-   WAMs = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX})"
-   addModelsToMetaTarget(wamType("ldm"), "$(sort ${TRAIN_LDM})", WAMs)
+   wams = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX})"
+   addModelsToMetaTarget(wamType("ldm"), "${TRAIN_LDM}", wams)
 
    #####################################
    # HIERARCHICAL LEXICALIZED DISTORTION MODELS
-   WAMs = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX})"
-   addModelsToMetaTarget(wamType("hldm"), "$(sort ${TRAIN_HLDM})", WAMs)
+   wams = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX})"
+   addModelsToMetaTarget(wamType("hldm"), "${TRAIN_HLDM}", wams)
 
    #####################################
    # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam
    wams = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
-   addModelsToMetaTarget(wamType(), "$(sort ${TRAIN_TM})", wams)
+   addModelsToMetaTarget(wamType(), "${TRAIN_TM}", wams)
 
    wams = "$(filter-out ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
-   addModelsToMetaTarget(wamType(), "$(sort ${TRAIN_TM})", wams, False)
+   addModelsToMetaTarget(wamType(), "${TRAIN_TM}", wams, False)
 
    #####################################
    # MIXTURE
-   WAMs = "${EXPECTED_MODEL_TYPES_PFX}"
+   wams = "${EXPECTED_MODEL_TYPES_PFX}"
    expected = "mix" in pt_types
-   addModelsToMetaTarget(wamType("mix"), "$(sort ${TUNE_MIXTM_FINAL} ${MIX_WAMS})", WAMs, expected)
+   addModelsToMetaTarget(wamType("mix"), "${TUNE_MIXTM_FINAL} ${MIX_WAMS}", wams, expected)
 
    #####################################
    # INDICATOR
-   WAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
+   wams = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
    expected = "indicator" in pt_types
-   addModelsToMetaTarget(wamType("indicator"), "$(sort ${ALL_TMS})", WAMs, expected)
+   addModelsToMetaTarget(wamType("indicator"), "${ALL_TMS}", wams, expected)
 
    #####################################
    # BILM
-   WAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
-   addModelsToMetaTarget(wamType("bilm"), "$(sort ${TRAIN_BILM} ${TUNE_BILM})", WAMs)
+   wams = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
+   addModelsToMetaTarget(wamType("bilm"), "${TRAIN_BILM} ${TUNE_BILM}", wams)
 
    #####################################
    # FORCE ALIGN
-   WAMs = "${IBM4_MODEL_PFX}"
-   addModelsToMetaTarget(wamType("ibm4_force_align"), "$(sort ${FORCE_ALIGN_SET})", WAMs)
+   wams = "${IBM4_MODEL_PFX}"
+   addModelsToMetaTarget(wamType("ibm4_force_align"), "${FORCE_ALIGN_SET}", wams)
 
-   print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
+   print("EXPECTED_FILES :=", *sorted(expectedFiles), file=df)
 endef
 
 #$(info ALIGNMENT: ${DEPS.PYSCRIPT})

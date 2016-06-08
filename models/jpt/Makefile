@@ -144,21 +144,17 @@ jpts:  merged_jpt
 define DEPS.PYSCRIPT
 from __future__ import print_function
 
-mixWamCorpora = set("${TUNE_MIXTM_FINAL} ${MIXTM} ${MIXTM_TRAIN_MIX}".strip().split())
+mixWamCorpora = set("${TUNE_MIXTM_FINAL} ${MIXTM} ${MIXTM_TRAIN_MIX}".split())
 def which_wam(c):
-   if len("${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}"):
-      if c in mixWamCorpora:
-         return "mixwam"
-      else:
-         return c
-   else:
-      return c
+   if len("${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}") and c in mixWamCorpora:
+      return "mixwam"
+   return c
 
-def corporaNames(corpora, wam, sx="${L1X}", tx="${L2X}"):
+def corporaNames(corp, wam, sx="${L1X}", tx="${L2X}"):
    if wam == "${IBM4_MODEL_PFX}":
-      return {"s" : corpora+"/${SRC_LANG}.lc", "t":corpora+"/${TGT_LANG}.lc"}
+      return {"s" : corp+"/${SRC_LANG}.lc", "t":corp+"/${TGT_LANG}.lc"}
    else:
-      return {"s" : corpora+sx, "t":corpora+tx}
+      return {"s" : corp+sx, "t":corp+tx}
 
 with open(".Makefile.deps", "w") as df:
    expectedFiles = set()
@@ -168,33 +164,30 @@ with open(".Makefile.deps", "w") as df:
    # jpts require the word alignment models in both directions, this is for the -w1 option.
    # jpts require the alignment file.
    # jpts require the source and target corpora.
-   WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}"
-   WAMs = set(WAMs.strip().split())
-   for corpora in set("${MIXTM_TRAIN_MIX} ${ALL_TMS}".strip().split()):
-      w = which_wam(corpora)
-      for wam in WAMs:
-         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+   wams = set("${POSSIBLE_WORD_ALIGNMENT_MODELS}".split())
+   for corp in set("${MIXTM_TRAIN_MIX} ${ALL_TMS}".split()):
+      w = which_wam(corp)
+      for wam in wams:
+         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corp, m=wam)
          print("{jptFileName}:  {m}.{c}.${L2_GIVEN_L1X}  {m}.{c}.${L1_GIVEN_L2X}".format(m=wam, c=w, jptFileName=jptFileName), file=df)
-         print("{jptFileName}:  {c}.{m}.${L1_2_L2}.align.gz".format(c=corpora, m=wam, jptFileName=jptFileName), file=df)
-         print("{jptFileName}:  {s}  {t}".format(c=corpora, jptFileName=jptFileName, **corporaNames(corpora, wam)), file=df)
+         print("{jptFileName}:  {c}.{m}.${L1_2_L2}.align.gz".format(c=corp, m=wam, jptFileName=jptFileName), file=df)
+         print("{jptFileName}:  {s}  {t}".format(c=corp, jptFileName=jptFileName, **corporaNames(corp, wam)), file=df)
 
-   WAMs = "${EXPECTED_MODEL_TYPES_PFX}"
-   WAMs = set(WAMs.strip().split())
-   for corpora in set("${MIXTM_TRAIN_MIX} ${ALL_TMS}".strip().split()):
-      mergedFileName = "${JPT_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
-      for wam in WAMs:
-         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+   wams = set("${EXPECTED_MODEL_TYPES_PFX}".split())
+   for corp in set("${MIXTM_TRAIN_MIX} ${ALL_TMS}".split()):
+      mergedFileName = "${JPT_MERGED_PFX}.{c}.${JOINTX}".format(c=corp)
+      for wam in wams:
+         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corp, m=wam)
          print("{mergedFileName}:  {jptFileName}".format(jptFileName=jptFileName, mergedFileName=mergedFileName), file=df)
 
-   WAMs = "${EXPECTED_MODEL_TYPES_PFX}"
-   WAMs = set(WAMs.strip().split())
-   for corpora in set("${TUNE_MIXTM_FINAL}".strip().split()):
-      mergedFileName = "${JPT_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
-      for wam in WAMs:
-         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+   wams = set("${EXPECTED_MODEL_TYPES_PFX}".split())
+   for corp in set("${TUNE_MIXTM_FINAL}".split()):
+      mergedFileName = "${JPT_MERGED_PFX}.{c}.${JOINTX}".format(c=corp)
+      for wam in wams:
+         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corp, m=wam)
          print("{mergedFileName}:  {jptFileName}".format(mergedFileName=mergedFileName, jptFileName=jptFileName), file=df)
-         print("{jptFileName}:  {c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corpora, jptFileName=jptFileName), file=df)
-         print("{jptFileName}:  {s}  {t}".format(jptFileName=jptFileName, **corporaNames(corpora, wam, "${L1}", "${L2}")), file=df)
+         print("{jptFileName}:  {c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp, jptFileName=jptFileName), file=df)
+         print("{jptFileName}:  {s}  {t}".format(jptFileName=jptFileName, **corporaNames(corp, wam, "${L1}", "${L2}")), file=df)
 
    jpt_types = "${PT_TYPES:_cpt=_jpt}".split()
 
@@ -202,51 +195,50 @@ with open(".Makefile.deps", "w") as df:
    # META LEVEL TARGETS
    #####################################
    # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_jpt
-   WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}"
-   WAMs = set(WAMs.strip().split())
+   wams = set("${POSSIBLE_WORD_ALIGNMENT_MODELS}".split())
    expected_wams = "${EXPECTED_MODEL_TYPES_PFX}".split()
-   for corpora in "$(sort ${TRAIN_TM})".strip().split():
-      for wam in WAMs:
-         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+   for corp in set("${TRAIN_TM}".split()):
+      for wam in wams:
+         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corp, m=wam)
          print("{m}_jpt:  {jptFileName}".format(m=wam, jptFileName=jptFileName), file=df)
 	 if wam in expected_wams:
 	    expectedFiles.add(jptFileName)
 
    #####################################
    # MERGED
-   for corpora in set("${TRAIN_TM}".strip().split()):
-      mergedFileName = "${JPT_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
+   for corp in set("${TRAIN_TM}".split()):
+      mergedFileName = "${JPT_MERGED_PFX}.{c}.${JOINTX}".format(c=corp)
       print("merged_jpt:  {mergedFileName}".format(mergedFileName=mergedFileName), file=df)
       if "merged_jpt" in jpt_types:
          expectedFiles.add(mergedFileName)
 
    #####################################
    # MIXTURE
-   for corpora in set("${MIX_WAMS}".strip().strip().split()):
-      mergedFileName = "${JPT_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
+   for corp in set("${MIX_WAMS}".split()):
+      mergedFileName = "${JPT_MERGED_PFX}.{c}.${JOINTX}".format(c=corp)
       print("mix_jpt:  {mergedFileName}".format(mergedFileName=mergedFileName), file=df)
       if "mix_jpt" in jpt_types:
          expectedFiles.add(mergedFileName)
 
    expected_wams = "${EXPECTED_MODEL_TYPES_PFX}".split()
-   for corpora in "${MIX_WAMS}".split():
+   for corp in "${MIX_WAMS}".split():
       for wam in expected_wams:
-         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corp, m=wam)
          expectedFiles.add(jptFileName)
 
    #####################################
    # INDICATOR
    # What is needed when the user calls indicator_wam
    indicatorWAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
-   indicatorWAMs = set(indicatorWAMs.strip().split())
-   for corpora in set("${ALL_TMS}".strip().split()):
+   indicatorWAMs = set(indicatorWAMs.split())
+   for corp in set("${ALL_TMS}".split()):
       for wam in indicatorWAMs:
-         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+         jptFileName = "${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corp, m=wam)
          print("indicator_jpt:  {jptFileName}".format(jptFileName=jptFileName), file=df)
          if "indicator_jpt" in jpt_types:
             expectedFiles.add(jptFileName)
 
-   print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
+   print("EXPECTED_FILES :=", *sorted(expectedFiles), file=df)
 endef
 
 #$(info JPT: ${DEPS.PYSCRIPT})

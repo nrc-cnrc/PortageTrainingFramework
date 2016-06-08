@@ -153,31 +153,29 @@ sigs:  merged_sig
 define DEPS.PYSCRIPT
 from __future__ import print_function
 
-def corporaNames(corpora, wam, sx="${L1X}", tx="${L2X}"):
+def corporaNames(corp, wam, sx="${L1X}", tx="${L2X}"):
    if wam == "${IBM4_MODEL_PFX}":
-      return {"s" : corpora+"/${SRC_LANG}.lc", "t":corpora+"/${TGT_LANG}.lc"}
+      return {"s" : corp+"/${SRC_LANG}.lc", "t":corp+"/${TGT_LANG}.lc"}
    else:
-      return {"s" : corpora+sx, "t":corpora+tx}
+      return {"s" : corp+sx, "t":corp+tx}
 
 # To create a sigpruned jpt we need an original jpt.
 # To create a sigpruned jpt we need the source and target corpora.
 with open(".Makefile.deps", "w") as df:
    expectedFiles = set()
 
-   WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}"
-   WAMs = set(WAMs.strip().split())
-   for corpora in set("${MIXTM_TRAIN_MIX} ${ALL_TMS}".strip().split()):
-      for wam in WAMs:
-         sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
-         print("{sigFileName}:  ${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(m=wam, c=corpora, sigFileName=sigFileName), file=df)
-         print("{sigFileName}:  {s}  {t}".format(sigFileName=sigFileName, **corporaNames(corpora, wam)), file=df)
+   wams = set("${POSSIBLE_WORD_ALIGNMENT_MODELS}".split())
+   for corp in set("${MIXTM_TRAIN_MIX} ${ALL_TMS}".split()):
+      for wam in wams:
+         sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corp, m=wam)
+         print("{sigFileName}:  ${JPT_MODEL_PFX}.{m}.{c}.${JOINTX}".format(m=wam, c=corp, sigFileName=sigFileName), file=df)
+         print("{sigFileName}:  {s}  {t}".format(sigFileName=sigFileName, **corporaNames(corp, wam)), file=df)
 
-   WAMs = "${EXPECTED_MODEL_TYPES_PFX}"
-   WAMs = set(WAMs.strip().split())
-   for corpora in set("${TUNE_MIXTM_FINAL} ${MIXTM_TRAIN_MIX} ${ALL_TMS}".strip().split()):
-      mergedModelFileName = "${SIG_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
-      for wam in WAMs:
-         sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+   wams = set("${EXPECTED_MODEL_TYPES_PFX}".split())
+   for corp in set("${TUNE_MIXTM_FINAL} ${MIXTM_TRAIN_MIX} ${ALL_TMS}".split()):
+      mergedModelFileName = "${SIG_MERGED_PFX}.{c}.${JOINTX}".format(c=corp)
+      for wam in wams:
+         sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corp, m=wam)
          print("{mergedModelFileName}:  {sigFileName}".format(mergedModelFileName=mergedModelFileName, sigFileName=sigFileName), file=df)
 
    sig_types = "${PT_TYPES:_cpt=_sig}".split()
@@ -186,20 +184,19 @@ with open(".Makefile.deps", "w") as df:
    # META LEVEL TARGETS
    #####################################
    # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_siq
-   WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}"
-   WAMs = set(WAMs.strip().split())
+   wams = set("${POSSIBLE_WORD_ALIGNMENT_MODELS}".split())
    expected_wams = "${EXPECTED_MODEL_TYPES_PFX}".split()
-   for corpora in set("${TRAIN_TM}".strip().split()):
-      for wam in WAMs:
-         sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+   for corp in set("${TRAIN_TM}".split()):
+      for wam in wams:
+         sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corp, m=wam)
          print("{m}_sig:  {sigFileName}".format(m=wam, sigFileName=sigFileName), file=df)
 	 if wam in expected_wams:
             expectedFiles.add(sigFileName)
 
    #####################################
    # MERGED
-   for corpora in "${TRAIN_TM}".strip().split():
-      mergedFileName = "${SIG_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
+   for corp in "${TRAIN_TM}".split():
+      mergedFileName = "${SIG_MERGED_PFX}.{c}.${JOINTX}".format(c=corp)
       print("merged_sig:  {mergedFileName}".format(mergedFileName=mergedFileName), file=df)
       if "merged_sig" in sig_types:
          expectedFiles.add(mergedFileName)
@@ -207,31 +204,31 @@ with open(".Makefile.deps", "w") as df:
    #####################################
    # MIXTURE
    # We build mix cpt with merged cpt thus we need merged Joint Frequency Counts.
-   for corpora in "${MIX_WAMS}".strip().split():
-      mergedFileName = "${SIG_MERGED_PFX}.{c}.${JOINTX}".format(c=corpora)
+   for corp in "${MIX_WAMS}".split():
+      mergedFileName = "${SIG_MERGED_PFX}.{c}.${JOINTX}".format(c=corp)
       print("mix_sig:  {mergedFileName}".format(mergedFileName=mergedFileName), file=df)
       if "mix_sig" in sig_types:
          expectedFiles.add(mergedFileName)
 
    expected_wams = "${EXPECTED_MODEL_TYPES_PFX}".split()
-   for corpora in "${MIX_WAMS}".split():
+   for corp in "${MIX_WAMS}".split():
       for wam in expected_wams:
-         sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+         sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corp, m=wam)
          expectedFiles.add(sigFileName)
 
    #####################################
    # INDICATOR
    # What is needed when the user calls indicator_wam
    indicatorWAMs = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
-   indicatorWAMs = set(indicatorWAMs.strip().split())
-   for corpora in "${ALL_TMS}".strip().split():
+   indicatorWAMs = set(indicatorWAMs.split())
+   for corp in "${ALL_TMS}".split():
       for wam in indicatorWAMs:
-         sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam)
+         sigFileName = "${SIG_MODEL_PFX}.{m}.{c}.${JOINTX}".format(c=corp, m=wam)
          print("indicator_sig:  {sigFileName}".format(sigFileName=sigFileName), file=df)
          if "indicator_sig" in sig_types:
             expectedFiles.add(sigFileName)
 
-   print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
+   print("EXPECTED_FILES :=", *sorted(expectedFiles), file=df)
 endef
 
 #$(info SIG: ${DEPS.PYSCRIPT})

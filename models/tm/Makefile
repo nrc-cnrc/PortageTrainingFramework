@@ -172,34 +172,34 @@ with open(".Makefile.cpt.deps", "w") as df:
    expectedFiles = set()
 
    # Write dependencies for how to create a cpt even for mix_cpt.
-   for corpora in set("${ALL_TMS}".strip().split()):
-      for wam in set("${POSSIBLE_WORD_ALIGNMENT_MODELS}".strip().split()):
-         cptFileName = "${CPT_MODEL_PFX}.{m}${SMOOTHERS_DESCRIPTION}.{c}.${L1_2_L2X}".format(c=corpora, m=wam)
-         print("{cptFileName}:  {m}.{c}.${L2_GIVEN_L1X}  {m}.{c}.${L1_GIVEN_L2X}".format(c=corpora, m=wam, cptFileName=cptFileName), file=df)
-         print("{cptFileName}:  {j}.{m}.{c}.${JOINTX}".format(c=corpora, m=wam, cptFileName=cptFileName, j="${${CPT_DEP_TAG}_MODEL_PFX}"), file=df)
+   wams = set("${POSSIBLE_WORD_ALIGNMENT_MODELS}".split())
+   for corp in set("${ALL_TMS}".split()):
+      for wam in wams:
+         cptFileName = "${CPT_MODEL_PFX}.{m}${SMOOTHERS_DESCRIPTION}.{c}.${L1_2_L2X}".format(c=corp, m=wam)
+         print("{cptFileName}:  {m}.{c}.${L2_GIVEN_L1X}  {m}.{c}.${L1_GIVEN_L2X}".format(c=corp, m=wam, cptFileName=cptFileName), file=df)
+         print("{cptFileName}:  {j}.{m}.{c}.${JOINTX}".format(c=corp, m=wam, cptFileName=cptFileName, j="${${CPT_DEP_TAG}_MODEL_PFX}"), file=df)
 
 
    #############################################################################
    # META LEVEL TARGETS
    #####################################
    # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_cpt
-   WAMs = "${POSSIBLE_WORD_ALIGNMENT_MODELS}".strip().split()
-   for corpora in set("${TRAIN_TM}".strip().split()):
-      for wam in set(WAMs):
-         filename = "${CPT_MODEL_PFX}.{m}${SMOOTHERS_DESCRIPTION}.{c}.${L1_2_L2X}".format(c=corpora, m=wam)
+   wams = set("${POSSIBLE_WORD_ALIGNMENT_MODELS}".split())
+   for corp in set("${TRAIN_TM}".split()):
+      for wam in wams:
+         filename = "${CPT_MODEL_PFX}.{m}${SMOOTHERS_DESCRIPTION}.{c}.${L1_2_L2X}".format(c=corp, m=wam)
          # Create meta-level dependencies between cpts and their jpts or sigs.
          print("{m}_cpt:  {filename}".format(m=wam, filename=filename), file=df)
 
    # Lets have a separate loop to build %_cpt_list, a list of cpt to convert to tppt.
-   WAMs = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".strip().split()
-   for corpora in set("${TRAIN_TM}".strip().split()):
-      for wam in set(WAMs):
-         filename = "${CPT_MODEL_PFX}.{m}${SMOOTHERS_DESCRIPTION}.{c}.${L1_2_L2X}".format(c=corpora, m=wam)
+   wams = set("$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split())
+   for corp in set("${TRAIN_TM}".split()):
+      for wam in wams:
+         filename = "${CPT_MODEL_PFX}.{m}${SMOOTHERS_DESCRIPTION}.{c}.${L1_2_L2X}".format(c=corp, m=wam)
          print("{m}_cpt_list += {filename}".format(m=wam, filename=filename), file=df)
          expectedFiles.add(filename)
 
-   print("EXPECTED_FILES := {}".format(" ".join(sorted(expectedFiles))), file=df)
-
+   print("EXPECTED_FILES :=", *sorted(expectedFiles), file=df)
 endef
 
 #$(info CPT: ${DEPS.PYSCRIPT})
@@ -275,25 +275,22 @@ merged_cpt:  ${merged_cpt_list}
 define DEPS.PYSCRIPT
 from __future__ import print_function
 
-mixWamCorpora = set("${TUNE_MIXTM_FINAL} ${MIXTM} ${MIXTM_TRAIN_MIX}".strip().split())
+mixWamCorpora = set("${TUNE_MIXTM_FINAL} ${MIXTM} ${MIXTM_TRAIN_MIX}".split())
 def which_wam(c):
-   if len("${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}"):
-      if c in mixWamCorpora:
-         return "mixwam"
-      else:
-         return c
-   else:
-      return c
+   if len("${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}") and c in mixWamCorpora:
+      return "mixwam"
+   return c
 
 # Merged conditional phrase tables depends on a word model alignment for Zens-Neys smoother.
 # Merged conditional phrase tables depends on either a merged jpt (normal scenario) or a merged sig (when using significance pruning).
 # A merged jpt depends on user define type of joint frequency count file.
 with open(".Makefile.merged_cpt.deps", "w") as df:
-   for corpora in set("${ALL_TMS}".strip().split()):
-      fileName = "${MERGED_CPT_PREFIX}.{c}.${L1_2_L2X}".format(c=corpora)
-      print("{fileName}:  {m}.{c}.${L2_GIVEN_L1X}  {m}.{c}.${L1_GIVEN_L2X}".format(m="${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}", c=which_wam(corpora), fileName=fileName), file=df)
-      print("{fileName}:  {m}.{c}.${JOINTX}".format(m="${${CPT_DEP_TAG}_MERGED_PFX}", c=corpora, fileName=fileName), file=df)
+   for corp in set("${ALL_TMS}".split()):
+      fileName = "${MERGED_CPT_PREFIX}.{c}.${L1_2_L2X}".format(c=corp)
+      print("{fileName}:  {m}.{c}.${L2_GIVEN_L1X}  {m}.{c}.${L1_GIVEN_L2X}".format(m="${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}", c=which_wam(corp), fileName=fileName), file=df)
+      print("{fileName}:  {m}.{c}.${JOINTX}".format(m="${${CPT_DEP_TAG}_MERGED_PFX}", c=corp, fileName=fileName), file=df)
 endef
+
 #$(info MERGED CPT: ${DEPS.PYSCRIPT})
 $(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.merged_cpt.deps

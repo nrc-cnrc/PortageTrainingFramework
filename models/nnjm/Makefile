@@ -84,7 +84,7 @@ from __future__ import print_function
 
 with open(".Makefile.deps", "w") as df:
    symlinks = []
-   for nnjm in set("${NNJM_PRETRAINED_NNJMS_FIXED}".strip().split()):
+   for nnjm in set("${NNJM_PRETRAINED_NNJMS_FIXED}".split()):
       parts = nnjm.split("/")
       assert(len(parts) >= 2)
       model  = parts[-1]
@@ -105,17 +105,16 @@ with open(".Makefile.deps", "w") as df:
       print("portageLive:  {pl}/{t}".format(pl="${PORTAGE_LIVE_DEST_DIR}", t=target), file=df)
       print("{pl}/{t}:  {t}  | {pl}".format(pl="${PORTAGE_LIVE_DEST_DIR}", t=target), file=df)
 
-   if len(symlinks) > 0:
-      print(" ".join(symlinks))
+   print("PRETRAINED_NNJMS_LIST :=", *symlinks, file=df)
 endef
 #$(info NNJM dependencies generator: ${DEPS.PYSCRIPT})
 
 
 ifneq (${USE_PRETRAINED_NNJMS},)
 $(info Using pre-trained NNJMS)
-PRETRAINED_NNJMS_LIST := $(shell python -c '${DEPS.PYSCRIPT}')
-$(info PRETRAINED_NNJMS_LIST: ${PRETRAINED_NNJMS_LIST})
+$(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.deps
+$(info PRETRAINED_NNJMS_LIST: ${PRETRAINED_NNJMS_LIST})
 
 all:  pretrained
 .PHONY:  pretrained

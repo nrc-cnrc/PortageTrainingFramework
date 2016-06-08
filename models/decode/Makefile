@@ -197,8 +197,6 @@ LDM := $(if ${USE_LDM},${LDM}\#L)
 LDM_PARAMS  := back-lex\#m\#L:back-lex\#s\#L:back-lex\#d\#L:fwd-lex\#m\#L:fwd-lex\#s\#L:fwd-lex\#d\#L
 endif # USE_LDM
 
-
-
 ifdef USE_HLDM
 HLDM ?= $(wildcard models/ldm/hldm.*.${SRC_LANG}2${TGT_LANG}.gz)
 ifneq ($(filter-out clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
@@ -212,8 +210,6 @@ HLDM := $(and ${USE_HLDM},${HLDM}\#H)
 # Parameters to use Hierarchical Lexicalized Distortion Models.
 HLDM_PARAMS := back-hlex\#m\#H:back-hlex\#s\#H:back-hlex\#d\#H:fwd-hlex\#m\#H:fwd-hlex\#s\#H:fwd-hlex\#d\#H
 endif # USE_HLDM
-
-
 
 ifdef USE_SPARSE
 SPARSE ?= models/sparse/model
@@ -239,7 +235,6 @@ endif
 endif
 $(info LMs: ${LMS})
 
-
 ifdef USE_COARSELM
 COARSE_LM_SEARCH ?= models/coarselm/*_${TGT_LANG}-${n}[-.]*tplm
 COARSE_LM_SPECS ?= $(foreach n, ${COARSELM_NCLS_LIST}, \
@@ -250,10 +245,9 @@ COARSE_LM_SPECS ?= $(foreach n, ${COARSELM_NCLS_LIST}, \
 $(info Coarse LMs: $(strip ${COARSE_LM_SPECS}))
 endif # USE_COARSELM
 
-
 ifdef USE_BILM
 define BILM_SPECS_PYSCRIPT
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import print_function
 import re
 import glob
 
@@ -285,7 +279,6 @@ BILM_SPECS := $(shell python -c '${BILM_SPECS_PYSCRIPT}')
 $(info BiLMs: ${BILM_SPECS})
 endif # USE_BILM
 
-
 ifneq (${USE_PRETRAINED_NNJMS},)
 NNJMS := $(wildcard models/nnjm/*/model)
 ifneq ($(filter-out clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
@@ -296,11 +289,9 @@ endif
 $(info NNJMs: ${NNJMS})
 endif
 
-
 # This is a helper to be able to use spaces.
 SPACE :=
 SPACE +=
-
 
 ${UNTUNED_DECODING_MODEL}: SHELL=${LOCAL_SHELL}
 ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
