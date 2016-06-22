@@ -231,9 +231,7 @@ EXPECTED_FILES += ${pretrained_cpt_list}
 .PHONY: pretrained_cpt
 pretrained_cpt: $(foreach p, ${pretrained_cpt_list}, .$p.tstamp)
 
-fix_path = $(strip $(if $(filter /, $(firstword $(subst /,/ ,$(1)))), $(1), $(addprefix ${TM_DIR_PFX}../../, $(1))))
-
-pretrained_cpt_paths = $(foreach f, ${TM_PRETRAINED_TMS}, $(call fix_path, $f))
+pretrained_cpt_paths = $(foreach f, ${TM_PRETRAINED_TMS}, $(call FIX_RELATIVE_PATH, ${TM_DIR_PFX}../.., $f))
 
 $(foreach f, ${pretrained_cpt_paths}, \
 	$(eval \

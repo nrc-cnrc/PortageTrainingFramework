@@ -240,9 +240,7 @@ endif
 pretrained.${SRC_LANG}: $(foreach p, $(notdir ${LM_PRETRAINED_SRC_LMS}), .$p.tstamp)
 pretrained.${TGT_LANG}: $(foreach p, $(notdir ${LM_PRETRAINED_TGT_LMS}), .$p.tstamp)
 
-fix_path = $(strip $(if $(filter /, $(firstword $(subst /,/ ,$(1)))), $(1), $(addprefix ../../, $(1))))
-
-pretrained_lm_paths = $(foreach f, ${LM_PRETRAINED_LMS}, $(call fix_path, $f))
+pretrained_lm_paths = $(foreach f, ${LM_PRETRAINED_LMS}, $(call FIX_RELATIVE_PATH, ../../, $f))
 
 $(foreach f, ${pretrained_lm_paths}, \
 	$(eval \

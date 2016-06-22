@@ -31,9 +31,7 @@ MODULE_NAME ?= nnjm
 # Where we need to deploy the NNJM models to create a portageLive system.
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/nnjm
 
-fix_path = $(strip $(if $(filter /, $(firstword $(subst /,/ ,$(1)))), $(1), $(addprefix ${NNJM_DIR_PFX}../../, $(1))))
-
-NNJM_PRETRAINED_NNJMS_FIXED := $(foreach f, ${NNJM_PRETRAINED_NNJMS}, $(call fix_path, $f))
+NNJM_PRETRAINED_NNJMS_FIXED := $(foreach f, ${NNJM_PRETRAINED_NNJMS}, $(call FIX_RELATIVE_PATH, ${NNJM_DIR_PFX}../../, $f))
 
 .DEFAULT_GOAL := help
 .SUFFIXES:

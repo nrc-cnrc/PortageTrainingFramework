@@ -178,14 +178,16 @@ $(foreach lm, ${MIXLM}, $(if $(filter ${lm}_${TGT_LANG}%, ${LOCAL_TGT_MODELS}), 
 	$(eval $(call LM_CORP_DEP,$(filter ${lm}_${TGT_LANG}%, ${LOCAL_TGT_MODELS:.tplm=}),${lm}_${TGT_LANG}${LANGX}${GZ}))) \
 )
 
-$(foreach p, ${MIXLM_PRETRAINED_LMS}, \
+pretrained_lm_paths = $(foreach f, ${MIXLM_PRETRAINED_LMS}, $(call FIX_RELATIVE_PATH, ../.., $f))
+
+$(foreach p, ${pretrained_lm_paths}, \
 	$(eval \
    	$(notdir ${p}): ${p}) \
 )
 
 # Are pretrained models also available in tplm?
-$(notdir ${MIXLM_PRETRAINED_LMS}): SHELL=${LOCAL_SHELL}
-$(notdir ${MIXLM_PRETRAINED_LMS}):
+$(notdir ${pretrained_lm_paths}): SHELL=${LOCAL_SHELL}
+$(notdir ${pretrained_lm_paths}):
 	@[[ ! -e $@ ]] || [[ -L $@ ]] || ! echo "ERROR: LM $@ already exists as a normal file."
 	@$(if $(filter-out %.tplm, $@),! echo "ERROR: Name of pre-trained LM file must end with .tplm: $<")
 	ln -sf $< .

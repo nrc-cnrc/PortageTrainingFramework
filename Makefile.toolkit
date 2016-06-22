@@ -25,6 +25,11 @@ endif
 # Usage: $(call CREATE_REFERENCE_NAMES, ${TUNE_RESCORE}[, EXTENSION])
 CREATE_REFERENCE_NAMES = $(strip $(foreach c,$1,$(addprefix $c_${TGT_LANG},$(or $(addsuffix $(or $(strip $2),${LANGX}),$(strip ${REFERENCE_INDICES})),$(or $(strip $2),${LANGX})))))
 
+# Helper function to adjust relative paths. A trailing "/" is added to the prefix if missing.
+# Usage: $(call FIX_RELATIVE_PATH, PREFIX_TO_ADD, PATH_TO_FIX)
+# e.g. pretrained_lm_paths = $(foreach f, ${LM_PRETRAINED_LMS}, $(call FIX_RELATIVE_PATH, ../.., $f))
+FIX_RELATIVE_PATH = $(strip $(or $(filter /% ~%, $(2)), $(addprefix $(1:/=)$(if $(strip $(1)),/), $(2))))
+
 # Helper recipe to list all corpora in use.
 define HELP_LIST_ALL_CORPORA
 	@echo "Your corpora are:"
@@ -92,7 +97,6 @@ endef
 endif
 
 
-
 ########################################
 # List of files that should read-only for safety.  Mainly this list
 # should be composed of final targets from a Makefile.
@@ -137,12 +141,19 @@ resource_summary_sub:
 
 ################################################################################
 # UNITTESTS
-.PHONY:  unittest_create_references
-unittest_create_references: unittest_create_references_multiple_1
-unittest_create_references: unittest_create_references_multiple_2
-unittest_create_references: unittest_create_references_single_1
-unittest_create_references: unittest_create_references_single_2
-unittest_create_references: unittest_create_references_empty
+.PHONY: toolkit_unittests
+toolkit_unittests: unittests_create_references
+toolkit_unittests: unittests_fix_relative_path
+
+toolkit_unittests:
+	@echo "ALL Makefile.toolkit unittests passed."
+
+.PHONY:  unittests_create_references
+unittests_create_references: unittest_create_references_multiple_1
+unittests_create_references: unittest_create_references_multiple_2
+unittests_create_references: unittest_create_references_single_1
+unittests_create_references: unittest_create_references_single_2
+unittests_create_references: unittest_create_references_empty
 
 unittest_create_references%:  TGT_LANG=l
 unittest_create_references%:  LANGX=.lc
@@ -172,4 +183,34 @@ unittest_create_references_single_2:
 .PHONY: unittest_create_references_empty
 unittest_create_references_empty:
 	@[[ "$(call CREATE_REFERENCE_NAMES,)" == "" ]]
+
+
+.PHONY: unittests_fix_relative_path
+unittests_fix_relative_path: unittest_fix_relative_path_1
+unittests_fix_relative_path: unittest_fix_relative_path_2
+unittests_fix_relative_path: unittest_fix_relative_path_3
+unittests_fix_relative_path: unittest_fix_relative_path_4
+
+.PHONY: unittest_fix_relative_path_1
+unittest_fix_relative_path_1:
+	@[[ "$(call FIX_RELATIVE_PATH, ../.., /home/a/b)" == "/home/a/b" ]]
+	@[[ "$(call FIX_RELATIVE_PATH, ../.., ~/a/b)" == "~/a/b" ]]
+
+.PHONY: unittest_fix_relative_path_2
+unittest_fix_relative_path_2:
+	@[[ "$(call FIX_RELATIVE_PATH, ../.., a)" == "../../a" ]]
+	@[[ "$(call FIX_RELATIVE_PATH, ../.., a/b)" == "../../a/b" ]]
+	@[[ "$(call FIX_RELATIVE_PATH, ../.., ./b)" == "../.././b" ]]
+	@[[ "$(call FIX_RELATIVE_PATH, ../.., ../b)" == "../../../b" ]]
+
+.PHONY: unittest_fix_relative_path_3
+unittest_fix_relative_path_3:
+	@[[ "$(call FIX_RELATIVE_PATH, ../../, a)" == "../../a" ]]
+	@[[ "$(call FIX_RELATIVE_PATH, ../../, a/b)" == "../../a/b" ]]
+	@[[ "$(call FIX_RELATIVE_PATH, ../../, ./b)" == "../.././b" ]]
+	@[[ "$(call FIX_RELATIVE_PATH, ../../, ../b)" == "../../../b" ]]
+
+.PHONY: unittest_fix_relative_path_4
+unittest_fix_relative_path_4:
+	@[[ "$(call FIX_RELATIVE_PATH, , a)" == "a" ]]
 
