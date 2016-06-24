@@ -288,6 +288,9 @@ models: sparse
 
 MODULE_TARGETS += sparse
 
+portageLive:  portageLive_models_sparse
+portageLive_models_decode${_PLIVE_DECODE_VARIANT}:  portageLive_models_sparse
+
 sparse: jpt
 	${MAKE} -C $@ all
 else

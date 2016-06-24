@@ -123,11 +123,10 @@ portageLive_model_data:  ${PORTAGE_LIVE_DEST_DIR}/model
 portageLive_model_data:  ${PORTAGE_LIVE_DEST_DIR}/model.templates
 portageLive_model_data:  portageLive_mmcls
 portageLive_model_data:  | ${PORTAGE_LIVE_DEST_DIR}
-	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../sparse/data.* .
-	for f in ${PORTAGE_LIVE_DEST_DIR}/*.mmcls; do g=$${f%%.mmcls}; [[ -L $$g ]] && rm $$g; done
+	for f in `grep -v '^\[' ${PORTAGE_LIVE_DEST_DIR}/model | sort -u`; do ln -fs ../../../sparse/$$f ${PORTAGE_LIVE_DEST_DIR}; done
 
 portageLive:  portageLive_mmcls
-.PHONY: portageLive_mmcls
+.PHONY:  portageLive_mmcls
 portageLive_mmcls:  SHELL=${LOCAL_SHELL}
 portageLive_mmcls:  model  | ${PORTAGE_LIVE_DEST_DIR} clean.${PORTAGE_LIVE_DEST_DIR}
 	for f in data.mkcls*; do  [[ $$f =~ .cats$$ ]] || [[ $$f =~ .mmcls$$ ]] || [[ -s $$f.mmcls ]] || wordClasses2MMmap $$f $$f.mmcls; done
@@ -150,9 +149,9 @@ ${PORTAGE_LIVE_DEST_DIR}/model.templates:  SHELL=${LOCAL_SHELL}
 ${PORTAGE_LIVE_DEST_DIR}/model.templates:  model.templates  | ${PORTAGE_LIVE_DEST_DIR} clean.${PORTAGE_LIVE_DEST_DIR}
 	sed '/data.mkcls/ s/.mmcls$$//;  /data.mkcls/ s/$$/.mmcls/' < $< > $@
 
-portageLive:   $(addprefix ${PORTAGE_LIVE_DEST_DIR}/, model.feats.gz  model.freqs.gz  model.numex  model.specs  model.voc.gz  model.wts.gz  model.wtsums.gz)
+portageLive:   $(addprefix ${PORTAGE_LIVE_DEST_DIR}/, model.feats.gz  model.voc.gz  model.wts.gz)
 ${PORTAGE_LIVE_DEST_DIR}/model.%:  | ${PORTAGE_LIVE_DEST_DIR} clean.${PORTAGE_LIVE_DEST_DIR}
-	cd ${PORTAGE_LIVE_DEST_DIR} && ln -s ../../../sparse/model.$*
+	ln -s ../../../sparse/model.$* ${PORTAGE_LIVE_DEST_DIR}
 
 clean.content:  clean.portageLive
 .PHONY:  clean.portageLive
