@@ -114,8 +114,6 @@ portageLive: SHELL=${LOCAL_SHELL}
 
 MAIN_TARGETS += portageLive
 
-portageLive:  clean.${PORTAGE_LIVE_DEST_DIR}
-
 portageLive:  portageLive_model_data
 .PHONY:  portageLive_model_data
 portageLive_model_data:  SHELL=${LOCAL_SHELL}
@@ -128,7 +126,7 @@ portageLive_model_data:  | ${PORTAGE_LIVE_DEST_DIR}
 portageLive:  portageLive_mmcls
 .PHONY:  portageLive_mmcls
 portageLive_mmcls:  SHELL=${LOCAL_SHELL}
-portageLive_mmcls:  model  | ${PORTAGE_LIVE_DEST_DIR} clean.${PORTAGE_LIVE_DEST_DIR}
+portageLive_mmcls:  model  | ${PORTAGE_LIVE_DEST_DIR}
 	for f in data.mkcls*; do  [[ $$f =~ .cats$$ ]] || [[ $$f =~ .mmcls$$ ]] || [[ -s $$f.mmcls ]] || wordClasses2MMmap $$f $$f.mmcls; done
 
 ${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
@@ -141,16 +139,16 @@ clean.${PORTAGE_LIVE_DEST_DIR}:  clean.%:  | %
 
 portageLive:  ${PORTAGE_LIVE_DEST_DIR}/model
 ${PORTAGE_LIVE_DEST_DIR}/model:  SHELL=${LOCAL_SHELL}
-${PORTAGE_LIVE_DEST_DIR}/model:  model  | ${PORTAGE_LIVE_DEST_DIR} clean.${PORTAGE_LIVE_DEST_DIR}
+${PORTAGE_LIVE_DEST_DIR}/model:  model  | ${PORTAGE_LIVE_DEST_DIR}
 	sed '/^data.mkcls/ s/.mmcls$$//;  /^data.mkcls/ s/$$/.mmcls/' < $< > $@
 
 portageLive:  ${PORTAGE_LIVE_DEST_DIR}/model.templates
 ${PORTAGE_LIVE_DEST_DIR}/model.templates:  SHELL=${LOCAL_SHELL}
-${PORTAGE_LIVE_DEST_DIR}/model.templates:  model.templates  | ${PORTAGE_LIVE_DEST_DIR} clean.${PORTAGE_LIVE_DEST_DIR}
+${PORTAGE_LIVE_DEST_DIR}/model.templates:  model.templates  | ${PORTAGE_LIVE_DEST_DIR}
 	sed '/data.mkcls/ s/.mmcls$$//;  /data.mkcls/ s/$$/.mmcls/' < $< > $@
 
 portageLive:   $(addprefix ${PORTAGE_LIVE_DEST_DIR}/, model.feats.gz  model.voc.gz  model.wts.gz)
-${PORTAGE_LIVE_DEST_DIR}/model.%:  | ${PORTAGE_LIVE_DEST_DIR} clean.${PORTAGE_LIVE_DEST_DIR}
+${PORTAGE_LIVE_DEST_DIR}/model.%:  | ${PORTAGE_LIVE_DEST_DIR}
 	ln -s ../../../sparse/model.$* ${PORTAGE_LIVE_DEST_DIR}
 
 clean.content:  clean.portageLive
