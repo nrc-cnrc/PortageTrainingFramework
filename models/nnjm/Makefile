@@ -55,7 +55,6 @@ help:
 all: SHELL=${LOCAL_SHELL}
 all:
 
-#$(info USE_PRETRAINED_NNJMS: ${USE_PRETRAINED_NNJMS})
 #$(info NNJM_PRETRAINED_NNJMS_FIXED: ${NNJM_PRETRAINED_NNJMS_FIXED})
 
 
@@ -108,7 +107,7 @@ endef
 #$(info NNJM dependencies generator: ${DEPS.PYSCRIPT})
 
 
-ifneq (${USE_PRETRAINED_NNJMS},)
+ifdef NNJM_PRETRAINED_NNJMS
 $(info Using pre-trained NNJMS)
 $(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.deps
@@ -168,7 +167,7 @@ ${PORTAGE_LIVE_DEST_DIR}:
 
 .PHONY:  portageLive
 portageLive:  SHELL=${LOCAL_SHELL}
-ifneq (${USE_PRETRAINED_NNJMS},)
+ifdef NNJM_PRETRAINED_NNJMS
 portageLive:  | ${PORTAGE_LIVE_DEST_DIR}
 else
 portageLive:
@@ -195,21 +194,20 @@ clean.portageLive:
 
 testsuite:  one_pretrained_testcase
 .PHONY:  one_pretrained_testcase
-one_pretrained_testcase:  export USE_PRETRAINED_NNJMS := 1
-one_pretrained_testcase:  export NNJM_PRETRAINED_NNJMS := ${PORTAGE}/corpora/bac-lac/filtered/corpora-version-2/portage-framelab.en2fr/models/nnjm/PTGSH-163a/model
+one_pretrained_testcase:  export NNJM_PRETRAINED_NNJMS := ${PORTAGE_GENERIC_MODEL}/nnjm/nnjm.generic-2.0.en2fr.mm/model
 one_pretrained_testcase:
 	${MAKE} clean
 	${MAKE} portageLive
-	[[ `\ls -d ${PORTAGE_LIVE_DEST_DIR}/pretrained.* | \wc -l` -eq 1 ]] || ! echo "Error: Expecting 1 NNJM model." >&2
-	[[ -L ${PORTAGE_LIVE_DEST_DIR}/pretrained.PTGSH-163a ]] || ! echo "Error: Missing NNJM model symlink." >&2
+	[[ `\ls -d ${PORTAGE_LIVE_DEST_DIR}/pretrained* | \wc -l` -eq 1 ]] || ! echo "Error: Expecting 1 NNJM model." >&2
+	[[ -L ${PORTAGE_LIVE_DEST_DIR}/pretrained.nnjm.generic-2.0.en2fr.mm ]] || ! echo "Error: Missing NNJM model symlink." >&2
+
 
 testsuite:  multiple_pretrained_testcase
 .PHONY:  multiple_pretrained_testcase
-multiple_pretrained_testcase:  export USE_PRETRAINED_NNJMS := 1
-multiple_pretrained_testcase:  export NNJM_PRETRAINED_NNJMS := ${PORTAGE}/corpora/bac-lac/filtered/corpora-version-2/portage-framelab.en2fr/models/nnjm/PTGSH-163a/model ${PORTAGE}/corpora/bac-lac/filtered/corpora-version-2/portage-framelab.en2fr/models/nnjm/PTGSH-163b/model
+multiple_pretrained_testcase:  export NNJM_PRETRAINED_NNJMS := ${PORTAGE_GENERIC_MODEL}/nnjm/nnjm.generic-2.0.en2fr.mm/model  ${PORTAGE_GENERIC_MODEL}/nnjm/nnjm.generic-2.0.fr2en.mm/model
 multiple_pretrained_testcase:
 	${MAKE} clean
 	${MAKE} portageLive
-	[[ `\ls -d ${PORTAGE_LIVE_DEST_DIR}/pretrained.* | \wc -l` -eq 2 ]] || ! echo "Error: Expecting 2 NNJM model." >&2
-	[[ -L ${PORTAGE_LIVE_DEST_DIR}/pretrained.PTGSH-163a ]] || ! echo "Error: Missing NNJM model symlink." >&2
-	[[ -L ${PORTAGE_LIVE_DEST_DIR}/pretrained.PTGSH-163b ]] || ! echo "Error: Missing NNJM model symlink." >&2
+	[[ `\ls -d ${PORTAGE_LIVE_DEST_DIR}/pretrained* | \wc -l` -eq 2 ]] || ! echo "Error: Expecting 2 NNJM model." >&2
+	[[ -L ${PORTAGE_LIVE_DEST_DIR}/pretrained.nnjm.generic-2.0.en2fr.mm ]] || ! echo "Error: Missing NNJM model symlink." >&2
+	[[ -L ${PORTAGE_LIVE_DEST_DIR}/pretrained.nnjm.generic-2.0.fr2en.mm ]] || ! echo "Error: Missing NNJM model symlink." >&2

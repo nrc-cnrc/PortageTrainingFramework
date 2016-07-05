@@ -279,7 +279,7 @@ BILM_SPECS := $(shell python -c '${BILM_SPECS_PYSCRIPT}')
 $(info BiLMs: ${BILM_SPECS})
 endif # USE_BILM
 
-ifneq (${USE_PRETRAINED_NNJMS},)
+ifdef NNJM_PRETRAINED_NNJMS
 NNJMS := $(wildcard models/nnjm/*/model)
 ifneq ($(filter-out clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
 ifeq ($(strip ${NNJMS}),)
@@ -309,7 +309,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS}:${DM_EXTRAS} \
 	      -lex-dist-model-file ${LDM}:${HLDM} \
 	      $(if ${BILM_SPEC}, -bilm-file ${BILM_SPECS}) \
-	      $(if ${USE_PRETRAINED_NNJMS}, -nnjm-file $(subst ${SPACE},:, ${NNJMS})) \
+	      $(if ${NNJM_PRETRAINED_NNJMS}, -nnjm-file $(subst ${SPACE},:, ${NNJMS})) \
 	      $(and ${USE_SPARSE}, -sparse-model ${SPARSE} -force-shift-reduce) \
 	      ${CANOE_INI_EXTRAS} \
 	  " - \

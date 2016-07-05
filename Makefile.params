@@ -226,12 +226,6 @@ USE_COARSELM = 1
 # Comment out to disable using BiLMs (default); uncomment to enable.
 #USE_BILM = 1
 
-# Trigger the inclusion of pretrained NNJM models.
-# If you define NNJM_PRETRAINED_NNJMS, it will automatically trigger adding
-# pretrained NNJM to your canoe.ini.  If you defined NNJM_PRETRAINED_NNJMS but
-# want to disable the feature anyway, comment the following line.
-USE_PRETRAINED_NNJMS ?= $(strip ${NNJM_PRETRAINED_NNJMS})
-
 # Train and apply truecasing if this variable is defined.
 # Comment out to disable truecasing; uncomment to enable.
 DO_TRUECASING = 1
