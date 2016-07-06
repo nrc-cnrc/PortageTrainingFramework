@@ -29,7 +29,8 @@
 \usepackage{color}
 \newcommand{\TODO}[1]{\emph{\textbf{\textcolor{red}{<TODO> #1 </TODO>}}}}
 
-\newcommand{\New}{\textcolor{red}{New }}
+\newcommand{\New}{\textcolor{red}{New}\xspace}
+\newcommand{\Changed}{\textcolor{red}{Changed}\xspace}
 
 % Official typesetting of PORTAGEshared, now called Portage II
 \newcommand{\PS}{PortageII\xspace}
@@ -422,7 +423,12 @@ Now you need to edit \code{Makefile.params} to set some global parameters:
 \item swap the values of \code{SRC_LANG} and
 \code{TGT_LANG}, to select translation from French to English, rather than
 the other way around, which is the default;
-\item \code{TRAIN_LM} and \code{TRAIN_TM} already have the right values, so
+\item \Changed\footnote{
+   Starting with \PS 3.0, set your LM training corpus using \url{PRIMARY_LM} to
+   get the recommended default use of the generic LM whenever possible, or
+   \url{TRAIN_LM} or \code{MIXLM} if you want to override the default
+   recommendations.
+} \code{PRIMARY_LM} and \code{TRAIN_TM} already have the right values, so
 they don't need to be changed;
 \item \New set \code{TRAIN_SPARSE} to \code{tm-train}, to train the
 new sparse models on the same corpus as the phrase tables;
@@ -583,9 +589,17 @@ models, drop the corpora into \code{corpora} and list all the corpus stems in
 \code{LM\us{}PRETRAINED\us{}TGT\us{}LMS} instead.  For mixture language models,
 see \S\ref{MIXLM}.
 
+\subsubsection{Using a regular LM}
+
+Instead of the new default, you can still use a single, regular LM, by setting
+\code{TRAIN_LM=lm-train} instead of \code{PRIMARY_LM=lm-train} in
+\code{Makefile.params}. We show what happens in that case here because the
+other examples build on it, but don't follow this case, follow the example in
+\S\ref{LM+generic-default} below instead.
+
 Here is the command used to produce
 \code{lm-train_en-kn-5g.binlm.gz},
-the language model needed for this example:
+the main language model:
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment}
@@ -618,6 +632,46 @@ metaparameters on our dev set, yielding slightly better language models.  The
 tuning set is specified to \code{estimate-ngram} using \code{-opt-perp}, and is
 configured in the framework via the \code{TUNE_LM} parameter in
 \code{Makefile.params}.
+
+\subsubsection{In-domain LM plus the generic LM} \label{LM+generic-default}
+
+Starting with \PS 3.0, we strongly recommend that you use the generic LM from
+PortageGenericModel 2.0 to improve the quality of your translations. This model
+cannot introduce any out-of-domain vocabulary into your translations, but it
+can really help the decoder chose the best way to use your in-domain phrase
+table.
+
+With \code{PRIMARY_LM=lm-train} defined as is now the default, you can issue
+this command to train your a mixture language model (MixLM) combining your
+in-domain LM and the generic one.
+
+\begin{small}
+\begin{alltt}
+   > \textbf{cd toy.experiment}
+   > \textbf{make mixlm}
+   make[2]: Entering directory `.../toy.experiment/models/mixlm'
+   [commands to make lm-train_fr-kn-5g.lm.gz and .tplm]
+   echo "`basename models/mixlm/lm-train_fr*.tplm`" "generic-2.0_fr.tplm" \bs
+      | tr " " "{\bs}n" > components_fr
+   mx-calc-distances.sh -v em components_fr ../../corpora/dev1_fr.lc > dev1.distances
+   mx-dist2weights -v normalize dev1.distances > dev1.weights
+   [commands to make lm-train_en-kn-5g.lm.gz and .tplm]
+   echo "`basename models/mixlm/lm-train_en*.tplm`" "generic-2.0_en.tplm" \bs
+      | tr " " "{\bs}n" > components_en
+   mx-mix-models.sh mixlm dev1.weights components_en ../../corpora/dev1_fr.lc \bs
+      > dev1.mixlm
+\end{alltt}
+\end{small}
+
+The above commands are explained in more details in \S\ref{MIXLM}, so we won't
+describe what they do here. The important here is that the mixture LM is
+created by combining the primary LM created from your in-domain training data
+with the generic model created on 43 million sentence pairs. Because of your
+in-domain data, this model is good at recognizing text that sounds right for
+your domain. Because of the very large data used to train the generic model,
+this model is good at recognizing text that sounds right in English (or French)
+in general. The combination helps the decoder chose better translations than
+either component model could on its own.
 
 \subsection{Creating a Coarse Language Model} \label{coarseLM}
 
@@ -1530,11 +1584,17 @@ decoding will pick up and use both sets of models, which is not usually
 desirable.
 
 When you configure your systems, edit the top-level \code{Makefile.params} and
-set either \code{TRAIN_LM} or \code{MIXLM}, and either \code{TRAIN_TM} or
+set one of \code{PRIMARY_LM}, \code{TRAIN_LM} or \code{MIXLM}, and either \code{TRAIN_TM} or
 \code{MIXTM}, making sure the variables you don't need are not defined. In some
 circumstances, combining regular and mixture models might be appropriate; in
 that case, you would define both sets of variables, but make sure you know what
 you're doing if you work that way.
+
+Our recommendation is now that you should always use the generic LM as
+background model if it is available for your target language.  The framework
+now has variable \code{PRIMARY_LM} to support this recommendation: if the generic
+LM exists, it is combined as a MixLM with your in-domain LM; otherwise your
+in-domain LM is used on its own.
 
 \subsubsection{Mixture Language Models} \label{MIXLM}
 
@@ -1767,7 +1827,7 @@ see the highest weight assigned to your in-domain component.
 
 \subsubsection{Generic and Pre-trained Models} \label{Generic}
 
-%\TODO{This section is too hard to use. We need a concrete and explicit example, at least showing the use of generic 1.0 as background LM.}
+%\TODO{This section is too hard to use. We need a concrete and explicit example, at least showing the use of generic 2.0 as background LM.}
 
 So far we assumed that all the models are trained locally, in the current
 instance of the framework.  Sometimes, you might have models already trained in
@@ -1860,7 +1920,7 @@ will be slightly different if you followed any of the optional paths above.}
    HLDM: models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz
    Sparse: models/sparse/model
    CPTs: models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz
-   LMs: models/lm/lm-train_en-kn-5g.tplm
+   LMs: models/mixlm/dev1.mixlm
    Coarse LMs:
       DynMap;wordClasses-models/wcl/en.200.classes;models/coarselm/lm-train_en-200-ukn-8g.tplm
       DynMap;wordClasses-models/wcl/en.800.classes;models/coarselm/lm-train_en-800-ukn-8g.tplm  
@@ -1869,11 +1929,11 @@ will be slightly different if you followed any of the optional paths above.}
       | sed -e 's/<SL>/fr/g' \bs
             -e 's/<TL>/en/g' \bs
             -e 's#<CPTS>#models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz#g' \bs
-            -e 's#<LMS>#models/lm/lm-train_en-kn-5g.tplm DynMap;wordClasses-models...#g' \bs
+            -e 's#<LMS>#models/mixlm/dev1.mixlm DynMap;wordClasses-models...#g' \bs
       | configtool -p "args: -dist-phrase-swap -distortion-model WordDisplacement::\bs
         back-hlex#m#H:back-hlex#s#H:back-hlex#d#H:fwd-hlex#m#H:fwd-hlex#s#H:fwd-hlex#d#H \bs
         -lex-dist-model-file :models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz#H \bs
-        -sparse-model models/sparse/model " - \bs
+        -sparse-model models/sparse/model -force-shift-reduce " - \bs
       > canoe.ini
    configtool check canoe.ini
    ok
@@ -1897,7 +1957,7 @@ Here is the result:
    [lex-dist-model-file]
       models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz#H
    [lmodel-file]
-      models/lm/lm-train_en-kn-5g.tplm
+      models/mixlm/dev1.mixlm
       DynMap;wordClasses-models/wcl/en.200.classes;models/coarselm/lm-train_en-200-ukn-8g.tplm
       DynMap;wordClasses-models/wcl/en.800.classes;models/coarselm/lm-train_en-800-ukn-8g.tplm
    [minimize-lm-context-size]
@@ -1909,6 +1969,7 @@ Here is the result:
    [distortion-limit] 7
    [dist-limit-simple]
    [dist-phrase-swap]
+   [force-shift-reduce]
    [no-bypass-marked]
    [cube-pruning]
    [use-ftm]
@@ -2038,7 +2099,7 @@ index     weight    feature description
 7         0.0401815 DistortionModel:fwd-hlex#d#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
 8         -0.329553 LengthFeature
 9         1         SparseModel:./models/sparse/model
-10        1         LanguageModel:models/lm/lm-train_en-kn-5g.tplm;SimpleAutoVoc
+10        1         LanguageModel:models/mixlm/dev1.mixlm;SimpleAutoVoc
 11        0.483673  LanguageModel:wordClasses-models/wcl/en.200.classes;models/coarselm/lm-train_en-200-ukn-8g.tplm;SimpleAutoVoc
 12        0.266164  LanguageModel:wordClasses-models/wcl/en.800.classes;models/coarselm/lm-train_en-800-ukn-8g.tplm;SimpleAutoVoc
 13        0.335264  TranslationModel:cpt.dev1.FILT.gz(col=0)
@@ -2331,6 +2392,10 @@ provided template are replaced by the actual models you trained earlier.
 Lines starting with \code{\#} are comments and are ignored by the software.
 
 \subsubsection{Running RAT (Rescore And Translate)}
+
+\TODO{Adjust the "make all" output below to reflect the fact that we now use
+static mixes by default, i.e., it'll stay with dev1.mixlm instead of changing
+it to dev2.mixlm.}
 
 Apart from the rescoring model, \code{rescore.py} needs a source file and one or
 more reference translations for it (same as \code{tune.py}). These may be the
