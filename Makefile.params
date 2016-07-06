@@ -47,7 +47,7 @@ TRAIN_LM      ?= lm-train
 # These file names should end with the extension .tplm and must include
 # the string _${TGT_LANG}, where ${TGT_LANG} is the target language, e.g. _fr .
 # Paths may be absolute or relative to the location of this Makefile.params file.
-#LM_PRETRAINED_TGT_LMS ?= ${PORTAGE}/generic-model/generic2.0/lm/generic2.0_${TGT_LANG}.tplm
+#LM_PRETRAINED_TGT_LMS ?= ${PORTAGE_GENERIC_MODEL}/generic-2.0/lm/generic-2.0_${TGT_LANG}.tplm
 
 # MIXLM is used to create a mixture language model which itself is composed of
 # several other language models.
@@ -62,7 +62,7 @@ TRAIN_LM      ?= lm-train
 # Note: The corresponding source language LMs are also required, should have
 # the same name except for the language code, and should be located in the same
 # directory.
-#MIXLM_PRETRAINED_TGT_LMS ?= ${PORTAGE}/generic-model/generic2.0/lm/generic2.0_${TGT_LANG}.tplm
+#MIXLM_PRETRAINED_TGT_LMS ?= ${PORTAGE_GENERIC_MODEL}/generic-2.0/lm/generic-2.0_${TGT_LANG}.tplm
 
 # TRAIN_COARSELM is used to train coarse language models.
 # By default, we train coarse LMs for the corpora listed in TRAIN_LM; if you
@@ -92,7 +92,7 @@ TRAIN_TM      ?= tm-train
 # where ${SRC_LANG} is the source language and ${TGT_LANG} is the target
 # language, e.g. .en2fr.gz .
 # Paths may be absolute or relative to the location of this Makefile.params file.
-#TM_PRETRAINED_TMS ?= ${PORTAGE}/generic-model/generic1.0/tm/cpt.generic1.0.${SRC_LANG}2${TGT_LANG}.gz
+#TM_PRETRAINED_TMS ?= ${PORTAGE_GENERIC_MODEL}/generic-1.0/tm/cpt.generic-1.0.${SRC_LANG}2${TGT_LANG}.gz
 
 # MIXTM is used to create a mixture translation model from several other
 # translation models.
@@ -106,7 +106,7 @@ TRAIN_TM      ?= tm-train
 # model TM.
 # These file names should start with cpt.
 # Paths may be absolute or relative to the location of this Makefile.params file.
-#MIXTM_PRETRAINED_TMS ?= ${PORTAGE}/generic-model/generic1.0/tm/cpt.generic1.0.${SRC_LANG}2${TGT_LANG}.gz
+#MIXTM_PRETRAINED_TMS ?= ${PORTAGE_GENERIC_MODEL}/generic-1.0/tm/cpt.generic-1.0.${SRC_LANG}2${TGT_LANG}.gz
 
 # MIXTM_TRAIN_MIX is an in-domain corpus used to train the weights for mixing 
 # the component translation models (its word alignment models are needed)
@@ -119,7 +119,7 @@ TRAIN_TM      ?= tm-train
 # Network Joint Models to use in your canoe.ini.  The NNJM's filename must be
 # 'model' and it should use memory mapped class files.
 # Paths may be absolute or relative to the location of this Makefile.params file.
-#NNJM_PRETRAINED_NNJMS ?= ${PORTAGE}/generic-model/generic2.0/nnjm/nnjm.generic2.0.${SRC_LANG}2${TGT_LANG}.mm
+#NNJM_PRETRAINED_NNJMS ?= ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
 
 # TRAIN_LDM is used to train a Lexicalized Distortion Model (LDM)
 # (the word alignment models are needed).
@@ -689,6 +689,12 @@ endif
 ifeq (${SRC_LANG},ar)
    DONT_LOWERCASE_SRC = 1
 endif
+
+
+# This sets a default value for PORTAGE_GENERIC_MODEL if it was not defined in
+# the user's environment.
+PORTAGE_GENERIC_MODEL ?= ${PORTAGE}/generic-model
+
 
 
 ########################################

@@ -69,6 +69,7 @@ models/tm/*/
 models/wal/*/
 
 models/wcl/*.classes
+models/wcl/*.mmcls
 
 translate/models
 translate/canoe.ini.cow.*
