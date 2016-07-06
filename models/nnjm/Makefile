@@ -194,7 +194,7 @@ clean.portageLive:
 
 testsuite:  one_pretrained_testcase
 .PHONY:  one_pretrained_testcase
-one_pretrained_testcase:  export NNJM_PRETRAINED_NNJMS := ${PORTAGE_GENERIC_MODEL}/nnjm/nnjm.generic-2.0.en2fr.mm/model
+one_pretrained_testcase:  export NNJM_PRETRAINED_NNJMS := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.en2fr.mm/model
 one_pretrained_testcase:
 	${MAKE} clean
 	${MAKE} portageLive
@@ -204,7 +204,7 @@ one_pretrained_testcase:
 
 testsuite:  multiple_pretrained_testcase
 .PHONY:  multiple_pretrained_testcase
-multiple_pretrained_testcase:  export NNJM_PRETRAINED_NNJMS := ${PORTAGE_GENERIC_MODEL}/nnjm/nnjm.generic-2.0.en2fr.mm/model  ${PORTAGE_GENERIC_MODEL}/nnjm/nnjm.generic-2.0.fr2en.mm/model
+multiple_pretrained_testcase:  export NNJM_PRETRAINED_NNJMS := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.en2fr.mm/model  ${PORTAGE_GENERIC_MODEL}/nnjm/nnjm.generic-2.0.fr2en.mm/model
 multiple_pretrained_testcase:
 	${MAKE} clean
 	${MAKE} portageLive
