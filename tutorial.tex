@@ -46,7 +46,8 @@
                linktocpage,
                backref=page,
                pdftitle={PortageII 2.0 Tutorial},
-               pdfauthor={Joanis, Stewart, Larkin and Foster}
+               pdfauthor={Joanis, Stewart, Larkin and Foster},
+               urlcolor=black % we use \url for code, not actual URLs
               ]{hyperref}
 \else
    \usepackage{hyperref}
@@ -81,9 +82,9 @@
 \fi
 
 \title{\PS Tutorial: \\
-       A toy experiment using the \\
+       A detailed walk-through of the \\
        experimental framework}
-\date{Last updated February 2013}
+\date{Last updated July 2016}
 \author{Eric Joanis, Darlene Stewart, Samuel Larkin, George Foster}
 
 \begin{document}
@@ -112,8 +113,8 @@ updated to reflect recommended usage of PortageII 3.0
       Information and Communications Technologies \\
    Conseil national de recherches Canada /
       National Research Council Canada \\
-   Copyright \copyright\ 2008--2013, Sa Majesté la Reine du Chef du Canada
-   \\ Copyright \copyright\ 2008--2013, Her Majesty in Right of Canada
+   Copyright \copyright\ 2008, 2009, 2010, 2011, 2012, 2013, 2016, Sa Majesté la Reine du Chef du Canada
+   \\ Copyright \copyright\ 2008, 2009, 2010, 2011, 2012, 2013, 2016, Her Majesty in Right of Canada
 \end{center}
 
 \vfill
@@ -284,13 +285,13 @@ sections:
 These steps are fairly standard, but there are many variants on the
 sample process illustrated here, which can be tuned for particular situations.
 
-The \PS user manual (found in \url{$PORTAGE/doc/user-manual.html} on the CD)
+The \PS user manual (found in \code{\$PORTAGE/doc/user-manual.html} on the CD)
 has additional information, including a Background section with general
 information on statistical machine translation, but the technical details in
 the user manual are outdated in many ways; we keep this tutorial up to date
 with each release, and we try to make it thorough, so it is a better source of
 information.  For detailed information about any individual program in \PS, run
-the program with the \code{-h} flag (or see \url{$PORTAGE/doc/usage.html} on
+the program with the \code{-h} flag (or see \code{\$PORTAGE/doc/usage.html} on
 the CD).
 
 
@@ -361,7 +362,7 @@ test sets.}
 Ideally, the splitting of a corpus should take into account its structure and
 nature, so these steps are not handled by the experimental framework. For the
 toy experiment, we provide small data sets that can be found here:
-\url{$PORTAGE/test-suite/tutorial-data}. These sets
+\code{\$PORTAGE/test-suite/tutorial-data}. These sets
 are very small, to minimize running time, so the resulting translations are of
 poor quality. In this toy experiment, the tuning and testing sets are
 ridiculously small, with just 100 sentence pairs each.
@@ -371,7 +372,7 @@ links) into your copy's corpora directory:
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment}
-   > \textbf{cp $PORTAGE/test-suite/tutorial-data/*.raw* corpora/}
+   > \textbf{cp \$PORTAGE/test-suite/tutorial-data/*.raw* corpora/}
    > \textbf{wc_stats corpora/*.raw* | expand-auto.pl}
       #Lines   #Words   #Char     [...]   filename
       100      1912     11284     [...]   corpora/dev1_en.raw
@@ -528,8 +529,8 @@ truecasing model.
 \end{alltt}
 \end{small}
 
-The decoder, \code{canoe}, treats \code{<}, \code{>} and \verb*X\X as
-special characters in order to support markup for special translation rules.
+The decoder, \code{canoe}, treats \code{<}, \code{>} and \verb*X\X % *
+as special characters in order to support markup for special translation rules.
 We won't use any markup in this example, but we still need to escape any
 occurrences of the three special characters in the files we'll provide as input
 to \code{canoe}: the source side of the dev and test files.
@@ -720,7 +721,7 @@ sequence of tokens:
 \begin{alltt}
    Creating ARPA text format lm-train_en-200-ukn-8g.lm.gz
    zcat lm-train_en-200.lc.gz \bs
-      | perl -ple 's/^{\bs}s+//; s/{\bs}s+$//; s/{\bs}s+/ /g;' | fold -s -w 4095 \bs
+      | perl -ple 's/^{\bs}s+//; s/{\bs}s+\$//; s/{\bs}s+/ /g;' | fold -s -w 4095 \bs
       | estimate-ngram -order 8 -smoothing KN -text /dev/stdin \bs
            -opt-perp dev1-200_en.lc -write-lm lm-train_en-200-ukn-8g.lm.gz
    arpalm2binlm lm-train_en-200-ukn-8g.lm.gz lm-train_en-200-ukn-8g.binlm.gz
@@ -791,7 +792,7 @@ improve readability.
    [...]
    make[2]: Entering directory `.../toy.experiment/models/tc'
    zcat -f ../../corpora/lm-train_en.tc.gz \bs
-        | perl -ne 'use encoding "UTF-8"; s/^[^[:lower:]]+$/{\bs}n/; print $_ unless /^$/;' \bs
+        | perl -ne 'use encoding "UTF-8"; s/^[^[:lower:]]+\$/{\bs}n/; print \$_ unless /^\$/;' \bs
         | utokenize.pl -pretok -paraline -ss -p -lang=en \bs
         | gzip > lm-train_en.tokss.gz
    [...]
@@ -834,7 +835,7 @@ The actual commands used depend on your LM toolkit.
 \begin{alltt}
    normc1 -ignore 1 -extended -notitle -loc en_CA.UTF-8 lm-train_en.nc1.binlm.gz \bs
         lm-train_en.tokss.gz \bs
-        | perl -pe 's/(.)$/$1 /; s/(.){\bs}n/$1/' | gzip > lm-train_en.nc1.gz
+        | perl -pe 's/(.)$/$1 /; s/(.){\bs}n/\$1/' | gzip > lm-train_en.nc1.gz
    [...]
 \end{alltt}
 \end{small}
@@ -872,7 +873,7 @@ truecasing LM, trained on the normalized-case corpus.
 \begin{alltt}
    zcat -f ../../corpora/lm-train_fr.al.gz \bs
         | utokenize.pl -pretok -paraline -ss -lang=fr \bs
-        | perl -pe 'use encoding "UTF-8"; s/^[^[:lower:]]+($|( : ))//;' \bs
+        | perl -pe 'use encoding "UTF-8"; s/^[^[:lower:]]+(\$|( : ))//;' \bs
         | gzip > lm-train_fr.tokss.gz
    zcat -f lm-train_fr.tokss.gz | filter-nc1.py -enc UTF-8 \bs
         | reverse.pl | gzip > lm-train_fr.revtokss.gz
@@ -1064,7 +1065,8 @@ variant instead.
       ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz
    > \textbf{cd toy.experiment/models/wal}
    > \textbf{make hmm3_model}
-   align-words -o sri -hmm ../ibm/hmm3.tm-train.en_given_fr.gz ../ibm/hmm3.tm-train.fr_given_en.gz \bs
+   align-words -a GDFA -o sri -hmm \bs
+      ../ibm/hmm3.tm-train.en_given_fr.gz ../ibm/hmm3.tm-train.fr_given_en.gz \bs
       ./../../corpora/tm-train_fr.lc.gz ./../../corpora/tm-train_en.lc.gz \bs
       | gzip > tm-train.hmm3.fr2en.align.gz
    > \textbf{cd toy.experiment/models/jpt}
@@ -1500,7 +1502,7 @@ this system will be in domain, which is why we optimize the system for
 in-domain text.
 
 To simulate this scenario, we've added three tiny corpora to
-\url{$PORTAGE/test-suite/tutorial-data/mix}.
+\verb"$"\url{PORTAGE/test-suite/tutorial-data/mix}.
 They don't actually come from different domains here, but we'll pretend they do
 for the sake of our tutorial, and we'll pretend only the first one is in
 domain.  You should copy these files into your \code{corpora} directory, adding
@@ -1508,7 +1510,7 @@ them to the files already there:
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment}
-   > \textbf{cp $PORTAGE/test-suite/tutorial-data/mix/*.raw* corpora/}
+   > \textbf{cp \$PORTAGE/test-suite/tutorial-data/mix/*.raw* corpora/}
    > \textbf{ls corpora/*train?_*}
    corpora/lm-train1_en.raw.gz  corpora/tm-train1_en.raw.gz
    corpora/lm-train1_fr.raw.gz  corpora/tm-train1_fr.raw.gz
@@ -2191,7 +2193,7 @@ file.  In this framework we provide a template model that does not use a
 translation memory.  If you have access to the results of looking up your
 source text in a translation memory, it is worth incorporating them into your
 CE model.  In the template provided here, all the translation memory related
-features are commented out.  See \url{doc/README.confidence} on the \PS CD for
+features are commented out.  See \code{doc/README.confidence} on the \PS CD for
 more details.
 
 Now we build the input CE model file:
@@ -2463,7 +2465,7 @@ variable definition on a given call to \code{make}: adding \code{V=} undefines
 \end{alltt}
 \end{small}
 This produces the output files \code{test1.out} and \code{test2.out},
-containing one line for each source line in \url{test*.rule}, as well as
+containing one line for each source line in \code{test*.rule}, as well as
 \code{test*.out.pal} and \code{test*.out.oov}, needed for truecasing.
 
 If you look at the output files, remember that we trained this toy system on a
@@ -2773,7 +2775,7 @@ usage from all the parts of the framework, as shown below:
 \vspace{-2em}
 \begin{tiny}
 \begin{alltt}
-Resource summary for $PORTAGE/toy.experiment:
+Resource summary for \$PORTAGE/toy.experiment:
          log.lm-train_en-200-ukn-8g.binlm                 WALL TIME: 20s      CPU TIME: 19s       PCPU: 100\%   VSZ: 0.042G    RSS: 0.007G
          log.lm-train_en-200-ukn-8g.lm                    WALL TIME: 4s       CPU TIME: 4s        PCPU: 117\%   VSZ: 0.042G    RSS: 0.007G
          log.lm-train_en-800-ukn-8g.binlm                 WALL TIME: 21s      CPU TIME: 20s       PCPU: 100\%   VSZ: 0.042G    RSS: 0.007G
@@ -2968,5 +2970,5 @@ corpus used.
 
 \section*{Bibliography}
 The bibliography for this document is found in the \PS user manual under
-section ``annotated bibliography''.
+section ``Annotated Bibliography''.
 \end{document}
