@@ -65,9 +65,10 @@ TRAIN_LM      ?= lm-train
 #MIXLM_PRETRAINED_TGT_LMS ?= ${PORTAGE_GENERIC_MODEL}/generic-2.0/lm/generic-2.0_${TGT_LANG}.tplm
 
 # TRAIN_COARSELM is used to train coarse language models.
-# By default, we train coarse LMs for the corpora listed in TRAIN_LM; if you
-# want to use different corpora, uncomment and define TRAIN_COARSELM.
-# => TRAIN_COARSELM = TRAIN_LM
+# By default, we train coarse LMs for the corpora listed in PRIMARY_LM, or
+# TRAIN_LM (if no PRIMARY_LM), or MIXLM (if no PRIMARY_LM or TRAIN_LM).
+# If you want to use different corpora, uncomment and define TRAIN_COARSELM.
+# => TRAIN_COARSELM = PRIMARY_LM or TRAIN_LM or MIXLM
 #TRAIN_COARSELM ?= coarselm-train
 
 # TRAIN_BILM is used to train BiLM models.
@@ -76,10 +77,11 @@ TRAIN_LM      ?= lm-train
 # => TRAIN_BILM = TRAIN_TM
 #TRAIN_BILM ?= bilm-train
 
-# TRAIN_TC is used to create a truecasing model.
-# By default, we use the first name listed in TRAIN_LM, thus if you do not, 
-# uncomment and define TRAIN_TC
-# => TRAIN_TC = first word of TRAIN_LM
+# TRAIN_TC is used to train a truecasing model.
+# By default, we train the TC model using the first corpus listed in PRIMARY_LM,
+# or TRAIN_LM (if no PRIMARY_LM), or MIXLM (if no PRIMARY_LM or TRAIN_LM).
+# If you want to use a different corpus, uncomment and define TRAIN_TC.
+# => TRAIN_TC = first word of PRIMARY_LM or TRAIN_LM or MIXLM
 #TRAIN_TC ?= tc-train
 
 # TRAIN_TM is used to create the translation tables.
@@ -523,10 +525,10 @@ ifdef USE_COARSELM
 endif
 COARSELM_NCLS_LIST := $(strip ${COARSELM_NCLS_LIST})
 
-# By default, we assume that the user wants to use the TRAIN_LM corpora
-# for coarse LM too.
+# By default, we assume that the user wants to use PRIMARY_LM for the coarse LM,
+# or TRAIN_LM (if no PRIMARY_LM), or MIXLM (if no PRIMARY_LM or TRAIN_LM).
 ifdef USE_COARSELM
-   TRAIN_COARSELM ?= ${TRAIN_LM}
+   TRAIN_COARSELM ?= $(or ${PRIMARY_LM},${TRAIN_LM},${MIXLM})
 endif
 TRAIN_COARSELM := $(strip ${TRAIN_COARSELM})
 
@@ -597,10 +599,11 @@ LM_TYPES ?= binlm
 PREFIX_DEV_COW  ?= ${TUNE_DECODE}
 PREFIX_DEV_RAT  ?= ${TUNE_RESCORE}
 
-# By default we assume that the user wants to use the first corpus in TRAIN_LM
-# to build the truecasing models.
+# By default, we assume that the user wants to use the first corpus in PRIMARY_LM
+# to build the truecasing models, or in TRAIN_LM (if no PRIMARY_LM), or in MIXLM
+# (if no PRIMARY_LM or TRAIN_LM).
 ifdef DO_TRUECASING
-   TRAIN_TC ?= $(firstword ${TRAIN_LM})
+   TRAIN_TC ?= $(firstword $(or ${PRIMARY_LM},${TRAIN_LM},${MIXLM}))
 endif
 TRAIN_TC := $(strip ${TRAIN_TC})
 
