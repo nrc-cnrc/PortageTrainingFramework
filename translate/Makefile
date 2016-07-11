@@ -8,8 +8,8 @@
 # Traitement multilingue de textes / Multilingual Text Processing
 # Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, 2012, 2015, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, 2012, 2015, Her Majesty in Right of Canada
+# Copyright 2008, 2012, 2016, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2012, 2016, Her Majesty in Right of Canada
 
 
 # Mandatory include: master config file.
@@ -297,10 +297,9 @@ clean.sparse:
 # for a particular file.
 # For dynamic mixlm's, we use weights computed specifically for the test set.
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): SHELL=${LOCAL_SHELL}
-ifneq ($(strip ${MIXLM} ${MIXLM_PRETRAINED_TGT_LMS}),)
-ifndef USE_STATIC_MIXLM
-USE_DYNAMIC_MIXLM = 1
-endif
+
+ifeq ($(strip ${MIXLM} ${MIXLM_PRETRAINED_TGT_LMS}),)
+USE_DYNAMIC_MIXLM =
 endif
 
 ifdef USE_DYNAMIC_MIXLM
@@ -324,6 +323,7 @@ $(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: %.mixlm
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: check_decoding_model
 	sed -e 's#models/mixlm/${TUNE_DECODE}${TUNE_VARIANT_TAG}.mixlm#$*.mixlm#g' ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
+
 else
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: check_decoding_model
 	cat ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
