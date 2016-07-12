@@ -45,8 +45,8 @@
 #       We use the first one in the list (see Makefile.definition).
 
 # Determine the source and target language model file names.
-LM_SRC ?= $(subst /,\/,$(wildcard ${LM_DIR}/${LM_CORP}_${SRC_LANG}*.binlm.gz))
-LM_TGT ?= $(subst /,\/,$(wildcard ${LM_DIR}/${LM_CORP}_${TGT_LANG}*.binlm.gz))
+LM_SRC ?= $(subst /,\/,$(or $(wildcard ${LM_DIR}/${LM_CORP}_${SRC_LANG}*.tplm),$(wildcard ${LM_DIR}/${LM_CORP}_${SRC_LANG}*.binlm.gz)))
+LM_TGT ?= $(subst /,\/,$(or $(wildcard ${LM_DIR}/${LM_CORP}_${TGT_LANG}*.tplm),$(wildcard ${LM_DIR}/${LM_CORP}_${TGT_LANG}*.binlm.gz)))
 
 # Requires:
 # - a template model <%${TEMPLATEX}>
