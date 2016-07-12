@@ -441,6 +441,9 @@ ifdef PRIMARY_LM
          MIXLM=${PRIMARY_LM}
          MIXLM_PRETRAINED_TGT_LMS=${MIXLM_PRETRAINED_TGT_LMS_GLOB}
       else
+         ifneq ($(filter ${TGT_LANG},en fr),)
+            $(error Generic LM for ${TGT_LANG} not found, please install PotageGenericModels 2.0, or set PORTAGE_GENERIC_MODEL, or set MIXLM_PRETRAINED_TGT_LMS, or use one of MixLM or TRAIN_LM instead of PRIMARY_LM)
+         endif
          ifneq ($(words ${PRIMARY_LM}),1)
             ifeq (${MAKELEVEL},0)
                $(info Multiple LMs in PRIMARY_LM: combining them in a MixLM)
