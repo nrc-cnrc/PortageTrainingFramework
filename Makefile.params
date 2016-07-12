@@ -38,9 +38,20 @@ TGT_LOCALE_COUNTRY ?= CA
 # Warning: TRAIN_TC, TRAIN_SPARSE, TUNE_DECODE, TUNE_RESCORE, TUNE_CE may not contain
 #          more than one <PREFIX>.
 
-# TRAIN_LM is used to create language models. 
+# Set PRIMARY_LM to your in-domain target-language LM training corpus.
+# If there is a generic LM for your target language, it will automatically be
+# used in a MixLM with your main LM
+# If you specify two or more LMs here, they will be groupped in a MixLM (with
+# the generic LM if it exists).
+# If you want to manually set your LM or MixLM parameters differently, comment
+# this variable out and define the LM-related variables below.
+# Warning: if you use PRIMARY_LM, leave TRAIN_LM and MIXLM undefined.
+PRIMARY_LM    ?= lm-train
+
+# TRAIN_LM is used to train regular (non mix) language models.
 # NOTE: Do not include stems for any files listed in LM_PRETRAINED_TGT_LMS below.
-TRAIN_LM      ?= lm-train
+# NOTE: Do not define TRAIN_LM if you defined PRIMARY_LM above.
+#TRAIN_LM      ?= lm-train
 
 # LM_PRETRAINED_TGT_LMS specifies file paths to additional pre-trained target
 # language LMs to use with the lm module, for example a generic model LM.
@@ -52,6 +63,7 @@ TRAIN_LM      ?= lm-train
 # MIXLM is used to create a mixture language model which itself is composed of
 # several other language models.
 # NOTE: Do not include stems for any files listed in MIXLM_PRETRAINED_TGT_LMS below.
+# NOTE: Do not define TRAIN_LM if you defined PRIMARY_LM above.
 #MIXLM         ?= sublm1 sublm2 sublm3
 
 # MIXLM_PRETRAINED_TGT_LMS specifies file paths to additional pre-trained target
@@ -62,6 +74,8 @@ TRAIN_LM      ?= lm-train
 # Note: The corresponding source language LMs are also required, should have
 # the same name except for the language code, and should be located in the same
 # directory.
+# NOTE: if you used PRIMARY_LM above and the Generic LM exists for your target
+# language, it will automatically be used.
 #MIXLM_PRETRAINED_TGT_LMS ?= ${PORTAGE_GENERIC_MODEL}/generic-2.0/lm/generic-2.0_${TGT_LANG}.tplm
 
 # TRAIN_COARSELM is used to train coarse language models.
@@ -80,7 +94,8 @@ TRAIN_LM      ?= lm-train
 # TRAIN_TC is used to train a truecasing model.
 # By default, we train the TC model using the first corpus listed in PRIMARY_LM,
 # or TRAIN_LM (if no PRIMARY_LM), or MIXLM (if no PRIMARY_LM or TRAIN_LM).
-# If you want to use a different corpus, uncomment and define TRAIN_TC.
+# If you want to use a different corpus, uncomment and define TRAIN_TC
+# explicitly.
 # => TRAIN_TC = first word of PRIMARY_LM or TRAIN_LM or MIXLM
 #TRAIN_TC ?= tc-train
 
@@ -104,13 +119,13 @@ TRAIN_TM      ?= tm-train
 #MIXTM         ?= subtm1 subtm2
 
 # MIXTM_PRETRAINED_TMS specifies file paths to additional pre-trained translation
-# tables to use in creating a mixture translation model, for example a generic 
+# tables to use in creating a mixture translation model, for example a generic
 # model TM.
 # These file names should start with cpt.
 # Paths may be absolute or relative to the location of this Makefile.params file.
 #MIXTM_PRETRAINED_TMS ?= ${PORTAGE_GENERIC_MODEL}/generic-1.0/tm/cpt.generic-1.0.${SRC_LANG}2${TGT_LANG}.gz
 
-# MIXTM_TRAIN_MIX is an in-domain corpus used to train the weights for mixing 
+# MIXTM_TRAIN_MIX is an in-domain corpus used to train the weights for mixing
 # the component translation models (its word alignment models are needed)
 # By default, we use the first name listed in MIXTM; if you want to use a
 # different corpus, uncomment and define MIXTM_TRAIN_MIX.
@@ -154,7 +169,7 @@ TRAIN_TM      ?= tm-train
 TUNE_DECODE   ?= dev1
 # TUNE_DECODE_VARIANTS is used to tune and test using multiple tuning sets.
 # Typically, each variant is a 90% sample subset of the TUNE_DECODE set.
-# Ex. If TUNE_DECODE is dev1, include "a b" in TUNE_DECODE_VARIANTS to tune 
+# Ex. If TUNE_DECODE is dev1, include "a b" in TUNE_DECODE_VARIANTS to tune
 #     with dev1a and dev1b in addition to dev1.
 # If variants are specified, 90% sample variants of the tuning set are created
 # automatically in the corpora directory if the variant files do not already exist.
@@ -281,7 +296,7 @@ DO_TRUECASING = 1
 
 # Change LM_TOOLKIT's value depending on the LM toolkit you have.  If you use
 # SRILM or MITLM, their executable scripts and programs must be on your PATH.
-# LM_TOOLKIT={SRI,IRST,MIT} 
+# LM_TOOLKIT={SRI,IRST,MIT}
 # where SRI  => SRILM toolkit
 #       IRST => IRSTLM toolkit
 #       MIT  => MITLM toolkit
@@ -374,6 +389,7 @@ endif
 # Removing accidental user spaces which would otherwise confuse make.
 SRC_LANG := $(strip ${SRC_LANG})
 TGT_LANG := $(strip ${TGT_LANG})
+PRIMARY_LM := $(strip ${PRIMARY_LM})
 TRAIN_LM := $(strip ${TRAIN_LM})
 MIXLM := $(strip ${MIXLM})
 TRAIN_TM := $(strip ${TRAIN_TM})
@@ -405,6 +421,41 @@ LANGXZ ?= ${LANGX}${GZ}
 # Language pair for this system.
 LANGS ?= ${SRC_LANG} ${TGT_LANG}
 
+# Apply the default logic triggered by using PRIMARY_LM instead of TRAIN_LM or MIXLM
+ifdef PRIMARY_LM
+   ifneq ($(or ${MIXLM},${TRAIN_LM}),)
+      $(error When you define PRIMARY_LM, leave TRAIN_LM and MIXLM undefined)
+   endif
+   ifdef MIXLM_PRETRAINED_TGT_LMS
+      ifeq (${MAKELEVEL},0)
+         $(info PRIMARY_LM and MIXLM_PRETRAINED_TGT_LMS specified: combining them in a MixLM)
+      endif
+      MIXLM=${PRIMARY_LM}
+   else
+      MIXLM_PRETRAINED_TGT_LMS_GLOB=$(wildcard ${PORTAGE_GENERIC_MODEL}/generic-2.0/lm/generic-2.0_${TGT_LANG}.tplm)
+      #$(info mixlm test ${MIXLM_PRETRAINED_TGT_LMS_GLOB})
+      ifneq (${MIXLM_PRETRAINED_TGT_LMS_GLOB},)
+         ifeq (${MAKELEVEL},0)
+            $(info Found pre-trained generic LM and PRIMARY_LM: combining them in a MixLM)
+         endif
+         MIXLM=${PRIMARY_LM}
+         MIXLM_PRETRAINED_TGT_LMS=${MIXLM_PRETRAINED_TGT_LMS_GLOB}
+      else
+         ifneq ($(words ${PRIMARY_LM}),1)
+            ifeq (${MAKELEVEL},0)
+               $(info Multiple LMs in PRIMARY_LM: combining them in a MixLM)
+            endif
+            MIXLM=${PRIMARY_LM}
+         else
+            ifeq (${MAKELEVEL},0)
+               $(info No pre-trained generic LM found: using a regular in-domain LM)
+            endif
+            TRAIN_LM=${PRIMARY_LM}
+         endif
+      endif
+   endif
+endif
+
 # With the MIT LM toolkit, a dev set can be used to tune the LM KN discounting
 # parameters. It is recommended that a dev set other than the TUNE_DECODE set
 # be used for such tuning; it's okay to use TUNE_RESCORE or TUNE_CE if different
@@ -414,8 +465,8 @@ TUNE_LM := $(strip ${TUNE_LM})
 
 USE_MIXTM := $(if $(strip ${MIXTM} ${MIXTM_PRETRAINED_TMS}),1)
 ifdef USE_MIXTM
-# By default we assume that the user wants to use the first MIXTM corpus (its 
-# word alignment models are needed) to train the weights for mixing the 
+# By default we assume that the user wants to use the first MIXTM corpus (its
+# word alignment models are needed) to train the weights for mixing the
 # component translation models.
 MIXTM_TRAIN_MIX ?= $(firstword ${MIXTM})
 MIXTM_TRAIN_MIX := $(strip ${MIXTM_TRAIN_MIX})
@@ -481,9 +532,9 @@ TMS_WITH_ALIGNMENT_FIELD ?= 1
 # Define the significance threshold for significance pruning.
 # Usually the default of a+e is the ideal value.
 # SIG_THRESHOLD must be a positive real number or a pre-defined constant:
-# 'a+e' (alpha + epsilon) is the significance threshold such that <1,1,1> 
+# 'a+e' (alpha + epsilon) is the significance threshold such that <1,1,1>
 #       phrase pairs are filtered out.
-# 'a-e' (alpha - epsilon) is the significance threshold such that <1,1,1> 
+# 'a-e' (alpha - epsilon) is the significance threshold such that <1,1,1>
 #       phrase pairs are kept.
 # Note: a (alpha) is the significance level of <1,1,1> phrase pairs, as
 # discussed in Johnson et al, EMNLP 2007.
@@ -492,7 +543,7 @@ ifdef USE_SIGPRUNING
 endif
 SIG_THRESHOLD := $(strip ${SIG_THRESHOLD})
 
-# By default, we assume that the user wants to use the corpora listed in 
+# By default, we assume that the user wants to use the corpora listed in
 # TRAIN_TM and MIXTM to build the Lexicalized Distortion Model (LDM).
 ifdef USE_LDM
    TRAIN_LDM ?= $(sort ${TRAIN_TM} ${MIXTM})
@@ -549,7 +600,7 @@ TUNE_COARSELM := $(strip ${TUNE_COARSELM})
 # word class granularity. Examples: 400bi-400s-400t, 400s-400t, 400bi
 # Multiple BiLM specifications are permitted. Each will be applied to each
 # corpus listed in TRAIN_BILM.
-# If you enable BiLMs, we suggest a 400bi-400s-400t coarse BiLM 
+# If you enable BiLMs, we suggest a 400bi-400s-400t coarse BiLM
 # (400 bitoken classes with 400 src word classes and 400 tgt word classes).
 ifdef USE_BILM
    BILM_SPEC ?= 400bi-400s-400t
@@ -559,7 +610,7 @@ BILM_SPEC := $(strip ${BILM_SPEC})
 # By default, we assume that the user wants to use the TRAIN_TM corpora
 # for BiLMs too.
 ifdef USE_BILM
-	TRAIN_BILM ?= ${TRAIN_TM}
+   TRAIN_BILM ?= ${TRAIN_TM}
 endif
 TRAIN_BILM := $(strip ${TRAIN_BILM})
 BILM_NCLS_LIST := $(patsubst %s,%, $(patsubst %t,%, $(filter %s %t, $(subst -, ,${BILM_SPEC}))))
@@ -587,7 +638,7 @@ WCL_NCLS_LIST := $(strip ${WCL_NCLS_LIST})
 # By default, we assume that the user wants to use the corpora listed in
 # TRAIN_LM and MIXLM to build the word classes.
 ifdef WCL_NCLS_LIST
-	TRAIN_WCL ?= $(sort ${TRAIN_LM} ${MIXLM} ${TRAIN_TM} ${MIXTM})
+   TRAIN_WCL ?= $(sort ${TRAIN_LM} ${MIXLM} ${TRAIN_TM} ${MIXTM})
 endif
 TRAIN_WCL := $(strip ${TRAIN_WCL})
 

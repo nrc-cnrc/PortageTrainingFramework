@@ -48,6 +48,8 @@ ifneq ($(strip ${TRANSLATE_SET}),)
 	@echo "  translate set: ${TRANSLATE_SET}"
 endif
 	@echo
+	${HELP_OTHER_PARAMS}
+	@echo
 	@echo "To run the framework, type: make all"
 	${HELP_LIST_MAIN_TARGETS}
 	@echo

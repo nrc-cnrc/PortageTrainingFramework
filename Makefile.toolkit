@@ -54,6 +54,18 @@ define HELP_LIST_ALL_CORPORA
 	$(if $(strip ${TUNE_CE}),@echo "  tune CE: ${TUNE_CE}")
 endef
 
+# Helper to list other important parameters in the help
+define HELP_OTHER_PARAMS
+	@echo "Other important parameters:"
+	$(if $(strip ${LM_PRETRAINED_TGT_LMS}),@echo "  pretrained LM: ${LM_PRETRAINED_TGT_LMS}")
+	$(if $(strip ${MIXLM_PRETRAINED_TGT_LMS}),@echo "  pretrained MixLM: ${MIXLM_PRETRAINED_TGT_LMS}")
+	$(if $(strip ${COARSELM_NCLS_LIST}),@echo "  coarse LM num classes: ${COARSELM_NCLS_LIST}")
+	$(if $(strip ${TM_PRETRAINED_TMS}),@echo "  pretrained TM: ${TM_PRETRAINED_TMS}")
+	$(if $(strip ${MIXTM_PRETRAINED_TMS}),@echo "  pretrained MixTM: ${MIXTM_PRETRAINED_TMS}")
+	@echo "  src locale: ${SRC_LOCALE}"
+	@echo "  tgt locale: ${TGT_LOCALE}"
+endef
+
 # Helper recipe to list the main targets for a Makefile:
 define HELP_LIST_MAIN_TARGETS
 	@echo
