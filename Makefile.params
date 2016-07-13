@@ -466,6 +466,13 @@ endif
 TUNE_LM ?= ${TUNE_DECODE}
 TUNE_LM := $(strip ${TUNE_LM})
 
+# Make sure USE_DYNAMIC_MIXLM is not defined if not using MixLMs.
+ifdef USE_DYNAMIC_MIXLM
+ifeq ($(strip ${MIXLM} ${MIXLM_PRETRAINED_TGT_LMS}),)
+USE_DYNAMIC_MIXLM =
+endif
+endif
+
 USE_MIXTM := $(if $(strip ${MIXTM} ${MIXTM_PRETRAINED_TMS}),1)
 ifdef USE_MIXTM
 # By default we assume that the user wants to use the first MIXTM corpus (its
