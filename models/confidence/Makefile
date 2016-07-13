@@ -107,14 +107,13 @@ MAIN_TARGETS += time-mem
 
 ########################################
 # DECODING MODEL.
-VARIANT ?= $(suffix ${DECODING_MODEL_DIR})
+VARIANT ?= $(patsubst .%,%,$(suffix ${DECODING_MODEL_DIR}))
 
 ${CANOE_MODEL}: SHELL=${LOCAL_SHELL}
 ${CANOE_MODEL}:
 	@[[ -f "${DECODING_MODEL_DIR}/${CANOE_MODEL}" ]] \
 	|| ! echo "ERROR: No decoding model (${CANOE_MODEL}) available. Please train ${DECODING_MODEL_DIR} first!" >&2
-	#sed -e 's#${TUNE_DECODE}${VARIANT}.mixlm#${TUNE_CE}.mixlm#g' ${DECODING_MODEL_DIR}/${CANOE_MODEL} > $@
-	sed -e 's#${TUNE_DECODE}${VARIANT}.mixlm#${TUNE_DECODE}${VARIANT}.mixlm#g' ${DECODING_MODEL_DIR}/${CANOE_MODEL} > $@
+	sed -e 's#${TUNE_DECODE}${VARIANT}.mixlm#$(if ${USE_DYNAMIC_MIXLM},${TUNE_CE},${TUNE_DECODE}${VARIANT}).mixlm#g' ${DECODING_MODEL_DIR}/${CANOE_MODEL} > $@
 	configtool check $@
 
 

@@ -215,12 +215,12 @@ clean.rescore_train:
 
 
 ########################################
-# Create a specific canoe.ini per test set.
+# Create a specific canoe.ini per devtest set used.
 # You could add some specific target if you need to customize a decoding model
 # for a particular testset.
 ${DECODING_MODEL}.%: SHELL=${LOCAL_SHELL}
 ${DECODING_MODEL}.%: check_decoding_model
-	sed -e 's#${TUNE_DECODE}.mixlm#$*.mixlm#g' ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
+	sed -e 's#${TUNE_DECODE}.mixlm#$(if ${USE_DYNAMIC_MIXLM},$*,${TUNE_DECODE}).mixlm#g' ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
 #	cat $< \
 #	| perl -pe 's/\[stack\].*/[stack] 600/go; s/\[beam-threshold\].*/[beam-threshold] 0.00001/go;' \

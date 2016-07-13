@@ -47,6 +47,15 @@ LM_DIR ?= models/lm
 MIXLM_COMPONENTS := $(strip ${MIXLM} $(notdir ${MIXLM_PRETRAINED_TGT_LMS}))
 
 TUNE_SETS = ${TUNE_DECODE} $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})
+ifdef USE_DYNAMIC_MIXLM
+ifdef DO_CE
+TUNE_SETS += ${TUNE_CE}
+endif
+ifdef DO_RESCORING
+TUNE_SETS += ${TUNE_RESCORE}
+endif
+endif
+
 
 # Watch out for already trained lms.
 vpath %_${SRC_LANG}${LANGX} ../../corpora
