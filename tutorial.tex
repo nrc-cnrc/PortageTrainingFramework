@@ -598,7 +598,7 @@ other examples build on it, but don't follow this case, follow the example in
 \S\ref{LM+generic-default} below instead.
 
 Here is the command used to produce
-\code{lm-train_en-kn-5g.binlm.gz},
+\code{lm-train_en-kn-5g.tplm},
 the main language model:
 \begin{small}
 \begin{alltt}
@@ -1686,10 +1686,10 @@ created and the mixture model is written by pasting the weights in
 \begin{small}
 \begin{alltt}
    > \textbf{cat dev1.mixlm}
-   lm-train1_en-kn-5g.binlm.gz     3.50733e-05
-   lm-train2_en-kn-5g.binlm.gz     0.000873166
-   lm-train3_en-kn-5g.binlm.gz     0.287847
-   lm-train_en-kn-5g.binlm.gz      0.711245
+   lm-train1_en-kn-5g.tplm     3.50733e-05
+   lm-train2_en-kn-5g.tplm     0.000873166
+   lm-train3_en-kn-5g.tplm     0.287847
+   lm-train_en-kn-5g.tplm      0.711245
 \end{alltt}
 \end{small}
 
@@ -2270,8 +2270,8 @@ Now we build the input CE model file:
             -e "s#IBM\bs\bs(.\bs\bs)BKW#models/tm/ibm\bs\bs1.tm-train.fr_given_en.gz#" \bs
             -e "s#HMM\bs\bs(.\bs\bs)FWD#models/tm/hmm\bs\bs1.tm-train.en_given_fr.gz#" \bs
             -e "s#HMM\bs\bs(.\bs\bs)BKW#models/tm/hmm\bs\bs1.tm-train.fr_given_en.gz#" \bs
-            -e "s#LM_SRC#models\/lm\/lm-train_fr-kn-5g.binlm.gz#" \bs
-            -e "s#LM_TGT#models\/lm\/lm-train_en-kn-5g.binlm.gz#" \bs
+            -e "s#LM_SRC#models\/mixlm\/lm-train_fr-kn-5g.tplm#" \bs
+            -e "s#LM_TGT#models\/mixlm\/lm-train_en-kn-5g.tplm#" \bs
       > ce-notm.ini
 \end{alltt}
 \end{small}
