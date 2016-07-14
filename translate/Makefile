@@ -298,10 +298,6 @@ clean.sparse:
 # For dynamic mixlm's, we use weights computed specifically for the test set.
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): SHELL=${LOCAL_SHELL}
 
-ifeq ($(strip ${MIXLM} ${MIXLM_PRETRAINED_TGT_LMS}),)
-USE_DYNAMIC_MIXLM =
-endif
-
 ifdef USE_DYNAMIC_MIXLM
 # Directory path for LM models in mixlm file, relative to the location of the mixlm file.
 # For a dynamic mixlm, the mixlm file itself is here in the translate directory,
@@ -321,7 +317,7 @@ clean.mixlm:
 
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: %.mixlm
 $(addprefix ${DECODING_MODEL}., ${TEST_SET}): ${DECODING_MODEL}.%: check_decoding_model
-	sed -e 's#models/mixlm/${TUNE_DECODE}${TUNE_VARIANT_TAG}.mixlm#$*.mixlm#g' ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
+	sed -e 's#models/mixlm/${TUNE_DECODE}${TUNE_VARIANT_TAG:.%=%}.mixlm#$*.mixlm#g' ${DECODING_MODEL_DIR}/${DECODING_MODEL} > $@
 	configtool check $@
 
 else
