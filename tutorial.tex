@@ -2393,10 +2393,6 @@ Lines starting with \code{\#} are comments and are ignored by the software.
 
 \subsubsection{Running RAT (Rescore And Translate)}
 
-\TODO{Adjust the "make all" output below to reflect the fact that we now use
-static mixes by default, i.e., it'll stay with dev1.mixlm instead of changing
-it to dev2.mixlm.}
-
 Apart from the rescoring model, \code{rescore.py} needs a source file and one or
 more reference translations for it (same as \code{tune.py}). These may be the
 same files used for \code{tune.py}, but it is sometimes better to use different
@@ -2408,7 +2404,7 @@ speed this up by increasing parallelism, which is controled by the
 \begin{alltt}
    > \textbf{make all}
    ln -fs models/decode/rmodels_sparse*.wts.gz .
-   sed -e 's#dev1.mixlm#dev2.mixlm#g' models/decode/canoe.ini.cow > canoe.ini.cow.dev2
+   sed -e 's#dev1.mixlm#dev1.mixlm#g' models/decode/canoe.ini.cow > canoe.ini.cow.dev2
    configtool check canoe.ini.cow.dev2
    ok
    Tuning the rescoring model.
