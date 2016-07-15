@@ -446,7 +446,8 @@ portageLive: portageLive_models_tm
 portageLive: portageLive_models_decode${_PLIVE_DECODE_VARIANT}
 portageLive: SHELL=${LOCAL_SHELL}
 portageLive:
-	ln -sf ../prime.sh $@
+	cp prime.sh $@
+	chmod 755 $@/prime.sh
 	pwd > $@/README
 	portage_info >> $@/README
 
