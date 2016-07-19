@@ -32,7 +32,10 @@ SRC_LOCALE_COUNTRY ?= CA
 # Target locale country code (two uppercase letters).
 TGT_LOCALE_COUNTRY ?= CA
 
-# Here we specify the stem of the corpora files.
+########################################
+# Corpora specification
+
+# Here we specify the stems of the corpora files.
 # Files should look like this: <PREFIX>_<LANGUAGE>.al
 # e.g. test1_fr.al
 # Warning: TRAIN_TC, TRAIN_SPARSE, TUNE_DECODE, TUNE_RESCORE, TUNE_CE may not contain
@@ -206,6 +209,9 @@ TEST_SET      ?= test1 test2
 # i.e. dev_fr1.al, dev_fr2.al, dev_fr3.al & dev_fr4.al
 #REFERENCE_INDICES ?= 1 2 3 4
 
+########################################
+# Features that can be enabled.
+
 # Normally, the mixlm weights computed for TUNE_DECODE are also used when
 # translating the test sets because computing the weights dynamically is
 # not supported in deployed PortageLive systems.
@@ -258,6 +264,9 @@ DO_TRUECASING = 1
 # fact with a gain in BLEU.
 #USE_SIGPRUNING = 1
 
+########################################
+# Tokenization and other preprocessing
+
 # If you have your own tokenizer or detokenizer and you want to use it, then
 # define the following variables to the command line to run it.  Note that the
 # variable names contain the source or target language two-letter identifier.
@@ -294,6 +303,9 @@ DO_TRUECASING = 1
 #MARK_RULE_fr ?= canoe-escapes.pl -add
 #MARK_RULE_ch ?= { chinese_rule_markup.pl | chinese_rule_create.pl; }
 
+########################################
+# LM Toolkit
+
 # Change LM_TOOLKIT's value depending on the LM toolkit you have.  If you use
 # SRILM or MITLM, their executable scripts and programs must be on your PATH.
 # LM_TOOLKIT={SRI,IRST,MIT}
@@ -305,6 +317,10 @@ LM_TOOLKIT = MIT
 # The prefix_root where we can find IRSTLM/bin, which must also be on your
 # PATH.  (Only needed if you are using IRSTLM - see next variable.)
 IRSTLM ?= $(PORTAGE)/pkgs/irstlm
+
+
+########################################
+# Parallelism levels and cluster control.
 
 # How many CPUs should each PortageLive request use?
 # You can increase this parameter if your PortageLive server has multiple
@@ -385,8 +401,8 @@ endif
 
 
 ########################################
-# Sanitizing user inputs.
-# Removing accidental user spaces which would otherwise confuse make.
+# Sanitize user inputs.
+# Remove accidental user spaces that would otherwise confuse make.
 SRC_LANG := $(strip ${SRC_LANG})
 TGT_LANG := $(strip ${TGT_LANG})
 PRIMARY_LM := $(strip ${PRIMARY_LM})
@@ -421,6 +437,27 @@ LANGXZ ?= ${LANGX}${GZ}
 # Language pair for this system.
 LANGS ?= ${SRC_LANG} ${TGT_LANG}
 
+# Auto-detect whether PortageII was compiled with ICU.
+ifeq (${MAKELEVEL},0)
+   PORTAGE_VERSION:=$(shell portage_info -version)
+   ifeq (${PORTAGE_VERSION},)
+      $(warning Cannot find portage_info; make sure a version of PortageII is installed.)
+   endif
+endif
+ifeq ($(strip $(shell portage_info -with-icu > /dev/null && echo "true")),true)
+   ICU = 1
+   ifeq (${MAKELEVEL},0)
+      $(info ${PORTAGE_VERSION} was compiled with ICU)
+   endif
+else
+   ifeq (${MAKELEVEL},0)
+      $(info ${PORTAGE_VERSION} was compiled without ICU)
+   endif
+endif
+ifeq (${MAKELEVEL},0)
+$(info )	  # Leave a blank line
+endif
+
 # Apply the default logic triggered by using PRIMARY_LM instead of TRAIN_LM or MIXLM
 ifdef PRIMARY_LM
    ifneq ($(or ${MIXLM},${TRAIN_LM}),)
@@ -442,10 +479,12 @@ ifdef PRIMARY_LM
          MIXLM_PRETRAINED_TGT_LMS=${MIXLM_PRETRAINED_TGT_LMS_GLOB}
       else
          ifneq ($(filter ${TGT_LANG},en fr),)
+            LM_ERROR_MSG := Generic LM for ${TGT_LANG} not found; please install PortageII Generic Model 2.0, or set \
+               PORTAGE_GENERIC_MODEL, or set MIXLM_PRETRAINED_TGT_LMS, or use one of MixLM or TRAIN_LM instead of PRIMARY_LM
             ifeq ($(filter clean clean.doc doc help,${MAKECMDGOALS}),)
-               $(error Generic LM for ${TGT_LANG} not found, please install PotageGenericModels 2.0, or set PORTAGE_GENERIC_MODEL, or set MIXLM_PRETRAINED_TGT_LMS, or use one of MixLM or TRAIN_LM instead of PRIMARY_LM)
+               $(error ${LM_ERROR_MSG})
             else
-               $(warning Generic LM for ${TGT_LANG} not found, please install PotageGenericModels 2.0, or set PORTAGE_GENERIC_MODEL, or set MIXLM_PRETRAINED_TGT_LMS, or use one of MixLM or TRAIN_LM instead of PRIMARY_LM)
+               $(warning ${LM_ERROR_MSG})
             endif
          endif
          ifneq ($(words ${PRIMARY_LM}),1)
@@ -727,40 +766,20 @@ endif
 LOCAL_SHELL = /bin/bash
 
 
-# Auto-detect if PortageII was compiled with ICU.
-ifeq (${MAKELEVEL},0)
-   PORTAGE_VERSION:=$(shell portage_info -version)
-   ifeq (${PORTAGE_VERSION},)
-      $(warning Cannot find portage_info; make sure a version of PortageII is installed.)
-   endif
-endif
-ifeq ($(strip $(shell portage_info -with-icu > /dev/null && echo "true")),true)
-   ICU = 1
-   ifeq (${MAKELEVEL},0)
-      $(info ${PORTAGE_VERSION} was compiled with ICU)
-   endif
-else
-   ifeq (${MAKELEVEL},0)
-      $(info ${PORTAGE_VERSION} was compiled without ICU)
-   endif
-endif
-
-
-# We include src_lang specific configuration just before we validate the configuration.
--include $(dir $(lastword ${MAKEFILE_LIST}))Makefile.params.${SRC_LANG}
-
-
 ########################################
 # LANGUAGE SPECIFICS
 ifeq (${SRC_LANG},ar)
    DONT_LOWERCASE_SRC = 1
 endif
 
+# We include src_lang specific configuration just before we validate the configuration.
+-include $(dir $(lastword ${MAKEFILE_LIST}))Makefile.params.${SRC_LANG}
 
+
+########################################
 # This sets a default value for PORTAGE_GENERIC_MODEL if it was not defined in
 # the user's environment.
 PORTAGE_GENERIC_MODEL ?= ${PORTAGE}/generic-model
-
 
 
 ########################################
