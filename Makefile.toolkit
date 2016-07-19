@@ -33,9 +33,9 @@ FIX_RELATIVE_PATH = $(strip $(or $(filter /% ~%, $(2)), $(addprefix $(1:/=)$(if 
 # Helper recipe to list all corpora in use.
 define HELP_LIST_ALL_CORPORA
 	@echo "Your corpora are:"
-	@echo "  train LMs: ${TRAIN_LM}"
+	$(if $(strip ${TRAIN_LM}),@echo "  train LMs: ${TRAIN_LM}")
+	$(if $(strip ${MIXLM}),@echo "  train MixLMs: ${MIXLM}")
 	$(if $(strip ${TUNE_LM}),@echo "  tune LM parameters: ${TUNE_LM}")
-	$(if $(strip ${MIXLM}),@echo "  train MixLM: ${MIXLM}")
 	$(if $(strip ${TRAIN_COARSELM}),@echo "  train coarse LMs: ${TRAIN_COARSELM}")
 	$(if $(strip ${TUNE_COARSELM}),@echo "  tune coarse LM parameters: ${TUNE_COARSELM}")
 	$(if $(strip ${TRAIN_BILM}),@echo "  train BiLMs: ${TRAIN_BILM}")
@@ -50,18 +50,19 @@ define HELP_LIST_ALL_CORPORA
 	$(if $(strip ${TRAIN_SPARSE}),@echo "  train sparse: ${TRAIN_SPARSE}")
 	@echo "  tune decode: ${TUNE_DECODE}"
 	$(if $(strip ${TUNE_DECODE_VARIANTS}),@echo "  tune decode variants: $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS})")
-	@echo "  tune rescore: ${TUNE_RESCORE}"
+	$(if $(strip ${TUNE_RESCORE}),@echo "  tune rescore: ${TUNE_RESCORE}")
 	$(if $(strip ${TUNE_CE}),@echo "  tune CE: ${TUNE_CE}")
 endef
 
 # Helper to list other important parameters in the help
 define HELP_OTHER_PARAMS
 	@echo "Other important parameters:"
-	$(if $(strip ${LM_PRETRAINED_TGT_LMS}),@echo "  pretrained LM: ${LM_PRETRAINED_TGT_LMS}")
-	$(if $(strip ${MIXLM_PRETRAINED_TGT_LMS}),@echo "  pretrained MixLM: ${MIXLM_PRETRAINED_TGT_LMS}")
+	$(if $(strip ${LM_PRETRAINED_TGT_LMS}),@echo "  pretrained LMs: ${LM_PRETRAINED_TGT_LMS}")
+	$(if $(strip ${MIXLM_PRETRAINED_TGT_LMS}),@echo "  pretrained MixLMs: ${MIXLM_PRETRAINED_TGT_LMS}")
 	$(if $(strip ${COARSELM_NCLS_LIST}),@echo "  coarse LM num classes: ${COARSELM_NCLS_LIST}")
-	$(if $(strip ${TM_PRETRAINED_TMS}),@echo "  pretrained TM: ${TM_PRETRAINED_TMS}")
-	$(if $(strip ${MIXTM_PRETRAINED_TMS}),@echo "  pretrained MixTM: ${MIXTM_PRETRAINED_TMS}")
+	$(if $(strip ${BILM_SPEC}),@echo "  BiLM specification: ${BILM_SPEC}")
+	$(if $(strip ${TM_PRETRAINED_TMS}),@echo "  pretrained TMs: ${TM_PRETRAINED_TMS}")
+	$(if $(strip ${MIXTM_PRETRAINED_TMS}),@echo "  pretrained MixTMs: ${MIXTM_PRETRAINED_TMS}")
 	@echo "  src locale: ${SRC_LOCALE}"
 	@echo "  tgt locale: ${TGT_LOCALE}"
 endef
