@@ -2,8 +2,8 @@ Traitement multilingue de textes / Multilingual Text Processing
 Technologies de l'information et des communications /
    Information and Communications Technologies
 Conseil national de recherches Canada / National Research Council Canada
-Copyright 2008-2014, Sa Majeste la Reine du Chef du Canada
-Copyright 2008-2014, Her Majesty in Right of Canada
+Copyright 2008-2016, Sa Majeste la Reine du Chef du Canada
+Copyright 2008-2016, Her Majesty in Right of Canada
 
 Distributed under specific licensing terms.  Please refer to your signed
 license agreement for details.
@@ -11,8 +11,8 @@ license agreement for details.
 
                       PortageII experimental framework
 
-Framework author: Samuel Larkin, with suggestions by George Foster and Eric
-Joanis
+Framework authors: Samuel Larkin and Darlene Stewart, with suggestions by
+George Foster and Eric Joanis
 
 
 This experimental framework is intended as a starting point for experiments
@@ -21,6 +21,9 @@ starting point.  In practice, our settings change all the time, at NRC, as we
 continue our research on Statistical Machine Translation, so no framework can
 truly represent the current state of the art.  Nonetheless, we've tried to
 present in this framework our currently recommended practice.
+
+A detailed tutorial is now available to accompany this framework. Please see
+tutorial.pdf. (Run "make doc" if you only see tutorial.tex.)
 
 
 QUICK START GUIDE
@@ -32,40 +35,41 @@ SOFTWARE SETUP:
 
 Make sure you have PortageII installed and available in your $PATH.  Also make
 sure you have IRSTLM properly compiled and set up, which means that you have
-set $IRSTLM to the location of your installed IRSTLM.  Typing "make help" will
-give you sample commands you can cut and paste to do so.  Alternatively, if you
-have SRILM installed, set LM_TOOLKIT=SRI in Makefile.params or LM_TOOLKIT=MIT
-to use MITLM's toolkit.
+set $IRSTLM to the location of your installed IRSTLM.  See the INSTALL file in
+PortageII for more details and more dependencies.  Typing "make help" will give
+you sample commands you can cut and paste to do so.  Alternatively, if you have
+SRILM installed, set LM_TOOLKIT=SRI in Makefile.params or LM_TOOLKIT=MIT to use
+MITLM's toolkit.
 
 
 TRAINING:
 
 You will need to copy or symlink your training files in corpora.  Your files
-should have the pattern <PREFIX>_<LANG>.al, where <LANG> is two letters
+should have the pattern <PREFIX>_<LANG>.raw, where <LANG> is two letters
 representing the language for that file.  These files should contain one
 sentence per line, in original truecase, tokenized and sentence aligned with
 the matching lines in the other language, except for the file used for the
 language model.  This framework requires two pairs of tuning files containing
-around 1000 sentences each, and two pairs of test files.  It also requires
+around 2000 sentences each, and two pairs of test files.  It also requires
 training copora for the language model and the translation models, which are
 kept compressed (.gz) since they are expected to be large.  Here's what your
 corpora directory should look like:
 
-corpora/dev1_en.al
-corpora/dev1_fr.al
-corpora/dev2_en.al
-corpora/dev2_fr.al
-corpora/lm-train_fr.al.gz
+corpora/dev1_en.raw
+corpora/dev1_fr.raw
+corpora/dev2_en.raw
+corpora/dev2_fr.raw
+corpora/lm-train_fr.raw.gz
 corpora/Makefile        <= provided by the framework.
 corpora/Makefile.params <= provided by the framework.
-corpora/test1_en.al
-corpora/test1_fr.al
-corpora/test2_en.al
-corpora/test2_fr.al
-corpora/tm-train_en.al.gz
-corpora/tm-train_fr.al.gz
+corpora/test1_en.raw
+corpora/test1_fr.raw
+corpora/test2_en.raw
+corpora/test2_fr.raw
+corpora/tm-train_en.raw.gz
+corpora/tm-train_fr.raw.gz
 
-As an example, dev1_en.al is an english file with dev1 as its <PREFIX>.
+As an example, dev1_en.raw is an english file with dev1 as its <PREFIX>.
 
 If you decide not to use the default file names for any of the previous files,
 you must edit Makefile.params accordingly.  Replace the prefixes of TRAIN_LM,
