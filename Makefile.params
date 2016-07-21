@@ -78,7 +78,8 @@ PRIMARY_LM    ?= lm-train
 # the same name except for the language code, and should be located in the same
 # directory.
 # NOTE: if you used PRIMARY_LM above and the Generic LM exists for your target
-# language, it will automatically be used.
+# language, it will automatically be used if no other MIXLM_PRETRAINED_TGT_LMS
+# are defined.
 #MIXLM_PRETRAINED_TGT_LMS ?= ${PORTAGE_GENERIC_MODEL}/generic-2.0/lm/generic-2.0_${TGT_LANG}.tplm
 
 # TRAIN_COARSELM is used to train coarse language models.
@@ -500,6 +501,24 @@ ifdef PRIMARY_LM
          endif
       endif
    endif
+else
+   ifdef MIXLM
+      ifdef MIXLM_PRETRAINED_TGT_LMS
+         ifeq (${MAKELEVEL},0)
+            $(info MIXLM and MIXLM_PRETRAINED_TGT_LMS specified: combining them in a MixLM)
+         endif
+      else ifneq ($(words ${MIXLM}),1)
+         ifeq (${MAKELEVEL},0)
+            $(info Multiple LMs in MIXLM specified: combining them in a MixLM)
+         endif
+      endif
+   else ifdef MIXLM_PRETRAINED_TGT_LMS
+      ifneq ($(words ${MIXLM_PRETRAINED_TGT_LMS}),1)
+         ifeq (${MAKELEVEL},0)
+            $(info Multiple LMs in MIXLM_PRETRAINED_TGT_LMS specified: combining them in a MixLM)
+         endif
+      endif
+   endif
 endif
 
 # With the MIT LM toolkit, a dev set can be used to tune the LM KN discounting
@@ -807,6 +826,12 @@ endif
 
 ifeq ($(strip ${TRAIN_LM} ${LM_PRETRAINED_TGT_LMS} ${MIXLM} ${MIXLM_PRETRAINED_TGT_LMS}),)
 $(error You must always define a training corpus and/or pretrained models for language models)
+endif
+
+ifneq ($(strip ${MIXLM} ${MIXLM_PRETRAINED_TGT_LMS}),)
+ifeq ($(words ${MIXLM} ${MIXLM_PRETRAINED_TGT_LMS}),1)
+$(error You must specify multiple LMs in MIXLM and/or MIXLM_PRETRAINED_TGT_LMS to train a MixLM)
+endif
 endif
 
 ifeq ($(strip ${TRAIN_TM} ${TM_PRETRAINED_TMS} ${MIXTM} ${MIXTM_PRETRAINED_TMS}),)
