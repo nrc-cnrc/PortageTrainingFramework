@@ -11,8 +11,8 @@ license agreement for details.
 
                       PortageII experimental framework
 
-Framework authors: Samuel Larkin and Darlene Stewart, with suggestions by
-George Foster and Eric Joanis
+Framework authors: Samuel Larkin, Darlene Stewart and Eric Joanis, with
+suggestions by George Foster
 
 
 This experimental framework is intended as a starting point for experiments
@@ -72,8 +72,9 @@ corpora/tm-train_fr.raw.gz
 As an example, dev1_en.raw is an english file with dev1 as its <PREFIX>.
 
 If you decide not to use the default file names for any of the previous files,
-you must edit Makefile.params accordingly.  Replace the prefixes of TRAIN_LM,
-TRAIN_TM, TUNE_DECODE, TUNE_RESCORE and/or TEST_SET to reflect your file names.
+you must edit Makefile.params accordingly.  Replace the prefixes of PRIMARY_LM
+(or TRAIN_LM or MIXLM), TRAIN_TM and the other TRAIN_* variables, as well as
+the various TUNE_* variables, and finally TEST_SET, to reflect your file names.
 Note that these variables are not the full file name but rather the <PREFIX> of
 each file or file pair.
 
@@ -83,7 +84,8 @@ also notice that that <LANG> = {SRC_LANG, TGT_LANG} and are preferably two
 letter tokens representing your source and target languages.
 
 At this point "make all" should do all the work, from training all models to
-getting BLEU scores, tuning decoding and rescoring weights in the process.
+getting BLEU scores, tuning decoding weights, and optionally rescoring weights
+and a confidence model, in the process.
 
 
 ONCE YOU HAVE A TRAINED SYSTEM:
@@ -94,10 +96,19 @@ and have one sentence per line.  To translate a new document, simply run:
    ./translate.sh <YOUR_NEW_TOKENIZED_DOCUMENT>
 
 
+TO DEPLOY TO PORTAGELIVE:
+
+Once your system is trained, you can also install it on a PortageLive server
+for regular use. Start with
+   make portageLive
+and then follow the instructions in your PortageII distro's PortageLive
+directory.
+
 
 TROUBLE SHOOTING GUIDE:
 This part tries to solve simple mistakes that prevent you from running
-successfully this framework.
+successfully this framework. It covers some issues we've seen in the past, but
+it is not intended to be complete.
 
 It is always good to check the commands you are about to run by typing:
 > make all -n
@@ -113,11 +124,10 @@ This is the most common mistake and usally means there is a prefix mismatch
 between the filename and the prefix for either TRAIN_LM, TRAIN_TM, TUNE_DECODE,
 TUNE_RESCORE or TEST_SET in ./Makefile.params.  The solution is simply to match
 the prefix with the filename in the following manner:
-filename: <prefix>_<language>.al   i.e. test_en.al
+filename: <prefix>_<language>.raw   i.e. test_en.raw
 prefix: <prefix>   i.e. test
 If you have the proper prefix but it still fails, make sure that your file's
-extension is .al for TUNE_DECODE, TUNE_RESCORE & TEST_SET and .al.gz for
-TRAIN_LM & TRAIN_TM.
+extension is .raw for TUNE_* & TEST_SET and .raw.gz for TRAIN_*.
 
 
 2. When running the models/lm module:
