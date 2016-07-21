@@ -2086,7 +2086,7 @@ only 16 columns, but with sparse features this file now has 8736 columns!  A
 human-readable version of the information is shown in \code{logs/log.decode},
 along with lots of logging information about decoding.  Here is an excerpt from
 the middle of that log file:
-\begin{small}
+\begin{scriptsize}
 \begin{alltt}
 Log-linear model used:
 index     weight    feature description
@@ -2125,7 +2125,7 @@ index     weight    feature description
 8723-8729 0.523808  SparseModel:PhrasePairAllTgtLengthBins:7
 8730-8736 0.602322  SparseModel:PhrasePairAllSrcLengthBins:7
 \end{alltt}
-\end{small}
+\end{scriptsize}
 Here the features used are listed with their respective weights in a way that
 is easy to read, whereas in the \code{summary.wts} file you can see how the
 weights evolved to get to the final weights we see here.
@@ -2411,7 +2411,7 @@ speed this up by increasing parallelism, which is controled by the
    rescore.py --cp-numpar 10 --cp-ncpus 1 --train --algorithm mira \bs
       --verbose --nbest-size 1000 --model-out rescore-model \bs
       --marked-src ../../corpora/dev2_fr.rule --canoe-config canoe.ini.cow.dev2 \bs
-      rescore-model.ini ../../corpora/dev2_fr.lc ../../corpora/dev2_en.lc \
+      rescore-model.ini ../../corpora/dev2_fr.lc ../../corpora/dev2_en.lc
    rm -f -r workdir-dev2_fr.rule-1000best
 \end{alltt}
 \end{small}
