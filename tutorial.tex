@@ -29,8 +29,8 @@
 \usepackage{color}
 \newcommand{\TODO}[1]{\emph{\textbf{\textcolor{red}{<TODO> #1 </TODO>}}}}
 
-\newcommand{\New}{\textcolor{red}{New}\xspace}
-\newcommand{\Changed}{\textcolor{red}{Changed}\xspace}
+\newcommand{\New}{\textcolor{red}{[New]}\xspace}
+\newcommand{\Changed}{\textcolor{red}{[Changed]}\xspace}
 
 % Official typesetting of PORTAGEshared, now called Portage II
 \newcommand{\PS}{PortageII\xspace}
@@ -357,7 +357,7 @@ testing sets contain around 2000 segments each.  If the corpus is chronological,
 then it is a good idea to choose these sets from the most recent material,
 which is likely to resemble future text more closely.\footnote{Our
 \code{tmx-prepro} module can automate splitting your corpus if you're
-starting form a TMX file. It uses random sampling by default for your dev and
+starting from a TMX file. It uses random sampling by default for your dev and
 test sets.}
 
 Ideally, the splitting of a corpus should take into account its structure and
@@ -449,7 +449,7 @@ the \emph{User definable variables} section of the file.  This is where most of
 the configurable behaviours are set, such as whether to do rescoring and/or
 truecasing, which optional models to use, the levels of parallelism, etc.
 
-We recommend you use MITLM (\url{http://code.google.com/p/mitlm/}) or SRILM
+We recommend you use MITLM (\url{https://github.com/mit-nlp/mitlm}) or SRILM
 (\url{http://www.speech.sri.com/projects/srilm/}) as your language modeling
 toolkit.  Although not recommended, IRSTLM is another supported
 option.\footnote{These recommendations are based on our
@@ -506,8 +506,8 @@ This step is skipped if you're using tokenized data (with \code{.al} and
 \code{.al.gz} extensions), but since we're starting from raw text, the
 framework automatically recognizes that it needs to tokenize it.
 
-By default, the \PS tokenizer is used (\code{utokenize.pl}), with a
-preprocessing script thart separates slash-separated words
+By default, the \PS tokenizer is used (\code{utokenize.pl}), along with a
+preprocessing script that separates slash-separated words
 (\code{fix-slashes.pl}) because those are seldom/rarely meant to stay together.
 
 \begin{small}
