@@ -558,16 +558,18 @@ to \code{canoe}: the source side of the dev and test files.
 This step creates various models and parameter files that are required for
 translation. There are many steps in training.  Three are mandatory: creating a
 language model (\S\ref{LM}), creating a translation model (\S\ref{TM}), and
-optimizing decoder weights (\S\ref{COW}).  Several are optional: creating a
-truecasing model (\S\ref{TC}), creating a (possibly hierarchical) lexicalized
-distortion model (\S\ref{LDM}), using mixture language and translation models
-for domain adaptation (\S\ref{MIX}), training a rescoring model (\S\ref{RAT}),
-and training a confidence estimation (CE) model (\S\ref{CE}).
+optimizing decoder weights (\S\ref{COW}).  Several are optional: creating coarse
+language models (\S\ref{coarseLM}), creating a truecasing model (\S\ref{TC}),
+creating a (possibly hierarchical) lexicalized distortion model (\S\ref{LDM}),
+creating a sparse model (\S\ref{sparse}), using mixture language and
+translation models for domain adaptation (\S\ref{MIX}), training a confidence 
+estimation (CE) model (\S\ref{CE}), and training a rescoring model
+(\S\ref{RAT}).
 
 \subsection{Creating a Language Model} \label{LM}
 
 \PS does not come with programs for language model training. However, it
-accepts models in the widely-used ``ARPA'' format which is produced by most
+accepts models in the widely-used ``ARPA'' format, which is produced by most
 language modelling toolkits. In this tutorial, we show all examples assuming
 you are using MITLM. If you use SRILM, the procedure will be the same, but the
 commands that get executed will be different.
@@ -664,7 +666,7 @@ in-domain LM and the generic one.
 \end{small}
 
 The above commands are explained in more details in \S\ref{MIXLM}, so we won't
-describe what they do here. The important here is that the mixture LM is
+describe what they do here. The important point here is that the mixture LM is
 created by combining the primary LM created from your in-domain training data
 with the generic model created on 43 million sentence pairs. Because of your
 in-domain data, this model is good at recognizing text that sounds right for
@@ -678,7 +680,7 @@ either component model could on its own.
 In \PS 3.0, we added the capacity to train and use coarse language models:
 language models that are trained and queried not on sequences of words, but
 rather on sequences of classes of words. These models have a useful capacity of
-abstraction: similar words and likely in similar contexts and unlikely in
+abstraction: similar words are likely in similar contexts and unlikely in
 similar context.\footnote{See Stewart et al (AMTA 2014) and the annotated
 bibliography included with the \PS user manual for full details on coarse LMs.}
 
@@ -687,7 +689,7 @@ on 200 word classes with one trained on 800 classes. These models capture
 abstractions at different levels of granularity. With only 200 classes, the
 first model is modelling something that probably resembles part-of-speech tag
 sequences, while 800 classes gives the second model a chance to capture some
-semantic caterogies as well. As for the order of the model, coarse models do
+semantic categories as well. As for the order of the model, coarse models do
 not suffer from the data sparsity that affects regular LMs, so we train 8-gram
 coarse LMs, whereas we only go up to 5-grams for the regular LMs.
 
@@ -966,7 +968,7 @@ together to constitute the final phrase table (\S\ref{CPT}).
 In \S\ref{PI}, we'll show how you can also produce alignment indicator features
 telling the system which aligner produced which phrase pairs.  The alignment
 indicator features are helpful because the different alignments make different
-kinds of error in the phrase pairs they produce; the high diversity of phrase
+kinds of errors in the phrase pairs they produce; the high diversity of phrase
 pairs obtained from two or three separate alignment methods helps the system,
 while the indicator features allow the system to learn to give more weight to
 alignments suggested by the more reliable alignment method.  Now, we don't need
@@ -1089,7 +1091,7 @@ the parallel corpus.
 \subsubsection*{Training Conditional Phrase Tables}
 
 We used to train conditional phrase tables separately for the JPTs coming from
-each different word alignment model, JPT, but the current best practice is to
+each different word alignment model, but the current best practice is to
 merge them first, so we'll come back to this step after doing the HMM and IBM4
 models.
 
@@ -1098,7 +1100,7 @@ models.
 Now we repeat the same steps using HMM word alignment models, using the
 ``hmm3'' variant, which is the default.  This variant corresponds to the HMM
 parameter settings we recommend using to create translation models.  If you
-inspect the alignments, you will find that ``hmm3'' alignment leave a lot of
+inspect the alignments, you will find that ``hmm3'' alignments leave a lot of
 words unaligned and seem to be of rather poor quality.  They were tuned
 specifically to maximize BLEU scores on a complete translation system, not for
 independent use.  If you want to produce alignments for display or other uses
@@ -1250,7 +1252,7 @@ Here we observe that the Kneser-Ney phrase probability estimate likes the
 more idiomatic ``projets de règlement'' better than the more literal
 ``règlements proposés'', while the lexical smoother prefers the latter
 because it focuses on individual words instead of the phrase. Combining the
-two makes the system more robust because it can exploit the strenghts of the
+two makes the system more robust because it can exploit the strengths of the
 phrase and the lexical scoring approaches.
 
 Note that this example is carefully chosen: because of the small size of the
@@ -1258,7 +1260,7 @@ training corpus, many entries in the phrase table are not good translations.
 
 To modify the default word alignment models that go in to the creation of the
 CPT, change the \code{MERGED_CPT_JPT_TYPES} variable in
-\code{toy.experiment/Makefile.params} to, for instance, \code{IBM2 HMM3 IBM4}:
+\code{toy.experiment/Makefile.params} to, for instance, \code{IBM2 HMM3};
 this variable enumerates which word-alignment models you want to generate when
 you type \code{make tm} or \code{make all} at the root level. All models you
 generate will be used in subsequent steps, so generate only the ones you intend
@@ -1323,7 +1325,7 @@ it for you.
 
 Important warning: if you've created both the \code{cpt.merge...} and
 \code{cpt.PI...} files in the same instance of the framework, the tuning step
-will use the both, which is not a good idea.  You should remove one or the
+will use them both, which is not a good idea.  You should remove one or the
 other before proceeding:
 \begin{small}
 \begin{alltt}
@@ -1342,7 +1344,7 @@ with \code{USE_HLDM} set to \code{1} in the default \code{Makefile.params}.
 These models help the decoder reorder words more appropriately during
 translation. Best results are obtained when using it.
 
-The framework also support using regular (non-hierarchical) Lexicalized
+The framework also supports using regular (non-hierarchical) Lexicalized
 Distortion Models (LDMs), but experiments have shown that HLDMs are much
 more effective, so we recommend using those instead.  The key difference between
 the two variants is how one defines the different distortion configurations.
@@ -1398,7 +1400,7 @@ utilities: \code{parallelize.pl}.  This script can be used to parallelize the
 execution of any command where each input line is processed independently.  It
 takes care of splitting the input(s) into chunks, running the chunks in
 parallel, and combining the outputs.  In this
-example the output from all instances of \code{dmcount} are merged using
+example the outputs from all instances of \code{dmcount} are merged using
 \code{merge_multi_column_counts}, a tool that adds counts together when it sees
 the same key in two files.  The default is to concatenate the parts together,
 which is appropriate for programs that produce one line of output per line of
@@ -1429,7 +1431,7 @@ sparse features are now turned on by default.\footnote{By default, only the
 fast sparse features sets are enabled: \code{hopmay} and \code{fastdhdm}. A
 third set is available, \code{otherdhdm}, but it significantly slows down
 decoding and is not worth the very small gain it provides. The choice of sparse
-features can be changed by setting variable \code{SPARSE\us{}FEATURES} in
+features can be changed by setting the variable \code{SPARSE\us{}FEATURES} in
 \code{toy.experiment/models/sparse/Makefile.params}.}
 
 Training sparse models:
@@ -1453,8 +1455,8 @@ Training sparse models:
 To build sparse models, we first list all the sparse feature sets we want in
 \code{model.specs} by concatenating the relevant template spec files.
 
-Then we use command \code{build-sparse-model.sh} to list the feature templates
-implied by the feature sets we chose (see file \code{model}), and to build all
+Then we use the command \code{build-sparse-model.sh} to list the feature
+templates implied by the feature sets we chose (see file \code{model}), and to build all
 the data files required for those feature templates. Actually, not quite: it
 outputs \code{build-model.cmds}, which lists all the commands to run to build
 these data files, and then we use \code{run-parallel.sh} to run them in
@@ -1590,7 +1592,7 @@ circumstances, combining regular and mixture models might be appropriate; in
 that case, you would define both sets of variables, but make sure you know what
 you're doing if you work that way.
 
-Our recommendation is now that you should always use the generic LM as
+Our recommendation now is that you should always use the generic LM as
 background model if it is available for your target language.  The framework
 now has variable \code{PRIMARY_LM} to support this recommendation: if the generic
 LM exists, it is combined as a MixLM with your in-domain LM; otherwise your
