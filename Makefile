@@ -305,6 +305,8 @@ MAIN_TARGETS += summary
 unittest1:  export TUNE_CE = dev3
 unittest1:  export DO_CE = 1
 unittest1:  export DO_RESCORING =
+unittest1:  export MERT_MAX_ITER := 3
+unittest1:  export PARALLELISM_LEVEL_TUNE_DECODE := 4
 unittest1:
 	${MAKE} all
 
@@ -312,9 +314,13 @@ unittest1:
 ########################################
 # Unittest MixLM & LDMS.
 .PHONY: unittest2
-unittest2:  export MIXLM = sublm1 sublm2 sublm3
-unittest2:  export USE_LDM = 1
-unittest2:  export USE_HLDM = 1
+unittest2:  export PRIMARY_LM :=
+unittest2:  export LM_TYPES := arpa
+unittest2:  export MIXLM := sublm1 sublm2 sublm3
+unittest2:  export USE_LDM := 1
+unittest2:  export USE_HLDM := 1
+unittest2:  export MERT_MAX_ITER := 3
+unittest2:  export PARALLELISM_LEVEL_TUNE_DECODE := 4
 unittest2:
 	${MAKE} all
 	[[ `find models/mixlm/ -maxdepth 1 -size +21c -name sublm\*.lm.gz | \wc -l` -eq 6 ]] || ! echo "Missing some Language Model files." >&2
