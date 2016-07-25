@@ -638,8 +638,8 @@ configured in the framework via the \code{TUNE_LM} parameter in
 \subsubsection{In-domain LM plus the generic LM} \label{LM+generic-default}
 
 Starting with \PS 3.0, we strongly recommend that you use the generic LM from
-PortageGenericModel 2.0 to improve the quality of your translations. This model
-cannot introduce any out-of-domain vocabulary into your translations, but it
+PortageII Generic Model 2.0 to improve the quality of your translations. This
+model cannot introduce any out-of-domain vocabulary into your translations, but it
 can really help the decoder chose the best way to use your in-domain phrase
 table.
 
@@ -1358,8 +1358,8 @@ program \code{dmestm}.  If you trained more than one phrase table, as we did
 above, the first step is repeated for each phrase table.
 \begin{small}
 \begin{alltt}
-   > \textbf{cd toy.experiment/models/ldm}
-   > \textbf{make all}
+   > \textbf{cd toy.experiment}
+   > \textbf{make ldm}
    parallelize.pl -nolocal -psub -1 -n 4 -np 4 -w 100000 \bs
       -s ../../corpora/tm-train_fr.lc.gz -s ../../corpora/tm-train_en.lc.gz \bs
       -s ../wal/tm-train.hmm3.fr2en.align.gz \bs
