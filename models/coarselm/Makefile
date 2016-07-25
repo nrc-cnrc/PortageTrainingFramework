@@ -147,7 +147,7 @@ ifeq (${LM_TOOLKIT}, MIT)
 ifdef TUNE_COARSELM
 $(foreach n, ${COARSELM_NCLS_LIST}, \
 	$(eval \
-		${TUNE_COARSELM}-${n}_${LM_LANG}${CORPUS_EXT:.gz=}: ${TUNE_COARSELM}_${LM_LANG}${CORPUS_EXT:.gz=} ${LM_LANG}.${n}.classes) \
+		${TUNE_COARSELM}-${n}_${LM_LANG}${CORPUS_EXT:.gz=}:  ${TUNE_COARSELM}_${LM_LANG}${CORPUS_EXT:.gz=}  ${LM_LANG}.${n}.classes) \
 )
 
 TUNE_FILES = $(foreach n, ${COARSELM_NCLS_LIST}, ${TUNE_COARSELM}-${n}_${LM_LANG}${CORPUS_EXT:.gz=})
@@ -160,7 +160,7 @@ ${TUNE_FILES}: %${CORPUS_EXT:.gz=}:
 $(foreach n, ${COARSELM_NCLS_LIST}, \
 	$(foreach c, ${TRAIN_COARSELM}, \
 		$(eval \
-			${c}_${LM_LANG}-${n}${LM_DESC}.lm.gz: ${TUNE_COARSELM}-${n}_${LM_LANG}${CORPUS_EXT:.gz=}) \
+			${c}_${LM_LANG}-${n}${LM_DESC}.lm.gz:  ${TUNE_COARSELM}-${n}_${LM_LANG}${CORPUS_EXT:.gz=}) \
 	) \
 )
 endif
@@ -188,6 +188,7 @@ clean.content:
 	${RM} *.lm.gz *.binlm.gz
 	${RM} $(foreach n, ${COARSELM_NCLS_LIST}, *-${n}${CORPUS_EXT} *-${n}_*${CORPUS_EXT:.gz=})
 	${RM} -r *.tplm
+	${RM} -r *.tmp.???
 
 
 clean.logs: SHELL=${LOCAL_SHELL}
