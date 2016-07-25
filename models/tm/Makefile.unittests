@@ -14,6 +14,7 @@
 
 .PHONY:  ibm  wal  jpt  sig  prep
 prep:
+	${MAKE} -C ../../corpora all &> /dev/null
 	${MAKE} -C ../ibm clean &> /dev/null
 	${MAKE} -C ../wal clean &> /dev/null
 	${MAKE} -C ../jpt clean &> /dev/null
