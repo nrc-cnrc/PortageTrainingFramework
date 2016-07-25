@@ -482,7 +482,7 @@ ifdef PRIMARY_LM
          ifneq ($(filter ${TGT_LANG},en fr),)
             LM_ERROR_MSG := Generic LM for ${TGT_LANG} not found; please install PortageII Generic Model 2.0, or set \
                PORTAGE_GENERIC_MODEL, or set MIXLM_PRETRAINED_TGT_LMS, or use one of MixLM or TRAIN_LM instead of PRIMARY_LM
-            ifeq ($(filter clean clean.doc doc help,${MAKECMDGOALS}),)
+            ifeq ($(filter clean clean.% doc help,${MAKECMDGOALS}),)
                $(error ${LM_ERROR_MSG})
             else
                $(warning ${LM_ERROR_MSG})
