@@ -680,5 +680,6 @@ unittest1:  export TRAIN_TM = tm-train
 unittest1:  export MIXLM = sublm1 sublm2 sublm3
 unittest1:  export DO_CE = 1
 unittest1:  export TC_USE_SRC_MODELS = 1
+unittest1:  export PRIMARY_LM =
 unittest1:
 	${MAKE} all
