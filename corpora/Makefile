@@ -492,7 +492,7 @@ clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
 	${RM} run-parallel-logs-*
 	${RM} log.*
-	${RM} .logs
+	${RM} -r .logs
 
 # Hide logs from user's view into .logs
 hide.logs: SHELL=${LOCAL_SHELL}
