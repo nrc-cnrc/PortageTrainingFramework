@@ -430,7 +430,7 @@ the other way around, which is the default;
    recommendations.
 } \code{PRIMARY_LM} and \code{TRAIN_TM} already have the right values, so
 they don't need to be changed;
-\item \New \code{TRAIN_SPARSE} already defaults to the first word of
+\item \New \code{TRAIN_SPARSE} already defaults to the first corpus listed in
 \code{TRAIN_TM}, in this case \code{tm-train}, so the new sparse models will be
 trained on the same corpus as the phrase tables;
 \item set \code{TUNE_RESCORE} to \code{dev2} and \code{TUNE_CE} to \code{dev3}
@@ -639,7 +639,7 @@ configured in the framework via the \code{TUNE_LM} parameter in
 \subsubsection{In-domain LM plus the generic LM} \label{LM+generic-default}
 
 Starting with \PS 3.0, we strongly recommend that you use the generic LM from
-PortageII Generic Model 2.0 to improve the quality of your translations. This
+Portage Generic Model 2.0 to improve the quality of your translations. This
 model cannot introduce any out-of-domain vocabulary into your translations, but it
 can really help the decoder chose the best way to use your in-domain phrase
 table.
@@ -1620,16 +1620,20 @@ Having done this, you should also comment out the definition of
 \S\ref{LM+generic-default}), since we'll use our own defined mixture LM instead
 of the default mixture LM or a regular LM.
 
-This change will also implicitly change the definitions of \code{TRAIN_TC} and
+This change also implicitly changes the definitions of \code{TRAIN_TC} and
 \code{TRAIN_COARSELM}. \code{TRAIN_COARSELM} will now default to the corpora
 listed in \code{MIXLM}, thus would train coarse LMs for each of the three domain
-corpora, plus the global one. You could explicitly set \code{TRAIN_COARSELM}
-to \code{lm-train1} if you want coarse LMs for just the in-domain corpus or to
-\code{lm-train} if you want coarse LMs for just the global one. \code{TRAIN_TC}
-will default to \code{lm-train1}, the first corpus listed in \code{MIXLM}, which
-means using just the in-domain corpus for truecasing. You could explicitly set
-\code{TRAIN_TC} to \code{lm-train} if you want to use the global corpus instead
-for truecasing.
+corpora, plus the global one. We recommend training coarse LMs on the
+union of the corpora (i.e. the global corpus) by explicitly setting:
+\begin{small}
+\begin{alltt}
+   TRAIN_COARSELM = lm-train
+\end{alltt}
+\end{small}
+\code{TRAIN_TC} will now default to \code{lm-train1}, the first corpus listed in
+\code{MIXLM}, which means using just the in-domain corpus for truecasing. You
+could explicitly set \code{TRAIN_TC} to \code{lm-train} to use the global corpus
+instead for truecasing.
 
 With the variables defined as discussed, training of the MixLM is automatic,
 but we'll break it down a bit.
@@ -1735,6 +1739,15 @@ in domain.
 
 As with MixLMs, you should remove the definition of \code{TRAIN_TM}, since the
 MixTM replaces the regular TM.
+Unfortunately, doing so disables the default definition of \code{TRAIN_SPARSE}
+so we must set it explicity:
+\begin{small}
+\begin{alltt}
+   TRAIN_SPARSE = tm-train
+\end{alltt}
+\end{small}
+Note that we recommend using the concatenation of all the parallel corpora for
+the sparse model, not just the in-domain corpus, hence we used \code{tm-train}.
 
 \begin{small}
 \begin{alltt}
@@ -1836,12 +1849,13 @@ see the highest weight assigned to your in-domain component.
 
 %\TODO{This section is too hard to use. We need a concrete and explicit example, at least showing the use of generic 2.0 as background LM.}
 
-So far we assumed that all the models are trained locally, in the current
-instance of the framework.  Sometimes, you might have models already trained in
+So far, except for \S\ref{LM+generic-default}, we assumed that all the models
+are trained locally, in the current instance of the framework.  Sometimes, you
+might have models already trained in
 other instances of the framework, or coming from generic models for which you
-may not have the training corpus.  In that case, you can add the name of the
-target-side pre-trained language models in \code{.tplm} format to
-\code{MIXLM_PRETRAINED_TGT_LMS} and they will be included in the mixture
+may not have the training corpus.  In that case, you can add the name(s) of the
+target-side pre-trained language model(s) in \code{.tplm} format to
+\code{MIXLM_PRETRAINED_TGT_LMS}, and they will be included in the mixture
 language model, in addition to the components listed in the \code{MIXLM}
 variable.  The source-side pre-trained language models are also required,
 to tune the mixture weights, and should have the same name except for the
@@ -1873,7 +1887,7 @@ dev set.
 
 We use Batch Lattice MIRA\footnote{In this document, when we say ``MIRA'',
 we mean ``Batch Lattice MIRA'' unless otherwise specified.}, a state-of-the-art
-tuning algorithm developped at NRC, to perform decoder weight optimization.
+tuning algorithm developed at NRC, to perform decoder weight optimization.
 This is launched using our tuning script, \code{tune.py}, which also supports
 a variety of other tuning algorithms.
 MIRA has several advantages over our previous tuning algorithm, Powell's:
@@ -1912,7 +1926,8 @@ automatically:
                      \code{models/tm} directory; and
 \item \code{<LMS>}:  all language models trained above and found in
                      the \code{models/lm} directory, as well as all MixLMs found
-                     in \code{models/mixlm}.
+                     in \code{models/mixlm}, and all coarse LMs found in
+                     \code{models/coarselm}.
 \item If \code{USE_HLDM} or \code{USE_LDM} is set in \code{Makefile.params},
 special processing is also done to insert the necessary (H)LDM parameters into
 the \code{canoe.ini} file.
@@ -1943,6 +1958,7 @@ will be slightly different if you followed any of the optional paths above.}
         -sparse-model models/sparse/model -force-shift-reduce " - \bs
       > canoe.ini
    configtool check canoe.ini
+   [...]
    ok
 \end{alltt}
 \end{small}
@@ -1950,8 +1966,8 @@ The \code{ln} command creates a soft link to the \code{models} directory---this 
 models appear to be relative to the current directory, which makes it easier to
 find them.  We create such symlinks everywhere we need access to the models.
 Next, the \code{sed} command replaces the template parameters by the appropriate
-values.  The \code{configtool} command in the pipe inserts the distortion parameters
-chosen by your framework parameters.  The final command, \code{configtool check
+values.  The \code{configtool} command in the pipeline inserts the distortion
+parameters chosen by your framework parameters.  The final command, \code{configtool check
 canoe.ini}, confirms that the \code{canoe.ini} file produced is error-free---it
 checks that all parameters are compatible and that all models can be found.
 
@@ -2035,14 +2051,14 @@ and we use the
    filter_models -z -r -tm-soft-limit cpt.dev1 -ldm < ../../corpora/dev1_fr.rule
    tune.py -v -o canoe.ini.cow.FILT -p 4 -c 1 -m 15 -n 100 -a lmira -r --workdir=foos \bs
       -d '-lattice-source-density' -f canoe.ini.FILT \bs
-      ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc
+      ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc &> log.canoe.ini.cow
    configtool -p args:"`configtool weights canoe.ini.cow.FILT`" canoe.ini > canoe.ini.cow
    rm -f -r foos *.FILT.gz *.FILT.bkoff canoe.ini.FILT canoe.ini.cow.FILT
 \end{alltt}
 \end{small}
 Because \code{tune.py} takes a while to run (between 15 minutes and three
 hours in this example, depending on your computing hardware)\footnote{Running time for
-\code{tune.py} can be reduced increasing decoder parallelism. Type
+\code{tune.py} can be reduced by increasing decoder parallelism. Type
 \code{tune.py -h} to see documentation on this option: \code{-p}; modify
 \code{PARALLELISM\us{}LEVEL\us{}TUNE\us{}DECODE} and/or \code{NCPUS} in \code{Makefile.params} to
 adjust tuning parallelism in this framework.} and writes large amounts of logging
@@ -2140,7 +2156,7 @@ You will notice that there are two ``TranslationModel'' weights and features:
 one for each of the backward probability estimates in the merged phrase table.
 Similarly, there are two ``ForwardTranslationModel'' weights and features.
 Since we are using HLDMs, there are seven ``DistortionModel'' weights and
-features.  The regular and coarse language models show up, we well as the
+features.  The regular and coarse language models show up, as well as the
 length feature which, with its typically negative weight, encourages the
 decoder to explore longer sentences, at least partially in compensation with
 the language model's tendency to prefer short sentences.  Finally, there is a
@@ -2149,9 +2165,9 @@ of their weights and the template specification.
 
 While \code{tune.py} is working, it saves lattices or $n$-best lists, and other
 intermediate files, to a temporary work directory called \code{foos}. If you
-wish to prevent these (large) files from being automatically cleaned up on
+wish to prevent these (large) files from being automatically cleaned upon
 completion, remove the \code{rm} command executed after \code{tune.py} in
-\code{Makefile}; you'll find that line by searching for \code{foos}.
+\code{Makefile}; you can find that line by searching for \code{foos}.
 
 % EJJ No longer works, and I don't see an equivalent for tune.py...  I suppose
 % the summary file itself is the equivalent now.
@@ -2213,8 +2229,8 @@ ours). But \code{canoe} interprets them as natural logs: throughout \PS, logs
 are natural.  This known bug has minimal impact: correcting for it requires
 either multiplying all LM scores by $log(10) \approx 2.3$, or equivalently
 multiplying the LM weight itself by $log(10)$. During optimization,
-\code{tune.py} and \code{rat.sh} implicitly do the latter, so this problem is
-self-fixing.  We continue to prefer not to fix this bug to avoid breaking
+\code{tune.py} and \code{rescore.py} implicitly do the latter, so this problem
+is self-fixing.  We continue to prefer not to fix this bug to avoid breaking
 backward compatibility with all previously trained models.  But if you want to
 compare the relative importance given to LMs vs. other models, you should
 mentally divide the LM weights by 2.3.}
