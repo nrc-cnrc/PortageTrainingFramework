@@ -591,7 +591,7 @@ models, drop the corpora into \code{corpora} and list all the corpus stems in
 \code{LM\us{}PRETRAINED\us{}TGT\us{}LMS} instead.  For mixture language models,
 see \S\ref{MIXLM}.
 
-\subsubsection{Using a regular LM}
+\subsubsection{Using a regular LM} \label{regularLM}
 
 Instead of the new default, you can still use a single, regular LM, by setting
 \code{TRAIN_LM=lm-train} instead of \code{PRIMARY_LM=lm-train} in
@@ -1615,17 +1615,20 @@ in fact the union of the three pretend domains, so we'll throw in
 \end{small}
 
 Having done this, you should also comment out the definition of
-\code{TRAIN_LM}, since we'll use the mixture LM instead of the regular LM.
-Unfortunately, doing so disables the default definition of \code{TRAIN_TC} and
-\code{TRAIN_COARSELM}, so we need to set them explicity:
-\begin{small}
-\begin{alltt}
-   TRAIN_TC = lm-train1
-   TRAIN_COARSELM = lm-train1
-\end{alltt}
-\end{small}
-Note that in each case, we used \code{lm-train1}, which means using the
-in-domain corpus for truecasing and the coarse language model.
+\code{PRIMARY_LM} (or \code{TRAIN_LM} if you followed \S\ref{regularLM} instead of
+\S\ref{LM+generic-default}), since we'll use our own defined mixture LM instead
+of the default mixture LM or a regular LM.
+
+This change will also implicitly change the definitions of \code{TRAIN_TC} and
+\code{TRAIN_COARSELM}. \code{TRAIN_COARSELM} will now default to the corpora
+listed in \code{MIXLM}, thus would train coarse LMs for each of the three domain
+corpora, plus the global one. You could explicitly set \code{TRAIN_COARSELM}
+to \code{lm-train1} if you want coarse LMs for just the in-domain corpus or to
+\code{lm-train} if you want coarse LMs for just the global one. \code{TRAIN_TC}
+will default to \code{lm-train1}, the first corpus listed in \code{MIXLM}, which
+means using just the in-domain corpus for truecasing. You could explicitly set
+\code{TRAIN_TC} to \code{lm-train} if you want to use the global corpus instead
+for truecasing.
 
 With the variables defined as discussed, training of the MixLM is automatic,
 but we'll break it down a bit.
@@ -1638,6 +1641,7 @@ but we'll break it down a bit.
    > \textbf{make clean}
    [removes trained LMs in models/lm, so they don't interfere with the mixlm]
    > \textbf{cd toy.experiment/models/mixlm}
+   > \textbf{make clean}
    > \textbf{make all}
    [commands to create lm-train1_fr-kn-5g.lm.gz and .tplm]
    [commands to create lm-train2_fr-kn-5g.lm.gz and .tplm]
