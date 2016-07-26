@@ -160,6 +160,9 @@ TRAIN_TM      ?= tm-train
 # TRAIN_SPARSE is used to train sparse features
 # It should point to the concatenation of all your TRAIN_TM and MIXTM corpora in use.
 # TODO: Automate creating that concatenation.
+# For the time being, by default we use the first corpus listed in TRAIN_TM;
+# if you want to use a different corpus, uncomment and define TRAIN_SPARSE.
+# => TRAIN_SPARSE = first word of TRAIN_TM
 #TRAIN_SPARSE ?= sparse-train
 
 # TRAIN_WCL is used to train word classes for use in coarse models.

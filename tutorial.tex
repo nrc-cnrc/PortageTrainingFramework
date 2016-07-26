@@ -430,8 +430,9 @@ the other way around, which is the default;
    recommendations.
 } \code{PRIMARY_LM} and \code{TRAIN_TM} already have the right values, so
 they don't need to be changed;
-\item \New set \code{TRAIN_SPARSE} to \code{tm-train}, to train the
-new sparse models on the same corpus as the phrase tables;
+\item \New \code{TRAIN_SPARSE} already defaults to the first word of
+\code{TRAIN_TM}, in this case \code{tm-train}, so the new sparse models will be
+trained on the same corpus as the phrase tables;
 \item set \code{TUNE_RESCORE} to \code{dev2} and \code{TUNE_CE} to \code{dev3}
 by uncommenting the lines defining them, i.e., by removing the \code{\#} at the
 beginning of these lines;
