@@ -831,7 +831,7 @@ only for generating a normalized-case target-side training corpus; it is not
 used in translation.  The main truecasing LM and the ``casemap'' are trained on
 the normalized-case target-side training corpus.  Together, they are used to
 determine the case for the output of the decoder.  Then case patterns observed
-in the source sentence, including the first word, are transfered to the
+in the source sentence, including the first word, are transferred to the
 truecased output of the decoder.
 
 %\TODO{Think about whether this whole section should be simplified with only the
@@ -1265,8 +1265,10 @@ CPT, change the \code{MERGED_CPT_JPT_TYPES} variable in
 this variable enumerates which word-alignment models you want to generate when
 you type \code{make tm} or \code{make all} at the root level. All models you
 generate will be used in subsequent steps, so generate only the ones you intend
-to use. (You should work in different copies of the framework if you want to
-experiment with different settings.)
+to use.
+
+\tip\margintip You should work in different copies of the framework if you want
+to experiment with different settings.\tipend
 
 \subsubsection{Adding alignment indicator features} \label{PI}
 
@@ -1937,6 +1939,7 @@ So now we make the \code{canoe.ini} file:\footnote{Note that your results here
 will be slightly different if you followed any of the optional paths above.}
 \begin{small}
 \begin{alltt}
+   > \textbf{cd toy.experiment/models/decode}
    > \textbf{make canoe.ini}
    ln -fs ../../models
    HLDM: models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz
@@ -2046,6 +2049,7 @@ and we use the
 \code{dev1} files for weight tuning:
 \begin{small}
 \begin{alltt}
+   > \textbf{cd toy.experiment/models/decode}
    > \textbf{make all}
    mkdir -p foos
    filter_models -z -r -tm-soft-limit cpt.dev1 -ldm < ../../corpora/dev1_fr.rule
@@ -2433,10 +2437,12 @@ speed this up by increasing parallelism, which is controled by the
 \code{PARALLELISM\us{}LEVEL\us{}TUNE\us{}RESCORE} framework variable.}
 \begin{small}
 \begin{alltt}
+   > \textbf{cd toy.experiment/models/rescore}
    > \textbf{make all}
    ln -fs models/decode/rmodels_sparse*.wts.gz .
    sed -e 's#dev1.mixlm#dev1.mixlm#g' models/decode/canoe.ini.cow > canoe.ini.cow.dev2
    configtool check canoe.ini.cow.dev2
+   [...]
    ok
    Tuning the rescoring model.
    rescore.py --cp-numpar 10 --cp-ncpus 1 --train --algorithm mira \bs
@@ -2448,10 +2454,10 @@ speed this up by increasing parallelism, which is controled by the
 \end{small}
 
 As mentioned in \S\ref{COW}, we now use N-best MIRA for rescoring instead of
-Powell's algorithm.  The \code{-a mira} switch provided to \code{rat.sh} above
-selects this tuning method.
+Powell's algorithm.  The \code{-a mira} switch provided to \code{rescore.py}
+above selects this tuning method.
 
-The output from \code{rat.sh} is written to the file \code{rescore-model}:
+The output from \code{rescore.py} is written to the file \code{rescore-model}:
 % cat rescore-model | perl -pe 's/(\.\d\d\d\d\d\d)\d+/\1/g'
 \begin{footnotesize}
 \begin{alltt}
@@ -2547,6 +2553,7 @@ variable definition on a given call to \code{make}: adding \code{V=} undefines
    ln -fs models/decode/rmodels_sparse*.wts.gz .
    cat models/decode/canoe.ini.cow > canoe.ini.cow.test1
    configtool check canoe.ini.cow.test1
+   [...]
    ok
    Generating translate/test1.out
    canoe-parallel.sh -n 1 canoe -f canoe.ini.cow.test1 -walign -palign \bs
@@ -2601,15 +2608,18 @@ compatible with rescoring, as we mentioned before.
 The third option for translating is to generate $n$-best lists and rescore
 them using the model generated in \S\ref{RAT}. To do this, we first run
 the decoder model tuned in \S\ref{COW}, and then the rescoring model
-tuned in \S\ref{RAT}.  The \code{rat.sh} script, used in translation
+tuned in \S\ref{RAT}.  The \code{rescore.py} script, used in translation
 mode, performs both steps for us:
 \begin{small}
 \begin{alltt}
+   > \textbf{cd toy.experiment/translate}
+   > \textbf{make clean}
    > \textbf{make translate}
    ln -fs ../models
    ln -fs models/decode/rmodels_sparse*.wts.gz .
    cat models/decode/canoe.ini.cow > canoe.ini.cow.test1
    configtool check canoe.ini.cow.test1
+   [...]
    ok
    Generating test1.rat
    rescore.py --cp-numpar 1 --trans --verbose --nbest-size 1000 \bs
@@ -2626,15 +2636,15 @@ files \code{test*.out} should be identical to the ones produced in
 \S\ref{Decoding}, although they might differ in minor ways because of
 rounding differences.
 
-Before continuing, comment \code{DO_RESCORING = 1} back out and set
+Before continuing, comment out \code{DO_RESCORING = 1} and set
 \code{TC_USE_SRC_MODELS = 1} again in \code{Makefile.params}, since these are
 the values assumed below.  Also, run \code{make clean} to remove files
 incompatible with the new truecasing workflow.
 
 \subsubsection{Truecasing and Detokenization} \label{Truecasing}
 
-If you inspect the \code{test.out}, and/or code{test.rat} output files, you will
-notice that they contain lowercase, tokenized text.  Two postprocessing steps
+If you inspect the \code{test.out}, and/or \code{test.rat} output files, you
+will notice that they contain lowercase, tokenized text.  Two postprocessing steps
 are required to restore normal case and normally spaced text: truecasing and
 detokenization.  The \code{test.ce} output file, on the other hand, already
 contains truecased, detokenized text, because \code{translate.pl} itself
@@ -2644,6 +2654,7 @@ Truecasing is done by the \code{truecase.pl} script using the truecasing models
 trained previously:
 \begin{small}
 \begin{alltt}
+   > \textbf{cd toy.experiment/translate}
    > \textbf{make tc}
    Truecasing translate/test1.out.tc
    truecase.pl -text test1.out.oov -bos \bs
@@ -2657,10 +2668,10 @@ trained previously:
 If you are using the old truecasing workflow, the same files will be generated
 by \code{truecase.pl}, but the options will be different (the \code{-src},
 \code{-pal}, \code{-srclang} and \code{-srclm} options will be omitted), and you
-will not get source casing patterns transfered to the output.
+will not get source casing patterns transferred to the output.
 
 If you are using rescoring, \code{make tc} will also truecase the rescored
-output, generating \code{test1.rat.tc}.
+output, generating \code{test*.rat.tc}.
 
 Detokenization is done by the script \code{udetokenize.pl}, a rule-based
 detokenizer for French, English, Spanish and Danish text.\footnote{The encoding
@@ -2673,6 +2684,7 @@ if you have one.
 
 \begin{small}
 \begin{alltt}
+   > \textbf{cd toy.experiment/translate}
    > \textbf{make detok}
    Detokenizing test1.out
    udetokenize.pl -lang=en < test1.out > test1.out.detok
@@ -2699,6 +2711,7 @@ with the references, and varies between 0 for no matches to 1 for a perfect
 match. BLEU is calculated by the program \code{bleumain}:
 \begin{small}
 \begin{alltt}
+   > \textbf{cd toy.experiment/translate}
    > \textbf{make bleu}
    Calculating BLEU for translate/test1.out.bleu
    bleumain -c test1.out ../corpora/test1_en.lc > test1.out.bleu
@@ -2760,13 +2773,13 @@ here, run \code{make clean} here before proceeding to \S\ref{PLive}.
 \section{Translating New Text} \label{NewText}
 
 The translation methods shown in the previous section work well with the test
-sets you dropped into the \code{corpora} directory, but it is not convenient for
-translating new text.  You can use the \code{translate.pl} script for new text.
-It is aware of the way this framework works and where it puts its models, so it
-makes it easy to carry out the whole translation pipeline: tokenization,
-lowercasing, decoding, truecasing, detokenization, with optional plugins you
-can use to insert ad hoc code to handle special cases correctly.  See
-\code{translate.pl -h} for details.  The \code{translate.sh} script you will
+sets you dropped into the \code{corpora} directory, but this workflow is not
+convenient for translating new text.  You can use the \code{translate.pl} script
+for new text. It is aware of the way this framework works and where it puts its
+models, so it makes it easy to carry out the whole translation pipeline:
+tokenization, lowercasing, decoding, truecasing, detokenization, with optional
+plugins you can use to insert ad hoc code to handle special cases correctly. 
+See \code{translate.pl -h} for details.  The \code{translate.sh} script you will
 find in the framework calls \code{translate.pl} with some of the options
 automatically filled in from the parameters you set in \code{Makefile.params}.
 See \code{./translate.sh -h} for details.
@@ -2778,7 +2791,7 @@ on a PortageLive translation server.
 
 The PortageLive models are optimized in various ways for a run-time
 environment.  Most importantly, they use our tightly packed model file format,
-accessed via memory-mapped IO.
+accessed via memory-mapped I/O.
 %; the various phrase tables are collapsed into a single table with the weights
 %pre-applied; filtering of the phrase table, normally done on the fly, is
 %pre-performed; and so on.
@@ -2796,6 +2809,7 @@ command that dereferences symbolic links.
 
 \begin{small}
 \begin{alltt}
+   > \textbf{cd toy.experiment}
    > \textbf{make portageLive}
    [...]
    [lots of prerequisite stuff happens]
@@ -2812,39 +2826,47 @@ command that dereferences symbolic links.
    rsync -Larz models/portageLive/* <REMOTE_HOST>:<DEST_DIR_ON_REMOTE_HOST>
    scp -r models/portageLive/* <REMOTE_HOST>:<DEST_DIR_ON_REMOTE_HOST>
    cp -Lr models/portageLive/* <DEST_DIR_ON_LOCAL_HOST>
+   Afterwards, optimize pretrained models on each PortageLive server:
+        ssh <REMOTE_HOST> plive-optimize-pretrained.sh <DEST_DIR_ON_REMOTE_HOST>
+   or   plive-optimize-pretrained.sh <DEST_DIR_ON_LOCAL_HOST>
 \end{alltt}
 \end{small}
 
-The three sample commands printed at the end of the execution show you how to
-perform a deep copy of the structure created, which will expand symbolic links
-during the copy.
+The three sample copy commands (\code{rsync}, \code{scp}, \code{cp}) in the
+output printed at the end of the execution show you how to perform a deep copy
+of the structure created, which will expand symbolic links during the copy.
+Instructions are also provided for calling \code{plive-optimize-pretrained.sh},
+which facilitates loading into shared memory a single copy of the pre-trained
+(generic) models for use by all your translation systems running on the
+PortageLive server.
 
 You can use \code{du -hL} to find out the total size that structure without
 actually expanding it:
 \begin{small}
 \begin{alltt}
    > \textbf{du -hL models/portageLive}
-   12M     models/portageLive/models/ibm
-   4.9M    models/portageLive/models/lm/lm-train_en-kn-5g.tplm
-   5.3M    models/portageLive/models/lm/lm-train_fr-kn-5g.tplm
-   11M     models/portageLive/models/lm
-   1016K   models/portageLive/models/sparse
-   1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
-   1.8M    models/portageLive/models/tc/tc-lm.en.tplm
-   504K    models/portageLive/models/tc/tc-map.en.tppt
-   4.2M    models/portageLive/models/tc
-   38M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
-   38M     models/portageLive/models/ldm
-   544K    models/portageLive/models/wcl
-   47M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
-   47M     models/portageLive/models/tm
-   7.9M    models/portageLive/models/coarselm/lm-train_en-200-ukn-8g.tplm
-   9.0M    models/portageLive/models/coarselm/lm-train_en-800-ukn-8g.tplm
-   17M     models/portageLive/models/coarselm
-   129M    models/portageLive/models
    8.0K    models/portageLive/plugins/fixedTerms
    12K     models/portageLive/plugins
-   129M    models/portageLi
+   4.9M    models/portageLive/models/mixlm/lm-train_en-kn-5g.tplm
+   5.3M    models/portageLive/models/mixlm/lm-train_fr-kn-5g.tplm
+   725M    models/portageLive/models/mixlm/generic-2.0_en.tplm
+   735M    models/portageLive/models/mixlm
+   12M     models/portageLive/models/ibm
+   37M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
+   37M     models/portageLive/models/ldm
+   736K    models/portageLive/models/wcl
+   47M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
+   47M     models/portageLive/models/tm
+   1.8M    models/portageLive/models/tc/tc-lm.en.tplm
+   1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
+   504K    models/portageLive/models/tc/tc-map.en.tppt
+   4.2M    models/portageLive/models/tc
+   8.9M    models/portageLive/models/coarselm/lm-train_en-800-ukn-8g.tplm
+   7.9M    models/portageLive/models/coarselm/lm-train_en-200-ukn-8g.tplm
+   17M     models/portageLive/models/coarselm
+   832K    models/portageLive/models/sparse
+   852M    models/portageLive/models
+   852M    models/portageLive
 \end{alltt}
 \end{small}
 
@@ -2861,6 +2883,7 @@ usage from all the parts of the framework, as shown below:
 %\label{FigTimeMem}
 \begin{small}
 \begin{alltt}
+> \textbf{cd toy.experiment}
 > \textbf{make time-mem}
 \end{alltt}
 \end{small}
@@ -3001,6 +3024,7 @@ by the models.  When you run \code{make summary}, you will first get the
 \code{time-mem} report, then the following disk space report:
 \begin{small}
 \begin{alltt}
+   > \textbf{cd toy.experiment}
    > \textbf{make summary}
    [output from time-mem plus:]
 
@@ -3008,44 +3032,67 @@ by the models.  When you run \code{make summary}, you will first get the
    4.7M    models/ibm/ibm1.tm-train.en_given_fr.gz
    4.6M    models/ibm/ibm1.tm-train.fr_given_en.gz
    3.8M    models/ibm/ibm2.tm-train.en_given_fr.gz
-   148K    models/ibm/ibm2.tm-train.en_given_fr.pos.gz
+   144K    models/ibm/ibm2.tm-train.en_given_fr.pos.gz
    3.8M    models/ibm/ibm2.tm-train.fr_given_en.gz
-   152K    models/ibm/ibm2.tm-train.fr_given_en.pos.gz
-   484K    models/ibm/ibm4.tm-train.en_given_fr.gz
-   460K    models/ibm/ibm4.tm-train.fr_given_en.gz
+   148K    models/ibm/ibm2.tm-train.fr_given_en.pos.gz
+   456K    models/ibm/ibm4.tm-train.en_given_fr.gz
+   480K    models/ibm/ibm4.tm-train.fr_given_en.gz
    4.0K    models/ibm/hmm3.tm-train.en_given_fr.dist.gz
    2.0M    models/ibm/hmm3.tm-train.en_given_fr.gz
    4.0K    models/ibm/hmm3.tm-train.fr_given_en.dist.gz
    2.1M    models/ibm/hmm3.tm-train.fr_given_en.gz
-   3.5M    models/jpt/jpt.hmm3.tm-train.fr-en.gz
-   1.3M    models/jpt/jpt.ibm2.tm-train.fr-en.gz
-   2.4M    models/jpt/jpt.ibm4.tm-train.fr-en.gz
-   4.4M    models/jpt/jpt.merged.tm-train.fr-en.gz
-   13M     models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz
-   14M     models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
-   3.4M    models/lm/lm-train_en-kn-5g.binlm.gz
-   5.4M    models/lm/lm-train_en-kn-5g.lm.gz
-   4.9M    models/lm/lm-train_en-kn-5g.tplm
-   3.7M    models/lm/lm-train_fr-kn-5g.binlm.gz
-   5.9M    models/lm/lm-train_fr-kn-5g.lm.gz
-   568K    models/decode
-   18M     translate
+   11M     models/jpt/jpt.hmm3.tm-train.fr-en.gz
+   5.3M    models/jpt/jpt.ibm2.tm-train.fr-en.gz
+   7.3M    models/jpt/jpt.ibm4.tm-train.fr-en.gz
+   17M     models/jpt/jpt.merged.tm-train.fr-en.gz
+   40M     models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz
+   47M     models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
+   164K    models/coarselm/lm-train_en-200.lc.gz
+   4.9M    models/coarselm/lm-train_en-200-ukn-8g.binlm.gz
+   7.1M    models/coarselm/lm-train_en-200-ukn-8g.lm.gz
+   7.9M    models/coarselm/lm-train_en-200-ukn-8g.tplm
+   188K    models/coarselm/lm-train_en-800.lc.gz
+   5.6M    models/coarselm/lm-train_en-800-ukn-8g.binlm.gz
+   8.5M    models/coarselm/lm-train_en-800-ukn-8g.lm.gz
+   8.9M    models/coarselm/lm-train_en-800-ukn-8g.tplm
+   4.0K    models/mixlm/dev1.mixlm
+   4.0K    models/mixlm/generic-2.0_en.tplm
+   4.0K    models/mixlm/generic-2.0_fr.tplm
+   5.4M    models/mixlm/lm-train_en-kn-5g.lm.gz
+   4.9M    models/mixlm/lm-train_en-kn-5g.tplm
+   5.9M    models/mixlm/lm-train_fr-kn-5g.lm.gz
+   5.3M    models/mixlm/lm-train_fr-kn-5g.tplm
    16M     models/tc
-   117M    total
+   84M     models/ldm
+   1.8M    models/sparse
+   3.4M    models/decode
+   12K     models/confidence/ce_model.cem
+   372K    translate
+   318M    total
 
    Disk usage for portageLive models:
-   12M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
-   12M     models/portageLive/models/ldm
-   14M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
-   14M     models/portageLive/models/tm
-   1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
-   516K    models/portageLive/models/tc/tc-map.en.tppt
+   8.0K    models/portageLive/plugins/fixedTerms
+   12K     models/portageLive/plugins
+   4.9M    models/portageLive/models/mixlm/lm-train_en-kn-5g.tplm
+   5.3M    models/portageLive/models/mixlm/lm-train_fr-kn-5g.tplm
+   725M    models/portageLive/models/mixlm/generic-2.0_en.tplm
+   735M    models/portageLive/models/mixlm
+   12M     models/portageLive/models/ibm
+   37M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
+   37M     models/portageLive/models/ldm
+   736K    models/portageLive/models/wcl
+   47M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
+   47M     models/portageLive/models/tm
    1.8M    models/portageLive/models/tc/tc-lm.en.tplm
+   1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
+   504K    models/portageLive/models/tc/tc-map.en.tppt
    4.2M    models/portageLive/models/tc
-   4.9M    models/portageLive/models/lm/lm-train_en-kn-5g.tplm
-   4.9M    models/portageLive/models/lm
-   35M     models/portageLive/models
-   35M     models/portageLive
+   8.9M    models/portageLive/models/coarselm/lm-train_en-800-ukn-8g.tplm
+   7.9M    models/portageLive/models/coarselm/lm-train_en-200-ukn-8g.tplm
+   17M     models/portageLive/models/coarselm
+   832K    models/portageLive/models/sparse
+   852M    models/portageLive/models
+   852M    models/portageLive
 \end{alltt}
 \end{small}
 
