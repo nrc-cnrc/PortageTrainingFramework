@@ -2250,12 +2250,15 @@ tune the CE model be completely unseen data. It can't have been part of your
 training data or the dev set you used to tune the decoder weights.  Otherwise
 the confidence estimates produced will be completely useless.
 
-At this stage we have to return to one previous step. We did not train all
-the models we need for CE: specifically, we need an LM for the source language.
 Edit \code{Makefile.params} in the main \code{toy.experiment} directory and set
-\code{DO_CE} to \code{1} (by uncommenting the appropriate line). If you run
+\code{DO_CE} to \code{1} (by uncommenting the appropriate line).  If you run
 \code{make confidence} in the main directory, all necessary steps will be done
 automatically.  As usual, we'll break it down a bit.
+
+At this stage, if you followed the instructions in \S\ref{regularLM} to train a
+regular LM, we have to return to one previous step.  We did not train all the
+models we need for CE: specifically, we need an LM for the source language.
+
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment/models}
@@ -2266,7 +2269,9 @@ automatically.  As usual, we'll break it down a bit.
 \end{alltt}
 \end{small}
 This command will build the required source-side LM using the toolkit you
-selected earlier.
+selected earlier.  If, however, you followed the instructions in
+\S\ref{LM+generic-default} to train a mixLM, as recommended, the source language
+LM has already been trained.
 
 Now we can work on the CE model itself. Note that our CE module does not
 currently work with rescoring, only with decoding. We train a confidence
@@ -2285,16 +2290,19 @@ Now we build the input CE model file:
 \begin{alltt}
    > \textbf{cd toy.experiment/models/confidence}
    > \textbf{make ce-notm.ini}
+   ln -fs ../../models
+   ln -fs models/decode/rmodels_sparse*.wts.gz .
    sed -e 's#dev1.mixlm#dev1.mixlm#g' models/decode/canoe.ini.cow > canoe.ini.cow
    configtool check canoe.ini.cow
+   [...]
    ok
    cat ce-notm.template \bs
       | sed -e "s#IBM\bs\bs(.\bs\bs)FWD#models/tm/ibm\bs\bs1.tm-train.en_given_fr.gz#" \bs
             -e "s#IBM\bs\bs(.\bs\bs)BKW#models/tm/ibm\bs\bs1.tm-train.fr_given_en.gz#" \bs
             -e "s#HMM\bs\bs(.\bs\bs)FWD#models/tm/hmm\bs\bs1.tm-train.en_given_fr.gz#" \bs
             -e "s#HMM\bs\bs(.\bs\bs)BKW#models/tm/hmm\bs\bs1.tm-train.fr_given_en.gz#" \bs
-            -e "s#LM_SRC#models\/mixlm\/lm-train_fr-kn-5g.tplm#" \bs
-            -e "s#LM_TGT#models\/mixlm\/lm-train_en-kn-5g.tplm#" \bs
+            -e "s#LM_SRC#models\bs/mixlm\bs/lm-train_fr-kn-5g.tplm#" \bs
+            -e "s#LM_TGT#models\bs/mixlm\bs/lm-train_en-kn-5g.tplm#" \bs
       > ce-notm.ini
 \end{alltt}
 \end{small}
