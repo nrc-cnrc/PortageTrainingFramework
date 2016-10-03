@@ -113,7 +113,7 @@ endif
 # Note: MITLM is finicky about spaces. Thus we need to collapse multiple spaces,
 # and remove any leading or trailing spaces. Also, it doesn't like lines longer
 # than 4095 characters.
-FILTER = perl -ple 's/^\s+//; s/\s+$$//; s/\s+/ /g;' | fold -s -w 4095
+FILTER = perl -ple 's/^\s+//; s/\s+$$//; s/\s+/ /g;' | fold --bytes --spaces --width=4095
 
 # See LM_CORP_DEP helper function for corpus dependency specifications.
 # If there is a second dependency, it is assumed to be a dev file for tuning
