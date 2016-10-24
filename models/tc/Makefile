@@ -196,7 +196,7 @@ lm: ${TRUECASING_LM}
 CORPUS_SHELL ?= $(if $(findstring $(flavor BIG_CORPUS), undefined), ${FRAMEWORK_SHELL}, ${LOCAL_SHELL})
 
 # Step 1: Filter out all-uppercase sentences and sentence split the target language corpus.
-TGT_UC_FILTER ?= perl -ne 'use encoding "${ENCODING}"; s/^[^[:lower:]]+$$/\n/; print $$_ unless /^$$/;'
+TGT_UC_FILTER ?= perl -ne 'BEGIN{binmode(STDIN, ":encoding(${ENCODING})"); binmode(STDOUT, ":encoding(${ENCODING})")}  s/^[^[:lower:]]+$$/\n/; print $$_ unless /^$$/;'
 TGT_TOKENIZE = ${TOKENIZE} -pretok -paraline -ss -p -lang=${TGT_LANG}
 
 %_${TGT_LANG}.tokss${GZ}: SHELL=${CORPUS_SHELL}
@@ -265,7 +265,7 @@ $(eval $(call LM_CORP_DEP,${TRAIN_TC}_${TGT_LANG}-kn-3g,${TRAIN_TC}_${TGT_LANG}$
 nc1_lm: SHELL=${LOCAL_SHELL}
 nc1_lm: ${TRUECASING_NC1_SRC_LM}
 
-SRC_UC_FILTER ?= perl -pe 'use encoding "${ENCODING}"; s/^[^[:lower:]]+($$|( : ))//;'
+SRC_UC_FILTER ?= perl -pe 'BEGIN{binmode(STDIN, ":encoding(${ENCODING})"); binmode(STDOUT, ":encoding(${ENCODING})")}  s/^[^[:lower:]]+($$|( : ))//;'
 SRC_TOKENIZE = ${TOKENIZE} -pretok -paraline -ss -lang=${SRC_LANG}
 
 %_${SRC_LANG}.tokss${GZ}: SHELL=${CORPUS_SHELL}
