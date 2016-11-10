@@ -78,6 +78,7 @@ ${CPT_MIX_PFX}%${L1_2_L2X}:
 	RP_PSUB_OPTS="-${MIX_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
 	train_tm_mixture \
+		-write-count -write-al top \
 		-v \
 		-o $@ \
 		$(filter %${L1_2_L2X}, $+) \
@@ -89,6 +90,7 @@ ${CPT_MIX_PFX}%${L2_2_L1X}:
 	RP_PSUB_OPTS="-${MIX_CPUS} -N $@ ${PSUB_OPTS}" \
 	${TIME_MEM} \
 	train_tm_mixture \
+		-write-count -write-al top \
 		-r -v \
 		-o $@ \
 		$(filter %${L2_2_L1X}, $+) \
