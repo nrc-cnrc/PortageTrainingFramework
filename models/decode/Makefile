@@ -343,6 +343,7 @@ ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TG
 		-o $@.FILT \
 		-p ${PARALLELISM_LEVEL_TUNE_DECODE} \
 		-c ${DECODE_CPUS} \
+		--cpopts=\"-rp-j 4\" \
 		-m ${MERT_MAX_ITER} \
 		-n 100 \
 		-a lmira \

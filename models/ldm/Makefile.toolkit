@@ -73,12 +73,12 @@ ADD_HLDM_OPTS = $(and $(findstring ${HLDM_MODEL_PFX}, $1), -hier)
 # - a source corpus with the L1X suffix;
 # - a target corpus with the L2X suffix;
 # - a alignment file for each parallel corpora provided.
-%${COUNTSX}: SHELL=${LOCAL_SHELL}
+%${COUNTSX}: SHELL=${FRAMEWORK_SHELL}
 %${COUNTSX}:
 	@_LOCAL=1; [[ `expr $(words $+) % 3` -eq 0 ]] || ! echo "ERROR: You must provide triplets of corpora/alignment to create $@." >&2
+	RP_PSUB_OPTS="-j 4 -${COUNT_CPUS} -N $@" \
 	parallelize.pl \
-		-nolocal \
-		-psub -${COUNT_CPUS} \
+		-rp "-j 4" \
 		-n ${PARALLELISM_LEVEL_LDM} \
 		-np ${PARALLELISM_LEVEL_LDM_WORKERS} \
 		-w ${MINIMUM_PARALLEL_CHUNK_SIZE} \

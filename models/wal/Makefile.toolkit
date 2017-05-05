@@ -64,7 +64,7 @@ ALIGN_MODEL_TYPE := -hmm
 
 %.${L1_2_L2}.align.gz:  SHELL=${FRAMEWORK_SHELL}
 %.${L1_2_L2}.align.gz:
-	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
+	RP_PSUB_OPTS="-N $@ -j 5 ${PSUB_OPTS}" \
 	set -o pipefail; \
 	parallelize.pl \
 		-stripe \

@@ -61,8 +61,8 @@ clean.content:
 
 clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
-	${RM} run-parallel-log* log.* run-p.*
-	${RM} -r .logs
+	${RM} run-parallel-log* log.*
+	${RM} -r .logs run-p.*
 
 # Hide logs from user's view into .logs
 hide.logs: SHELL=${LOCAL_SHELL}
@@ -87,16 +87,22 @@ SPARSE_FEATURES ?= fastdhdm hopmay
 model.specs: $(foreach F,$(SPARSE_FEATURES),sparse-specs-$F)
 	cat $+ > $@
 
+# Note: when building build-model.cmds, we pull the count_unal_words commands first since
+# they are the slowest to run, and so we benefit from launching them early.
 model: model.specs
 	${RM} data.* build-model.cmds model
-	build-sparse-model.sh -cmdfile build-model.cmds -model model -config $< \
+	build-sparse-model.sh -cmdfile build-model.cmds.tmp -model model -config $< \
 	   -corp ../../corpora/${TRAIN_SPARSE} \
 	   -srclang ${SRC_LANG} -tgtlang ${TGT_LANG} \
 	   -srcext $(patsubst .%,%,${LANGXZ}) -tgtext $(patsubst .%,%,${LANGXZ})
+	grep count_unal_words < build-model.cmds.tmp > build-model.cmds
+	grep -v count_unal_words < build-model.cmds.tmp >> build-model.cmds
 
+data: SHELL=${FRAMEWORK_SHELL}
 data: model
-	run-parallel.sh build-model.cmds ${PARALLELISM_LEVEL_SPARSE} >& log.$@
-	echo "This file exists just so make dependencies work." > $@
+	RP_PSUB_OPTS="-j 4 -N sparse$@" \
+	   run-parallel.sh -j 4 build-model.cmds ${PARALLELISM_LEVEL_SPARSE} >& log.$@
+	_LOCAL=1 echo "This file exists just so make dependencies work." > $@
 
 model.templates: model data
 	palminer -v -pop -m model >& log.$@

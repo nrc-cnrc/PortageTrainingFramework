@@ -110,7 +110,7 @@ POST_PROCESSING ?= cat
 TRANS_CPUS ?= 1
 
 # If you need to add any other options to canoe-parallel.
-CANOE_PARALLEL_EXTRAS ?=
+CANOE_PARALLEL_EXTRAS ?= -rp-j 4
 
 # Extra canoe options
 CANOE_EXTRAS ?=
@@ -357,7 +357,7 @@ else
 %.out: SHELL=${FRAMEWORK_SHELL}
 %.out: ${DECODING_MODEL}.% %${RULEX}
 	@_LOCAL=1 echo "Generating $(notdir ${CURDIR})/$@"
-	RP_PSUB_OPTS="-${TRANS_CPUS}" \
+	RP_PSUB_OPTS="-${TRANS_CPUS} -N $@" \
 	set -o pipefail; \
 	canoe-parallel.sh \
 		-n ${PARALLELISM_LEVEL_TRANSLATE} \
