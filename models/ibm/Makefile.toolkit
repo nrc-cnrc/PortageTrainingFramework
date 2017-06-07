@@ -1,0 +1,313 @@
+# vim:noet:ts=3:nowrap
+
+# @file Makefile.toolkit
+# @brief Makefile targets and recipes to generate Word Alignment Models.
+#
+# @author Samuel Larkin
+#
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2015, Sa Majeste la Reine du Chef du Canada
+# Copyright 2015, Her Majesty in Right of Canada
+
+IBM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
+
+# We assume the top level Makefile.params has already been included.
+include ${IBM_DIR_PFX}../Makefile.definition
+
+# What program to use to train models.
+CAT ?= cat.sh
+
+# Given the user's configuration, what is the minimal set of model types that
+# we need to produce.
+EXPECTED_MODEL_TYPES := $(strip $(sort ${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES}))
+EXPECTED_MODEL_TYPES_PFX := $(foreach m, ${EXPECTED_MODEL_TYPES}, ${${m}_MODEL_PFX})
+
+
+########################################
+# IBM1 MODELS
+# requires: source and target corpora.
+${IBM1_MODEL_PFX}%${L1_GIVEN_L2X}: IBM1_DIR=-r
+${IBM1_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
+${IBM1_MODEL_PFX}.%.gz:
+	_LOCAL=1; if [[ -w $@ ]]; then rm $@; fi
+	@_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
+	RP_PSUB_OPTS="-${IBM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
+	${CAT} -n $(call IBM1_MODEL_PARALLELISM_LEVEL, $+) -pn $(call IBM1_MODEL_WORKERS, $+) \
+		-v ${IBM1_DIR} \
+		-n1 5 -n2 0 \
+		-bin \
+		${IBM1_MODEL_EXTRAS} \
+		$@ \
+		$(call interleave, $(filter %${L1} %${L1X}, $+), $(filter %${L2} %${L2X}, $+)) \
+		&> log.${@:.gz=}
+
+
+########################################
+# IBM2 MODELS
+${IBM2_MODEL_PFX}%${L1_GIVEN_L2X}: IBM2_DIR=-r
+${IBM2_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
+${IBM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
+	_LOCAL=1; if [[ -w $@ ]]; then rm $@ ${@:.gz=}.pos.gz; fi
+	@_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
+	RP_PSUB_OPTS="-${IBM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
+	${CAT} -n ${IBM2_MODEL_PARALLELISM_LEVEL} -pn ${IBM2_MODEL_WORKERS} \
+		-v ${IBM2_DIR} \
+		-n1 0 -n2 5 \
+		-slen 20 -tlen 20 -bksize 20 \
+		-bin \
+		-i $(filter %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $^) \
+		${IBM2_MODEL_EXTRAS} \
+		$@ \
+		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
+		&> log.${@:.gz=}
+
+
+########################################
+# HMM1 MODELS
+${HMM1_MODEL_PFX}%${L1_GIVEN_L2X}: HMM1_DIR=-r
+${HMM1_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
+${HMM1_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
+	_LOCAL=1; if [[ -w $@ ]]; then rm $@ ${@:.gz=}.dist.gz; fi
+	@_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
+	RP_PSUB_OPTS="-${HMM1_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
+	${CAT} -n ${HMM1_MODEL_PARALLELISM_LEVEL} -pn ${HMM1_MODEL_WORKERS} \
+		-v ${HMM1_DIR} \
+		-n1 0 -n2 5 \
+		-mimic he-lex \
+		-bin \
+		-i $(filter %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $^) \
+		${HMM1_MODEL_EXTRAS} \
+		$@ \
+		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
+		&> log.${@:.gz=}
+
+
+########################################
+# HMM2 MODELS
+${HMM2_MODEL_PFX}%${L1_GIVEN_L2X}: HMM2_DIR=-r
+${HMM2_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
+${HMM2_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
+	_LOCAL=1; if [[ -w $@ ]]; then rm $@ ${@:.gz=}.dist.gz; fi
+	@_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
+	RP_PSUB_OPTS="-${HMM2_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
+	${CAT} -n ${HMM2_MODEL_PARALLELISM_LEVEL} -pn ${HMM2_MODEL_WORKERS} \
+		-v ${HMM2_DIR} \
+		-n1 0 -n2 5 \
+		-mimic liang \
+		-bin \
+		-i $(filter %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $^) \
+		${HMM2_MODEL_EXTRAS} \
+		$@ \
+		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
+		&> log.${@:.gz=}
+
+
+########################################
+# HMM3 MODELS
+#Note: We use "-end-dist" instead of "-start-dist -final-dist -anchor" because
+#      PortageII lacks "-start-dist"
+${HMM3_MODEL_PFX}%${L1_GIVEN_L2X}: HMM3_DIR=-r
+${HMM3_MODEL_PFX}.%.gz:  SHELL=${FRAMEWORK_SHELL}
+${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
+	_LOCAL=1; if [[ -w $@ ]]; then rm $@ ${@:.gz=}.dist.gz; fi
+	@_LOCAL=1; [[ ! -e $@ ]] || ! echo "ERROR: We are trying to regenerate a file that you marked as read-only." >&2
+	RP_PSUB_OPTS="-${HMM3_MODEL_CPUS} -N $@ ${PSUB_OPTS}" \
+	${CAT} -n ${HMM3_MODEL_PARALLELISM_LEVEL} -pn ${HMM3_MODEL_WORKERS} \
+		-v ${HMM3_DIR} \
+		-n1 0 -n2 5 \
+		-hmm ${NEW_HMM} -end-dist -anchor -max-jump 20 -alpha 0.0 -lambda 1.0 -p0 0.6 -up0 0.5 \
+		-bin \
+		-i $(filter %${L2_GIVEN_L1X} %${L1_GIVEN_L2X}, $^) \
+		${HMM3_MODEL_EXTRAS} \
+		$@ \
+		$(call filter_interleave, %${L1} %${L1X}, %${L2} %${L2X}, ${IBM1_MODEL_PFX}.%.gz, $+) \
+		&> log.${@:.gz=}
+
+
+########################################
+# Fast Align
+${FAST_ALIGN_MODEL_PFX}: SHELL=${LOCAL_SHELL}
+${FAST_ALIGN_MODEL_PFX}:
+	mkdir -p $@
+
+${FAST_ALIGN_MODEL_PFX}/mixwam.${SRC_LANG}_${TGT_LANG}.glued:  SHELL=${LOCAL_SHELL}
+${FAST_ALIGN_MODEL_PFX}/mixwam.${SRC_LANG}_${TGT_LANG}.glued:  | ${FAST_ALIGN_MODEL_PFX}
+	fast_align_glue_corpora.py \
+		<(zcat -f $(sort $(filter %${L1X}, $+))) \
+		<(zcat -f $(sort $(filter %${L2X}, $+))) \
+	> $@
+
+${FAST_ALIGN_MODEL_PFX}/%.${SRC_LANG}_${TGT_LANG}.glued:  SHELL=${LOCAL_SHELL}
+${FAST_ALIGN_MODEL_PFX}/%.${SRC_LANG}_${TGT_LANG}.glued:  %${L1X}  %${L2X}  | ${FAST_ALIGN_MODEL_PFX}
+	fast_align_glue_corpora.py $+ > $@
+
+${FAST_ALIGN_MODEL_PFX}.%.${L2_GIVEN_L1X}:  SHELL=${FRAMEWORK_SHELL}
+${FAST_ALIGN_MODEL_PFX}.%.${L2_GIVEN_L1X}:
+	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
+	set -o pipefail; \
+	time-mem \
+	fast_align -i $< -d -v -o \
+		-c >(fast_align_normalize_ttable.py | train_ibm -tobin - $@) \
+		2> log.$(notdir ${@:.gz=}) \
+	| gzip > ${FAST_ALIGN_MODEL_PFX}/$*.${L1_2_L2}.fast_align.gz
+
+${FAST_ALIGN_MODEL_PFX}.%.${L1_GIVEN_L2X}:  SHELL=${FRAMEWORK_SHELL}
+${FAST_ALIGN_MODEL_PFX}.%.${L1_GIVEN_L2X}:
+	RP_PSUB_OPTS="-N $@ ${PSUB_OPTS}" \
+	set -o pipefail; \
+	time-mem \
+	fast_align -i $< -d -v -o -r \
+		-c >(fast_align_normalize_ttable.py | train_ibm -tobin - $@) \
+		2> log.$(notdir ${@:.gz=}) \
+	| gzip > ${FAST_ALIGN_MODEL_PFX}/$*.${L2_2_L1}.fast_align.gz
+
+
+################################################################################
+# GIZA SPECIFIC TARGETS.
+# GIZA SPECIFIC TARGETS.
+#$(addsuffix /,$(sort 1wam ${ALL_WAMS})):  SHELL=${LOCAL_SHELL}
+$(sort 1wam ${ALL_WAMS}):  SHELL=${LOCAL_SHELL}
+#$(addsuffix /,$(sort 1wam ${ALL_WAMS})):  %:
+$(sort 1wam ${ALL_WAMS}):  %:
+	mkdir -p $@
+
+
+.PHONY:  debug_giza
+
+debug_giza:  $(addsuffix /${SRC_LANG}.lc, ${ALL_WAMS})
+debug_giza:  $(addsuffix /${TGT_LANG}.lc, ${ALL_WAMS})
+
+.INTERMEDIATE:  1wam${L1X} 1wam${L2X}
+# how to create the 1wam filtered corpora pair for IBM4.
+1wam${L1X}:  SHELL=${LOCAL_SHELL}
+1wam${L1X}:  ${MIXTM:=${L1X}}
+	zcat -f $+ | gzip > $@
+1wam${L2X}:  SHELL=${LOCAL_SHELL}
+1wam${L2X}:  ${MIXTM:=${L2X}}
+	zcat -f $+ | gzip > $@
+
+# TODO:  where should we put these rules?
+# When creating the filtered version of a corpora we need to change file
+# extension to the uncompressed version when it comes to heldouts.
+$(foreach c, ${TUNE_MIXTM_FINAL}, \
+	$(eval \
+		$c/${SRC_LANG}.lc:  override L1X = ${L1}) \
+	$(eval \
+		$c/${SRC_LANG}.lc:  override L2X = ${L2}) \
+)
+
+# In order to pick up the proper extension for corpora, either compress or not,
+# we'll need to do second expansion.
+.SECONDEXPANSION:
+# Clean up the inputs for giza.
+%/${SRC_LANG}.lc:  SHELL=${LOCAL_SHELL}
+%/${SRC_LANG}.lc:  %$${L1X}  %$${L2X}  | %
+	giza_filter $+ $@ ${@:${SRC_LANG}.lc=${TGT_LANG}.lc} 2> $@.log
+
+%/${TGT_LANG}.lc:  SHELL=${LOCAL_SHELL}
+%/${TGT_LANG}.lc:  %/${SRC_LANG}.lc  | %
+	test -s $@ && sleep 1 && touch --reference=$< $@
+
+
+debug_giza:  $(addsuffix /${SRC_LANG}.lc.vcb, ${ALL_WAMS})
+debug_giza:  $(addsuffix /${TGT_LANG}.lc.vcb, ${ALL_WAMS})
+
+# Create the vocabulary files.
+%/${SRC_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
+%/${SRC_LANG}.lc.vcb:  %/${SRC_LANG}.lc  %/${TGT_LANG}.lc  | %
+	plain2snt $+ 2> $@.log
+
+%/${TGT_LANG}.lc.vcb:  SHELL=${LOCAL_SHELL}
+%/${TGT_LANG}.lc.vcb:  %/${SRC_LANG}.lc.vcb  | %
+	test -s $@ && sleep 1 && touch --reference=$< $@
+
+%/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  SHELL=${LOCAL_SHELL}
+%/${SRC_LANG}.lc_${TGT_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb  | %
+	test -s $@ && sleep 1 && touch --reference=$< $@
+
+%/${TGT_LANG}.lc_${SRC_LANG}.lc.snt:  SHELL=${LOCAL_SHELL}
+%/${TGT_LANG}.lc_${SRC_LANG}.lc.snt:  %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb  | %
+	test -s $@ && sleep 1 && touch --reference=$< $@
+
+
+debug_giza:  $(addsuffix /${SRC_LANG}.lc.vcb.classes, ${ALL_WAMS})
+debug_giza:  $(addsuffix /${TGT_LANG}.lc.vcb.classes, ${ALL_WAMS})
+
+# Create the vocabulary classes.
+%.lc.vcb.classes:  SHELL=${FRAMEWORK_SHELL}
+%.lc.vcb.classes:  %.lc
+	time-mem mkcls -m2 -p$< -c50 -V$@ opt &> $@.log
+
+
+debug_giza:  $(addsuffix /${L1_2_L2}.cooc, ${ALL_WAMS})
+debug_giza:  $(addsuffix /${L2_2_L1}.cooc, ${ALL_WAMS})
+
+# Create the cooccurrence counts.
+%/${L1_2_L2}.cooc:  SHELL=${LOCAL_SHELL}
+%/${L1_2_L2}.cooc:  %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc_${TGT_LANG}.lc.snt  | %
+	snt2cooc $@  $+ 2> $@.log
+
+%/${L2_2_L1}.cooc:  SHELL=${LOCAL_SHELL}
+%/${L2_2_L1}.cooc:  %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc_${SRC_LANG}.lc.snt  | %
+	snt2cooc $@  $+ 2> $@.log
+
+
+debug_giza:  $(addsuffix /${L2_GIVEN_L1}.gizacfg, ${ALL_WAMS})
+debug_giza:  $(addsuffix /${L1_GIVEN_L2}.gizacfg, ${ALL_WAMS})
+
+# Perform word alignment.
+%/${L2_GIVEN_L1}.gizacfg:  SHELL=${FRAMEWORK_SHELL}
+%/${L2_GIVEN_L1}.gizacfg:  %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc.vcb  %/${SRC_LANG}.lc_${TGT_LANG}.lc.snt  %/${L1_2_L2}.cooc  |  %  %/${SRC_LANG}.lc.vcb.classes %/${TGT_LANG}.lc.vcb.classes
+	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
+	${TIME_MEM} \
+	mgiza \
+		-ncpus ${IBM4_MODEL_PARALLELISM_LEVEL} \
+		-sourcevocabularyfile $(filter %${SRC_LANG}.lc.vcb,$+) \
+		-targetvocabularyfile $(filter %${TGT_LANG}.lc.vcb,$+) \
+		-corpusfile $(filter %.snt,$+) \
+		-p0 0.98 \
+		-coocurrencefile $(filter %.cooc,$+) \
+		-outputpath $* \
+		-ml 101 \
+		-outputfileprefix $(notdir ${@:.gizacfg=}) \
+		&> $@.log
+
+%/${L1_GIVEN_L2}.gizacfg:  SHELL=${FRAMEWORK_SHELL}
+%/${L1_GIVEN_L2}.gizacfg:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${TGT_LANG}.lc_${SRC_LANG}.lc.snt  %/${L2_2_L1}.cooc  | %  %/${TGT_LANG}.lc.vcb.classes %/${SRC_LANG}.lc.vcb.classes
+	RP_PSUB_OPTS="-${IBM4_MODEL_CPUS} -N $@" \
+	${TIME_MEM} \
+	mgiza \
+		-ncpus ${IBM4_MODEL_PARALLELISM_LEVEL} \
+		-sourcevocabularyfile $(filter %${TGT_LANG}.lc.vcb,$+) \
+		-targetvocabularyfile $(filter %${SRC_LANG}.lc.vcb,$+) \
+		-corpusfile $(filter %.snt,$+) \
+		-p0 0.98 \
+		-coocurrencefile $(filter %.cooc,$+) \
+		-outputpath $* \
+		-ml 101 \
+		-outputfileprefix $(notdir ${@:.gizacfg=}) \
+		&> $@.log
+
+
+# Converts Giza's IBM4 ttables in a format that Portage understands.
+# No need to time-mem or submit to the cluster since both giza_convert_ttable &
+# train_ibm on large data sets take only a couple of seconds and use little
+# memory.
+${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  SHELL=${LOCAL_SHELL}
+${IBM4_MODEL_PFX}.%.${L2_GIVEN_L1X}:  %/${SRC_LANG}.lc.vcb %/${TGT_LANG}.lc.vcb  %/${L2_GIVEN_L1}.gizacfg
+	set -o pipefail; \
+	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
+	| gzip > tmp.$@
+	train_ibm -tobin tmp.$@ $@ 2> log.${@:.gz=}
+	rm -f tmp.$@
+
+${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  SHELL=${LOCAL_SHELL}
+${IBM4_MODEL_PFX}.%.${L1_GIVEN_L2X}:  %/${TGT_LANG}.lc.vcb %/${SRC_LANG}.lc.vcb  %/${L1_GIVEN_L2}.gizacfg
+	set -o pipefail; \
+	giza_convert_ttable $(filter %.lc.vcb,$+) $(patsubst %.gizacfg,%.t3.final,$(filter %.gizacfg,$+)) \
+	| gzip > tmp.$@
+	train_ibm -tobin tmp.$@ $@ 2> log.${@:.gz=}
+	rm -f tmp.$@
+
