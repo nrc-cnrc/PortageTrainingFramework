@@ -1,0 +1,60 @@
+## @file incremental.config.template
+## @brief template for incremental-config file, documenting variables to set manually.
+## @author Eric Joanis
+## Lines starting with "##" are for the template only, the rest of this file
+## gets used as a starting point for portageLive/incremental.config
+
+# @file incremental.config
+# @brief configuration for incremental document adaptation
+# @author Eric Joanis (for the base template) and system maintainer
+#
+# This file contains the configuration required to use incremental
+# adaptation with a system.
+#
+# Traitement multilingue de textes / Multilingual Text Processing
+# Tech. de l'information et des communications / Information and Communications Tech.
+# Conseil national de recherches Canada / National Research Council Canada
+# Copyright 2017, Sa Majeste la Reine du Chef du Canada /
+# Copyright 2017, Her Majesty in Right of Canada
+
+# ============= USER SETTINGS =============
+
+# This part of the file is intended to be edited manually when custom
+# configurations are required. Uncomment and edit lines as needed, and check
+# that your settings not overwritten by automated settings at the end.
+
+# Preprocessing: default is plugins/preprocess_plugin if it exists,
+# preprocess_plugin on your $PATH otherwise. Define these if that's not
+# appropriate:
+#SRC_PREPROCESS_CMD=
+#TGT_PREPROCESS_CMD=
+
+# Tokenizing the source and target language: for languages supported by
+# utokenize.pl, use that by preference; otherwise make sure
+#    plugins/tokenize_plugin LANG
+# works for $SRC_LANG and $TGT_LANG; or, as a last recourse, define these
+# variables:
+#SRC_TOKENIZE_CMD=
+#TGT_TOKENIZE_CMD=
+
+# Lowercasing: we use "utf8_casemap -c l" by default. Uncomment and edit the
+# variables below if that's not appropriate. Use "cat" to disable lowercasing.
+#SRC_LOWERCASE_CMD="utf8_casemap -c l"
+#SRC_LOWERCASE_CMD=cat
+#TGT_LOWERCASE_CMD="utf8_casemap -c l"
+#TGT_LOWERCASE_CMD=cat
+
+
+# ============= AUTOMATED SETTINGS =============
+
+# Starting here, the end of the file should be filled automatically.
+# The framework should define SRC_LANG, TGT_LANG, and give the base name for
+# the word-alignment model in ALIGNMENT_MODEL_BASE.
+#SRC_LANG=en
+#TGT_LANG=fr
+#ALIGNMENT_MODEL_BASE=models/ibm/hmm3.tm-train.
+# When a document-specific incremental model is first configured, definitions
+# for INCREMENTAL_TM_BASE and INCREMENTAL_LM_BASE shoudl get added.
+#INCREMENTAL_LM_BASE=lm.incremental
+#INCREMENTAL_TM_BASE=cpt.incremental
+
