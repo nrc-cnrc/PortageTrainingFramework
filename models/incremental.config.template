@@ -54,7 +54,7 @@
 #TGT_LANG=fr
 #ALIGNMENT_MODEL_BASE=models/ibm/hmm3.tm-train.
 # When a document-specific incremental model is first configured, definitions
-# for INCREMENTAL_TM_BASE and INCREMENTAL_LM_BASE shoudl get added.
+# for INCREMENTAL_TM_BASE and INCREMENTAL_LM_BASE should get added.
 #INCREMENTAL_LM_BASE=lm.incremental
 #INCREMENTAL_TM_BASE=cpt.incremental
 
