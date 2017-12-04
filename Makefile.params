@@ -136,11 +136,37 @@ TRAIN_TM      ?= tm-train
 # => MIXTM_TRAIN_MIX = first word of MIXTM
 #MIXTM_TRAIN_MIX ?= subtm1
 
-# NNJM_PRETRAINED_NNJMS specifies file paths to additional pre-trained Neural
+# Word class granularities for NNJMs.
+# Defining NNJM_NCLS triggers word class training too.
+# If defined, NNJM_NCLS must contain integer values.
+# We recommend using a 400-class for NNJM.
+NNJM_NCLS ?= 400
+
+# NNJM main model.
+# Define NNJM_TRAIN_CORPORA to train a NNJM.
+# NOTE: You either use NNJM_TRAIN_CORPORA or NNJM_PRETRAINED_NNJM for your
+# out-of-domain data.
+NNJM_DEV_CORPORA ?= ${TUNE_DECODE}
+NNJM_TEST_CORPORA ?=
+#NNJM_TRAIN_CORPORA ?= ${TRAIN_TM}
+
+# NNJM fine tuning.
+# Define NNJM_FINE_TUNING_TRAIN_CORPORA to fine tune your NNJM model.
+# This triggers a second training on an existing model with in-domain data.
+NNJM_FINE_TUNING_DEV_CORPORA ?= ${NNJM_DEV_CORPORA}
+NNJM_FINE_TUNING_TEST_CORPORA ?= ${NNJM_TEST_CORPORA}
+NNJM_FINE_TUNING_TRAIN_CORPORA ?=
+
+# NNJM specific options that should stay empty.
+NNJM_TRAIN_NNJM_OPTS ?=
+NNJM_GENEX_OPTS ?=
+
+# NNJM_PRETRAINED_NNJM specifies file path to an additional pre-trained Neural
 # Network Joint Models to use in your canoe.ini.  The NNJM's filename must be
 # 'model' and it should use memory mapped class files.
-# Paths may be absolute or relative to the location of this Makefile.params file.
-#NNJM_PRETRAINED_NNJMS ?= ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
+# Path may be absolute or relative to the location of this Makefile.params file.
+#NNJM_PRETRAINED_NNJM ?= ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
+
 
 # TRAIN_LDM is used to train a Lexicalized Distortion Model (LDM)
 # (the word alignment models are needed).
@@ -711,7 +737,7 @@ TUNE_BILM := $(strip ${TUNE_BILM})
 # => WCL_NCLS_LIST = COARSELM_NCLS_LIST BILM_NCLS_LIST
 # Defining WCL_NCLS_LIST triggers word class training.
 # If defined, WCL_NCLS_LIST must contain integer values.
-WCL_NCLS_LIST ?= $(sort ${COARSELM_NCLS_LIST} ${BILM_NCLS_LIST})
+WCL_NCLS_LIST ?= $(sort ${COARSELM_NCLS_LIST} ${BILM_NCLS_LIST} ${NNJM_NCLS})
 WCL_NCLS_LIST := $(strip ${WCL_NCLS_LIST})
 
 # By default, we assume that the user wants to use the corpora listed in
@@ -970,6 +996,18 @@ endif
 ifneq ($(or $(filter IBM4, ${MERGED_CPT_ZN_MODEL} ${MERGED_CPT_JPT_TYPES}), $(filter ibm4_cpt, ${PT_TYPES})),)
 ifneq ($(strip $(shell which-test.sh mgiza && echo "true")),true)
 $(error You cannot use the IBM4 feature since you don't have mgiza installed.)
+endif
+endif
+
+ifneq ($(strip ${NNJM_TRAIN_CORPORA}),)
+ifeq ($(strip ${NNJM_DEV_CORPORA}),)
+$(error You must define NNJM_DEV_CORPORA when you have defined NNJM_TRAIN_CORPORA.)
+endif
+endif
+
+ifneq ($(strip ${NNJM_FINE_TUNING_TRAIN_CORPORA}),)
+ifeq ($(strip ${NNJM_FINE_TUNING_DEV_CORPORA}),)
+$(error You must define NNJM_FINE_TUNING_DEV_CORPORA when you have defined NNJM_FINE_TUNING_TRAIN_CORPORA.)
 endif
 endif
 

@@ -279,15 +279,17 @@ BILM_SPECS := $(shell python -c '${BILM_SPECS_PYSCRIPT}')
 $(info BiLMs: ${BILM_SPECS})
 endif # USE_BILM
 
-ifdef NNJM_PRETRAINED_NNJMS
 NNJMS := $(wildcard models/nnjm/*/model)
+NNJMS := $(filter %/fine_tuned/model %/trained/model models/nnjm/%/model, ${NNJMS})
+NNJMS := $(firstword ${NNJMS})
+ifdef NNJM_PRETRAINED_NNJM
 ifneq ($(filter-out clean clean.content clean.logs time-mem, ${MAKECMDGOALS}),)
 ifeq ($(strip ${NNJMS}),)
 $(error Could not find pretrained NNJMs)
 endif
 endif
-$(info NNJMs: ${NNJMS})
 endif
+$(info NNJMs: ${NNJMS})
 
 # This is a helper to be able to use spaces.
 SPACE :=
@@ -309,7 +311,7 @@ ${UNTUNED_DECODING_MODEL}: ${DECODING_MODEL_TEMPLATE}
 	      -distortion-model WordDisplacement:${LDM_PARAMS}:${HLDM_PARAMS}:${DM_EXTRAS} \
 	      -lex-dist-model-file ${LDM}:${HLDM} \
 	      $(if ${BILM_SPEC}, -bilm-file ${BILM_SPECS}) \
-	      $(if ${NNJM_PRETRAINED_NNJMS}, -nnjm-file $(subst ${SPACE},:, ${NNJMS})) \
+	      $(if ${NNJMS}, -nnjm-file ${NNJMS}) \
 	      $(and ${USE_SPARSE}, -sparse-model ${SPARSE} -force-shift-reduce) \
 	      ${CANOE_INI_EXTRAS} \
 	  " - \

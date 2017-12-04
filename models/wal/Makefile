@@ -63,6 +63,7 @@ vpath %/${L1_GIVEN_L2}.A3.final.part0  ${WAL_DIR_PFX}../ibm/
 .SECONDARY:
 
 
+$(info PT_TYPES: ${PT_TYPES})
 ########################################
 # ALL
 # Define all the work to be done.
@@ -149,6 +150,8 @@ clean.alignment_files:
 .PHONY: alignment_files  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 alignment_files:  $(addsuffix _alignment, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
 
+$(info ALL_WAMS: ${ALL_WAMS})
+
 
 define DEPS.PYSCRIPT
 from __future__ import print_function
@@ -180,12 +183,51 @@ def createRules(corp, wam, source, target):
 with open(".Makefile.deps", "w") as df:
    expectedFiles = set()
 
+   print("# FORCE_ALIGN_SET: {}".format(set("${FORCE_ALIGN_SET}".split())), file=df)
+   print("# ALL_WAMS: {}".format(set("${ALL_WAMS}".split())), file=df)
+
+   ########################################
    # Default rules except for IBM4 & fast_align that are third-party aligners.
+   print("# Default rules except for IBM4 & fast_align that are third-party aligners.", file=df)
    for corp in set("${ALL_WAMS}".split()):
       for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
          createRules(corp, wam, corp+"${L1X}", corp+"${L2X}")
 
+   # Special case for mixtm and BiLM tuning.
+   # TODO: do we really need to align TUNE_MIXTM_FINAL and TUNE_BILM?
+   # If so should not we be using tm-train WAM like the NNJM?
+   print("# mixtm and BiLM tuning", file=df)
+   for corp in set("${TUNE_MIXTM_FINAL} ${TUNE_BILM}".split()):
+      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
+         createRules(corp, wam, corp+"${L1}", corp+"${L2}")
+
+   # Special case for NNJM.
+   # TODO: Against which model should be force align NNJM sets?
+   # TODO: Augmenting which_wam to return the proper WAM for NNJM would allow us to fold the next two paragraphs into the preceding two.
+   print("# NNJM", file=df)
+   for corp in set("$(filter-out ${ALL_WAMS}, ${NNJM_TRAIN_CORPORA} ${NNJM_FINE_TUNING_TRAIN_CORPORA})".split()):
+      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
+         alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
+         source = corp + "${L1X}"
+         target = corp + "${L2X}"
+         al1 = "{wam}.{corp}.${L2_GIVEN_L1X}".format(corp="$(firstword ${TRAIN_TM})", wam=wam)
+         al2 = "{wam}.{corp}.${L1_GIVEN_L2X}".format(corp="$(firstword ${TRAIN_TM})", wam=wam)
+         writeDeps(alignmentFileName, source, target, al1, al2)
+
+   for corp in set("${NNJM_DEV_CORPORA} ${NNJM_TEST_CORPORA} ${NNJM_FINE_TUNING_DEV_CORPORA} ${NNJM_FINE_TUNING_TEST_CORPORA}".split()):
+      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
+         alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
+         source = corp + "${L1}"
+         target = corp + "${L2}"
+         al1 = "{wam}.{corp}.${L2_GIVEN_L1X}".format(corp="$(firstword ${TRAIN_TM})", wam=wam)
+         al2 = "{wam}.{corp}.${L1_GIVEN_L2X}".format(corp="$(firstword ${TRAIN_TM})", wam=wam)
+         writeDeps(alignmentFileName, source, target, al1, al2)
+
+
+   ########################################
    # For IBM4.
+   print("# IBM4", file=df)
+   print("# IBM4: {}".format(set("${ALL_WAMS} ${FORCE_ALIGN_SET}".split())), file=df)
    for corp in set("${ALL_WAMS} ${FORCE_ALIGN_SET}".split()):
       for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
          alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
@@ -196,19 +238,18 @@ with open(".Makefile.deps", "w") as df:
          writeDeps(alignmentFileName, source, target, d1, d2)
 
    # For IBM4.
-   # For the devs & tests, we want to use the first TRAIN_TM as IBM4 models.
-   for corp in set("$(filter-out ${TUNE_MIXTM_FINAL}, ${FORCE_ALIGN_SET})".split()):
+   # For the devs & tests, we want to use the first TRAIN_TM (aka IBM4_FORCE_ALIGN_WAM) as IBM4 model.
+   print("# IBM4 devs & tests", file=df)
+   for corp in set("$(filter-out ${TUNE_MIXTM_FINAL} ${ALL_WAMS}, ${FORCE_ALIGN_SET})".split()):
       for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
          print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corp, A="${IBM4_FORCE_ALIGN_WAM}"), file=df)
 
-   # Special case for mixtm and BiLM tuning.
-   for corp in set("${TUNE_MIXTM_FINAL} ${TUNE_BILM}".split()):
-      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
-         createRules(corp, wam, corp+"${L1}", corp+"${L2}")
 
+   ########################################
    # FAST ALIGN
-   # source and target must be of the form %${L1x} and %${L2X}
-   for corp in set("${ALL_WAMS}".split()):
+   # source and target must be of the form %${L1X} and %${L2X}
+   print("# FAST ALIGN", file=df)
+   for corp in set("${ALL_WAMS} ${NNJM_TRAIN_CORPORA} ${NNJM_FINE_TUNING_TRAIN_CORPORA}".split()):
       for wam in set("$(filter ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
          alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
          source = corp + "${L1X}"
@@ -223,11 +264,11 @@ with open(".Makefile.deps", "w") as df:
    #############################################################################
    # META LEVEL TARGETS
    def addModelsToMetaTarget(target, corpora, wams, expected=True):
-      for corp in set(corpora.split()):
+      for corp in sorted(set(corpora.split())):
          for wam in set(wams.split()):
             alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
             print("{target}_wal:  {alignment}".format(target=target(wam), alignment=alignmentFileName), file=df)
-	    if expected:
+            if expected:
                expectedFiles.add(alignmentFileName)
 
    def wamType(wam_type=None):
@@ -237,41 +278,56 @@ with open(".Makefile.deps", "w") as df:
 
    #####################################
    # LEXICALIZED DISTORTION MODELS
+   print("# LEXICALIZED DISTORTION MODELS", file=df)
    wams = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX})"
    addModelsToMetaTarget(wamType("ldm"), "${TRAIN_LDM}", wams)
 
    #####################################
    # HIERARCHICAL LEXICALIZED DISTORTION MODELS
+   print("# HIERARCHICAL LEXICALIZED DISTORTION MODELS", file=df)
    wams = "$(sort $(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS}) ${EXPECTED_MODEL_TYPES_PFX} ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX})"
    addModelsToMetaTarget(wamType("hldm"), "${TRAIN_HLDM}", wams)
 
    #####################################
-   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam
+   # Expected: { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam
+   print("# { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam", file=df)
    wams = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
    addModelsToMetaTarget(wamType(), "${TRAIN_TM}", wams)
 
+   #####################################
+   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam
+   print("# NNJM { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam", file=df)
+   #wams = "$(filter ${NNJM_WAM_TYPE}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
+   wams = "${NNJM_WAM_TYPE}"
+   addModelsToMetaTarget(wamType(), "${NNJM_DEV_CORPORA} ${NNJM_TEST_CORPORA} ${NNJM_TRAIN_CORPORA} ${NNJM_FINE_TUNING_DEV_CORPORA} ${NNJM_FINE_TUNING_TEST_CORPORA} ${NNJM_FINE_TUNING_TRAIN_CORPORA}", wams)
+
+   print("# Not Expected { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam", file=df)
    wams = "$(filter-out ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
-   addModelsToMetaTarget(wamType(), "${TRAIN_TM}", wams, False)
+   addModelsToMetaTarget(wamType(), "${TRAIN_TM}", wams, expected=False)
 
    #####################################
    # MIXTURE
+   print("# MIXTURE", file=df)
    wams = "${EXPECTED_MODEL_TYPES_PFX}"
    expected = "mix" in pt_types
    addModelsToMetaTarget(wamType("mix"), "${TUNE_MIXTM_FINAL} ${MIX_WAMS}", wams, expected)
 
    #####################################
    # INDICATOR
+   print("# INDICATOR", file=df)
    wams = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
    expected = "indicator" in pt_types
    addModelsToMetaTarget(wamType("indicator"), "${ALL_TMS}", wams, expected)
 
    #####################################
    # BILM
+   print("# BILM", file=df)
    wams = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
    addModelsToMetaTarget(wamType("bilm"), "${TRAIN_BILM} ${TUNE_BILM}", wams)
 
    #####################################
    # FORCE ALIGN
+   print("# FORCE ALIGN", file=df)
    wams = "${IBM4_MODEL_PFX}"
    addModelsToMetaTarget(wamType("ibm4_force_align"), "${FORCE_ALIGN_SET}", wams)
 

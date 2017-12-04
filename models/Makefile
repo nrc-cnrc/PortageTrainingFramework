@@ -320,17 +320,22 @@ endif
 
 .PHONY:  nnjm
 nnjm:  SHELL=${LOCAL_SHELL}
-ifdef NNJM_PRETRAINED_NNJMS
+ifneq ("${NNJM_PRETRAINED_NNJM}${NNJM_TRAIN_CORPORA}${NNJM_FINE_TUNING_TRAIN_CORPORA}","")
 models:  nnjm
+
+MODULE_TARGETS += nnjm
 
 PortageLive:  portageLive_models_nnjm
 portageLive_models_decode${_PLIVE_DECODE_VARIANT}: portageLive_models_nnjm
+portageLive_models_nnjm:  portageLive_models_wcl
 
+nnjm:  wal
+nnjm:  wcl
 nnjm:
 	${MAKE} -C $@ all
 else
 nnjm:
-	@echo "Not using pretrained nnjms." >&2
+	@echo "Not using NNJM." >&2
 endif
 
 

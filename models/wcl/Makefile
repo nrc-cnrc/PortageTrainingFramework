@@ -100,6 +100,8 @@ with open(".Makefile.deps", "w") as df:
          cfiles = " ".join("{c}_{l}{x}".format(c=c, l=l, x=corpus_ext) for c in corpora)
          print("{t}: {cf}".format(t=target, cf=cfiles), file=df)
          expected_files.append(target)
+         target="{l}.{n}.mmcls".format(l=l, n=n)
+         expected_files.append(target)
 
    print("EXPECTED_FILES :=", *expected_files, file=df)
 endef

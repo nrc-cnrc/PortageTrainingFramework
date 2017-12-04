@@ -116,6 +116,9 @@ FAST_ALIGN_MODEL_PFX ?= fast_align
 # fill-up procedure.
 POSSIBLE_WORD_ALIGNMENT_MODELS := ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX} ${HMM3_MODEL_PFX} ${HMM2_MODEL_PFX} ${HMM1_MODEL_PFX} ${IBM2_MODEL_PFX} ${IBM1_MODEL_PFX}
 
+# Function to sort a list of models from arbitrary order to best-first order.
+sort_aligners = $(filter $1, ${POSSIBLE_WORD_ALIGNMENT_MODELS})
+
 ########################################
 # JPT MODELS.
 JPT_MODEL_PFX ?= jpt
@@ -124,6 +127,13 @@ JPT_MODEL_PFX ?= jpt
 # SIG MODELS.
 SIG_THRESHOLD ?= a+e
 SIG_MODEL_PFX ?= sig.${SIG_THRESHOLD}
+
+
+########################################
+# NNJM
+# If no NNJM_WAM_TYPE is provided will automatically get the best model that was provided in MERGED_CPT_JPT_TYPES.
+NNJM_WAM_TYPE ?= $(firstword $(call sort_aligners, $(shell echo ${MERGED_CPT_JPT_TYPES} | tr A-Z a-z)))
+NNJM_WAM_TYPE :=$(strip ${NNJM_WAM_TYPE})
 
 
 # DON'T change the following variable, we need a new variable to hold the

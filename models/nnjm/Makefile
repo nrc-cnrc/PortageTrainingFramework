@@ -9,8 +9,8 @@
 # Traitement multilingue de textes / Multilingual Text Processing
 # Tech. de l'information et des communications / Information and Communications Tech.
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2016, Sa Majeste la Reine du Chef du Canada
-# Copyright 2016, Her Majesty in Right of Canada
+# Copyright 2017, Sa Majeste la Reine du Chef du Canada
+# Copyright 2017, Her Majesty in Right of Canada
 
 NNJM_DIR_PFX := $(dir $(lastword ${MAKEFILE_LIST}))
 #$(info NNJM_DIR_PFX: ${NNJM_DIR_PFX})
@@ -22,6 +22,9 @@ include ${NNJM_DIR_PFX}../../Makefile.params
 MAKEFILE_PARAMS ?= Makefile.params
 -include ${NNJM_DIR_PFX}${MAKEFILE_PARAMS}
 
+# We assume the top level Makefile.params has already been included.
+include ${NNJM_DIR_PFX}../Makefile.definition
+
 # Include the master toolkit.
 include ${NNJM_DIR_PFX}../../Makefile.toolkit
 
@@ -31,7 +34,48 @@ MODULE_NAME ?= nnjm
 # Where we need to deploy the NNJM models to create a portageLive system.
 PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/nnjm
 
-NNJM_PRETRAINED_NNJMS_FIXED := $(foreach f, ${NNJM_PRETRAINED_NNJMS}, $(call FIX_RELATIVE_PATH, ${NNJM_DIR_PFX}../../, $f))
+NNJM_PRETRAINED_NNJM_FIXED := $(foreach f, ${NNJM_PRETRAINED_NNJM}, $(call FIX_RELATIVE_PATH, ${NNJM_DIR_PFX}../../, $f))
+
+NNJM_NCLS ?= 400
+
+# NNJM trained model
+NNJM_DEV_CORPORA ?= ${TUNE_DECODE}
+NNJM_TEST_CORPORA ?=
+#NNJM_TRAIN_CORPORA ?= ${TRAIN_TM}
+
+# NNJM fine tuning
+NNJM_FINE_TUNING_DEV_CORPORA ?= ${NNJM_DEV_CORPORA}
+NNJM_FINE_TUNING_TEST_CORPORA ?= ${NNJM_TEST_CORPORA}
+NNJM_FINE_TUNING_TRAIN_CORPORA ?=
+NNJM_FINE_TUNING_PRETRAINED_MODEL ?= trained/nnjm
+
+# If no NNJM_WAM_TYPE is provided will automatically get the best model that
+# was provided in MERGED_CPT_JPT_TYPES.
+$(info Using wam_type: ${NNJM_WAM_TYPE})
+
+NNJM_TRAIN_NNJM_OPTS ?=
+NNJM_TRAIN_NNJM_OPTS := $(and ${NNJM_TRAIN_NNJM_OPTS}, -train-nnjm-opts "${NNJM_TRAIN_NNJM_OPTS}")
+NNJM_GENEX_OPTS ?=
+NNJM_GENEX_OPTS := $(and ${NNJM_GENEX_OPTS}, -nnjm-genex-opts "${NNJM_GENEX_OPTS}")
+
+
+CORPORA_DIR := ${NNJM_DIR_PFX}/../../corpora
+WAL_DIR := ${NNJM_DIR_PFX}/../wal
+WCL_DIR := ${NNJM_DIR_PFX}/../wcl
+
+CLS_X := .mmcls
+
+vpath %${L1}  ${CORPORA_DIR}
+vpath %${L2}  ${CORPORA_DIR}
+vpath %${L1X}  ${CORPORA_DIR}
+vpath %${L2X}  ${CORPORA_DIR}
+vpath %.classes  ${WCL_DIR}
+vpath %.mmcls  ${WCL_DIR}
+vpath %.align  ${WAL_DIR}
+vpath %.align.gz  ${WAL_DIR}
+vpath %/${SRC_LANG}.lc    ${WAL_DIR_PFX}../ibm/  ${WAL_DIR_PFX}../wal/
+vpath %/${TGT_LANG}.lc    ${WAL_DIR_PFX}../ibm/  ${WAL_DIR_PFX}../wal/
+
 
 .DEFAULT_GOAL := help
 .SUFFIXES:
@@ -55,7 +99,7 @@ help:
 all: SHELL=${LOCAL_SHELL}
 all:
 
-#$(info NNJM_PRETRAINED_NNJMS_FIXED: ${NNJM_PRETRAINED_NNJMS_FIXED})
+#$(info NNJM_PRETRAINED_NNJM_FIXED: ${NNJM_PRETRAINED_NNJM_FIXED})
 
 
 ########################################
@@ -68,20 +112,35 @@ clean:  clean.logs
 .PHONY:  clean.content
 clean.content:  SHELL=${LOCAL_SHELL}
 clean.content:
-	${RM} cpt.delme  pretrained.*
+	${RM} -r cpt.delme  pretrained.* trained fine_tuned train-nnjm.workdir-*
 
 .PHONY:  clean.logs
 clean.logs: SHELL=${LOCAL_SHELL}
 clean.logs:
-	${RM} .Makefile*.deps
+	${RM} .Makefile*.deps log.train-nnjm*
 
 
 define DEPS.PYSCRIPT
 from __future__ import print_function
 
+def add_nnjm_corpra_dependencies(model_name, corpora_prefixes, ext=".gz"):
+   for corpora in set(corpora_prefixes.split()):
+      if "${NNJM_WAM_TYPE}".lower()  == "ibm4":
+         s = "{c}/${SRC_LANG}.lc".format(c=corpora, e=ext)
+         t = "{c}/${TGT_LANG}.lc".format(c=corpora, e=ext)
+      else:
+         s = "{c}${L1}{e}".format(c=corpora, e=ext)
+         t = "{c}${L2}{e}".format(c=corpora, e=ext)
+      wal = "{c}.{w}.${L1_2_L2}.align.gz".format(c=corpora, w="${NNJM_WAM_TYPE}".lower(), e=ext)
+      print("{mn}:  {s}  {t}  {wal}".format(mn=model_name, s=s, t=t, wal=wal), file=df)
+
 with open(".Makefile.deps", "w") as df:
+   if "${NNJM_WAM_TYPE}".lower() not in set("${MERGED_CPT_JPT_TYPES}".lower().split()):
+      print("$$(error You must use a NNJM_WAM_TYPE(${NNJM_WAM_TYPE}) that is in (${MERGED_CPT_JPT_TYPES}))", file=df)
+
+   print("# Pretrain model:", file=df)
    symlinks = []
-   for nnjm in set("${NNJM_PRETRAINED_NNJMS_FIXED}".split()):
+   for nnjm in set("${NNJM_PRETRAINED_NNJM_FIXED}".split()):
       parts = nnjm.split("/")
       assert(len(parts) >= 2)
       model  = parts[-1]
@@ -98,24 +157,47 @@ with open(".Makefile.deps", "w") as df:
       print("{t}/{m}.is.memory.mapped:  {t}".format(t=target, m=model), file=df)
       print("{t}:  {d}".format(t=target, d="/".join(parts[:-1])), file=df)
 
-      print("portageLive:  {t}/{m}.pretrained".format(m=model, t=target), file=df)
-      print("portageLive:  {pl}/{t}".format(pl="${PORTAGE_LIVE_DEST_DIR}", t=target), file=df)
-      print("{pl}/{t}:  {t}  | {pl}".format(pl="${PORTAGE_LIVE_DEST_DIR}", t=target), file=df)
+      #print("portageLive:  {t}/{m}.pretrained".format(m=model, t=target), file=df)
+      #print("portageLive:  {pl}/{t}".format(pl="${PORTAGE_LIVE_DEST_DIR}", t=target), file=df)
+      #print("{pl}/{t}:  {t}  | {pl}".format(pl="${PORTAGE_LIVE_DEST_DIR}", t=target), file=df)
 
    print("PRETRAINED_NNJMS_LIST :=", *symlinks, file=df)
+
+   print("", file=df)
+
+   print("# Training:", file=df)
+
+   # TODO: What should be the wal_ext?
+   wal_ext = ".${NNJM_NCLS}${CLS_X}"
+
+   # TODO: if we are using a pretrained model, we need to be using the same classes files as the pretrained model.
+   print("trained/nnjm.bin:  {s}  {t}".format(s="${SRC_LANG}"+wal_ext, t="${TGT_LANG}"+wal_ext), file=df)
+   add_nnjm_corpra_dependencies("trained/nnjm.bin", "${NNJM_DEV_CORPORA} ${NNJM_TEST_CORPORA}", ext="")
+   add_nnjm_corpra_dependencies("trained/nnjm.bin", "${NNJM_TRAIN_CORPORA}", ext=".gz")
+
+   if "${NNJM_TRAIN_CORPORA}".strip() != "":
+      print("fine_tuned/nnjm.bin:  {s}  {t}".format(s="${SRC_LANG}"+wal_ext, t="${TGT_LANG}"+wal_ext), file=df)
+   add_nnjm_corpra_dependencies("fine_tuned/nnjm.bin", "${NNJM_FINE_TUNING_DEV_CORPORA} ${NNJM_FINE_TUNING_TEST_CORPORA}", ext="")
+   add_nnjm_corpra_dependencies("fine_tuned/nnjm.bin", "${NNJM_FINE_TUNING_TRAIN_CORPORA}", ext=".gz")
 endef
 #$(info NNJM dependencies generator: ${DEPS.PYSCRIPT})
 
 
-ifdef NNJM_PRETRAINED_NNJMS
-$(info Using pre-trained NNJMS)
 $(shell python -c '${DEPS.PYSCRIPT}')
 include .Makefile.deps
+
+ifdef NNJM_PRETRAINED_NNJM
+$(info Using pre-trained NNJMS)
 $(info PRETRAINED_NNJMS_LIST: ${PRETRAINED_NNJMS_LIST})
 
 all:  pretrained
 .PHONY:  pretrained
 pretrained: SHELL=${LOCAL_SHELL}
+
+# If we were to fine tune a NNJM, since no training corpora was provided by the
+# user, we will fine tune the pretrained model.
+NNJM_FINE_TUNING_PRETRAINED_MODEL := $(firstword ${PRETRAINED_NNJMS_LIST})/nnjm
+$(firstword ${PRETRAINED_NNJMS_LIST})/nnjm.pkl:  $(firstword ${PRETRAINED_NNJMS_LIST})
 
 ${PRETRAINED_NNJMS_LIST}:  SHELL=${LOCAL_SHELL}
 ${PRETRAINED_NNJMS_LIST}:
@@ -136,6 +218,17 @@ cpt.delme:
 #clean.content:  clean.symlinks
 #clean.symlinks:
 #	${RM} ${PRETRAINED_NNJMS_LIST}
+
+
+${NNJM_FINE_TUNING_PRETRAINED_MODEL}.bin:  %.bin:  $(dir $*)
+	true
+
+
+${NNJM_FINE_TUNING_PRETRAINED_MODEL}.pkl:  %.pkl:  $(dir $*)
+	true
+else ifneq ($(strip ${NNJM_TRAIN_CORPORA}),)
+$(info Training a NNJM model using ${NNJM_TRAIN_CORPORA})
+all:  trained/nnjm.bin
 else
 $(info Not using NNJMs)
 all:
@@ -143,9 +236,18 @@ all:
 endif
 
 
+
+ifneq ($(strip ${NNJM_FINE_TUNING_TRAIN_CORPORA}),)
+$(info Performing fine tuning on ${NNJM_FINE_TUNING_PRETRAINED_MODEL} using ${NNJM_FINE_TUNING_TRAIN_CORPORA})
+all:  fine_tuned/nnjm.bin
+endif
+
+
+
+
 .PHONY: pretrained.are.memory.mapped
 pretrained.are.memory.mapped:  SHELL=${LOCAL_SHELL}
-pretrained.are.memory.mapped:  $(addsuffix .is.memory.mapped, ${NNJM_PRETRAINED_NNJMS_FIXED})
+pretrained.are.memory.mapped:  $(addsuffix .is.memory.mapped, ${NNJM_PRETRAINED_NNJM_FIXED})
 
 # Validate that the NNJM model is using classes files that are memory mapped.
 %.is.memory.mapped:  SHELL=${LOCAL_SHELL}
@@ -167,8 +269,16 @@ ${PORTAGE_LIVE_DEST_DIR}:
 
 .PHONY:  portageLive
 portageLive:  SHELL=${LOCAL_SHELL}
-ifdef NNJM_PRETRAINED_NNJMS
-portageLive:  | ${PORTAGE_LIVE_DEST_DIR}
+ifdef NNJM_FINE_TUNING_TRAIN_CORPORA
+portageLive:  ${PORTAGE_LIVE_DEST_DIR}/fine_tuned
+${PORTAGE_LIVE_DEST_DIR}/fine_tuned:  fine_tuned/nnjm.bin  | ${PORTAGE_LIVE_DEST_DIR}
+else ifdef NNJM_TRAIN_CORPORA
+portageLive:  ${PORTAGE_LIVE_DEST_DIR}/trained
+${PORTAGE_LIVE_DEST_DIR}/trained:  trained/nnjm.bin  | ${PORTAGE_LIVE_DEST_DIR}
+else ifdef NNJM_PRETRAINED_NNJM
+portageLive:  $(firstword ${PRETRAINED_NNJMS_LIST})/model.pretrained
+portageLive:  ${PORTAGE_LIVE_DEST_DIR}/$(firstword ${PRETRAINED_NNJMS_LIST})
+${PORTAGE_LIVE_DEST_DIR}/$(firstword ${PRETRAINED_NNJMS_LIST}):  $(firstword ${PRETRAINED_NNJMS_LIST})  | ${PORTAGE_LIVE_DEST_DIR}
 else
 portageLive:
 	@echo "Not using NNJMs, so nothing to do for portageLive." >&2
@@ -176,7 +286,7 @@ endif
 
 ${PORTAGE_LIVE_DEST_DIR}/%: SHELL=${LOCAL_SHELL}
 ${PORTAGE_LIVE_DEST_DIR}/%:
-	ln -fs ../../../nnjm/$< $@
+	ln -fs ../../../nnjm/$* $(dir $@)
 
 MAIN_TARGETS += portageLive
 
@@ -188,13 +298,91 @@ clean.portageLive:
 
 
 
+
+################################################################################
+# TODO:  these rules are quick hacky and specific, yark!
+remove_corpora = $(or $(and $(strip $1), $(filter-out \
+				%$(strip $1)${L1} \
+				%$(strip $1)${L2} \
+				%$(strip $1)/${SRC_LANG}.lc \
+				%$(strip $1)/${TGT_LANG}.lc \
+				%$(strip $1).${NNJM_WAM_TYPE}.${L1_2_L2}.align.gz \
+				, $2)), $2)
+get_corpora = $(filter-out %.pkl, \
+					$(filter \
+					%$(strip $1)${L1} \
+					%$(strip $1)${L2} \
+					%$(strip $1)/${SRC_LANG}.lc \
+					%$(strip $1)/${TGT_LANG}.lc \
+					%$(strip $1).${NNJM_WAM_TYPE}.${L1_2_L2}.align.gz \
+					, $2))
+
+remove_dev = $(call remove_corpora, ${NNJM_DEV_CORPORA}, \
+					 $(call remove_corpora, ${NNJM_FINE_TUNING_DEV_CORPORA}, $1))
+
+remove_test = $(call remove_corpora, ${NNJM_TEST_CORPORA}, \
+					 $(call remove_corpora, ${NNJM_FINE_TUNING_TEST_CORPORA}, $1))
+
+get_train = $(filter-out %.bin %.pkl, $(call remove_test, $(call remove_dev, $1)))
+
+trained/nnjm.bin:
+	train-nnjm.sh \
+		-out trained \
+		-cls-s $(filter %/${SRC_LANG}.${NNJM_NCLS}${CLS_X}, $^) \
+		-cls-t $(filter %/${TGT_LANG}.${NNJM_NCLS}${CLS_X}, $^) \
+		${NNJM_TRAIN_NNJM_OPTS} \
+		${NNJM_GENEX_OPTS} \
+		$(and $(call get_corpora, ${NNJM_TEST_CORPORA}, $^), -test $(call get_corpora, ${NNJM_TEST_CORPORA}, $^)) \
+		-dev $(call get_corpora, ${NNJM_DEV_CORPORA}, $^) \
+		$(call get_train, $(filter-out %${CLS_X}, $^)) \
+	&> log.train-nnjm
+
+
+
+fine_tuned/nnjm.bin:  ${NNJM_FINE_TUNING_PRETRAINED_MODEL}.pkl
+	train-nnjm.sh \
+		-out fine_tuned \
+		-pre-trained-nnjm  $(or $(dir $(filter %.pkl, $^)), $(error You need to define a pretrained nnjm model.)) \
+		${NNJM_TRAIN_NNJM_OPTS} \
+		${NNJM_GENEX_OPTS} \
+		$(and $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPORA}, $^), -test $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPORA}, $^)) \
+		-dev $(call get_corpora, ${NNJM_FINE_TUNING_DEV_CORPORA}, $^) \
+		$(or $(call get_train, $(filter-out %${CLS_X}, $^)), $(error You need to define NNJM_FINE_TUNING_TRAIN_CORPORA)) \
+	&> log.train-nnjm.fine_tuning
+
+
+%.bin:  %.pkl
+	unpickle.py $< $@
+
+
+
+
+################################################################################
+# Validation
+ifneq ($(strip ${NNJM_PRETRAINED_NNJM_FIXED}),)
+ifneq ($(strip ${NNJM_TRAIN_CORPORA}),)
+$(error You cannot use pretrained nnjm and also ask to train a NNJM.  Maybe you want to fine tune a pretrained model instead?)
+endif   # NNJM_TRAIN_CORPORA
+
+else  # NNJM_PRETRAINED_NNJM_FIXED
+ifneq ($(strip ${NNJM_FINE_TUNING_TRAIN_CORPORA}),)
+ifeq ($(strip ${NNJM_TRAIN_CORPORA}),)
+$(error you need to use either a pretrained model or train a base model if you want to use fine tuning.)
+endif   # NNJM_TRAIN_CORPORA
+endif   # NNJM_FINE_TUNING_TRAIN_CORPORA
+endif   # NNJM_PRETRAINED_NNJM_FIXED
+
+
+
+
+
 ################################################################################
 # TestSuite
 .PHONY:  testsuite
 
 testsuite:  one_pretrained_testcase
 .PHONY:  one_pretrained_testcase
-one_pretrained_testcase:  export NNJM_PRETRAINED_NNJMS := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.en2fr.mm/model
+one_pretrained_testcase:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.en2fr.mm/model
 one_pretrained_testcase:
 	${MAKE} clean
 	${MAKE} portageLive
@@ -204,10 +392,120 @@ one_pretrained_testcase:
 
 testsuite:  multiple_pretrained_testcase
 .PHONY:  multiple_pretrained_testcase
-multiple_pretrained_testcase:  export NNJM_PRETRAINED_NNJMS := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.en2fr.mm/model  ${PORTAGE_GENERIC_MODEL}/nnjm/nnjm.generic-2.0.fr2en.mm/model
+multiple_pretrained_testcase:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.en2fr.mm/model  ${PORTAGE_GENERIC_MODEL}/nnjm/nnjm.generic-2.0.fr2en.mm/model
 multiple_pretrained_testcase:
 	${MAKE} clean
 	${MAKE} portageLive
 	[[ `\ls -d ${PORTAGE_LIVE_DEST_DIR}/pretrained* | \wc -l` -eq 2 ]] || ! echo "Error: Expecting 2 NNJM model." >&2
 	[[ -L ${PORTAGE_LIVE_DEST_DIR}/pretrained.nnjm.generic-2.0.en2fr.mm ]] || ! echo "Error: Missing NNJM model symlink." >&2
 	[[ -L ${PORTAGE_LIVE_DEST_DIR}/pretrained.nnjm.generic-2.0.fr2en.mm ]] || ! echo "Error: Missing NNJM model symlink." >&2
+
+
+########################################
+# Training scenarios
+.PHONY:  test_scenarios
+NNJM_TRAIN_NNJM_OPTS_QUICK := -embed_size 3  -n_hidden_layers 1  -batch_size 64  -slice_size 64  -print_interval 1  -hidden_layer_sizes 12  -n_epochs 6  -self_norm_alpha 0.1  -eta_0 0.3  -rnd_elide_max 3  -rnd_elide_prob 0.1  -val_batch_size 10  -batches_per_epoch 20
+
+# ERROR
+# We are not allowed to ask for pretrained and try to train a NNJM.
+.PHONY: pretrained_trained
+test_scenarios:  pretrained_trained
+pretrained_trained:  export NNJM_WAM_TYPE := hmm3
+pretrained_trained:  export NNJM_DEV_CORPORA := ${TUNE_DECODE}
+pretrained_trained:  export NNJM_TEST_CORPORA := $(firstword ${TEST_SET})
+pretrained_trained:  export NNJM_TRAIN_CORPORA := ${TRAIN_TM}
+pretrained_trained:  export NNJM_FINE_TUNING_DEV_CORPORA :=
+pretrained_trained:  export NNJM_FINE_TUNING_TEST_CORPORA :=
+pretrained_trained:  export NNJM_FINE_TUNING_TRAIN_CORPORA :=
+pretrained_trained:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
+pretrained_trained:
+	echo -e "################################################\nTESTCASE: $@"
+	! ${MAKE} all
+
+
+# ERROR
+# It is not allowed to try to only fine tuned since a pretrained NNJM or a
+# freshly build NNJM is required.
+.PHONY: fine_tuned_only
+test_scenarios:  fine_tuned_only
+fine_tuned_only:  export NNJM_WAM_TYPE := hmm3
+fine_tuned_only:  export NNJM_DEV_CORPORA :=
+fine_tuned_only:  export NNJM_TEST_CORPORA :=
+fine_tuned_only:  export NNJM_TRAIN_CORPORA :=
+fine_tuned_only:  export NNJM_FINE_TUNING_DEV_CORPORA := ${TUNE_DECODE}
+fine_tuned_only:  export NNJM_FINE_TUNING_TEST_CORPORA := $(firstword ${TEST_SET})
+fine_tuned_only:  export NNJM_FINE_TUNING_TRAIN_CORPORA := ${TRAIN_TM}
+fine_tuned_only:  export NNJM_PRETRAINED_NNJM :=
+fine_tuned_only:
+	echo -e "################################################\nTESTCASE: $@"
+	! ${MAKE} all
+
+
+# We should be able to use a pretrained NNJM model only.
+.PHONY: pretrained
+test_scenarios:  pretrained
+pretrained:  export NNJM_WAM_TYPE := hmm3
+pretrained:  export NNJM_DEV_CORPORA :=
+pretrained:  export NNJM_TEST_CORPORA :=
+pretrained:  export NNJM_TRAIN_CORPORA :=
+pretrained:  export NNJM_FINE_TUNING_DEV_CORPORA :=
+pretrained:  export NNJM_FINE_TUNING_TEST_CORPORA :=
+pretrained:  export NNJM_FINE_TUNING_TRAIN_CORPORA :=
+pretrained:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
+pretrained:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
+pretrained:
+	echo -e "################################################\nTESTCASE: $@"
+	${MAKE} portageLive
+
+
+# We should be able to fine tune a pretrained NNJM model.
+.PHONY: pretrained_fine_tuned
+test_scenarios:  pretrained_fine_tuned
+pretrained_fine_tuned:  export NNJM_WAM_TYPE := hmm3
+pretrained_fine_tuned:  export NNJM_DEV_CORPORA :=
+pretrained_fine_tuned:  export NNJM_TEST_CORPORA :=
+pretrained_fine_tuned:  export NNJM_TRAIN_CORPORA :=
+pretrained_fine_tuned:  export NNJM_FINE_TUNING_DEV_CORPORA := ${TUNE_DECODE}
+pretrained_fine_tuned:  export NNJM_FINE_TUNING_TEST_CORPORA := $(firstword ${TEST_SET})
+pretrained_fine_tuned:  export NNJM_FINE_TUNING_TRAIN_CORPORA := ${TRAIN_TM}
+#pretrained_fine_tuned:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
+pretrained_fine_tuned:  export NNJM_PRETRAINED_NNJM := /home/models/HANSARD-2017/Hansard-2017.${SRC_LANG}2${TGT_LANG}/models/nnjm/pretrained.baseline.10M/model
+pretrained_fine_tuned:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
+pretrained_fine_tuned:
+	echo -e "################################################\nTESTCASE: $@"
+	${MAKE} portageLive
+
+
+# We should be able to train a NNJM model from user provided data.
+.PHONY: trained
+test_scenarios:  trained
+trained:  export NNJM_WAM_TYPE := hmm3
+trained:  export NNJM_DEV_CORPORA := ${TUNE_DECODE}
+trained:  export NNJM_TEST_CORPORA := $(firstword ${TEST_SET})
+trained:  export NNJM_TRAIN_CORPORA := ${TRAIN_TM}
+trained:  export NNJM_FINE_TUNING_DEV_CORPORA :=
+trained:  export NNJM_FINE_TUNING_TEST_CORPORA :=
+trained:  export NNJM_FINE_TUNING_TRAIN_CORPORA :=
+trained:  export NNJM_PRETRAINED_NNJM :=
+trained:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
+trained:
+	echo -e "################################################\nTESTCASE: $@"
+	${MAKE} portageLive
+
+
+# We should be able to fine tune a trained NNJM model built from user provided
+# data.
+.PHONY: trained_fine_tuned
+test_scenarios:  trained_fine_tuned
+trained_fine_tuned:  export NNJM_WAM_TYPE := hmm3
+trained_fine_tuned:  export NNJM_DEV_CORPORA := ${TUNE_DECODE}
+trained_fine_tuned:  export NNJM_TEST_CORPORA := $(firstword ${TEST_SET})
+trained_fine_tuned:  export NNJM_TRAIN_CORPORA := ${TRAIN_TM}
+trained_fine_tuned:  export NNJM_FINE_TUNING_DEV_CORPORA := ${TUNE_DECODE}
+trained_fine_tuned:  export NNJM_FINE_TUNING_TEST_CORPORA := $(firstword ${TEST_SET})
+trained_fine_tuned:  export NNJM_FINE_TUNING_TRAIN_CORPORA := ${TRAIN_TM}
+trained_fine_tuned:  export NNJM_PRETRAINED_NNJM :=
+trained_fine_tuned:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
+trained_fine_tuned:
+	echo -e "################################################\nTESTCASE: $@"
+	${MAKE} portageLive
