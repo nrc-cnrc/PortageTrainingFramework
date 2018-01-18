@@ -166,8 +166,11 @@ ${FAST_ALIGN_MODEL_PFX}.%.${L1_GIVEN_L2X}:
 
 ################################################################################
 # GIZA SPECIFIC TARGETS.
-$(addsuffix /,$(sort 1wam ${ALL_WAMS})):  SHELL=${LOCAL_SHELL}
-$(addsuffix /,$(sort 1wam ${ALL_WAMS})):  %:
+# GIZA SPECIFIC TARGETS.
+#$(addsuffix /,$(sort 1wam ${ALL_WAMS})):  SHELL=${LOCAL_SHELL}
+$(sort 1wam ${ALL_WAMS}):  SHELL=${LOCAL_SHELL}
+#$(addsuffix /,$(sort 1wam ${ALL_WAMS})):  %:
+$(sort 1wam ${ALL_WAMS}):  %:
 	mkdir -p $@
 
 

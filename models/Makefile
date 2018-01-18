@@ -484,6 +484,31 @@ $(addprefix portageLive/plugins/, ${PLUGINS}):  portageLive/plugins/%:
 	mkdir -p $(dir $@)
 	cd $(dir $@) && ln -fs ../../../plugins/$*
 
+.PHONY: portageLive_incremental
+portageLive: portageLive_incremental
+portageLive_incremental: portageLive/incremental.config portageLive_incremental_ibm
+
+INCREMENTAL_WAM=$(strip \
+   $(if ${TRAIN_TM},$(firstword ${TRAIN_TM}), \
+      $(if ${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL},mixwam, \
+         $(firstword ${MIXTM_TRAIN_MIX}))))
+
+portageLive/incremental.config: SHELL=${LOCAL_SHELL}
+portageLive/incremental.config: incremental.config.template
+	cat incremental.config.template > $@
+	echo SRC_LANG=${SRC_LANG} >> $@
+	echo TGT_LANG=${TGT_LANG} >> $@
+	echo ALIGNMENT_MODEL_BASE=models/ibm/hmm3.${INCREMENTAL_WAM}. >> $@
+ifdef DONT_LOWERCASE_SRC
+	echo SRC_LOWERCASE_CMD=cat >> $@
+endif
+
+.PHONY: portageLive_incremental_ibm
+portageLive_incremental_ibm: SHELL=${LOCAL_SHELL}
+portageLive_incremental_ibm:
+	mkdir -p portageLive/models/ibm
+	cd portageLive/models/ibm && ln -fs ../../../ibm/hmm3.${INCREMENTAL_WAM}.*_given_* .
+
 .PHONY: clean.portageLive
 clean clean.content: clean.portageLive
 clean.portageLive: SHELL=${LOCAL_SHELL}

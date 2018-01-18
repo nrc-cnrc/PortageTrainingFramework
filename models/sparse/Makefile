@@ -106,6 +106,9 @@ data: model
 
 model.templates: model data
 	palminer -v -pop -m model >& log.$@
+ifdef SPARSE_MODEL_NO_MMCLS
+	sed -i 's/\.mmcls$$//' model.templates
+endif
 
 EXPECTED_FILES := model model.templates model.numex model.feats.gz model.freqs.gz \
                   model.voc.gz model.wts.gz model.wtsums.gz data.*

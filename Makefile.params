@@ -618,6 +618,10 @@ ifdef USE_SIGPRUNING
 endif
 SIG_THRESHOLD := $(strip ${SIG_THRESHOLD})
 
+# On some clusters or highly parallel file systems, memory-mapped class files
+# can be inefficient - uncomment to use the regular ones instead
+SPARSE_MODEL_NO_MMCLS ?= 1
+
 # By default, we assume that the user wants to use the corpora listed in
 # TRAIN_TM and MIXTM to build the Lexicalized Distortion Model (LDM).
 ifdef USE_LDM
