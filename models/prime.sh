@@ -29,6 +29,12 @@ CONTEXT=`dirname $0`
 # This can either be "full" or "partial".
 PrimeMode=$1
 
+# Prime the truecasing model, if it's tightly packed
+if grep tctp $CONTEXT/soap-translate.sh >& /dev/null; then
+   cat $CONTEXT/models/tc/*.tp*/* >& /dev/null
+fi
+
+# Prime the main decoder model itself
 if [[ "$PrimeMode" == "full" ]] || [[ "$PrimeMode" == "partial" ]]; then
    configtool prime_$PrimeMode $CONTEXT/canoe.ini.cow
 else
@@ -36,7 +42,7 @@ else
    exit 3
 fi
 
-#Prime the software.
+# Prime the software.
 if [[ -e $CONTEXT/ce_model.cem ]]; then
    # Translating 'a' is a temporray hack while we properly fix translating an
    # empty sentence with a system that has confidence estimation.
