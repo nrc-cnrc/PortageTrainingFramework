@@ -1620,7 +1620,12 @@ in fact the union of the three pretend domains, so we'll throw in
 Having done this, you should also comment out the definition of
 \code{PRIMARY_LM} (or \code{TRAIN_LM} if you followed \S\ref{regularLM} instead of
 \S\ref{LM+generic-default}), since we'll use our own defined mixture LM instead
-of the default mixture LM or a regular LM.
+of the default mixture LM or a regular LM.\footnote{
+When you change the values of \code{PRIMARY\us{}LM}, \code{TRAIN\us{}LM} and/or
+\code{MIXLM} in a framework where you already did some training, you should run
+\code{make clean} in directories \code{models/lm} and \code{models/mixlm}, otherwise
+results might not be correct.
+}
 
 This change also implicitly changes the definitions of \code{TRAIN_TC} and
 \code{TRAIN_COARSELM}. \code{TRAIN_COARSELM} will now default to the corpora
@@ -1634,7 +1639,7 @@ union of the corpora (i.e. the global corpus) by explicitly setting:
 \end{small}
 \code{TRAIN_TC} will now default to \code{lm-train1}, the first corpus listed in
 \code{MIXLM}, which means using just the in-domain corpus for truecasing. You
-could explicitly set \code{TRAIN_TC} to \code{lm-train} to use the global corpus
+might want to explicitly set \code{TRAIN_TC} to \code{lm-train} to use the global corpus
 instead for truecasing.
 
 With the variables defined as discussed, training of the MixLM is automatic,
