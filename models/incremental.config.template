@@ -44,6 +44,12 @@
 #TGT_LOWERCASE_CMD="utf8_casemap -c l"
 #TGT_LOWERCASE_CMD=cat
 
+# Rolling window: by default, the incremental model keeps only the most recent
+# 2000 sentence pairs added via incrAddSentences(). Uncomment and update the
+# variable below to change that value, but don't make it too big, since updates
+# will get slower as the corpus grows.
+#MAX_INCR_CORPUS_SIZE=2000
+
 
 # ============= AUTOMATED SETTINGS =============
 
