@@ -403,22 +403,22 @@ multiple_pretrained_testcase:
 
 ########################################
 # Training scenarios
-.PHONY:  test_scenarios
+.PHONY:  testsuite_scenarios
 NNJM_TRAIN_NNJM_OPTS_QUICK := -embed_size 3  -n_hidden_layers 1  -batch_size 64  -slice_size 64  -print_interval 1  -hidden_layer_sizes 12  -n_epochs 6  -self_norm_alpha 0.1  -eta_0 0.3  -rnd_elide_max 3  -rnd_elide_prob 0.1  -val_batch_size 10  -batches_per_epoch 20
 
 # ERROR
 # We are not allowed to ask for pretrained and try to train a NNJM.
-.PHONY: pretrained_trained
-test_scenarios:  pretrained_trained
-pretrained_trained:  export NNJM_WAM_TYPE := hmm3
-pretrained_trained:  export NNJM_DEV_CORPORA := ${TUNE_DECODE}
-pretrained_trained:  export NNJM_TEST_CORPORA := $(firstword ${TEST_SET})
-pretrained_trained:  export NNJM_TRAIN_CORPORA := ${TRAIN_TM}
-pretrained_trained:  export NNJM_FINE_TUNING_DEV_CORPORA :=
-pretrained_trained:  export NNJM_FINE_TUNING_TEST_CORPORA :=
-pretrained_trained:  export NNJM_FINE_TUNING_TRAIN_CORPORA :=
-pretrained_trained:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
-pretrained_trained:
+.PHONY: testcase_pretrained_trained
+testsuite_scenarios:  testcase_pretrained_trained
+testcase_pretrained_trained:  export NNJM_WAM_TYPE := hmm3
+testcase_pretrained_trained:  export NNJM_DEV_CORPORA := ${TUNE_DECODE}
+testcase_pretrained_trained:  export NNJM_TEST_CORPORA := $(firstword ${TEST_SET})
+testcase_pretrained_trained:  export NNJM_TRAIN_CORPORA := ${TRAIN_TM}
+testcase_pretrained_trained:  export NNJM_FINE_TUNING_DEV_CORPORA :=
+testcase_pretrained_trained:  export NNJM_FINE_TUNING_TEST_CORPORA :=
+testcase_pretrained_trained:  export NNJM_FINE_TUNING_TRAIN_CORPORA :=
+testcase_pretrained_trained:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
+testcase_pretrained_trained:
 	echo -e "################################################\nTESTCASE: $@"
 	! ${MAKE} all
 
@@ -426,86 +426,86 @@ pretrained_trained:
 # ERROR
 # It is not allowed to try to only fine tuned since a pretrained NNJM or a
 # freshly build NNJM is required.
-.PHONY: fine_tuned_only
-test_scenarios:  fine_tuned_only
-fine_tuned_only:  export NNJM_WAM_TYPE := hmm3
-fine_tuned_only:  export NNJM_DEV_CORPORA :=
-fine_tuned_only:  export NNJM_TEST_CORPORA :=
-fine_tuned_only:  export NNJM_TRAIN_CORPORA :=
-fine_tuned_only:  export NNJM_FINE_TUNING_DEV_CORPORA := ${TUNE_DECODE}
-fine_tuned_only:  export NNJM_FINE_TUNING_TEST_CORPORA := $(firstword ${TEST_SET})
-fine_tuned_only:  export NNJM_FINE_TUNING_TRAIN_CORPORA := ${TRAIN_TM}
-fine_tuned_only:  export NNJM_PRETRAINED_NNJM :=
-fine_tuned_only:
+.PHONY: testcase_fine_tuned_only
+testsuite_scenarios:  testcase_fine_tuned_only
+testcase_fine_tuned_only:  export NNJM_WAM_TYPE := hmm3
+testcase_fine_tuned_only:  export NNJM_DEV_CORPORA :=
+testcase_fine_tuned_only:  export NNJM_TEST_CORPORA :=
+testcase_fine_tuned_only:  export NNJM_TRAIN_CORPORA :=
+testcase_fine_tuned_only:  export NNJM_FINE_TUNING_DEV_CORPORA := ${TUNE_DECODE}
+testcase_fine_tuned_only:  export NNJM_FINE_TUNING_TEST_CORPORA := $(firstword ${TEST_SET})
+testcase_fine_tuned_only:  export NNJM_FINE_TUNING_TRAIN_CORPORA := ${TRAIN_TM}
+testcase_fine_tuned_only:  export NNJM_PRETRAINED_NNJM :=
+testcase_fine_tuned_only:
 	echo -e "################################################\nTESTCASE: $@"
 	! ${MAKE} all
 
 
 # We should be able to use a pretrained NNJM model only.
-.PHONY: pretrained
-test_scenarios:  pretrained
-pretrained:  export NNJM_WAM_TYPE := hmm3
-pretrained:  export NNJM_DEV_CORPORA :=
-pretrained:  export NNJM_TEST_CORPORA :=
-pretrained:  export NNJM_TRAIN_CORPORA :=
-pretrained:  export NNJM_FINE_TUNING_DEV_CORPORA :=
-pretrained:  export NNJM_FINE_TUNING_TEST_CORPORA :=
-pretrained:  export NNJM_FINE_TUNING_TRAIN_CORPORA :=
-pretrained:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
-pretrained:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
-pretrained:
+.PHONY: testcase_pretrained
+testsuite_scenarios:  testcase_pretrained
+testcase_pretrained:  export NNJM_WAM_TYPE := hmm3
+testcase_pretrained:  export NNJM_DEV_CORPORA :=
+testcase_pretrained:  export NNJM_TEST_CORPORA :=
+testcase_pretrained:  export NNJM_TRAIN_CORPORA :=
+testcase_pretrained:  export NNJM_FINE_TUNING_DEV_CORPORA :=
+testcase_pretrained:  export NNJM_FINE_TUNING_TEST_CORPORA :=
+testcase_pretrained:  export NNJM_FINE_TUNING_TRAIN_CORPORA :=
+testcase_pretrained:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
+testcase_pretrained:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
+testcase_pretrained:
 	echo -e "################################################\nTESTCASE: $@"
 	${MAKE} portageLive
 
 
 # We should be able to fine tune a pretrained NNJM model.
-.PHONY: pretrained_fine_tuned
-test_scenarios:  pretrained_fine_tuned
-pretrained_fine_tuned:  export NNJM_WAM_TYPE := hmm3
-pretrained_fine_tuned:  export NNJM_DEV_CORPORA :=
-pretrained_fine_tuned:  export NNJM_TEST_CORPORA :=
-pretrained_fine_tuned:  export NNJM_TRAIN_CORPORA :=
-pretrained_fine_tuned:  export NNJM_FINE_TUNING_DEV_CORPORA := ${TUNE_DECODE}
-pretrained_fine_tuned:  export NNJM_FINE_TUNING_TEST_CORPORA := $(firstword ${TEST_SET})
-pretrained_fine_tuned:  export NNJM_FINE_TUNING_TRAIN_CORPORA := ${TRAIN_TM}
-#pretrained_fine_tuned:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
-pretrained_fine_tuned:  export NNJM_PRETRAINED_NNJM := /home/models/HANSARD-2017/Hansard-2017.${SRC_LANG}2${TGT_LANG}/models/nnjm/pretrained.baseline.10M/model
-pretrained_fine_tuned:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
-pretrained_fine_tuned:
+.PHONY: testcase_pretrained_fine_tuned
+testsuite_scenarios:  testcase_pretrained_fine_tuned
+testcase_pretrained_fine_tuned:  export NNJM_WAM_TYPE := hmm3
+testcase_pretrained_fine_tuned:  export NNJM_DEV_CORPORA :=
+testcase_pretrained_fine_tuned:  export NNJM_TEST_CORPORA :=
+testcase_pretrained_fine_tuned:  export NNJM_TRAIN_CORPORA :=
+testcase_pretrained_fine_tuned:  export NNJM_FINE_TUNING_DEV_CORPORA := ${TUNE_DECODE}
+testcase_pretrained_fine_tuned:  export NNJM_FINE_TUNING_TEST_CORPORA := $(firstword ${TEST_SET})
+testcase_pretrained_fine_tuned:  export NNJM_FINE_TUNING_TRAIN_CORPORA := ${TRAIN_TM}
+#testcase_pretrained_fine_tuned:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
+testcase_pretrained_fine_tuned:  export NNJM_PRETRAINED_NNJM := /home/models/HANSARD-2017/Hansard-2017.${SRC_LANG}2${TGT_LANG}/models/nnjm/pretrained.baseline.10M/model
+testcase_pretrained_fine_tuned:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
+testcase_pretrained_fine_tuned:
 	echo -e "################################################\nTESTCASE: $@"
 	${MAKE} portageLive
 
 
 # We should be able to train a NNJM model from user provided data.
-.PHONY: trained
-test_scenarios:  trained
-trained:  export NNJM_WAM_TYPE := hmm3
-trained:  export NNJM_DEV_CORPORA := ${TUNE_DECODE}
-trained:  export NNJM_TEST_CORPORA := $(firstword ${TEST_SET})
-trained:  export NNJM_TRAIN_CORPORA := ${TRAIN_TM}
-trained:  export NNJM_FINE_TUNING_DEV_CORPORA :=
-trained:  export NNJM_FINE_TUNING_TEST_CORPORA :=
-trained:  export NNJM_FINE_TUNING_TRAIN_CORPORA :=
-trained:  export NNJM_PRETRAINED_NNJM :=
-trained:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
-trained:
+.PHONY: testcase_trained
+testsuite_scenarios:  testcase_trained
+testcase_trained:  export NNJM_WAM_TYPE := hmm3
+testcase_trained:  export NNJM_DEV_CORPORA := ${TUNE_DECODE}
+testcase_trained:  export NNJM_TEST_CORPORA := $(firstword ${TEST_SET})
+testcase_trained:  export NNJM_TRAIN_CORPORA := ${TRAIN_TM}
+testcase_trained:  export NNJM_FINE_TUNING_DEV_CORPORA :=
+testcase_trained:  export NNJM_FINE_TUNING_TEST_CORPORA :=
+testcase_trained:  export NNJM_FINE_TUNING_TRAIN_CORPORA :=
+testcase_trained:  export NNJM_PRETRAINED_NNJM :=
+testcase_trained:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
+testcase_trained:
 	echo -e "################################################\nTESTCASE: $@"
 	${MAKE} portageLive
 
 
 # We should be able to fine tune a trained NNJM model built from user provided
 # data.
-.PHONY: trained_fine_tuned
-test_scenarios:  trained_fine_tuned
-trained_fine_tuned:  export NNJM_WAM_TYPE := hmm3
-trained_fine_tuned:  export NNJM_DEV_CORPORA := ${TUNE_DECODE}
-trained_fine_tuned:  export NNJM_TEST_CORPORA := $(firstword ${TEST_SET})
-trained_fine_tuned:  export NNJM_TRAIN_CORPORA := ${TRAIN_TM}
-trained_fine_tuned:  export NNJM_FINE_TUNING_DEV_CORPORA := ${TUNE_DECODE}
-trained_fine_tuned:  export NNJM_FINE_TUNING_TEST_CORPORA := $(firstword ${TEST_SET})
-trained_fine_tuned:  export NNJM_FINE_TUNING_TRAIN_CORPORA := ${TRAIN_TM}
-trained_fine_tuned:  export NNJM_PRETRAINED_NNJM :=
-trained_fine_tuned:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
-trained_fine_tuned:
+.PHONY: testcase_trained_fine_tuned
+testsuite_scenarios:  testcase_trained_fine_tuned
+testcase_trained_fine_tuned:  export NNJM_WAM_TYPE := hmm3
+testcase_trained_fine_tuned:  export NNJM_DEV_CORPORA := ${TUNE_DECODE}
+testcase_trained_fine_tuned:  export NNJM_TEST_CORPORA := $(firstword ${TEST_SET})
+testcase_trained_fine_tuned:  export NNJM_TRAIN_CORPORA := ${TRAIN_TM}
+testcase_trained_fine_tuned:  export NNJM_FINE_TUNING_DEV_CORPORA := ${TUNE_DECODE}
+testcase_trained_fine_tuned:  export NNJM_FINE_TUNING_TEST_CORPORA := $(firstword ${TEST_SET})
+testcase_trained_fine_tuned:  export NNJM_FINE_TUNING_TRAIN_CORPORA := ${TRAIN_TM}
+testcase_trained_fine_tuned:  export NNJM_PRETRAINED_NNJM :=
+testcase_trained_fine_tuned:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
+testcase_trained_fine_tuned:
 	echo -e "################################################\nTESTCASE: $@"
 	${MAKE} portageLive
