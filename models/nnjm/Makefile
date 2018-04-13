@@ -452,7 +452,7 @@ testcase_pretrained:  export NNJM_FINE_TUNING_DEV_CORPUS :=
 testcase_pretrained:  export NNJM_FINE_TUNING_TEST_CORPUS :=
 testcase_pretrained:  export NNJM_FINE_TUNING_TRAIN_CORPUS :=
 testcase_pretrained:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
-testcase_pretrained:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
+testcase_pretrained:  export NNJM_TRAIN_NNJM_OPTS := -batch_size 64  -slice_size 64  -print_interval 1  -n_epochs 6
 testcase_pretrained:
 	echo -e "################################################\nTESTCASE: $@"
 	${MAKE} portageLive
@@ -470,7 +470,7 @@ testcase_pretrained_fine_tuned:  export NNJM_FINE_TUNING_TEST_CORPUS := $(firstw
 testcase_pretrained_fine_tuned:  export NNJM_FINE_TUNING_TRAIN_CORPUS := ${TRAIN_TM}
 #testcase_pretrained_fine_tuned:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
 testcase_pretrained_fine_tuned:  export NNJM_PRETRAINED_NNJM := /home/models/HANSARD-2017/Hansard-2017.${SRC_LANG}2${TGT_LANG}/models/nnjm/pretrained.baseline.10M/model
-testcase_pretrained_fine_tuned:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
+testcase_pretrained_fine_tuned:  export NNJM_TRAIN_NNJM_OPTS := -batch_size 64  -slice_size 64  -print_interval 1  -n_epochs 6
 testcase_pretrained_fine_tuned:
 	echo -e "################################################\nTESTCASE: $@"
 	${MAKE} portageLive
