@@ -205,7 +205,7 @@ with open(".Makefile.deps", "w") as df:
    # TODO: Against which model should be force align NNJM sets?
    # TODO: Augmenting which_wam to return the proper WAM for NNJM would allow us to fold the next two paragraphs into the preceding two.
    print("# NNJM", file=df)
-   for corp in set("$(filter-out ${ALL_WAMS}, ${NNJM_TRAIN_CORPORA} ${NNJM_FINE_TUNING_TRAIN_CORPORA})".split()):
+   for corp in set("$(filter-out ${ALL_WAMS}, ${NNJM_TRAIN_CORPUS} ${NNJM_FINE_TUNING_TRAIN_CORPUS})".split()):
       for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
          alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
          source = corp + "${L1X}"
@@ -214,7 +214,7 @@ with open(".Makefile.deps", "w") as df:
          al2 = "{wam}.{corp}.${L1_GIVEN_L2X}".format(corp="$(firstword ${TRAIN_TM})", wam=wam)
          writeDeps(alignmentFileName, source, target, al1, al2)
 
-   for corp in set("${NNJM_DEV_CORPORA} ${NNJM_TEST_CORPORA} ${NNJM_FINE_TUNING_DEV_CORPORA} ${NNJM_FINE_TUNING_TEST_CORPORA}".split()):
+   for corp in set("${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}".split()):
       for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
          alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
          source = corp + "${L1}"
@@ -249,7 +249,7 @@ with open(".Makefile.deps", "w") as df:
    # FAST ALIGN
    # source and target must be of the form %${L1X} and %${L2X}
    print("# FAST ALIGN", file=df)
-   for corp in set("${ALL_WAMS} ${NNJM_TRAIN_CORPORA} ${NNJM_FINE_TUNING_TRAIN_CORPORA}".split()):
+   for corp in set("${ALL_WAMS} ${NNJM_TRAIN_CORPUS} ${NNJM_FINE_TUNING_TRAIN_CORPUS}".split()):
       for wam in set("$(filter ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
          alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
          source = corp + "${L1X}"
@@ -299,7 +299,7 @@ with open(".Makefile.deps", "w") as df:
    print("# NNJM { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam", file=df)
    #wams = "$(filter ${NNJM_WAM_TYPE}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
    wams = "${NNJM_WAM_TYPE}"
-   addModelsToMetaTarget(wamType(), "${NNJM_DEV_CORPORA} ${NNJM_TEST_CORPORA} ${NNJM_TRAIN_CORPORA} ${NNJM_FINE_TUNING_DEV_CORPORA} ${NNJM_FINE_TUNING_TEST_CORPORA} ${NNJM_FINE_TUNING_TRAIN_CORPORA}", wams)
+   addModelsToMetaTarget(wamType(), "${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS} ${NNJM_TRAIN_CORPUS} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS} ${NNJM_FINE_TUNING_TRAIN_CORPUS}", wams)
 
    print("# Not Expected { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam", file=df)
    wams = "$(filter-out ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"

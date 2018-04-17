@@ -140,37 +140,37 @@ TRAIN_TM      ?= tm-train
 ### NNJM training
 # NNJM training can be done in three modes:
 #  1: 1-pass training on your own in-domain data only:
-#     - define NNJM_TRAIN_CORPORA to point to your in-domain data, e.g.,
+#     - define NNJM_TRAIN_CORPUS to point to your in-domain data, e.g.,
 #       ${TRAIN_TM}
-#     - leave NNJM_FINE_TUNING_TRAIN_CORPORA and NNJM_PRETRAINED_NNJM empty
+#     - leave NNJM_FINE_TUNING_TRAIN_CORPUS and NNJM_PRETRAINED_NNJM empty
 #  2: 2-pass training, first on your own generic data, with fine-tuning on your
 #  own in-domain data:
-#     - define NNJM_TRAIN_CORPORA to point to your generic data
-#     - define NNJM_FINE_TUNING_TRAIN_CORPORA to point to your in-domain data
+#     - define NNJM_TRAIN_CORPUS to point to your generic data
+#     - define NNJM_FINE_TUNING_TRAIN_CORPUS to point to your in-domain data
 #     - leave NNJM_PRETRAINED_NNJM empty
 #  3: 2-pass training, starting from a pre-trained NNJM (e.g., NRC's generic
 #  one), with fine-tuning on your own in-domain data:
-#  	- define NNJM_FINE_TUNING_TRAIN_CORPORA to point to your in-domain data
+#  	- define NNJM_FINE_TUNING_TRAIN_CORPUS to point to your in-domain data
 #  	- define NNJM_PRETRAINED_NNJM to point to the pre-trained model
-#  	- leave NNJM_TRAIN_CORPORA empty.
+#  	- leave NNJM_TRAIN_CORPUS empty.
 # Recommendation: 2-pass tuning is best. Use the NRC's generic model if your
 # language pair is en-fr (mode 3), or use the largest generic corpus your have
 # access to (mode 2).
 
 # NNJM main model:
-# Define NNJM_TRAIN_CORPORA to train the main NNJM from scratch on this corpus,
+# Define NNJM_TRAIN_CORPUS to train the main NNJM from scratch on this corpus,
 # typically large generic data.
-# NOTE: Either use NNJM_TRAIN_CORPORA or NNJM_PRETRAINED_NNJM but not both.
-#NNJM_TRAIN_CORPORA ?=
-NNJM_DEV_CORPORA ?= ${TUNE_DECODE} # Validation corpus, for early stopping
-NNJM_TEST_CORPORA ?=
+# NOTE: Either use NNJM_TRAIN_CORPUS or NNJM_PRETRAINED_NNJM but not both.
+#NNJM_TRAIN_CORPUS ?=
+NNJM_DEV_CORPUS ?= ${TUNE_DECODE} # Validation corpus, for early stopping
+NNJM_TEST_CORPUS ?=
 
 # NNJM fine tuning.
-# Define NNJM_FINE_TUNING_TRAIN_CORPORA to fine tune your NNJM model.
+# Define NNJM_FINE_TUNING_TRAIN_CORPUS to fine tune your NNJM model.
 # This triggers a second-pass training on an existing model with in-domain data.
-NNJM_FINE_TUNING_TRAIN_CORPORA ?=
-NNJM_FINE_TUNING_DEV_CORPORA ?= ${NNJM_DEV_CORPORA}
-NNJM_FINE_TUNING_TEST_CORPORA ?= ${NNJM_TEST_CORPORA}
+NNJM_FINE_TUNING_TRAIN_CORPUS ?=
+NNJM_FINE_TUNING_DEV_CORPUS ?= ${NNJM_DEV_CORPUS}
+NNJM_FINE_TUNING_TEST_CORPUS ?= ${NNJM_TEST_CORPUS}
 
 # NNJM_PRETRAINED_NNJM specifies file path to an additional pre-trained Neural
 # Network Joint Models to use in your canoe.ini.  The NNJM's filename must be
@@ -1020,15 +1020,15 @@ $(error You cannot use the IBM4 feature since you don't have mgiza installed.)
 endif
 endif
 
-ifneq ($(strip ${NNJM_TRAIN_CORPORA}),)
-ifeq ($(strip ${NNJM_DEV_CORPORA}),)
-$(error You must define NNJM_DEV_CORPORA when you have defined NNJM_TRAIN_CORPORA.)
+ifneq ($(strip ${NNJM_TRAIN_CORPUS}),)
+ifeq ($(strip ${NNJM_DEV_CORPUS}),)
+$(error You must define NNJM_DEV_CORPUS when you have defined NNJM_TRAIN_CORPUS.)
 endif
 endif
 
-ifneq ($(strip ${NNJM_FINE_TUNING_TRAIN_CORPORA}),)
-ifeq ($(strip ${NNJM_FINE_TUNING_DEV_CORPORA}),)
-$(error You must define NNJM_FINE_TUNING_DEV_CORPORA when you have defined NNJM_FINE_TUNING_TRAIN_CORPORA.)
+ifneq ($(strip ${NNJM_FINE_TUNING_TRAIN_CORPUS}),)
+ifeq ($(strip ${NNJM_FINE_TUNING_DEV_CORPUS}),)
+$(error You must define NNJM_FINE_TUNING_DEV_CORPUS when you have defined NNJM_FINE_TUNING_TRAIN_CORPUS.)
 endif
 endif
 

@@ -32,12 +32,12 @@ TCX ?= .tc
 # Define the corpora.
 TRAIN_SET    := $(sort ${TRAIN_LM} ${TRAIN_TM} ${TRAIN_TC} ${TRAIN_LDM} ${TRAIN_HLDM} \
                        ${TRAIN_COARSELM} ${TRAIN_BILM} ${TRAIN_WCL} ${TRAIN_SPARSE} \
-                       ${NNJM_TRAIN_CORPORA} ${NNJM_FINE_TUNING_TRAIN_CORPORA})
+                       ${NNJM_TRAIN_CORPUS} ${NNJM_FINE_TUNING_TRAIN_CORPUS})
 # NOTE: heldout are stem that are for a source corpus and one or more references.
 HELDOUT_SET  := $(sort ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TEST_SET} \
                        ${TUNE_MIXTM} ${TUNE_LM} ${TUNE_COARSELM} \
-                       ${NNJM_DEV_CORPORA} ${NNJM_FINE_TUNING_DEV_CORPORA} \
-                       ${NNJM_TEST_CORPORA} ${NNJM_FINE_TUNING_TEST_CORPORA} \
+                       ${NNJM_DEV_CORPUS} ${NNJM_FINE_TUNING_DEV_CORPUS} \
+                       ${NNJM_TEST_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS} \
                        $(addprefix ${TUNE_DECODE}, ${TUNE_DECODE_VARIANTS}))
 CORPORA_SET  := $(sort ${TRAIN_SET} ${HELDOUT_SET})
 
@@ -362,10 +362,10 @@ LC += ${TC_LC}
 WCL_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_WCL})
 WCL_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${TRAIN_WCL})
 LC += ${WCL_LC}
-NNJM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${NNJM_TRAIN_CORPORA})
-NNJM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${NNJM_TRAIN_CORPORA})
-NNJM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${NNJM_FINE_TUNING_TRAIN_CORPORA})
-NNJM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${NNJM_FINE_TUNING_TRAIN_CORPORA})
+NNJM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${NNJM_TRAIN_CORPUS})
+NNJM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${NNJM_TRAIN_CORPUS})
+NNJM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${NNJM_FINE_TUNING_TRAIN_CORPUS})
+NNJM_LC += $(addsuffix _${SRC_LANG}${LANGXZ}, ${NNJM_FINE_TUNING_TRAIN_CORPUS})
 LC += ${NNJM_LC}
 LM_LC += $(addsuffix _${TGT_LANG}${LANGXZ}, ${TRAIN_LM})
 ifdef TC_USE_SRC_MODELS

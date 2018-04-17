@@ -39,14 +39,14 @@ NNJM_PRETRAINED_NNJM_FIXED := $(foreach f, ${NNJM_PRETRAINED_NNJM}, $(call FIX_R
 NNJM_NCLS ?= 400
 
 # NNJM trained model
-NNJM_DEV_CORPORA ?= ${TUNE_DECODE}
-NNJM_TEST_CORPORA ?=
-#NNJM_TRAIN_CORPORA ?= ${TRAIN_TM}
+NNJM_DEV_CORPUS ?= ${TUNE_DECODE}
+NNJM_TEST_CORPUS ?=
+#NNJM_TRAIN_CORPUS ?= ${TRAIN_TM}
 
 # NNJM fine tuning
-NNJM_FINE_TUNING_DEV_CORPORA ?= ${NNJM_DEV_CORPORA}
-NNJM_FINE_TUNING_TEST_CORPORA ?= ${NNJM_TEST_CORPORA}
-NNJM_FINE_TUNING_TRAIN_CORPORA ?=
+NNJM_FINE_TUNING_DEV_CORPUS ?= ${NNJM_DEV_CORPUS}
+NNJM_FINE_TUNING_TEST_CORPUS ?= ${NNJM_TEST_CORPUS}
+NNJM_FINE_TUNING_TRAIN_CORPUS ?=
 NNJM_FINE_TUNING_PRETRAINED_MODEL ?= trained/nnjm
 
 # If no NNJM_WAM_TYPE is provided will automatically get the best model that
@@ -172,13 +172,13 @@ with open(".Makefile.deps", "w") as df:
 
    # TODO: if we are using a pretrained model, we need to be using the same classes files as the pretrained model.
    print("trained/nnjm.bin:  {s}  {t}".format(s="${SRC_LANG}"+wal_ext, t="${TGT_LANG}"+wal_ext), file=df)
-   add_nnjm_corpra_dependencies("trained/nnjm.bin", "${NNJM_DEV_CORPORA} ${NNJM_TEST_CORPORA}", ext="")
-   add_nnjm_corpra_dependencies("trained/nnjm.bin", "${NNJM_TRAIN_CORPORA}", ext=".gz")
+   add_nnjm_corpra_dependencies("trained/nnjm.bin", "${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS}", ext="")
+   add_nnjm_corpra_dependencies("trained/nnjm.bin", "${NNJM_TRAIN_CORPUS}", ext=".gz")
 
-   if "${NNJM_TRAIN_CORPORA}".strip() != "":
+   if "${NNJM_TRAIN_CORPUS}".strip() != "":
       print("fine_tuned/nnjm.bin:  {s}  {t}".format(s="${SRC_LANG}"+wal_ext, t="${TGT_LANG}"+wal_ext), file=df)
-   add_nnjm_corpra_dependencies("fine_tuned/nnjm.bin", "${NNJM_FINE_TUNING_DEV_CORPORA} ${NNJM_FINE_TUNING_TEST_CORPORA}", ext="")
-   add_nnjm_corpra_dependencies("fine_tuned/nnjm.bin", "${NNJM_FINE_TUNING_TRAIN_CORPORA}", ext=".gz")
+   add_nnjm_corpra_dependencies("fine_tuned/nnjm.bin", "${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}", ext="")
+   add_nnjm_corpra_dependencies("fine_tuned/nnjm.bin", "${NNJM_FINE_TUNING_TRAIN_CORPUS}", ext=".gz")
 endef
 #$(info NNJM dependencies generator: ${DEPS.PYSCRIPT})
 
@@ -226,8 +226,8 @@ ${NNJM_FINE_TUNING_PRETRAINED_MODEL}.bin:  %.bin:  $(dir $*)
 
 ${NNJM_FINE_TUNING_PRETRAINED_MODEL}.pkl:  %.pkl:  $(dir $*)
 	true
-else ifneq ($(strip ${NNJM_TRAIN_CORPORA}),)
-$(info Training a NNJM model using ${NNJM_TRAIN_CORPORA})
+else ifneq ($(strip ${NNJM_TRAIN_CORPUS}),)
+$(info Training a NNJM model using ${NNJM_TRAIN_CORPUS})
 all:  trained/nnjm.bin
 else
 $(info Not using NNJMs)
@@ -237,8 +237,8 @@ endif
 
 
 
-ifneq ($(strip ${NNJM_FINE_TUNING_TRAIN_CORPORA}),)
-$(info Performing fine tuning on ${NNJM_FINE_TUNING_PRETRAINED_MODEL} using ${NNJM_FINE_TUNING_TRAIN_CORPORA})
+ifneq ($(strip ${NNJM_FINE_TUNING_TRAIN_CORPUS}),)
+$(info Performing fine tuning on ${NNJM_FINE_TUNING_PRETRAINED_MODEL} using ${NNJM_FINE_TUNING_TRAIN_CORPUS})
 all:  fine_tuned/nnjm.bin
 endif
 
@@ -269,10 +269,10 @@ ${PORTAGE_LIVE_DEST_DIR}:
 
 .PHONY:  portageLive
 portageLive:  SHELL=${LOCAL_SHELL}
-ifdef NNJM_FINE_TUNING_TRAIN_CORPORA
+ifdef NNJM_FINE_TUNING_TRAIN_CORPUS
 portageLive:  ${PORTAGE_LIVE_DEST_DIR}/fine_tuned
 ${PORTAGE_LIVE_DEST_DIR}/fine_tuned:  fine_tuned/nnjm.bin  | ${PORTAGE_LIVE_DEST_DIR}
-else ifdef NNJM_TRAIN_CORPORA
+else ifdef NNJM_TRAIN_CORPUS
 portageLive:  ${PORTAGE_LIVE_DEST_DIR}/trained
 ${PORTAGE_LIVE_DEST_DIR}/trained:  trained/nnjm.bin  | ${PORTAGE_LIVE_DEST_DIR}
 else ifdef NNJM_PRETRAINED_NNJM
@@ -317,11 +317,11 @@ get_corpora = $(filter-out %.pkl, \
 					%$(strip $1).${NNJM_WAM_TYPE}.${L1_2_L2}.align.gz \
 					, $2))
 
-remove_dev = $(call remove_corpora, ${NNJM_DEV_CORPORA}, \
-					 $(call remove_corpora, ${NNJM_FINE_TUNING_DEV_CORPORA}, $1))
+remove_dev = $(call remove_corpora, ${NNJM_DEV_CORPUS}, \
+					 $(call remove_corpora, ${NNJM_FINE_TUNING_DEV_CORPUS}, $1))
 
-remove_test = $(call remove_corpora, ${NNJM_TEST_CORPORA}, \
-					 $(call remove_corpora, ${NNJM_FINE_TUNING_TEST_CORPORA}, $1))
+remove_test = $(call remove_corpora, ${NNJM_TEST_CORPUS}, \
+					 $(call remove_corpora, ${NNJM_FINE_TUNING_TEST_CORPUS}, $1))
 
 get_train = $(filter-out %.bin %.pkl, $(call remove_test, $(call remove_dev, $1)))
 
@@ -332,8 +332,8 @@ trained/nnjm.bin:
 		-cls-t $(filter %/${TGT_LANG}.${NNJM_NCLS}${CLS_X}, $^) \
 		${NNJM_TRAIN_NNJM_OPTS} \
 		${NNJM_GENEX_OPTS} \
-		$(and $(call get_corpora, ${NNJM_TEST_CORPORA}, $^), -test $(call get_corpora, ${NNJM_TEST_CORPORA}, $^)) \
-		-dev $(call get_corpora, ${NNJM_DEV_CORPORA}, $^) \
+		$(and $(call get_corpora, ${NNJM_TEST_CORPUS}, $^), -test $(call get_corpora, ${NNJM_TEST_CORPUS}, $^)) \
+		-dev $(call get_corpora, ${NNJM_DEV_CORPUS}, $^) \
 		$(call get_train, $(filter-out %${CLS_X}, $^)) \
 	&> log.train-nnjm
 
@@ -345,9 +345,9 @@ fine_tuned/nnjm.bin:  ${NNJM_FINE_TUNING_PRETRAINED_MODEL}.pkl
 		-pre-trained-nnjm  $(or $(dir $(filter %.pkl, $^)), $(error You need to define a pretrained nnjm model.)) \
 		${NNJM_TRAIN_NNJM_OPTS} \
 		${NNJM_GENEX_OPTS} \
-		$(and $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPORA}, $^), -test $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPORA}, $^)) \
-		-dev $(call get_corpora, ${NNJM_FINE_TUNING_DEV_CORPORA}, $^) \
-		$(or $(call get_train, $(filter-out %${CLS_X}, $^)), $(error You need to define NNJM_FINE_TUNING_TRAIN_CORPORA)) \
+		$(and $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPUS}, $^), -test $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPUS}, $^)) \
+		-dev $(call get_corpora, ${NNJM_FINE_TUNING_DEV_CORPUS}, $^) \
+		$(or $(call get_train, $(filter-out %${CLS_X}, $^)), $(error You need to define NNJM_FINE_TUNING_TRAIN_CORPUS)) \
 	&> log.train-nnjm.fine_tuning
 
 
@@ -360,16 +360,16 @@ fine_tuned/nnjm.bin:  ${NNJM_FINE_TUNING_PRETRAINED_MODEL}.pkl
 ################################################################################
 # Validation
 ifneq ($(strip ${NNJM_PRETRAINED_NNJM_FIXED}),)
-ifneq ($(strip ${NNJM_TRAIN_CORPORA}),)
+ifneq ($(strip ${NNJM_TRAIN_CORPUS}),)
 $(error You cannot use pretrained nnjm and also ask to train a NNJM.  Maybe you want to fine tune a pretrained model instead?)
-endif   # NNJM_TRAIN_CORPORA
+endif   # NNJM_TRAIN_CORPUS
 
 else  # NNJM_PRETRAINED_NNJM_FIXED
-ifneq ($(strip ${NNJM_FINE_TUNING_TRAIN_CORPORA}),)
-ifeq ($(strip ${NNJM_TRAIN_CORPORA}),)
+ifneq ($(strip ${NNJM_FINE_TUNING_TRAIN_CORPUS}),)
+ifeq ($(strip ${NNJM_TRAIN_CORPUS}),)
 $(error you need to use either a pretrained model or train a base model if you want to use fine tuning.)
-endif   # NNJM_TRAIN_CORPORA
-endif   # NNJM_FINE_TUNING_TRAIN_CORPORA
+endif   # NNJM_TRAIN_CORPUS
+endif   # NNJM_FINE_TUNING_TRAIN_CORPUS
 endif   # NNJM_PRETRAINED_NNJM_FIXED
 
 
@@ -411,12 +411,12 @@ NNJM_TRAIN_NNJM_OPTS_QUICK := -embed_size 3  -n_hidden_layers 1  -batch_size 64 
 .PHONY: testcase_pretrained_trained
 testsuite_scenarios:  testcase_pretrained_trained
 testcase_pretrained_trained:  export NNJM_WAM_TYPE := hmm3
-testcase_pretrained_trained:  export NNJM_DEV_CORPORA := ${TUNE_DECODE}
-testcase_pretrained_trained:  export NNJM_TEST_CORPORA := $(firstword ${TEST_SET})
-testcase_pretrained_trained:  export NNJM_TRAIN_CORPORA := ${TRAIN_TM}
-testcase_pretrained_trained:  export NNJM_FINE_TUNING_DEV_CORPORA :=
-testcase_pretrained_trained:  export NNJM_FINE_TUNING_TEST_CORPORA :=
-testcase_pretrained_trained:  export NNJM_FINE_TUNING_TRAIN_CORPORA :=
+testcase_pretrained_trained:  export NNJM_DEV_CORPUS := ${TUNE_DECODE}
+testcase_pretrained_trained:  export NNJM_TEST_CORPUS := $(firstword ${TEST_SET})
+testcase_pretrained_trained:  export NNJM_TRAIN_CORPUS := ${TRAIN_TM}
+testcase_pretrained_trained:  export NNJM_FINE_TUNING_DEV_CORPUS :=
+testcase_pretrained_trained:  export NNJM_FINE_TUNING_TEST_CORPUS :=
+testcase_pretrained_trained:  export NNJM_FINE_TUNING_TRAIN_CORPUS :=
 testcase_pretrained_trained:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
 testcase_pretrained_trained:
 	echo -e "################################################\nTESTCASE: $@"
@@ -429,12 +429,12 @@ testcase_pretrained_trained:
 .PHONY: testcase_fine_tuned_only
 testsuite_scenarios:  testcase_fine_tuned_only
 testcase_fine_tuned_only:  export NNJM_WAM_TYPE := hmm3
-testcase_fine_tuned_only:  export NNJM_DEV_CORPORA :=
-testcase_fine_tuned_only:  export NNJM_TEST_CORPORA :=
-testcase_fine_tuned_only:  export NNJM_TRAIN_CORPORA :=
-testcase_fine_tuned_only:  export NNJM_FINE_TUNING_DEV_CORPORA := ${TUNE_DECODE}
-testcase_fine_tuned_only:  export NNJM_FINE_TUNING_TEST_CORPORA := $(firstword ${TEST_SET})
-testcase_fine_tuned_only:  export NNJM_FINE_TUNING_TRAIN_CORPORA := ${TRAIN_TM}
+testcase_fine_tuned_only:  export NNJM_DEV_CORPUS :=
+testcase_fine_tuned_only:  export NNJM_TEST_CORPUS :=
+testcase_fine_tuned_only:  export NNJM_TRAIN_CORPUS :=
+testcase_fine_tuned_only:  export NNJM_FINE_TUNING_DEV_CORPUS := ${TUNE_DECODE}
+testcase_fine_tuned_only:  export NNJM_FINE_TUNING_TEST_CORPUS := $(firstword ${TEST_SET})
+testcase_fine_tuned_only:  export NNJM_FINE_TUNING_TRAIN_CORPUS := ${TRAIN_TM}
 testcase_fine_tuned_only:  export NNJM_PRETRAINED_NNJM :=
 testcase_fine_tuned_only:
 	echo -e "################################################\nTESTCASE: $@"
@@ -445,12 +445,12 @@ testcase_fine_tuned_only:
 .PHONY: testcase_pretrained
 testsuite_scenarios:  testcase_pretrained
 testcase_pretrained:  export NNJM_WAM_TYPE := hmm3
-testcase_pretrained:  export NNJM_DEV_CORPORA :=
-testcase_pretrained:  export NNJM_TEST_CORPORA :=
-testcase_pretrained:  export NNJM_TRAIN_CORPORA :=
-testcase_pretrained:  export NNJM_FINE_TUNING_DEV_CORPORA :=
-testcase_pretrained:  export NNJM_FINE_TUNING_TEST_CORPORA :=
-testcase_pretrained:  export NNJM_FINE_TUNING_TRAIN_CORPORA :=
+testcase_pretrained:  export NNJM_DEV_CORPUS :=
+testcase_pretrained:  export NNJM_TEST_CORPUS :=
+testcase_pretrained:  export NNJM_TRAIN_CORPUS :=
+testcase_pretrained:  export NNJM_FINE_TUNING_DEV_CORPUS :=
+testcase_pretrained:  export NNJM_FINE_TUNING_TEST_CORPUS :=
+testcase_pretrained:  export NNJM_FINE_TUNING_TRAIN_CORPUS :=
 testcase_pretrained:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
 testcase_pretrained:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
 testcase_pretrained:
@@ -462,12 +462,12 @@ testcase_pretrained:
 .PHONY: testcase_pretrained_fine_tuned
 testsuite_scenarios:  testcase_pretrained_fine_tuned
 testcase_pretrained_fine_tuned:  export NNJM_WAM_TYPE := hmm3
-testcase_pretrained_fine_tuned:  export NNJM_DEV_CORPORA :=
-testcase_pretrained_fine_tuned:  export NNJM_TEST_CORPORA :=
-testcase_pretrained_fine_tuned:  export NNJM_TRAIN_CORPORA :=
-testcase_pretrained_fine_tuned:  export NNJM_FINE_TUNING_DEV_CORPORA := ${TUNE_DECODE}
-testcase_pretrained_fine_tuned:  export NNJM_FINE_TUNING_TEST_CORPORA := $(firstword ${TEST_SET})
-testcase_pretrained_fine_tuned:  export NNJM_FINE_TUNING_TRAIN_CORPORA := ${TRAIN_TM}
+testcase_pretrained_fine_tuned:  export NNJM_DEV_CORPUS :=
+testcase_pretrained_fine_tuned:  export NNJM_TEST_CORPUS :=
+testcase_pretrained_fine_tuned:  export NNJM_TRAIN_CORPUS :=
+testcase_pretrained_fine_tuned:  export NNJM_FINE_TUNING_DEV_CORPUS := ${TUNE_DECODE}
+testcase_pretrained_fine_tuned:  export NNJM_FINE_TUNING_TEST_CORPUS := $(firstword ${TEST_SET})
+testcase_pretrained_fine_tuned:  export NNJM_FINE_TUNING_TRAIN_CORPUS := ${TRAIN_TM}
 #testcase_pretrained_fine_tuned:  export NNJM_PRETRAINED_NNJM := ${PORTAGE_GENERIC_MODEL}/generic-2.0/nnjm/nnjm.generic-2.0.${SRC_LANG}2${TGT_LANG}.mm/model
 testcase_pretrained_fine_tuned:  export NNJM_PRETRAINED_NNJM := /home/models/HANSARD-2017/Hansard-2017.${SRC_LANG}2${TGT_LANG}/models/nnjm/pretrained.baseline.10M/model
 testcase_pretrained_fine_tuned:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
@@ -480,12 +480,12 @@ testcase_pretrained_fine_tuned:
 .PHONY: testcase_trained
 testsuite_scenarios:  testcase_trained
 testcase_trained:  export NNJM_WAM_TYPE := hmm3
-testcase_trained:  export NNJM_DEV_CORPORA := ${TUNE_DECODE}
-testcase_trained:  export NNJM_TEST_CORPORA := $(firstword ${TEST_SET})
-testcase_trained:  export NNJM_TRAIN_CORPORA := ${TRAIN_TM}
-testcase_trained:  export NNJM_FINE_TUNING_DEV_CORPORA :=
-testcase_trained:  export NNJM_FINE_TUNING_TEST_CORPORA :=
-testcase_trained:  export NNJM_FINE_TUNING_TRAIN_CORPORA :=
+testcase_trained:  export NNJM_DEV_CORPUS := ${TUNE_DECODE}
+testcase_trained:  export NNJM_TEST_CORPUS := $(firstword ${TEST_SET})
+testcase_trained:  export NNJM_TRAIN_CORPUS := ${TRAIN_TM}
+testcase_trained:  export NNJM_FINE_TUNING_DEV_CORPUS :=
+testcase_trained:  export NNJM_FINE_TUNING_TEST_CORPUS :=
+testcase_trained:  export NNJM_FINE_TUNING_TRAIN_CORPUS :=
 testcase_trained:  export NNJM_PRETRAINED_NNJM :=
 testcase_trained:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
 testcase_trained:
@@ -498,12 +498,12 @@ testcase_trained:
 .PHONY: testcase_trained_fine_tuned
 testsuite_scenarios:  testcase_trained_fine_tuned
 testcase_trained_fine_tuned:  export NNJM_WAM_TYPE := hmm3
-testcase_trained_fine_tuned:  export NNJM_DEV_CORPORA := ${TUNE_DECODE}
-testcase_trained_fine_tuned:  export NNJM_TEST_CORPORA := $(firstword ${TEST_SET})
-testcase_trained_fine_tuned:  export NNJM_TRAIN_CORPORA := ${TRAIN_TM}
-testcase_trained_fine_tuned:  export NNJM_FINE_TUNING_DEV_CORPORA := ${TUNE_DECODE}
-testcase_trained_fine_tuned:  export NNJM_FINE_TUNING_TEST_CORPORA := $(firstword ${TEST_SET})
-testcase_trained_fine_tuned:  export NNJM_FINE_TUNING_TRAIN_CORPORA := ${TRAIN_TM}
+testcase_trained_fine_tuned:  export NNJM_DEV_CORPUS := ${TUNE_DECODE}
+testcase_trained_fine_tuned:  export NNJM_TEST_CORPUS := $(firstword ${TEST_SET})
+testcase_trained_fine_tuned:  export NNJM_TRAIN_CORPUS := ${TRAIN_TM}
+testcase_trained_fine_tuned:  export NNJM_FINE_TUNING_DEV_CORPUS := ${TUNE_DECODE}
+testcase_trained_fine_tuned:  export NNJM_FINE_TUNING_TEST_CORPUS := $(firstword ${TEST_SET})
+testcase_trained_fine_tuned:  export NNJM_FINE_TUNING_TRAIN_CORPUS := ${TRAIN_TM}
 testcase_trained_fine_tuned:  export NNJM_PRETRAINED_NNJM :=
 testcase_trained_fine_tuned:  export NNJM_TRAIN_NNJM_OPTS := ${NNJM_TRAIN_NNJM_OPTS_QUICK}
 testcase_trained_fine_tuned:

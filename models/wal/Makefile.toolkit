@@ -115,7 +115,7 @@ $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS}):  %/${L2_2_
 # FORCE ALIGN
 
 # We'll need to force align the corpora used to "tune" the mixtm.
-FORCE_ALIGN_SET := $(sort ${TUNE_MIXTM_FINAL} ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TUNE_BILM} ${TEST_SET} ${NNJM_TRAIN_CORPORA} ${NNJM_DEV_CORPORA} ${NNJM_TEST_CORPORA} ${NNJM_FINE_TUNING_DEV_CORPORA} ${NNJM_FINE_TUNING_TEST_CORPORA} ${NNJM_FINE_TUNING_TRAIN_CORPORA})
+FORCE_ALIGN_SET := $(sort ${TUNE_MIXTM_FINAL} ${TUNE_DECODE} ${TUNE_RESCORE} ${TUNE_CE} ${TUNE_BILM} ${TEST_SET} ${NNJM_TRAIN_CORPUS} ${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS} ${NNJM_FINE_TUNING_TRAIN_CORPUS})
 # We DO NOT want to force align a corpus that was used to create a Word Alignment Model.
 FORCE_ALIGN_SET := $(filter-out ${ALL_WAMS}, ${FORCE_ALIGN_SET})
 ifdef MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL
@@ -138,7 +138,7 @@ ${FORCE_ALIGN_SET}:  %:
 # TODO:  where should we put these rules?
 # When creating the filtered version of a corpora we need to change file
 # extension to the uncompressed version when it comes to heldouts.
-$(foreach c, $(filter-out ${NNJM_TRAIN_CORPORA} ${NNJM_FINE_TUNING_TRAIN_CORPORA}, ${FORCE_ALIGN_SET}), \
+$(foreach c, $(filter-out ${NNJM_TRAIN_CORPUS} ${NNJM_FINE_TUNING_TRAIN_CORPUS}, ${FORCE_ALIGN_SET}), \
 	$(eval \
 		$c/${SRC_LANG}.lc:  override L1X = ${L1}) \
 	$(eval \
