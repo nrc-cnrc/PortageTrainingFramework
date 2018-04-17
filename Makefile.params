@@ -136,30 +136,41 @@ TRAIN_TM      ?= tm-train
 # => MIXTM_TRAIN_MIX = first word of MIXTM
 #MIXTM_TRAIN_MIX ?= subtm1
 
-# Word class granularities for NNJMs.
-# Defining NNJM_NCLS triggers word class training too.
-# If defined, NNJM_NCLS must contain integer values.
-# We recommend using a 400-class for NNJM.
-NNJM_NCLS ?= 400
 
-# NNJM main model.
-# Define NNJM_TRAIN_CORPORA to train a NNJM.
-# NOTE: You either use NNJM_TRAIN_CORPORA or NNJM_PRETRAINED_NNJM for your
-# out-of-domain data.
-NNJM_DEV_CORPORA ?= ${TUNE_DECODE}
+### NNJM training
+# NNJM training can be done in three modes:
+#  1: 1-pass training on your own in-domain data only:
+#     - define NNJM_TRAIN_CORPORA to point to your in-domain data, e.g.,
+#       ${TRAIN_TM}
+#     - leave NNJM_FINE_TUNING_TRAIN_CORPORA and NNJM_PRETRAINED_NNJM empty
+#  2: 2-pass training, first on your own generic data, with fine-tuning on your
+#  own in-domain data:
+#     - define NNJM_TRAIN_CORPORA to point to your generic data
+#     - define NNJM_FINE_TUNING_TRAIN_CORPORA to point to your in-domain data
+#     - leave NNJM_PRETRAINED_NNJM empty
+#  3: 2-pass training, starting from a pre-trained NNJM (e.g., NRC's generic
+#  one), with fine-tuning on your own in-domain data:
+#  	- define NNJM_FINE_TUNING_TRAIN_CORPORA to point to your in-domain data
+#  	- define NNJM_PRETRAINED_NNJM to point to the pre-trained model
+#  	- leave NNJM_TRAIN_CORPORA empty.
+# Recommendation: 2-pass tuning is best. Use the NRC's generic model if your
+# language pair is en-fr (mode 3), or use the largest generic corpus your have
+# access to (mode 2).
+
+# NNJM main model:
+# Define NNJM_TRAIN_CORPORA to train the main NNJM from scratch on this corpus,
+# typically large generic data.
+# NOTE: Either use NNJM_TRAIN_CORPORA or NNJM_PRETRAINED_NNJM but not both.
+#NNJM_TRAIN_CORPORA ?=
+NNJM_DEV_CORPORA ?= ${TUNE_DECODE} # Validation corpus, for early stopping
 NNJM_TEST_CORPORA ?=
-#NNJM_TRAIN_CORPORA ?= ${TRAIN_TM}
 
 # NNJM fine tuning.
 # Define NNJM_FINE_TUNING_TRAIN_CORPORA to fine tune your NNJM model.
-# This triggers a second training on an existing model with in-domain data.
+# This triggers a second-pass training on an existing model with in-domain data.
+NNJM_FINE_TUNING_TRAIN_CORPORA ?=
 NNJM_FINE_TUNING_DEV_CORPORA ?= ${NNJM_DEV_CORPORA}
 NNJM_FINE_TUNING_TEST_CORPORA ?= ${NNJM_TEST_CORPORA}
-NNJM_FINE_TUNING_TRAIN_CORPORA ?=
-
-# NNJM specific options that should stay empty.
-NNJM_TRAIN_NNJM_OPTS ?=
-NNJM_GENEX_OPTS ?=
 
 # NNJM_PRETRAINED_NNJM specifies file path to an additional pre-trained Neural
 # Network Joint Models to use in your canoe.ini.  The NNJM's filename must be
@@ -730,6 +741,16 @@ ifdef USE_BILM
    TUNE_BILM ?= ${TUNE_LM}
 endif
 TUNE_BILM := $(strip ${TUNE_BILM})
+
+# Word class granularities for NNJMs.
+# Defining NNJM_NCLS triggers word class training too.
+# If defined, NNJM_NCLS must contain integer values.
+# We recommend using a 400-class for NNJM.
+NNJM_NCLS ?= 400
+
+# NNJM specific options that should stay empty.
+NNJM_TRAIN_NNJM_OPTS ?=
+NNJM_GENEX_OPTS ?=
 
 # Word class granularities to train.
 # By default, we train word classes (wcl) for the granularites identified for
