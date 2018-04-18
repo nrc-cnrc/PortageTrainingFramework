@@ -332,7 +332,7 @@ trained/nnjm.bin:
 		-cls-t $(filter %/${TGT_LANG}.${NNJM_NCLS}${CLS_X}, $^) \
 		${NNJM_TRAIN_NNJM_OPTS} \
 		${NNJM_GENEX_OPTS} \
-		$(and $(call get_corpora, ${NNJM_TEST_CORPUS}, $^), -test $(call get_corpora, ${NNJM_TEST_CORPUS}, $^)) \
+		$(and $(strip ${NNJM_TEST_CORPUS}), $(call get_corpora, ${NNJM_TEST_CORPUS}, $^), -test $(call get_corpora, ${NNJM_TEST_CORPUS}, $^)) \
 		-dev $(call get_corpora, ${NNJM_DEV_CORPUS}, $^) \
 		$(call get_train, $(filter-out %${CLS_X}, $^)) \
 	&> log.train-nnjm
@@ -345,7 +345,7 @@ fine_tuned/nnjm.bin:  ${NNJM_FINE_TUNING_PRETRAINED_MODEL}.pkl
 		-pre-trained-nnjm  $(or $(dir $(filter %.pkl, $^)), $(error You need to define a pretrained nnjm model.)) \
 		${NNJM_TRAIN_NNJM_OPTS} \
 		${NNJM_GENEX_OPTS} \
-		$(and $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPUS}, $^), -test $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPUS}, $^)) \
+		$(and $(strip ${NNJM_FINE_TUNING_TEST_CORPUS}), $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPUS}, $^), -test $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPUS}, $^)) \
 		-dev $(call get_corpora, ${NNJM_FINE_TUNING_DEV_CORPUS}, $^) \
 		$(or $(call get_train, $(filter-out %${CLS_X}, $^)), $(error You need to define NNJM_FINE_TUNING_TRAIN_CORPUS)) \
 	&> log.train-nnjm.fine_tuning
