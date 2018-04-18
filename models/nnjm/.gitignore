@@ -1,0 +1,7 @@
+cpt.delme
+pretrained.*
+trained
+fine_tuned
+train-nnjm.workdir-*
+.Makefile*.deps
+log.train-nnjm*
