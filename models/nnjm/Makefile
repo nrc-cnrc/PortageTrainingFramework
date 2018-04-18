@@ -339,10 +339,10 @@ trained/nnjm.bin:
 
 
 
-fine_tuned/nnjm.bin:  ${NNJM_FINE_TUNING_PRETRAINED_MODEL}.pkl
+fine_tuned/nnjm.bin:  ${NNJM_FINE_TUNING_PRETRAINED_MODEL}.bin
 	train-nnjm.sh \
 		-out fine_tuned \
-		-pre-trained-nnjm  $(or $(dir $(filter %.pkl, $^)), $(error You need to define a pretrained nnjm model.)) \
+		-pre-trained-nnjm  $(or $(dir $(filter %.bin, $^)), $(error You need to define a pretrained nnjm model.)) \
 		${NNJM_TRAIN_NNJM_OPTS} \
 		${NNJM_GENEX_OPTS} \
 		$(and $(strip ${NNJM_FINE_TUNING_TEST_CORPUS}), $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPUS}, $^), -test $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPUS}, $^)) \
