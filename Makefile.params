@@ -163,14 +163,14 @@ TRAIN_TM      ?= tm-train
 # NOTE: Either use NNJM_TRAIN_CORPUS or NNJM_PRETRAINED_NNJM but not both.
 #NNJM_TRAIN_CORPUS ?=
 NNJM_DEV_CORPUS ?= ${TUNE_DECODE} # Validation corpus, for early stopping
-NNJM_TEST_CORPUS ?=
+NNJM_TEST_CORPUS ?=               # Test corpus, optional
 
 # NNJM fine tuning.
 # Define NNJM_FINE_TUNING_TRAIN_CORPUS to fine tune your NNJM model.
 # This triggers a second-pass training on an existing model with in-domain data.
 NNJM_FINE_TUNING_TRAIN_CORPUS ?=
-NNJM_FINE_TUNING_DEV_CORPUS ?= ${NNJM_DEV_CORPUS}
-NNJM_FINE_TUNING_TEST_CORPUS ?= ${NNJM_TEST_CORPUS}
+NNJM_FINE_TUNING_DEV_CORPUS ?= ${NNJM_DEV_CORPUS}   # Validation corpus, for early stopping
+NNJM_FINE_TUNING_TEST_CORPUS ?= ${NNJM_TEST_CORPUS} # Test corpus, optional
 
 # NNJM_PRETRAINED_NNJM specifies file path to an additional pre-trained Neural
 # Network Joint Models to use in your canoe.ini.  The NNJM's filename must be
