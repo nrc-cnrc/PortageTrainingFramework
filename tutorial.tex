@@ -85,7 +85,7 @@
 \title{\PS Tutorial: \\
        A detailed walk-through of the \\
        experimental framework}
-\date{Last updated July 2016}
+\date{Last updated June 2018}
 \author{Eric Joanis, Darlene Stewart, Samuel Larkin, George Foster}
 
 \begin{document}
@@ -100,7 +100,7 @@
 An adaptation of George Foster's \emph{Running Portage: A Toy Example} \\
 to Samuel Larkin's experimental framework,\\
 %updated to reflect recommended usage of \PS.
-updated to reflect recommended usage of PortageII 3.0
+updated to reflect recommended usage of PortageII 4.0
 \end{center}
 
 \vfill
@@ -114,8 +114,8 @@ updated to reflect recommended usage of PortageII 3.0
       Information and Communications Technologies \\
    Conseil national de recherches Canada /
       National Research Council Canada \\
-   Copyright \copyright\ 2008, 2009, 2010, 2011, 2012, 2013, 2016, Sa Majesté la Reine du Chef du Canada
-   \\ Copyright \copyright\ 2008, 2009, 2010, 2011, 2012, 2013, 2016, Her Majesty in Right of Canada
+   Copyright \copyright\ 2008, 2009, 2010, 2011, 2012, 2013, 2016, 2018, Sa Majesté la Reine du Chef du Canada
+   \\ Copyright \copyright\ 2008, 2009, 2010, 2011, 2012, 2013, 2016, 2018, Her Majesty in Right of Canada
 \end{center}
 
 \vfill
@@ -270,6 +270,7 @@ sections:
       translation model (\S\ref{TM}),
       hierarchical lexicalized distortion model (\S\ref{LDM}),
       sparse model (\S\ref{sparse}),
+      NNJMs (\S\ref{NNJM}),
       mixture models (\S\ref{MIX}),
       decoder weight optimization (\S\ref{COW}),
       confidence estimation model training (\S\ref{CE}),
@@ -562,8 +563,10 @@ language model (\S\ref{LM}), creating a translation model (\S\ref{TM}), and
 optimizing decoder weights (\S\ref{COW}).  Several are optional: creating coarse
 language models (\S\ref{coarseLM}), creating a truecasing model (\S\ref{TC}),
 creating a (possibly hierarchical) lexicalized distortion model (\S\ref{LDM}),
-creating a sparse model (\S\ref{sparse}), using mixture language and
-translation models for domain adaptation (\S\ref{MIX}), training a confidence 
+creating a sparse model (\S\ref{sparse}),
+creating or fine-tuning an NNJM (\S\ref{NNJM}),
+using mixture language and
+translation models for domain adaptation (\S\ref{MIX}), training a confidence
 estimation (CE) model (\S\ref{CE}), and training a rescoring model
 (\S\ref{RAT}).
 
@@ -1524,6 +1527,158 @@ target words, classes of source and target words, and the list of most
 frequently unaligned words, as required by one or the other of the sparse
 feature templates.
 
+\subsection{Creating and fine tuning NNJMs} \label{NNJM}
+
+In 2014, Jacob Devlin and his colleagues at BBN developed a neural feature that
+significantly improved the performance of phrase-based, statistical machine
+translation: the Neural Network Joint Model (NNJM) (Devlin et al, 2014).
+The NRC has reimplemented this model with success and made it available as a
+decoder feature in PortgageII 3.0, and now, with PortageII 4.0, we provide the
+training software for this model. This makes \PS a hybrid neural/statistical
+machine translation system with the phrase-based decoder having access to this
+powerful neural feature to guide the search.
+
+You can use or train NNJMs in four different ways:
+\begin{itemize}
+   \item Use NRC's generic NNJM on its own (no training required);
+   \item Fine tune NRC's generic NNJM on your in-domain data;
+   \item Train your own NNJM in one pass on all you data (in or out of domain); or
+   \item Perform two-pass training on your own data:
+      \begin{itemize}
+         \item for the first pass, use all the parallel data you have and/or
+            can get to create your own generic NNJM;
+         \item for the second pass, fine-tune the first-pass model on your
+            in-domain data only.
+      \end{itemize}
+\end{itemize}
+
+The get the most out of NNJMs, we strongly recommend always using two-pass
+training, starting either with NRC's generic NNJM or with your own generic
+NNJM, and fine-tuning it with your in-domain data.
+
+\subsubsection{First-pass training}
+
+To enable the use of NRC's generic French-English NNJM or your own pre-trained
+generic NNJM, define \code{NNJM_PRETRAINED_NNJM} in the top-level
+\code{Makefile.params}:
+\begin{small}
+\begin{alltt}
+   NNJM_PRETRAINED_NNJM ?= \$\{PORTAGE_GENERIC_MODEL\}/generic-2.0/nnjm/nnjm.generic-
+2.0.\$\{SRC_LANG\}2\$\{TGT_LANG\}.mm/model
+\end{alltt}
+\end{small}
+or
+\begin{small}
+\begin{alltt}
+   NNJM_PRETRAINED_NNJM ?= /path/to/some/other/framework/models/nnjm/trained/model
+\end{alltt}
+\end{small}
+
+To create your own generic NNJM, assemble all the parallel data you can get
+into a single corpus file pair in the \code{corpora/} directory, e.g.,
+\code{corpora/generic-nnjm-train_en.raw.gz} and
+\code{corpora/generic-nnjm-train_fr.raw.gz} and set \code{NNJM_TRAIN_CORPUS}:
+\begin{small}
+\begin{alltt}
+   NNJM_TRAIN_CORPUS ?= generic-nnjm-train
+\end{alltt}
+\end{small}
+
+If you stop here and run \code{make all} in \code{models/nnjm} or at the
+framework root, you will use a one-pass NNJM.
+
+\subsubsection{Second-pass training}
+
+To enable the second pass of NNJM training and maximize the value of your NNJM,
+you must define \code{NNJM_FINE_TUNING_TRAIN_CORPUS}:
+\begin{small}
+\begin{alltt}
+   NNJM_FINE_TUNING_TRAIN_CORPUS ?= nnjm-train
+\end{alltt}
+\end{small}
+Like for sparse features, this should be one file pair which contains all of
+your in-domain corpora concatenated together.
+
+\subsubsection{Continuing the tutorial}
+
+To continue this tutorial, let's use NRC's generic NNJM for the first pass, and
+the TM training corpus \code{tm-train} for the second pass:
+\begin{small}
+\begin{alltt}
+   NNJM_TRAIN_CORPUS ?=   # leave this line empty or commented out
+   NNJM_FINE_TUNING_TRAIN_CORPUS ?= tm-train
+   NNJM_PRETRAINED_NNJM ?= \$\{PORTAGE_GENERIC_MODEL\}/generic-2.0/nnjm/nnjm.generic-
+2.0.\$\{SRC_LANG\}2\$\{TGT_LANG\}.mm/model
+\end{alltt}
+\end{small}
+
+Before you proceed, you must have installed Theano and its dependencies, as
+documented in the user manual (see \code{doc/user-manual/TheanoInstallation.html}).
+
+\begin{small}
+\begin{alltt}
+   > \textbf{cd toy.experiment}
+   > \textbf{make nnjm}
+   [commands in corpora, ibm, wal and wcl to make sure all dependencies were built]
+   [commands in models/nnjm for error checking]
+   train-nnjm.sh -out fine_tuned -pre-trained-nnjm pretrained.nnjm.generic-2.0.fr2en.mm/ \bs
+      -dev ../wal/dev1/fr.lc ../wal/dev1/en.lc .//../wal/dev1.ibm4.fr2en.align.gz \bs
+      ../ibm/tm-train/fr.lc ../ibm/tm-train/en.lc .//../wal/tm-train.ibm4.fr2en.align.gz \bs
+      &> log.train-nnjm.fine_tuning
+\end{alltt}
+\end{small}
+
+While this runs, the interesting log files are \code{models/nnjm/log.train-nnjm.fine_tuning}
+and \code{models/nnjm/train-nnjm.workdir-XXX/log.train-nnjm.py}, where XXX will
+vary at each run. log.train-nnjm.py should look something like this:
+\begin{footnotesize}
+\begin{alltt}
+   > \textbf{cat models/nnjm/train-nnjm.workdir-}\emph{XXX}\textbf{/log.train-nnjm.py}
+   Using cuDNN version 5005 on context None
+   Mapped name None to device cuda: GeForce GTX TITAN (0000:05:00.0)
+   Reading data
+   read 2215 examples from train-nnjm.workdir-Z2d/dev-ex.gz
+   Warning: svoc_size too small (0); raising it to 16400
+   Warning: tvoc_size too small (0); raising it to 16387
+   Warning: ovoc_size too small (0); raising it to 32396
+   Trying to loading symbolic variables from file a binary file format: pretrained.nnjm.generic-2.0.fr2en+pkl.mm//nnjm.bin
+   Successfully loaded symbolic variables.
+   [...]
+   Optimizing
+   ... epoch size = 189292 (100\% train data), slice size = 64000 (2 per epoch), minibatch size = 128
+   ... epoch 1: 31 secs, eta = 0.030000, nlls: train = 1.957493, val = 2.055192, test = 0.000000
+   ... epoch 2: 29 secs, eta = 0.030000, nlls: train = 1.901798, val = 2.037993, test = 0.000000
+   ... epoch 3: 29 secs, eta = 0.030000, nlls: train = 1.866922, val = 2.026534, test = 0.000000
+   ... epoch 4: 29 secs, eta = 0.030000, nlls: train = 1.835368, val = 2.022086, test = 0.000000
+   [...]
+   ... epoch 14: 30 secs, eta = 0.030000, nlls: train = 1.618010, val = 2.002129, test = 0.000000
+   ... epoch 15: 30 secs, eta = 0.030000, nlls: train = 1.614075, val = 1.999671, test = 0.000000
+   ... epoch 16: 30 secs, eta = 0.015000, nlls: train = 1.591829, val = 1.998804, test = 0.000000
+   ... epoch 17: 31 secs, eta = 0.015000, nlls: train = 1.570838, val = 1.998533, test = 0.000000
+   validation error stable - quitting
+   Writing to fine_tuned/nnjm.pkl
+\end{alltt}
+\end{footnotesize}
+
+Things to look for in \code{log.train-nnjm.py}:
+\begin{itemize}
+   \item ``Using cuDNN'' and the name of your GPU device in the first two lines
+      confirm that traning is happening on GPU, not on CPU.
+   \item Up to 60 epochs showing training and validation perplexities (shown
+      next to ``train ='' and ``val ='') progressively going down at each
+      iteration.
+   \item Validation perplexity is the perplexity of your dev set
+      (\code{NNJM_FINE_TUNING_DEV_CORPUS}). When it has not gone down for four
+      consecutive iterations, training stops.
+   \item Perplexity values are not very meaningful, they can vary wildly from
+      one context to another. The downward trend is all we're looking for.
+      Validation perplexities can be compared only if you are using exactly the
+      same dev set in two experiments.
+   \item NNJM training normally takes hours on GPU, days on CPU, even for the
+      fine-tuning pass. It should take around 10 minutes on GPU with the tiny
+      dataset in this tutorial, or a couple hours on CPU.
+\end{itemize}
+
 \subsection{Mixture Models and Domain Adaptation} \label{MIX}
 
 In the previous sections, we assume that the training data for
@@ -1577,7 +1732,7 @@ them to the files already there:
    corpora/lm-train2_fr.raw.gz  corpora/tm-train2_fr.raw.gz
    corpora/lm-train3_en.raw.gz  corpora/tm-train3_en.raw.gz
    corpora/lm-train3_fr.raw.gz  corpora/tm-train3_fr.raw.gz
-   \end{alltt}
+\end{alltt}
 \end{small}
 
 Mixture models are meant to replace regular LMs and TMs. In a given setup, you
