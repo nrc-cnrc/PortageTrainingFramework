@@ -2077,10 +2077,10 @@ In this framework, we start with a template configuration file:
 \end{alltt}
 \end{small}
 
-The framework will automatically insert the phrase tables, language models
-and (H)LDMs generated in the previous steps into the \code{canoe.ini} file when
-you make it.  It supports four template placeholders that will be replaced
-automatically:
+The framework will automatically insert the phrase tables, language models,
+(H)LDMs, and NNJMs generated in the previous steps into the \code{canoe.ini}
+file when you make it.  It supports four template placeholders that will be
+replaced automatically:
 \begin{itemize}
 \item \code{<SL>}:   source language code, e.g. ``fr'';
 \item \code{<TL>}:   target language code, e.g., ``en'';
@@ -2109,7 +2109,8 @@ will be slightly different if you followed any of the optional paths above.}
    Coarse LMs:
       DynMap;wordClasses-models/wcl/en.200.classes;models/coarselm/lm-train_en-200-ukn-8g.tplm
       DynMap;wordClasses-models/wcl/en.800.classes;models/coarselm/lm-train_en-800-ukn-8g.tplm  
-   BiLMs:
+   NNJMs: models/nnjm/fine_tuned/model
+
    cat canoe.ini.template \bs
       | sed -e 's/<SL>/fr/g' \bs
             -e 's/<TL>/en/g' \bs
@@ -2118,6 +2119,7 @@ will be slightly different if you followed any of the optional paths above.}
       | configtool -p "args: -dist-phrase-swap -distortion-model WordDisplacement::\bs
         back-hlex#m#H:back-hlex#s#H:back-hlex#d#H:fwd-hlex#m#H:fwd-hlex#s#H:fwd-hlex#d#H \bs
         -lex-dist-model-file :models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz#H \bs
+        -nnjm-file models/nnjm/fine_tuned/model \bs
         -sparse-model models/sparse/model -force-shift-reduce " - \bs
       > canoe.ini
    configtool check canoe.ini
@@ -2138,12 +2140,9 @@ Here is the result:
 \begin{small}
 \begin{alltt}
    > \textbf{cat canoe.ini}
-   [ttable-multi-prob]
-      models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz
-   [lex-dist-model-file]
-      models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz#H
-   [lmodel-file]
-      models/mixlm/dev1.mixlm
+   [ttable-multi-prob] models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz
+   [lex-dist-model-file] models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.gz#H
+   [lmodel-file] models/mixlm/dev1.mixlm
       DynMap;wordClasses-models/wcl/en.200.classes;models/coarselm/lm-train_en-200-ukn-8g.tplm
       DynMap;wordClasses-models/wcl/en.800.classes;models/coarselm/lm-train_en-800-ukn-8g.tplm
    [minimize-lm-context-size]
@@ -2160,16 +2159,10 @@ Here is the result:
    [cube-pruning]
    [use-ftm]
    [weight-w] -1
-   [distortion-model]
-      WordDisplacement
-      back-hlex#m#H
-      back-hlex#s#H
-      back-hlex#d#H
-      fwd-hlex#m#H
-      fwd-hlex#s#H
-      fwd-hlex#d#H
-   [sparse-model]
-      models/sparse/model
+   [distortion-model] WordDisplacement back-hlex#m#H back-hlex#s#H back-hlex#d#H
+      fwd-hlex#m#H fwd-hlex#s#H fwd-hlex#d#H
+   [sparse-model] models/sparse/model
+   [nnjm-file] models/nnjm/fine_tuned/model
 \end{alltt}
 \end{small}
 
@@ -2213,8 +2206,8 @@ and we use the
    > \textbf{make all}
    mkdir -p foos
    filter_models -z -r -tm-soft-limit cpt.dev1 -ldm < ../../corpora/dev1_fr.rule
-   tune.py -v -o canoe.ini.cow.FILT -p 4 -c 1 -m 15 -n 100 -a lmira -r --workdir=foos \bs
-      -d '-lattice-source-density' -f canoe.ini.FILT \bs
+   tune.py -v -o canoe.ini.cow.FILT -p 4 -c 1 --cpopts=\bs"-rp-j 4\bs" -m 15 -n 100 \bs
+      -a lmira -r --workdir=foos -d '-lattice-source-density' -f canoe.ini.FILT \bs
       ../../corpora/dev1_fr.rule ../../corpora/dev1_en.lc &> log.canoe.ini.cow
    configtool -p args:"`configtool weights canoe.ini.cow.FILT`" canoe.ini > canoe.ini.cow
    rm -f -r foos *.FILT.gz *.FILT.bkoff canoe.ini.FILT canoe.ini.cow.FILT
@@ -2246,8 +2239,6 @@ decode-score=0.1475 prev-optimizer-score=23.40 prev-nbest-size=0 avg-wt-diff=0.0
 decode-score=0.2144 prev-optimizer-score=25.08 prev-nbest-size=0 avg-wt-diff=0.0134
 decode-score=0.2679 prev-optimizer-score=27.20 prev-nbest-size=0 avg-wt-diff=0.0191
 decode-score=0.2572 prev-optimizer-score=27.62 prev-nbest-size=0 avg-wt-diff=0.0149
-decode-score=0.2594 prev-optimizer-score=27.33 prev-nbest-size=0 avg-wt-diff=0.0109
-decode-score=0.2664 prev-optimizer-score=27.61 prev-nbest-size=0 avg-wt-diff=0.0118
 [...]
 > \textbf{less -S summary.wts}
 1.0   1.0   1.0   1.0   1.0   1.0   1.0   -1.0  0.0 1.0   1.0   1.0   1.0   1.0   1.0   1.0   0.0   ...
@@ -2256,8 +2247,6 @@ decode-score=0.2664 prev-optimizer-score=27.61 prev-nbest-size=0 avg-wt-diff=0.0
 0.674 -0.36 0.251 0.336 -0.33 0.569 0.074 -0.73 0.0 0.799 0.655 0.354 0.047 0.312 0.641 0.139 0.099 ...
 0.628 0.158 0.035 0.399 0.610 0.231 0.278 -0.41 0.0 1.0   0.670 0.284 0.374 0.256 0.540 0.166 0.017 ...
 0.343 0.362 0.080 0.394 0.661 0.306 0.359 -0.42 0.0 0.982 0.898 0.472 0.637 0.138 -0.01 0.156 0.046 ...
-0.484 0.349 0.007 0.368 0.493 0.341 0.229 -0.29 0.0 1.0   0.548 0.174 0.327 0.186 0.162 0.088 0.016 ...
-0.374 0.190 0.203 0.516 0.772 0.485 0.494 -0.13 0.0 1.0   0.493 0.359 0.290 0.212 0.275 0.185 -0.00 ...
 [...]
 \end{alltt}
 \end{footnotesize}
@@ -2269,48 +2258,49 @@ framework).
 
 It's hard to make sense of the contents of \code{summary.wts} here: it shows
 the weight of each feature at each iteration. Without sparse features, that was
-only 16 columns, but with sparse features this file now has 8736 columns!  A
+only 16 columns, but with sparse features this file now has 8737 columns!  A
 human-readable version of the information is shown in \code{logs/log.decode},
 along with lots of logging information about decoding.  Here is an excerpt from
 the middle of that log file:
 \begin{scriptsize}
 \begin{alltt}
 Log-linear model used:
-index     weight    feature description
-1         0.56392   DistortionModel:WordDisplacement
-2         0.254499  DistortionModel:back-hlex#m#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
-3         0.243196  DistortionModel:back-hlex#s#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
-4         0.581631  DistortionModel:back-hlex#d#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
-5         0.651703  DistortionModel:fwd-hlex#m#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
-6         0.222988  DistortionModel:fwd-hlex#s#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
-7         0.0401815 DistortionModel:fwd-hlex#d#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
-8         -0.329553 LengthFeature
-9         1         SparseModel:./models/sparse/model
-10        1         LanguageModel:models/mixlm/dev1.mixlm;SimpleAutoVoc
-11        0.483673  LanguageModel:wordClasses-models/wcl/en.200.classes;models/coarselm/lm-train_en-200-ukn-8g.tplm;SimpleAutoVoc
-12        0.266164  LanguageModel:wordClasses-models/wcl/en.800.classes;models/coarselm/lm-train_en-800-ukn-8g.tplm;SimpleAutoVoc
-13        0.335264  TranslationModel:cpt.dev1.FILT.gz(col=0)
-14        0.177488  TranslationModel:cpt.dev1.FILT.gz(col=1)
-15        0.149706  ForwardTranslationModel:cpt.dev1.FILT.gz(col=2)
-16        0.197426  ForwardTranslationModel:cpt.dev1.FILT.gz(col=3)
-17-82     0.521932  SparseModel:DistCurrentSrcFirstWord:data.mkcls_.._.._corpora_tm-train_fr.lc.gz_20_2
-83-238    0.521934  SparseModel:DistCurrentSrcFirstWord:data.mkcls_.._.._corpora_tm-train_fr.lc.gz_50_2
-239-484   0.521935  SparseModel:DistCurrentSrcFirstWord:data.svoci_.._.._corpora_tm-train_80
-485-550   0.521933  SparseModel:DistCurrentSrcLastWord:data.mkcls_.._.._corpora_tm-train_fr.lc.gz_20_2
-551-706   0.521933  SparseModel:DistCurrentSrcLastWord:data.mkcls_.._.._corpora_tm-train_fr.lc.gz_50_2
-707-952   0.52193   SparseModel:DistCurrentSrcLastWord:data.svoci_.._.._corpora_tm-train_80
-953-1018  0.521934  SparseModel:DistCurrentTgtFirstWord:data.mkcls_.._.._corpora_tm-train_en.lc.gz_20_2
-1019-1174 0.521933  SparseModel:DistCurrentTgtFirstWord:data.mkcls_.._.._corpora_tm-train_en.lc.gz_50_2
-1175-1420 0.521934  SparseModel:DistCurrentTgtFirstWord:data.tvoci_.._.._corpora_tm-train_80
-1421-1486 0.52193   SparseModel:DistCurrentTgtLastWord:data.mkcls_.._.._corpora_tm-train_en.lc.gz_20_2
-1487-1642 0.521929  SparseModel:DistCurrentTgtLastWord:data.mkcls_.._.._corpora_tm-train_en.lc.gz_50_2
-1643-1888 0.521932  SparseModel:DistCurrentTgtLastWord:data.tvoci_.._.._corpora_tm-train_80
-1889-8612 1.66568   SparseModel:AlignedWordPair:data.svoc_.._.._corpora_tm-train_80 data.tvoc_.._.._corpora_tm-train_80
-8613-8662 1.24093   SparseModel:LexUnalTgtAny:data.tunal_.._jpt_50
-8663-8673 0.521933  SparseModel:PhrasePairCountMultiBin:data.bins11
-8674-8722 0.616501  SparseModel:PhrasePairAllBiLengthBins:7 7
-8723-8729 0.523808  SparseModel:PhrasePairAllTgtLengthBins:7
-8730-8736 0.602322  SparseModel:PhrasePairAllSrcLengthBins:7
+index     weight feature description
+1         0.1782 DistortionModel:WordDisplacement
+2         0.0249 DistortionModel:back-hlex#m#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
+3         0.2077 DistortionModel:back-hlex#s#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
+4         0.2399 DistortionModel:back-hlex#d#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
+5         0.0937 DistortionModel:fwd-hlex#m#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
+6         0.0605 DistortionModel:fwd-hlex#s#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
+7         0.2099 DistortionModel:fwd-hlex#d#hldm.ibm4+hmm3+ibm2.fr2en.FILT.gz
+8         -0.239 LengthFeature
+9         1      SparseModel:./models/sparse/model
+10        0.3150 NNJM:models/nnjm/fine_tuned/model
+11        1      LanguageModel:models/mixlm/dev1.mixlm;SimpleAutoVoc
+12        -0.231 LanguageModel:wordClasses-models/wcl/en.200.classes;models/coarselm/lm-train_en-200-ukn-8g.tplm;SimpleAutoVoc
+13        0.0444 LanguageModel:wordClasses-models/wcl/en.800.classes;models/coarselm/lm-train_en-800-ukn-8g.tplm;SimpleAutoVoc
+14        0.2390 TranslationModel:cpt.dev1.FILT.gz(col=0)
+15        0.1393 TranslationModel:cpt.dev1.FILT.gz(col=1)
+16        0.0093 ForwardTranslationModel:cpt.dev1.FILT.gz(col=2)
+17        0.0426 ForwardTranslationModel:cpt.dev1.FILT.gz(col=3)
+18-83     0.0561 SparseModel:DistCurrentSrcFirstWord:data.mkcls_.._.._corpora_tm-train_fr.lc.gz_20_2
+84-239    0.0561 SparseModel:DistCurrentSrcFirstWord:data.mkcls_.._.._corpora_tm-train_fr.lc.gz_50_2
+240-485   0.0561 SparseModel:DistCurrentSrcFirstWord:data.svoci_.._.._corpora_tm-train_80
+486-551   0.0561 SparseModel:DistCurrentSrcLastWord:data.mkcls_.._.._corpora_tm-train_fr.lc.gz_20_2
+552-707   0.0561 SparseModel:DistCurrentSrcLastWord:data.mkcls_.._.._corpora_tm-train_fr.lc.gz_50_2
+708-953   0.0561 SparseModel:DistCurrentSrcLastWord:data.svoci_.._.._corpora_tm-train_80
+954-1019  0.0561 SparseModel:DistCurrentTgtFirstWord:data.mkcls_.._.._corpora_tm-train_en.lc.gz_20_2
+1020-1175 0.0561 SparseModel:DistCurrentTgtFirstWord:data.mkcls_.._.._corpora_tm-train_en.lc.gz_50_2
+1176-1421 0.0561 SparseModel:DistCurrentTgtFirstWord:data.tvoci_.._.._corpora_tm-train_80
+1422-1487 0.0561 SparseModel:DistCurrentTgtLastWord:data.mkcls_.._.._corpora_tm-train_en.lc.gz_20_2
+1488-1643 0.0561 SparseModel:DistCurrentTgtLastWord:data.mkcls_.._.._corpora_tm-train_en.lc.gz_50_2
+1644-1889 0.0561 SparseModel:DistCurrentTgtLastWord:data.tvoci_.._.._corpora_tm-train_80
+1890-8613 0.3386 SparseModel:AlignedWordPair:data.svoc_.._.._corpora_tm-train_80 data.tvoc_.._.._corpora_tm-train_80
+8614-8663 0.4073 SparseModel:LexUnalTgtAny:data.tunal_.._jpt_50
+8664-8674 0.0561 SparseModel:PhrasePairCountMultiBin:data.bins11
+8675-8723 0.0596 SparseModel:PhrasePairAllBiLengthBins:7 7
+8724-8730 0.0561 SparseModel:PhrasePairAllTgtLengthBins:7
+8731-8737 0.0596 SparseModel:PhrasePairAllSrcLengthBins:7
 \end{alltt}
 \end{scriptsize}
 Here the features used are listed with their respective weights in a way that
@@ -2373,6 +2363,7 @@ the weights tuned on the development corpus:
    [weight-d] 0.4037:0.3889:0.1811:0.7207:0.7390:0.3564:0.3785
    [weight-w] -0.368477
    [weight-sparse] 1
+   [weight-nnjm] 0.4507756121
 \end{alltt}
 \end{small}
 
@@ -2386,7 +2377,7 @@ The set of \code{weight-} parameters above provide the decoder features weights:
 \item the sentence-length penalty (if positive) or bonus (if negative) (\code{weight-w}), and
 \item the special sparse weight (\code{weight-sparse}, always 1).
 \end{itemize}
-The language model often obtains the highest weight, as is the case
+The language model often obtains one of the highest weights, as is the case
 here.\footnote{A note of warning about the LM weight: following Doug Paul's
 ``ARPA'' LM format, all LM formats we know use base-10 log probs (including
 ours). But \code{canoe} interprets them as natural logs: throughout \PS, logs
@@ -2550,8 +2541,8 @@ features:
    FileFF:ffvals,2
    FileFF:ffvals,3
    [...]
-   FileFF:ffvals,15
    FileFF:ffvals,16
+   FileFF:ffvals,17
    LengthFF
    IBM1TgtGivenSrc:models/ibm/ibm1.tm-train.en_given_fr.gz
    IBM1SrcGivenTgt:models/ibm/ibm1.tm-train.fr_given_en.gz
@@ -2622,44 +2613,45 @@ The output from \code{rescore.py} is written to the file \code{rescore-model}:
 \begin{footnotesize}
 \begin{alltt}
    > \textbf{cat rescore-model}
-   FileFF:ffvals,1 0.124309
-   FileFF:ffvals,2 0.038887
-   FileFF:ffvals,3 0.044201
-   FileFF:ffvals,4 0.040754
-   FileFF:ffvals,5 0.052477
-   FileFF:ffvals,6 0.242793
-   FileFF:ffvals,7 -0.103990
-   FileFF:ffvals,8 -0.017403
-   FileFF:ffvals,9 -0.191628
-   FileFF:ffvals,10 0.058649
-   FileFF:ffvals,11 -0.007194
-   FileFF:ffvals,12 0.085358
-   FileFF:ffvals,13 0.212081
-   FileFF:ffvals,14 -0.132792
-   FileFF:ffvals,15 0.210576
-   FileFF:ffvals,16 -0.015600
-   LengthFF 0.286781
-   IBM1TgtGivenSrc:models/ibm/ibm1.tm-train.en_given_fr.gz 0.195805
-   IBM1SrcGivenTgt:models/ibm/ibm1.tm-train.fr_given_en.gz 0.136434
-   IBM2TgtGivenSrc:models/ibm/ibm2.tm-train.en_given_fr.gz 0.204987
-   IBM2SrcGivenTgt:models/ibm/ibm2.tm-train.fr_given_en.gz -0.031389
-   HMMTgtGivenSrc:models/ibm/hmm3.tm-train.en_given_fr.gz -0.098828
-   HMMSrcGivenTgt:models/ibm/hmm3.tm-train.fr_given_en.gz -0.061873
-   HMMVitTgtGivenSrc:models/ibm/hmm3.tm-train.en_given_fr.gz -0.106703
-   HMMVitSrcGivenTgt:models/ibm/hmm3.tm-train.fr_given_en.gz -0.062817
-   IBM1WTransTgtGivenSrc:models/ibm/ibm1.tm-train.en_given_fr.gz 0.077752
-   IBM1WTransSrcGivenTgt:models/ibm/ibm1.tm-train.fr_given_en.gz 0.030338
-   IBM1DeletionTgtGivenSrc:models/ibm/ibm1.tm-train.en_given_fr.gz 0.002741
-   IBM1DeletionSrcGivenTgt:models/ibm/ibm1.tm-train.fr_given_en.gz -0.001039
-   nbestWordPostSrc:1#<ffval-wts>#<pfx> 0.186204
-   nbestWordPostTrg:1#<ffval-wts>#<pfx> -0.047810
-   nbestPhrasePostSrc:1#<ffval-wts>#<pfx> 0.193464
-   nbestPhrasePostTrg:1#<ffval-wts>#<pfx> 0.123318
-   nbestNgramPost:2#1#<ffval-wts>#<pfx> 0.221880
-   nbestSentLenPost:1#<ffval-wts>#<pfx> 0.033256
-   ParMismatch 0.002794
+   FileFF:ffvals,1 0.388134
+   FileFF:ffvals,2 -6.732545E-4
+   FileFF:ffvals,3 0.412476
+   FileFF:ffvals,4 0.163495
+   FileFF:ffvals,5 -0.028345
+   FileFF:ffvals,6 0.208439
+   FileFF:ffvals,7 -0.018605
+   FileFF:ffvals,8 -0.173593
+   FileFF:ffvals,9 -0.520015
+   FileFF:ffvals,10 0.338784
+   FileFF:ffvals,11 0.467237
+   FileFF:ffvals,12 0.355724
+   FileFF:ffvals,13 0.655179
+   FileFF:ffvals,14 0.143748
+   FileFF:ffvals,15 -0.002571
+   FileFF:ffvals,16 0.038195
+   FileFF:ffvals,17 -0.078686
+   LengthFF 0.420451
+   IBM1TgtGivenSrc:models/ibm/ibm1.tm-train.en_given_fr.gz 0.486410
+   IBM1SrcGivenTgt:models/ibm/ibm1.tm-train.fr_given_en.gz 0.084028
+   IBM2TgtGivenSrc:models/ibm/ibm2.tm-train.en_given_fr.gz -0.226396
+   IBM2SrcGivenTgt:models/ibm/ibm2.tm-train.fr_given_en.gz 0.136847
+   HMMTgtGivenSrc:models/ibm/hmm3.tm-train.en_given_fr.gz -0.009522
+   HMMSrcGivenTgt:models/ibm/hmm3.tm-train.fr_given_en.gz -0.022977
+   HMMVitTgtGivenSrc:models/ibm/hmm3.tm-train.en_given_fr.gz -0.036106
+   HMMVitSrcGivenTgt:models/ibm/hmm3.tm-train.fr_given_en.gz -0.083444
+   IBM1WTransTgtGivenSrc:models/ibm/ibm1.tm-train.en_given_fr.gz 0.284196
+   IBM1WTransSrcGivenTgt:models/ibm/ibm1.tm-train.fr_given_en.gz 0.120217
+   IBM1DeletionTgtGivenSrc:models/ibm/ibm1.tm-train.en_given_fr.gz -0.008971
+   IBM1DeletionSrcGivenTgt:models/ibm/ibm1.tm-train.fr_given_en.gz -0.015327
+   nbestWordPostSrc:1#<ffval-wts>#<pfx> 0.248525
+   nbestWordPostTrg:1#<ffval-wts>#<pfx> 0.172008
+   nbestPhrasePostSrc:1#<ffval-wts>#<pfx> 0.476051
+   nbestPhrasePostTrg:1#<ffval-wts>#<pfx> 0.343475
+   nbestNgramPost:2#1#<ffval-wts>#<pfx> -0.324966
+   nbestSentLenPost:1#<ffval-wts>#<pfx> 0.255397
+   ParMismatch 0.0
    QuotMismatch:ef 0.0
-   RatioFF 0.001648
+   RatioFF 0.006098
 \end{alltt}
 \end{footnotesize}
 This is a copy of \code{rescore-model.ini} with a weight assigned to each
@@ -2716,7 +2708,7 @@ variable definition on a given call to \code{make}: adding \code{V=} undefines
    [...]
    ok
    Generating translate/test1.out
-   canoe-parallel.sh -n 1 canoe -f canoe.ini.cow.test1 -walign -palign \bs
+   canoe-parallel.sh -n 1 -rp-j 4 canoe -f canoe.ini.cow.test1 -walign -palign \bs
       < ../corpora/test1_fr.rule \bs
       | nbest2rescore.pl -canoe -tagoov -oov -wal -palout=test1.out.pal \bs
       | tee test1.out.oov | perl -pe 's/<OOV>(.+?)<\bs/OOV>/\bs1/g;' > test1.out
@@ -2879,10 +2871,10 @@ match. BLEU is calculated by the program \code{bleumain}:
    bleumain -c test1.rat ../corpora/test1_en.lc > test1.rat.bleu
    [repeat for test2]
    grep Human *.bleu
-   test1.out.bleu:Human readable value: 18.94 +/- 3.22
-   test1.rat.bleu:Human readable value: 19.09 +/- 3.32
-   test2.out.bleu:Human readable value: 19.76 +/- 3.43
-   test2.rat.bleu:Human readable value: 20.36 +/- 3.86
+   test1.out.bleu:Human readable value: 23.78 +/- 3.65
+   test1.rat.bleu:Human readable value: 23.81 +/- 3.62
+   test2.out.bleu:Human readable value: 23.06 +/- 3.44
+   test2.rat.bleu:Human readable value: 23.35 +/- 3.45
 \end{alltt}
 \end{small}
 Here we show the BLEU score for rescoring too, for illustration, but without
@@ -2909,12 +2901,12 @@ pairwise bootstrap resampling:
 \begin{alltt}
    > \textbf{bleucompare test1.rat test1.out REFS ../corpora/test1_en.lc}
    Comparing using BLEU
-   test1.rat got max BLEU score in 77.3% of samples
-   test1.out got max BLEU score in 22.7% of samples
+   test1.rat got max BLEU score in 46.3% of samples
+   test1.out got max BLEU score in 53.7% of samples
    > \textbf{bleucompare test2.rat test2.out REFS ../corpora/test2_en.lc}
    Comparing using BLEU
-   test2.rat got max BLEU score in 83.2% of samples
-   test2.out got max BLEU score in 16.8% of samples
+   test2.rat got max BLEU score in 78.4% of samples
+   test2.out got max BLEU score in 21.6% of samples
 \end{alltt}
 \end{small}
 This indicates that the difference is indeed not significant for \code{test1}.
@@ -2983,9 +2975,9 @@ command that dereferences symbolic links.
    You now have all that is needed for PortageLive.
    From the framework root, run one of the following commands to
    transfer the PortageLive models to your server:
-   rsync -Larz models/portageLive/* <REMOTE_HOST>:<DEST_DIR_ON_REMOTE_HOST>
-   scp -r models/portageLive/* <REMOTE_HOST>:<DEST_DIR_ON_REMOTE_HOST>
-   cp -Lr models/portageLive/* <DEST_DIR_ON_LOCAL_HOST>
+        rsync -Larz models/portageLive/* <REMOTE_HOST>:<DEST_DIR_ON_REMOTE_HOST>
+   or   scp -r models/portageLive/* <REMOTE_HOST>:<DEST_DIR_ON_REMOTE_HOST>
+   or   cp -Lr models/portageLive/* <DEST_DIR_ON_LOCAL_HOST>
    Afterwards, optimize pretrained models on each PortageLive server:
         ssh <REMOTE_HOST> plive-optimize-pretrained.sh <DEST_DIR_ON_REMOTE_HOST>
    or   plive-optimize-pretrained.sh <DEST_DIR_ON_LOCAL_HOST>
@@ -3007,26 +2999,27 @@ actually expanding it:
    > \textbf{du -hL models/portageLive}
    8.0K    models/portageLive/plugins/fixedTerms
    12K     models/portageLive/plugins
-   4.9M    models/portageLive/models/mixlm/lm-train_en-kn-5g.tplm
-   5.3M    models/portageLive/models/mixlm/lm-train_fr-kn-5g.tplm
-   725M    models/portageLive/models/mixlm/generic-2.0_en.tplm
-   735M    models/portageLive/models/mixlm
-   12M     models/portageLive/models/ibm
-   37M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
-   37M     models/portageLive/models/ldm
-   736K    models/portageLive/models/wcl
-   47M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
-   47M     models/portageLive/models/tm
-   1.8M    models/portageLive/models/tc/tc-lm.en.tplm
+   38M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
+   38M     models/portageLive/models/ldm
+   1.1M    models/portageLive/models/wcl
    1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
    504K    models/portageLive/models/tc/tc-map.en.tppt
+   1.8M    models/portageLive/models/tc/tc-lm.en.tplm
    4.2M    models/portageLive/models/tc
-   8.9M    models/portageLive/models/coarselm/lm-train_en-800-ukn-8g.tplm
+   280M    models/portageLive/models/nnjm/fine_tuned
+   280M    models/portageLive/models/nnjm
+   47M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
+   47M     models/portageLive/models/tm
+   725M    models/portageLive/models/mixlm/generic-2.0_en.tplm
+   4.9M    models/portageLive/models/mixlm/lm-train_en-kn-5g.tplm
+   729M    models/portageLive/models/mixlm
+   4.1M    models/portageLive/models/ibm
+   776K    models/portageLive/models/sparse
+   9.0M    models/portageLive/models/coarselm/lm-train_en-800-ukn-8g.tplm
    7.9M    models/portageLive/models/coarselm/lm-train_en-200-ukn-8g.tplm
    17M     models/portageLive/models/coarselm
-   832K    models/portageLive/models/sparse
-   852M    models/portageLive/models
-   852M    models/portageLive
+   1.1G    models/portageLive/models
+   1.1G    models/portageLive
 \end{alltt}
 \end{small}
 
@@ -3233,26 +3226,27 @@ by the models.  When you run \code{make summary}, you will first get the
    Disk usage for portageLive models:
    8.0K    models/portageLive/plugins/fixedTerms
    12K     models/portageLive/plugins
-   4.9M    models/portageLive/models/mixlm/lm-train_en-kn-5g.tplm
-   5.3M    models/portageLive/models/mixlm/lm-train_fr-kn-5g.tplm
-   725M    models/portageLive/models/mixlm/generic-2.0_en.tplm
-   735M    models/portageLive/models/mixlm
-   12M     models/portageLive/models/ibm
-   37M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
-   37M     models/portageLive/models/ldm
-   736K    models/portageLive/models/wcl
-   47M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
-   47M     models/portageLive/models/tm
-   1.8M    models/portageLive/models/tc/tc-lm.en.tplm
+   38M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
+   38M     models/portageLive/models/ldm
+   1.1M    models/portageLive/models/wcl
    1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
    504K    models/portageLive/models/tc/tc-map.en.tppt
+   1.8M    models/portageLive/models/tc/tc-lm.en.tplm
    4.2M    models/portageLive/models/tc
-   8.9M    models/portageLive/models/coarselm/lm-train_en-800-ukn-8g.tplm
+   280M    models/portageLive/models/nnjm/fine_tuned
+   280M    models/portageLive/models/nnjm
+   47M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
+   47M     models/portageLive/models/tm
+   725M    models/portageLive/models/mixlm/generic-2.0_en.tplm
+   4.9M    models/portageLive/models/mixlm/lm-train_en-kn-5g.tplm
+   729M    models/portageLive/models/mixlm
+   4.1M    models/portageLive/models/ibm
+   776K    models/portageLive/models/sparse
+   9.0M    models/portageLive/models/coarselm/lm-train_en-800-ukn-8g.tplm
    7.9M    models/portageLive/models/coarselm/lm-train_en-200-ukn-8g.tplm
    17M     models/portageLive/models/coarselm
-   832K    models/portageLive/models/sparse
-   852M    models/portageLive/models
-   852M    models/portageLive
+   1.1G    models/portageLive/models
+1.1G    models/portageLive
 \end{alltt}
 \end{small}
 
