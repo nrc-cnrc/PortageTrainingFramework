@@ -21,7 +21,7 @@
 \usepackage{textcomp}
 \newcommand\upquote[1]{\textquotesingle#1\textquotesingle}
 \usepackage{alltt}
-% This is needed in order to get bold in tt.
+% This is needed to get bold in tt.
 \renewcommand{\ttdefault}{txtt}
 \newcommand{\bs}{\textbackslash{}}
 
@@ -136,7 +136,7 @@ updated to reflect recommended usage of PortageII 4.0
 This document describes how to run an experiment from end to end using the \PS
 experimental framework. It is intended as a tutorial on using \PS, as well as a
 starting point for further experiments.  Although the framework automates most
-of the steps described below, we go through them one by one here in order to
+of the steps described below, we go through them one by one to
 better explain how to use the \PS software suite.
 
 \PS can be viewed as a set of programs for turning a bilingual corpus into a
@@ -148,22 +148,22 @@ a more realistic setup would be. Total running time is one to several hours.
 \subsection{Making Sure \PS is Installed}
 
 To begin, you must build or obtain the \PS executables and ensure that they are
-in your path, typically by sourcing the \code{SETUP.bash} file as
+in your path, by sourcing the \code{SETUP.bash} file as
 customized for your environment during installation of \PS.\footnote{There is
-  also a \code{SETUP.tcsh} for users of that shell. The examples in
-  this document assume the use of bash.} You should also
-set your environment variable \code{\$PORTAGE} to the directory where \PS is
-installed, which is also done by \code{SETUP.bash}.  Follow the
+  also a \code{SETUP.tcsh} for users of that shell, but we strongly recommend
+  using bash.  The examples in this document assume the use of bash.}
+\code{SETUP.bash} also sets environment variable \code{\$PORTAGE} to the
+directory where \PS is installed.  Follow the
 instructions in \code{INSTALL} before you proceed with this document.
 
-To make sure \PS is installed properly, run:\footnote{At NRC, replace
-\code{\$PORTAGE} here by your sandbox}
+To make sure \PS is installed properly, run:\footnote{At NRC, replace this
+instance of \code{\$PORTAGE} by your sandbox.}
 \begin{small}
 \begin{alltt}
-   > \textbf{make -C $PORTAGE/test-suite/unit-testing/check-installation}
+   > \textbf{make -C \$PORTAGE/test-suite/unit-testing/check-installation}
 \end{alltt}
 \end{small}
-You should see the message ``Installation successful.''
+You should see the message ``Installation successful'' near the end.
 
 You can also try \code{canoe -h}, \code{tune.py -h}, \code{utokenize.pl -h},
 \code{ce.pl -h}, and \code{filter-nc1.py -h}.
@@ -185,8 +185,9 @@ For example:\footnote{At NRC, clone the framework repository into
 \code{toy.experiment} instead.}
 \begin{small}
 \begin{alltt}
-   > \textbf{cd $PORTAGE}
-   > \textbf{cp -pr framework toy.experiment}
+   > \textbf{mkdir experiments}
+   > \textbf{cd experiments}
+   > \textbf{cp -pr \$PORTAGE/framework toy.experiment}
    > \textbf{cd toy.experiment}
 \end{alltt}
 \end{small}
@@ -201,8 +202,8 @@ As you work through the example, the commands that you should type\footnote{This
    from here onto the command line of your interactive shell if you wish.}
 are shown in bold and preceded by a prompt, \code{>}, and the system's response
 is not.  System output is not usually fully reproduced here, for brevity's
-sake. When it is, results (especially numbers) may vary a little from the ones
-shown, due to platform differences. Note that many results presented here are
+sake. When it is, results (especially numbers) may vary from the ones
+shown, due to platform and random-number generation differences. Note that many results are
 truncated in precision for presentation purposes.
 
 Many of the commands are expressed as \code{make} targets. This has the
@@ -222,15 +223,15 @@ specifically requested. Here are some other useful \code{make} commands:
       \emph{target} by running commands in parallel whenever possible (up to
       \emph{N} ways parallel if \emph{N} is specified). This lets you take
       advantage of a computing cluster if you have one. If you use a single
-      multi-core computer, you don't need \code{-j}, since many commands in the
-      framework are already internally parallelized, as discussed in
+      multi-core computer, \code{-j} has no effect since most commands in the
+      framework are internally parallelized instead, as discussed in
       \S\ref{FrameworkParams}.
 \item \code{make help}: display some help and the main targets available in
       the makefile.
 \item \code{make summary}: display the resources used by the framework: time
       and memory used, as well as disk space for the runtime models (most
       informative once training has been completed; discussed further in
-      \S\ref{FrameworkParams}).
+      \S\ref{FrameworkParams} and \S\ref{ResourceSummary}).
 \end{itemize}
 
 \tip\margintip When you run the whole process using \code{make all}, you should
@@ -287,14 +288,13 @@ sections:
 These steps are fairly standard, but there are many variants on the
 sample process illustrated here, which can be tuned for particular situations.
 
-The \PS user manual (found in \code{\$PORTAGE/doc/user-manual.html} on the CD)
+The \PS user manual (\code{\$PORTAGE/doc/user-manual.html})
 has additional information, including a Background section with general
-information on statistical machine translation, but the technical details in
+information on statistical machine translation and an annotated bibliography, but the technical details in
 the user manual are outdated in many ways; we keep this tutorial up to date
-with each release, and we try to make it thorough, so it is a better source of
+with each release, and we try to make it thorough, so it is the best source of
 information.  For detailed information about any individual program in \PS, run
-the program with the \code{-h} flag (or see \code{\$PORTAGE/doc/usage.html} on
-the CD).
+the program with the \code{-h} flag (or see \code{\$PORTAGE/doc/usage.html}).
 
 
 \section{Corpus Preparation} \label{CorpusPreparation}
@@ -321,12 +321,11 @@ tokenizer, a sentence aligner and sample corpus pre-processing scripts with
 Processing} in the user manual.
 
 If your data exists in the form of a translation memory or an aligned bitext,
-our \code{tmx-prepro} module can help you extract your data and prepare it for
-training \PS.\footnote{Starting with version 3.0, you can find the
-\code{tmx-prepro} module at the root of the \PS CD.}
+our \code{tmx-prepro} module (\code{\$PORTAGE/tmx-prepro}) can help you extract
+your data and prepare it for training \PS.
 
 This tutorial starts from sentence-aligned plain text, as you would get from
-the \code{tmx-prepro} module extracting data from a TMX file.
+\code{tmx-prepro} extracting data from a TMX file.
 We don't perform data clean up and sentence alignment here,
 because they are highly dependent on your actual data and what other tools you
 already have.  You should plan to invest some time in preprocessing your data
@@ -334,18 +333,18 @@ well if you want to obtain good results with \PS.
 
 \subsection{Encoding: UTF-8}
 
-The \PS framework only supports UTF-8 data. If you use a different encoding,
-please use \code{iconv} or \code{uconv} to convert your data to UTF-8 and the
+The \PS framework only supports the UTF-8 encoding. If you use a different encoding,
+please use \code{iconv} or \code{uconv} to convert your data to UTF-8, and the
 \PS output to the encoding you need.
 
 We previously supported latin1, cp-1252 and GB-2312 (simplified Chinese), but
-UTF-8 can be used to represent all text, and assuming its systematic use allows
+UTF-8 can be used to represent all text, and its systematic use allows
 us to both simplify the framework and make it more robust at the same time.
 
 \subsection{Splitting the Corpus} \label{Splitting}
 
 The corpus, which we assume you have sentence aligned, as
-discussed above, must be split into separate portions in order to run
+discussed above, must be split into separate portions to run
 experiments.  Distinct, non-overlapping sub-corpora are required for model
 training (see \S\ref{Training}), for tuning decoder weights (\S\ref{COW}) and
 rescoring weights (\S\ref{RAT}), for confidence estimation (if you use it;
@@ -364,10 +363,8 @@ test sets.}
 Ideally, the splitting of a corpus should take into account its structure and
 nature, so these steps are not handled by the experimental framework. For the
 toy experiment, we provide small data sets that can be found here:
-\code{\$PORTAGE/test-suite/tutorial-data}. These sets
-are very small, to minimize running time, so the resulting translations are of
-poor quality. In this toy experiment, the tuning and testing sets are
-ridiculously small, with just 100 sentence pairs each.
+\code{\$PORTAGE/test-suite/tutorial-data}. These sets are ridiculously small,
+to minimize running time, so the resulting translations are of poor quality.
 
 To drop these sets into the framework, copy them (or make symbolic
 links) into your copy's corpora directory:
@@ -401,9 +398,7 @@ should be plain text, truecase, sentence-split and sentence-aligned, just like
 the ones we provide here. If your corpora are already tokenized, call your
 files \code{*.al} and \code{*.al.gz} instead of \code{*.raw} and
 \code{*.raw.gz}: the framework will automatically skip tokenization with those
-file extensions.\footnote{Previous versions of this tutorial started from
-tokenized \code{*.al*} files, but we changed it to reflect the more common
-situation where the corpus is not yet tokenized.}
+file extensions.
 
 Although the framework does not support compressed dev and test files, the
 training files can and should be compressed, as shown here.  Most programs and
@@ -411,7 +406,7 @@ modules in \PS transparently handle compressed files, compressing and
 decompressing them on the fly as needed.
 
 If you inspect them, you might notice that the \code{lm-train*} and
-\code{tm-train*} files are almost identical, but that the \code{lm-train*} have
+\code{tm-train*} files are almost identical, but that the \code{lm-train*} files have
 more text.  When training the language model, it is a good idea to add
 available monolingual material to the target side of the parallel corpus, as we
 simulated doing here.  In practice, your LM training data might be a lot larger
@@ -444,7 +439,7 @@ needed;
   use MITLM or SRILM, respectively.
 %\item set \code{DO_RESCORING} to \code{1} by uncommenting the relevant line.
 \end{itemize}
-In this toy experiment, we will use the default value for all other parameters.
+For now, keep the default value for all other parameters.
 
 While in \code{Makefile.params}, you should read through the variables in
 the \emph{User definable variables} section of the file.  This is where most of
@@ -459,68 +454,74 @@ empirical results: we get similar BLEU scores when using MITLM and SRILM, but
 lower ones when using IRSTLM.} See \code{Makefile.params} and type \code{make
 help} for more details.
 
-Another set of parameters you might want to adjust are the various
-\code{PARALLELISM_LEVEL_*} variables.  \PS is written in such a way as to take
+Another set of parameters to look at are the various
+\code{PARALLELISM_LEVEL_*} variables.  \PS takes
 advantage of multi-processor computers and/or multi-node computing clusters,
-doing tasks in parellel where possible.  If you're not running on a cluster,
-the number of CPUs on your machine is a good choice for all these variables
-(this is the default; look for \code{NCPUS} if you want to change the default).
-If you are running on a cluster, the framework uses
+doing tasks in parellel where possible.  On a non-clustered computer,
+the number of CPUs is the default for all these variables:
+explicitly set \code{NCPUS} to restrict the number of CPUs used globally.
+On a cluster, the framework uses
 \code{qsub} to submit jobs, via the \code{run-parallel.sh} and \code{psub}
 scripts, and you can set these variables according to resources available to
 you.
 
-When running this framework, you might notice that many commands are preceded
+When running this framework, many commands are preceded
 by control variables \code{RP_PSUB_OPTS=...} or \code{_LOCAL=1}.  These strings
-only have an impact when running on a cluster, and are ignored otherwise.  When
-working on a cluster, commands preceded by \code{_LOCAL=1} are inexpensive ones
+only have an impact on a cluster, and are ignored otherwise.
+On a cluster, commands preceded by \code{_LOCAL=1} are inexpensive ones
 that get run directly instead of being submitted to the queueing system, while
-\code{RP_PSUB_OPTS=...} is used to specify additional options to \code{psub},
-which is used in \PS to encapsulate the invocation of \code{qsub}.  If your
+\code{RP_PSUB_OPTS=...} specifies additional options to \code{psub},
+which encapsulates the invocation of \code{qsub}.  If your
 cluster has specific usage rules or if you require additional parameters to
-\code{qsub}, you might want to customize \code{psub} itself or add options as
+\code{qsub}, customize \code{psub} itself or add options as
 required in this framework.
 
 \tip\margintip Many commands run in this framework will also be preceded by
 \code{time-mem}. This utility script measures the time and memory usage of a
 command.  At any time, type \code{make summary} to get a summary of resources
-used by all components of the framework so far.  The output of \code{make
-time-mem} can be very useful to determine which steps are taking the most time
-and/or the most memory.  They can help you determine if you have enough
-computing resources to process your corpora.  They can also help you determine
-the cost of various choices you can make in \PS.  The command \code{make
+used by all components of the framework so far.  \code{make
+time-mem} can be very useful to determine which steps are taking the most
+resources.  They can help you determine if you have enough
+computing resources to process your corpora, and
+the cost of various choices you can make in \PS.  \code{make
 summary} will give you the \code{time-mem} information as well as the space on
 disk of the models needed at runtime, such as would be deployed on a
 translation server.\tipend
 
-For the sake of brevity, when we quote executed commands in this document, we
-only show the command itself, leaving out \code{time-mem} and the control
-variables mentioned above.
-
 Most commands in the framework produce logs called
 \code{log.\emph{output-file-name}}.  If you encounter errors, look for
 explanations in these log files, that's usually where the error messages will
-end up.  Again, for brevity, we don't show these log files in this document.
+end up.
+
+For the sake of brevity, commands quoted in this document
+leave out \code{time-mem}, the control
+variables mentioned above, and the log files.
 
 \subsection{Tokenization} \label{Tokenizing}
 
 This step is skipped if you're using tokenized data (with \code{.al} and
-\code{.al.gz} extensions), but since we're starting from raw text, the
-framework automatically recognizes that it needs to tokenize it.
+\code{.al.gz} extensions), but the
+framework automatically recognizes that it needs to tokenize the raw text
+corpora we provided for this tutorial.
 
-By default, the \PS tokenizer is used (\code{utokenize.pl}), along with a
+By default, the \PS tokenizer is used (\code{utokenize.pl})\footnote{Look for
+and set \code{TOKENIZER\us{}\emph{ll}} in \code{Makefile.params} to choose a
+different tokenizer for language \emph{ll}}, along with a
 preprocessing script that separates slash-separated words
-(\code{fix-slashes.pl}) because those are seldom/rarely meant to stay together.
+(\code{fix-slashes.pl}) because those are rarely meant to stay together.
 
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment/corpora}
    > \textbf{make tok}
-   [commands to tokenize the dev, test and train files in both languages]
+   \{ fix-slashes.pl | utokenize.pl -noss -lang=fr; \} < dev1_fr.raw > dev1_fr.al
+   [...]
+   parallelize.pl -nolocal -psub -1 -w 100000 -n 16 \bs
+      "\{ fix-slashes.pl | utokenize.pl -noss -lang=en; \} < tm-train_en.raw.gz > tm-train_en.al.gz"
 \end{alltt}
 \end{small}
 
-\subsection{Lowercasing and Adding Escapes} \label{Lowercasing}
+\subsection{Lowercasing and Escaping Special Characters} \label{Lowercasing}
 
 To reduce data sparseness, we convert all files to lowercase.
 We keep the lowercase and truecase
@@ -538,9 +539,9 @@ truecasing model.
 \end{small}
 
 The decoder, \code{canoe}, treats \code{<}, \code{>} and \verb*X\X % *
-as special characters in order to support markup for special translation rules.
-We won't use any markup in this example, but we still need to escape any
-occurrences of the three special characters in the files we'll provide as input
+as special characters to support markup for special translation rules.
+We won't use markup in this tutorial, but we must still escape
+the special characters in the input files
 to \code{canoe}: the source side of the dev and test files.
 
 \begin{small}
@@ -565,20 +566,20 @@ language models (\S\ref{coarseLM}), creating a truecasing model (\S\ref{TC}),
 creating a (possibly hierarchical) lexicalized distortion model (\S\ref{LDM}),
 creating a sparse model (\S\ref{sparse}),
 creating or fine-tuning an NNJM (\S\ref{NNJM}),
-using mixture language and
+using mixture language models and mixture
 translation models for domain adaptation (\S\ref{MIX}), training a confidence
 estimation (CE) model (\S\ref{CE}), and training a rescoring model
 (\S\ref{RAT}).
 
 \subsection{Creating a Language Model} \label{LM}
 
-\PS does not come with programs for language model training. However, it
-accepts models in the widely-used ``ARPA'' format, which is produced by most
-language modelling toolkits. In this tutorial, we show all examples assuming
+\PS does not come with language model training software. However, it
+accepts models in the widely-used ``ARPA'' format, which is supported by most
+language modelling toolkits. In this tutorial, we assume
 you are using MITLM. If you use SRILM, the procedure will be the same, but the
 commands that get executed will be different.
 
-By default, we train language models of order five.  We have found this is a
+By default, we train language models of order five, a
 good compromise between translation quality and size of the models.  Higher
 order language models might sometimes be useful, but only for very large
 corpora, and at a cost in space and decoding speed.
@@ -588,20 +589,21 @@ part of the parallel training corpus to illustrate using more text to train the
 language model than the translation model.  If you have access to relatively
 small amounts of additional monolingual text, adding it to your main LM
 training corpus is the simplest option.  If you have access to large amounts of
-monolingual text in your target language, you can use it to train additional
-language models, or mixture language models.  To train separate language
+monolingual text, you can use it to train additional
+language models or mixture language models.  To train separate language
 models, drop the corpora into \code{corpora} and list all the corpus stems in
-\code{TRAIN\us{}LM}; if the LM is trained externally, add its name to
-\code{LM\us{}PRETRAINED\us{}TGT\us{}LMS} instead.  For mixture language models,
-see \S\ref{MIXLM}.
+\code{TRAIN\us{}LM}; if an LM is trained externally, add its name to
+\code{LM\us{}PRETRAINED\us{}TGT\us{}LMS} instead.  But for best results, use
+mixture language models (see \S\ref{MIXLM}).
 
 \subsubsection{Using a regular LM} \label{regularLM}
 
-Instead of the new default, you can still use a single, regular LM, by setting
+Since \PS 3.0, the recommendation and default is the use a MixLM of your
+corpus and our generic language model (see \S\ref{LM+generic-default}).
+But you can still use a single, regular LM, by setting
 \code{TRAIN_LM=lm-train} instead of \code{PRIMARY_LM=lm-train} in
-\code{Makefile.params}. We show what happens in that case here because the
-other examples build on it, but don't follow this case, follow the example in
-\S\ref{LM+generic-default} below instead.
+\code{Makefile.params}. We show what happens in that case here for
+completeness.
 
 Here is the command used to produce
 \code{lm-train_en-kn-5g.tplm},
@@ -615,8 +617,7 @@ the main language model:
    make -C lm all LM_LANG=en
    Creating ARPA text format lm-train_en-kn-5g.lm.gz
    zcat ../../corpora/lm-train_en.lc.gz \bs
-      | perl -ple 's/^{\bs}s*(.*?){\bs}s*$/$1/; s/{\bs}s+/ /g;' \bs
-      | fold -s -w 4095 \bs
+      | perl -ple 's/^{\bs}s+//; s/{\bs}s+\$//; s/{\bs}s+/ /g;' | fold --bytes --spaces --width=4095 \bs
       | estimate-ngram -order 5 -smoothing ModKN -text /dev/stdin \bs
         -opt-perp ../../corpora/dev1_en.lc \bs
         -write-lm lm-train_en-kn-5g.lm.gz
@@ -625,13 +626,13 @@ the main language model:
 \end{alltt}
 \end{small}
 The main command executed, MITLM's \code{estimate-ngram}, produces the language
-model itself in ``ARPA'' format.  The \code{perl} filter that precedes it
+model in ``ARPA'' format.  The \code{perl} filter that precedes it
 removes extraneous whitespace, because \code{estimate-ngram} is picky about its
 input.  The \code{fold} command wraps lines that are longer than 4KB, to avoid
 breaking a word (or worse, a UTF-8 character) apart at MITLM's internal buffer
-boundary.  The last two command, \code{arpalm2binlm} and \code{arpalm2tplm.sh},
-convert the model into the \PS binary language model format, and the \PS
-tightly-packed language model format, respectively, for fast loading and use.
+boundary.  The \code{arpalm2binlm} and \code{arpalm2tplm.sh} commands
+convert the model into the \PS binary language model and
+tightly-packed language model formats, respectively, for fast loading and use.
 
 Since version 3.0 of \PS, we take advantage of MITLM's ability to tune the LM
 metaparameters on our dev set, yielding slightly better language models.  The
@@ -639,12 +640,16 @@ tuning set is specified to \code{estimate-ngram} using \code{-opt-perp}, and is
 configured in the framework via the \code{TUNE_LM} parameter in
 \code{Makefile.params}.
 
+Before continuing the tutorial, don't forget to revert your
+\code{Makefile.params} to have \code{PRIMARY_LM=lm-train} and \code{TRAIN_LM}
+undefined.
+
 \subsubsection{In-domain LM plus the generic LM} \label{LM+generic-default}
 
 Starting with \PS 3.0, we strongly recommend that you use the generic LM from
-Portage Generic Model 2.0 to improve the quality of your translations. This
-model cannot introduce any out-of-domain vocabulary into your translations, but it
-can really help the decoder chose the best way to use your in-domain phrase
+Portage Generic Model 2.0 (or more recent) to improve the quality of your translations.
+Without introducing out-of-domain vocabulary into your translations, this model
+helps the decoder chose the best way to use your in-domain phrase
 table.
 
 With \code{PRIMARY_LM=lm-train} defined as is now the default, you can issue
@@ -672,9 +677,9 @@ in-domain LM and the generic one.
 The above commands are explained in more details in \S\ref{MIXLM}, so we won't
 describe what they do here. The important point here is that the mixture LM is
 created by combining the primary LM created from your in-domain training data
-with the generic model created on 43 million sentence pairs. Because of your
+with NRC's generic model created on 43 million sentence pairs. Because of your
 in-domain data, this model is good at recognizing text that sounds right for
-your domain. Because of the very large data used to train the generic model,
+your domain. Because of the very large data set used to train the generic model,
 this model is good at recognizing text that sounds right in English (or French)
 in general. The combination helps the decoder chose better translations than
 either component model could on its own.
@@ -684,20 +689,20 @@ either component model could on its own.
 In \PS 3.0, we added the capacity to train and use coarse language models:
 language models that are trained and queried not on sequences of words, but
 rather on sequences of classes of words. These models have a useful capacity of
-abstraction: similar words are likely in similar contexts and unlikely in
-similar context.\footnote{See Stewart et al (AMTA 2014) and the annotated
-bibliography included with the \PS user manual for full details on coarse LMs.}
+abstraction: similar words can be expected to occur in
+similar contexts.\footnote{See Stewart et al (AMTA 2014) and the annotated
+bibliography included with the \PS user manual for more details on coarse LMs.}
 
-Empirically, we get the best results when we combine a coarse LM model trained
+Empirically, we get the best results when we combine a coarse LM trained
 on 200 word classes with one trained on 800 classes. These models capture
 abstractions at different levels of granularity. With only 200 classes, the
-first model is modelling something that probably resembles part-of-speech tag
+first one is modelling something that probably resembles part-of-speech tag
 sequences, while 800 classes gives the second model a chance to capture some
-semantic categories as well. As for the order of the model, coarse models do
+semantic categories as well. As for the order of these models, coarse models do
 not suffer from the data sparsity that affects regular LMs, so we train 8-gram
 coarse LMs, whereas we only go up to 5-grams for the regular LMs.
 
-So our recommendation, and the framework default, is to train two 8-gram coarse
+Our recommendation, and the framework default, is to train two 8-gram coarse
 LMs, one with 200 classes and one with 800 classes.
 
 Before training the coarse LMs themselves, we need to learn word classes on the
@@ -715,37 +720,25 @@ tool to learn these classes from the corpora.
       -min-count 1 -classes 200 -output fr.200.classes -train all-200_fr.lc
    sed -i -e 's/ /{\bs}t/' fr.200.classes
    rm -r all-200_fr.lc
-   zcat -f ../../corpora/lm-train_en.lc.gz ../../corpora/tm-train_en.lc.gz > all-200_en.lc
-   word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
-      -min-count 1 -classes 200 -output en.200.classes -train all-200_en.lc
-   sed -i -e 's/ /{\bs}t/' en.200.classes
-   rm -r all-200_en.lc
-   zcat -f ../../corpora/lm-train_fr.lc.gz ../../corpora/tm-train_fr.lc.gz > all-800_fr.lc
-   word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
-      -min-count 1 -classes 800 -output fr.800.classes -train all-800_fr.lc
-   sed -i -e 's/ /{\bs}t/' fr.800.classes
-   rm -r all-800_fr.lc
-   zcat -f ../../corpora/lm-train_en.lc.gz ../../corpora/tm-train_en.lc.gz > all-800_en.lc
-   word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
-      -min-count 1 -classes 800 -output en.800.classes -train all-800_en.lc
-   sed -i -e 's/ /{\bs}t/' en.800.classes
-   rm -r all-800_en.lc
+   [commands to train en.200.classes, fr.800.classes and en.800.classes]
 \end{alltt}
 \end{small}
 
-In each block above, we first concatenate all the files in a temporary single,
-uncompressed input file, as required by \code{word2vec}.\footnote{For coarse
+For each class file to create, we first concatenate all the input files in a temporary
+uncompressed file, as required by \code{word2vec}.\footnote{For coarse
 LM classes, we should only need \code{lm-train\us{}en.lc.gz}, but instead we
 use all target language corpora because we want these classes to be aware of
-all target-side vocabulary of training files used for any models. Although we
-don't use them here, classes are also trained in the source side because some
-models need them.} Then we call \code{word2vec} with the parameters we have
-determined are optimal.  Finally the resulting \code{.classes} files are
+all target-side vocabulary of training files used for any models. Although not
+needed for Coarse LMs, classes are also trained on the source side because others
+models need them.} Then we call \code{word2vec} with carefully tuned parameters.
+Finally the resulting \code{.classes} files are
 reformated to respect the standard word-tab-class format on each line and the
 temporary input file is deleted.
 
-Now that we have our word-class files, we can train the language models
-themselves:
+Now that we have our word-class files, we can train the LMs themselves.
+Breaking with the convention in rest of this document, we'll
+interleave the commands executed by make and our comments about them, to
+improve readability.
 
 \begin{small}
 \begin{alltt}
@@ -756,7 +749,7 @@ themselves:
 
    word2class -no-error ../../corpora/lm-train_en.lc.gz ../wcl/en.200.classes | \bs
       gzip > lm-train_en-200.lc.gz
-   182273 of 182273 words mapped to word classes.
+   182281 of 182281 words mapped to word classes.
 
    word2class -no-error ../../corpora/dev1_en.lc ../wcl/en.200.classes > dev1-200_en.lc
    57 word mapping errors.
@@ -768,7 +761,7 @@ themselves:
 
 Using \code{word2class}, we create a copy of all the input training corpus with
 all the words substituted by their word class. A message tells us that all
-182273 words were mapped to their classes. Since we're using the dev set for
+182281 words were mapped to their classes. Since we're using the dev set for
 metaparameter tuning with MITLM, we also need to do the same mapping on the dev
 set, but now we see 57 mapping errors: this is due to words in the dev set not
 being in the training corpus and is perfectly normal: we want to train \PS and
@@ -781,7 +774,7 @@ sequence of tokens:
 \begin{alltt}
    Creating ARPA text format lm-train_en-200-ukn-8g.lm.gz
    zcat lm-train_en-200.lc.gz \bs
-      | perl -ple 's/^{\bs}s+//; s/{\bs}s+\$//; s/{\bs}s+/ /g;' | fold -s -w 4095 \bs
+      | perl -ple 's/^{\bs}s+//; s/{\bs}s+\$//; s/{\bs}s+/ /g;' | fold --bytes --spaces --width=4095 \bs
       | estimate-ngram -order 8 -smoothing KN -text /dev/stdin \bs
            -opt-perp dev1-200_en.lc -write-lm lm-train_en-200-ukn-8g.lm.gz
    arpalm2binlm lm-train_en-200-ukn-8g.lm.gz lm-train_en-200-ukn-8g.binlm.gz
@@ -827,7 +820,7 @@ language models: source-side and target-side
 case-normalizing\footnote{``Normalized case'' means that the first character of
 the sentence is in lowercase unless the word inherently requires the upper
 case.  E.g., ``his flat in is London.'' and ``London is on the Thames.'' are in
-normalized case.  The acronym ``nc1'', used in some file names, stands for
+normalized case.  The acronym ``nc1'' stands for
 ``normalized-cased first word'', i.e., normalized case.} language models, as
 well as the main truecasing LM.  The target-side case-normalizing LM is used
 only for generating a normalized-case target-side training corpus; it is not
@@ -841,7 +834,7 @@ truecased output of the decoder.
 %final model files listed, but not the commands used.}
 
 Running \code{make tc} at the root of the framework will build all necessary
-files and models.  Breaking with the convention in rest of this document, we'll
+files and models.  As for Coarse LMs, we'll
 interleave the commands executed by make and our comments about them, to
 improve readability.
 
@@ -852,7 +845,7 @@ improve readability.
    [...]
    make[2]: Entering directory `.../toy.experiment/models/tc'
    zcat -f ../../corpora/lm-train_en.tc.gz \bs
-        | perl -ne 'use encoding "UTF-8"; s/^[^[:lower:]]+\$/{\bs}n/; print \$_ unless /^\$/;' \bs
+        | perl -ne '\emph{UTF-8 encoding stuff} s/^[^[:lower:]]+\$/{\bs}n/; print \$_ unless /^\$/;' \bs
         | utokenize.pl -pretok -paraline -ss -p -lang=en \bs
         | gzip > lm-train_en.tokss.gz
    [...]
@@ -2038,7 +2031,7 @@ still be the first one listed in \code{MIXTM}.
 The language and translation models are the main sources of information used
 for translation, which is performed by the \code{canoe} decoder.  Optionally,
 we might have trained an HLDM as an additional source of information, and we
-might have included alignment indicator features.  In order to get reasonable
+might have included alignment indicator features.  To get reasonable
 translation quality, the weights on all sources of information
 need to be tuned. The tuning process is carried out by a script called
 \code{tune.py}, which runs \code{canoe} several times, refining the weights at
@@ -2499,7 +2492,7 @@ Rescoring can be useful for research work, but is generally not recommended for
 commercial use, so it is disabled by default in this framework. It is also
 incompatible with confidence estimation, improved truecasing using source-side
 information, and its installation in PortageLive (see \S\ref{PLive}) is not
-automated.  In order to complete this section of the tutorial, you will need to
+automated.  To complete this section of the tutorial, you will need to
 edit \code{Makefile.params} and set \code{DO_RESCORING = 1}, comment out or
 remove \code{TC_USE_SRC_MODELS = 1}, and comment out or remove \code{DO_CE = 1}.
 
@@ -3024,7 +3017,7 @@ actually expanding it:
 \end{small}
 
 
-\section{Resource Summary}
+\section{Resource Summary} \label{ResourceSummary}
 
 Now that the whole experiment has run, we can get a global summary of resource
 usage from all the parts of the framework, as shown below:
