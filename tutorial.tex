@@ -612,7 +612,6 @@ the main language model:
 \begin{alltt}
    > \textbf{cd toy.experiment}
    > \textbf{make lm}
-   [...]
    make -C models lm
    make -C lm all LM_LANG=en
    Creating ARPA text format lm-train_en-kn-5g.lm.gz
@@ -713,7 +712,6 @@ tool to learn these classes from the corpora.
 \begin{alltt}
    > \textbf{cd toy.experiment}
    > \textbf{make wcl}
-   [...]
    make[2]: Entering directory `.../toy.experiment/models/wcl'
    zcat -f ../../corpora/lm-train_fr.lc.gz ../../corpora/tm-train_fr.lc.gz > all-200_fr.lc
    word2vec -cbow 0 -size 100 -window 1 -negative 0 -hs 1 -sample 0 -threads 1 \bs
@@ -744,7 +742,6 @@ improve readability.
 \begin{alltt}
    > \textbf{cd toy.experiment}
    > \textbf{make coarselm}
-   [...]
    make[2]: Entering directory `.../toy.experiment/models/coarselm'
 
    word2class -no-error ../../corpora/lm-train_en.lc.gz ../wcl/en.200.classes | \bs
@@ -842,7 +839,6 @@ improve readability.
 \begin{alltt}
    > \textbf{cd toy.experiment}
    > \textbf{make tc}
-   [...]
    make[2]: Entering directory `.../toy.experiment/models/tc'
    zcat -f ../../corpora/lm-train_en.tc.gz \bs
         | perl -ne '\emph{set UTF-8 encoding} s/^[^[:lower:]]+\$/{\bs}n/; print \$_ unless /^\$/;' \bs
@@ -950,25 +946,25 @@ Here we illustrate the method we currently recommend: merge the counts from all
 the alignment methods to estimate the main probability feature, using one
 alignment method to estimate a lexical smoothing feature.
 You can do all this by typing \code{make tm} in your \code{toy.experiment}
-directory, but we will break it down into several steps here.
+directory, but we will break it down into several steps.
 
 By default, \code{make tm} will train IBM2 (\S\ref{IBM2}), HMM (\S\ref{HMM}),
-and IBM4 (\S\ref{IBM4}) word-alignment models, and tally all their counts
-together to constitute the final phrase table (\S\ref{CPT}).
+and IBM4 (\S\ref{IBM4}) word-alignment models, and tally their counts
+together into the final phrase table (\S\ref{CPT}).
 
 In \S\ref{PI}, we'll show how you can also produce alignment indicator features
 telling the system which aligner produced which phrase pairs.  The alignment
-indicator features are helpful because the different alignments make different
-kinds of errors in the phrase pairs they produce; the high diversity of phrase
+indicator features can be helpful because the different alignments make different
+kinds of errors in the phrase pairs they produce; the diversity of phrase
 pairs obtained from two or three separate alignment methods helps the system,
 while the indicator features allow the system to learn to give more weight to
-alignments suggested by the more reliable alignment method.  Now, we don't need
-to know how reliable each method is, because the system will learn that
-automatically during tuning (see \S\ref{COW}).
+alignments suggested by the more reliable alignment method.  Now, we don't
+explicitly estimate how reliable each method is, instead we let decoder tuning
+learn the indicator feature weights (see \S\ref{COW}).
 
-Later, in \S\ref{MIXTM}, we'll look at interpolating probability estimates
+Later, we'll look at interpolating probability estimates
 coming from various corpora, in a way that is adapted to your in-domain
-material.
+material (\S\ref{MIXTM}).
 
 \subsubsection{Creating a Translation Model Using IBM2 Alignments} \label{IBM2}
 
@@ -979,7 +975,7 @@ material.
 \subsubsection*{Training IBM2 Models}
 
 First we train IBM2 word alignment models, which requires training IBM1 models
-as a prerequisite.  We do this for both directions.
+as a prerequisite.  We do this for both directions in \code{models/ibm/}.
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment/models/ibm}
@@ -997,53 +993,54 @@ as a prerequisite.  We do this for both directions.
 \end{alltt}
 \end{small}
 The \code{train_ibm} program could have been used directly, but we use
-\code{cat.sh} instead, which runs \code{train_ibm} in parallel. Here the
+\code{cat.sh} instead to parallelize the process. The
 options \code{-n 4 -pn 4} mean 4-ways parallel: the default is to use the
-number of CPUs available, as controlled by the \code{PARALLELISM_LEVEL_TM}
-variable in \code{Makefile.params}.
+number of CPUs available, as controlled by \code{PARALLELISM_LEVEL_TM}
+in \code{Makefile.params}.
 
 The commands above write log files containing information about training.  For
 example, the IBM log files show convergence and pruning statistics for each
-iteration (use \code{grep ppx log.*} to see all perplexities):
-\begin{small}
+iteration (use \code{grep ppx log.*en} to see perplexities for the reverse models):
+\begin{footnotesize}
 \begin{alltt}
-   > \textbf{grep -h ppx log.ibm[12]*en_given_fr}
-   parallel iter (IBM1): prev ppx = 351.448, size = 1402947 word pairs.
-   parallel iter (IBM1): prev ppx = 108.875, size = 1332170 word pairs.
-   parallel iter (IBM1): prev ppx = 66.4431, size = 1178494 word pairs.
-   parallel iter (IBM1): prev ppx = 52.8119, size = 1015983 word pairs.
-   parallel iter (IBM1): prev ppx = 47.9137, size = 874944 word pairs.
-   parallel iter (IBM2): prev ppx = 45.759, size = 874673 word pairs.
-   parallel iter (IBM2): prev ppx = 29.4061, size = 874333 word pairs.
-   parallel iter (IBM2): prev ppx = 23.4947, size = 850139 word pairs.
-   parallel iter (IBM2): prev ppx = 20.8628, size = 741848 word pairs.
-   parallel iter (IBM2): prev ppx = 19.5686, size = 617840 word pairs.
+   > \textbf{grep ppx log.*fr}
+   log.ibm1.tm-train.en_given_fr:parallel iter (IBM1): prev ppx = 351.624, size = 1403160 word pairs.
+   log.ibm1.tm-train.en_given_fr:parallel iter (IBM1): prev ppx = 108.905, size = 1332332 word pairs.
+   log.ibm1.tm-train.en_given_fr:parallel iter (IBM1): prev ppx = 66.4595, size = 1178515 word pairs.
+   log.ibm1.tm-train.en_given_fr:parallel iter (IBM1): prev ppx = 52.8252, size = 1015977 word pairs.
+   log.ibm1.tm-train.en_given_fr:parallel iter (IBM1): prev ppx = 47.9259, size = 874907 word pairs.
+   log.ibm2.tm-train.en_given_fr:parallel iter (IBM2): prev ppx = 45.7706, size = 874635 word pairs.
+   log.ibm2.tm-train.en_given_fr:parallel iter (IBM2): prev ppx = 29.4135, size = 874294 word pairs.
+   log.ibm2.tm-train.en_given_fr:parallel iter (IBM2): prev ppx = 23.4987, size = 850152 word pairs.
+   log.ibm2.tm-train.en_given_fr:parallel iter (IBM2): prev ppx = 20.865, size = 741890 word pairs.
+   log.ibm2.tm-train.en_given_fr:parallel iter (IBM2): prev ppx = 19.5697, size = 617871 word pairs.
 \end{alltt}
-\end{small}
+\end{footnotesize}
 
 The log files also contain time and memory resource information, which you can
 summarize at any level just as you can globally:
 \begin{footnotesize}
 \begin{alltt}
    > \textbf{make time-mem}
-   find -type f -name log.\* | sort | xargs time-mem-tally-pl -no-dir -m tm \bs
-      | second-to-hms.pl | expand-auto.pl
-      log.ibm1.tm-train.en_given_fr  WALL TIME: 1m3s   CPU TIME: 28s   VSZ: 0.102G  RSS: 0.012G
-      log.ibm1.tm-train.fr_given_en  WALL TIME: 1m0s   CPU TIME: 28s   VSZ: 0.099G  RSS: 0.013G
-      log.ibm2.tm-train.en_given_fr  WALL TIME: 57s    CPU TIME: 24s   VSZ: 0.099G  RSS: 0.012G
-      log.ibm2.tm-train.fr_given_en  WALL TIME: 58s    CPU TIME: 24s   VSZ: 0.099G  RSS: 0.014G
-   tm:TIME-MEM                       WALL TIME: 3m58s  CPU TIME: 1m44s VSZ: 0.102G  RSS: 0.014G
+     log.ibm1.tm-train.en_given_fr  WALL TIME: 13s  CPU TIME: 7s   PCPU: 100\%  VSZ: 0.288G  RSS: 0.017G
+     log.ibm1.tm-train.fr_given_en  WALL TIME: 13s  CPU TIME: 7s   PCPU: 99\%   VSZ: 0.288G  RSS: 0.017G
+     log.ibm2.tm-train.en_given_fr  WALL TIME: 11s  CPU TIME: 5s   PCPU: 100\%  VSZ: 0.286G  RSS: 0.016G
+     log.ibm2.tm-train.fr_given_en  WALL TIME: 11s  CPU TIME: 5s   PCPU: 100\%  VSZ: 0.286G  RSS: 0.016G
+   ibm:TIME-MEM                     WALL TIME: 48s  CPU TIME: 24s  PCPU: 100\%  VSZ: 0.288G  RSS: 0.017G
 \end{alltt}
 \end{footnotesize}
 
 The IBM models are written to files \code{ibm[12].*} and contain word
 translation/alignment probabilities.
+The files are in a binary format that you can read with the \code{ibmcat} command,
+e.g., \code{ibmcat ibm2.tm-train.en_given_fr.gz | less}.
 
 \subsubsection*{Creating the alignment file}
 
-Now we use the alignment model to produce and save the alignment of the
+Now we use the alignment models to generate the alignment of the
 training corpus according to the IBM2 alignment method, to be used for creating
 phrase tables and other models that rely on word alignments.
+We do this in \code{models/wal/}.
 
 \begin{small}
 \begin{alltt}
@@ -1053,7 +1050,6 @@ phrase tables and other models that rely on word alignments.
       ../ibm/ibm2.tm-train.en_given_fr.gz ../ibm/ibm2.tm-train.fr_given_en.gz \bs
       ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
       | gzip > tm-train.ibm2.fr2en.align.gz
-   [...]
 \end{alltt}
 \end{small}
 
@@ -1063,8 +1059,8 @@ parallelizes the process.
 
 \subsubsection*{Training Joint-Count Phrase Tables}
 
-With the alignment saved, extracting the joint-count phrase table (or JPT) from
-the parallel corpus is reasonably quick.
+With the word alignments saved, extracting the joint-count phrase table (or JPT) from
+the parallel corpus is reasonably quick. We're now in \code{models/jpt/}.
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment/models/jpt}
@@ -1089,14 +1085,14 @@ models.
 \subsubsection{Creating a Translation Model Using HMM Alignments} \label{HMM}
 
 Now we repeat the same steps using HMM word alignment models, using the
-``hmm3'' variant, which is the default.  This variant corresponds to the HMM
-parameter settings we recommend using to create translation models.  If you
+``hmm3'' variant, which is the default and recommended HMM configuration.
+If you
 inspect the alignments, you will find that ``hmm3'' alignments leave a lot of
-words unaligned and seem to be of rather poor quality.  They were tuned
-specifically to maximize BLEU scores on a complete translation system, not for
+words unaligned.  They were tuned
+specifically to maximize BLEU scores in a complete translation system, not for
 independent use.  If you want to produce alignments for display or other uses
-that exploit the alignment directly, we recommend the ``hmm2'' or ``hmm1''
-variant instead.
+that exploit the alignments directly, the ``hmm2'' or ``hmm1''
+variant might be more suitsable.
 
 \begin{small}
 \begin{alltt}
@@ -1145,7 +1141,10 @@ targets in \code{toy.experiment/models/ibm/Makefile.toolkit} than to create new 
 Our experiments have shown that it can be beneficial to combine the JPTs
 obtained from IBM2 and HMM models with an additional one obtained from IBM4
 models: the resulting systems are more robust and output better quality
-translations.  \PS does not include software to train or use IBM4 models,
+translations.
+IBM4 alignments are of the highest quality, so many MT groups just use IBM4 on its own,
+but we find the combination performs best.
+\PS does not include software to train or run IBM4 models,
 however, so you must independently obtain MGiza++ and make sure it is found on
 your PATH, as documented in \code{INSTALL}.
 
@@ -1153,10 +1152,10 @@ your PATH, as documented in \code{INSTALL}.
 \begin{alltt}
    > \textbf{cd toy.experiment/models/ibm}
    > \textbf{make ibm4_model}
-   [lots of commands get run to train IBM4 models using MGiza++]
+   [lots of commands to train IBM4 models using MGiza++]
    > \textbf{cd toy.experiment/models/wal}
    > \textbf{make ibm4_model}
-   [commands to extract and save the aligned corpus produced by MGiza++]
+   [commands to extract and save the corpus alignments produced by MGiza++]
    > \textbf{cd toy.experiment/models/jpt}
    > \textbf{make ibm4_model}
    [gen-jpt-parallel.sh is used to extract a JPT from the IBM4-aligned corpus]
@@ -1168,7 +1167,7 @@ IBM4 models and align the training corpus using it, performing necessary
 conversions before and after to ensure compatibility with \PS software.  Our
 own \code{align-words} (in \code{wal}) and \code{gen-jpt-parallel.sh} (in
 \code{jpt}) are then used to produce a standard symmetrized alignment file and
-extract phrase pairs from it, finishing with the same procedure as with IBM2
+extract phrase pairs from it, following the same procedure as with IBM2
 and HMM models.
 
 \subsubsection{Creating a Conditional Phrase Table} \label{CPT}
@@ -1180,7 +1179,7 @@ word-alignment models, we merge their counts together in a single JPT:
    > \textbf{cd toy.experiment/models/jpt}
    > \textbf{make merged_model}
    merge_multi_column_counts -a jpt.merged.tm-train.fr-en.gz \bs
-      jpt.ibm2.tm-train.fr-en.gz jpt.hmm3.tm-train.fr-en.gz jpt.ibm4.tm-train.fr-en.gz
+      jpt.hmm3.tm-train.fr-en.gz jpt.ibm4.tm-train.fr-en.gz jpt.ibm2.tm-train.fr-en.gz
 \end{alltt}
 \end{small}
 
@@ -1188,10 +1187,10 @@ Finally we compute the conditional phrase table (or CPT), using two different
 smoo\-thers to calculate the probabilities.\footnote{In general, we obtain
 better translation quality when using phrase probabilities estimated from
 occurrence counts (relative frequency, ``RFSmoother'', or a smoothed variant
-such as ``KNSmoother'' or ``GTSmoother'') along with lexical probability
+such as ``KNSmoother'' or ``GTSmoother'') combined with lexical probability
 estimates such as Zens-Ney smoothing (``ZNSmoother''). Other smoothing
 options are also available. Experiments in recent years have shown that
-using Kneser-Ney smoothing with Zens-Ney smoothing
+using Kneser-Ney smoothed phrase probabilities with Zens-Ney smoothed lexical probabilities
 gives the best results in a wide range of cases, so this is
 the default.  The variables \code{CPT\us{}SMOOTHERS} and
 \code{SMOOTHERS\us{}DESCRIPTION} in \code{models/tm/Makefile.params} control
@@ -1249,7 +1248,7 @@ phrase and the lexical scoring approaches.
 Note that this example is carefully chosen: because of the small size of the
 training corpus, many entries in the phrase table are not good translations.
 
-To modify the default word alignment models that go in to the creation of the
+To modify the default word alignment models that go into the creation of the
 CPT, change the \code{MERGED_CPT_JPT_TYPES} variable in
 \code{toy.experiment/Makefile.params} to, for instance, \code{IBM2 HMM3};
 this variable enumerates which word-alignment models you want to generate when
@@ -1263,25 +1262,25 @@ to experiment with different settings.\tipend
 \subsubsection{Adding alignment indicator features} \label{PI}
 
 In our NIST OpenMT 2012 system, we found that the decoder could benefit from
-knowing which alignment method suggested which phrase pairs.  With the new
-Batch Lattice MIRA tuning method (which is now the default), we are able to throw more
+knowing which alignment method suggested which phrase pairs.  With the then-new
+Batch Lattice MIRA tuning method (which has been the default since then), we are able to throw more
 features at the system than before, such as the alignment indicator features,
-and it is able to exploit them to improve the quality of the translations
-produced (as measured by BLEU).  Unlike the Powell tuning algorithm,
+and it is able to exploit them to improve translation quality
+(as measured by BLEU).  Unlike the Powell tuning algorithm,
 MIRA can exploit a large number of features effectively without overfitting the
 dev set.
 
 The alignment indicator features are simply flags, one per alignment method.
-To enable generating them, you can set
+To enable generating them, set
 \code{MERGED_CPT_USE_ALIGNMENT_INDICATORS} to \code{1} in the top-level
 \code{Makefile.params}.  Having done so, the default merged CPT file
 (\code{cpt.merged...}) will not be generated, instead you will get a
 \code{cpt.PI...} file with identical contents in the first three columns, plus
 a fourth column containing two or three values (one per aligner), with values 1
-(the alignment produced the phrase pair) or 0.3 (otherwise).  The 0.3 works as
+(indicating the alignment produced the phrase pair) or 0.3 (otherwise).  The 0.3 works as
 a constant arbitrary penalty that gets applied whenever a given aligner did not
-produce a given phrase pair.  The penalty value is arbitrary here in the phrase
-table, but its weight gets tuned so as to maximize BLEU scores on your dev set
+produce a given phrase pair.  The penalty value is arbitrary in the phrase table,
+but its weight gets tuned so as to maximize BLEU scores on your dev set
 later.
 
 To generate the CPT with alignment indicator features at this point, you can
@@ -1299,26 +1298,26 @@ run \code{make indicator_model}:
    joint2multi_cpt -write-count -write-al top -prune1w 100 -v -i -z -1 fr -2 en \bs
       -s '0:KNSmoother 3' -s ZNSmoother -a '1-100:PureIndicator' \bs
       -dir fwd -o cpt.PI-kn3-zn.hmm3 \bs
-      -ibm_l2_given_l1  ../ibm/hmm3.tm-train.en_given_fr.gz \bs
-      -ibm_l1_given_l2  ../ibm/hmm3.tm-train.fr_given_en.gz \bs
+      -ibm_l2_given_l1  ./../ibm/hmm3.tm-train.en_given_fr.gz \bs
+      -ibm_l1_given_l2  ./../ibm/hmm3.tm-train.fr_given_en.gz \bs
       j2m/ibm2 j2m/hmm3 j2m/ibm4
 \end{alltt}
 \end{small}
 
 The \code{joint2multi_cpt} program used above is a versatile tool for
 generating phrase tables with all sorts of features.  It can produce anything
-that \code{joint2cond_phrase_table} can, plus additional features that reflect
+that \code{joint2cond_phrase_tables} can, plus various other features that take into account
 the provenance of each phrase pair.  Here we use it with just one particular
-setting that has been proved to be effective empirically.
+setting that has been proved effective empirically.
 
 Experimental advice: in our experiments we found that indicator features can
 increase the BLEU score a little, but it roughtly doubles the amount of memory
 required to train the CPT. Experiment with your own data to see if it's worth
-it for you.
+it for you, but we leave it off by default because it's often not worth it.
 
 Important warning: if you've created both the \code{cpt.merge...} and
 \code{cpt.PI...} files in the same instance of the framework, the tuning step
-will use them both, which is not a good idea.  You should remove one or the
+will use them both, which is not a good idea. You should remove one or the
 other before proceeding:
 \begin{small}
 \begin{alltt}
@@ -1327,39 +1326,40 @@ other before proceeding:
    > \textbf{rm cpt.PI*}
 \end{alltt}
 \end{small}
+You should also reset \code{MERGED_CPT_USE_ALIGNMENT_INDICATORS}.
 You will need to work in two separate copies of the framework if you want to
 experiment with both of these methods.
 
 \subsection{Creating a Hierarchical Lexicalized Distortion Model} \label{LDM}
 
-Hierarchical Lexicalized Distortion Models (HLDMs) are now used by default,
+Hierarchical Lexicalized Distortion Models (HLDMs) are now recommended and used by default,
 with \code{USE_HLDM} set to \code{1} in the default \code{Makefile.params}.
 These models help the decoder reorder words more appropriately during
-translation. Best results are obtained when using it.
+translation.
 
 The framework also supports using regular (non-hierarchical) Lexicalized
 Distortion Models (LDMs), but experiments have shown that HLDMs are much
-more effective, so we recommend using those instead.  The key difference between
+more effective.  The key difference between
 the two variants is how one defines the different distortion configurations.
 HLDMs use a more natural definition that overcomes some of the weaknesses of
 LDMs.
 
-HLDMs and LDMs are created in two steps: 1) counting occurrences of the
-different types of distortion instances over the training corpus, using the
-program \code{dmcount}, and 2) estimating scores from these counts, using the
-program \code{dmestm}.  If you trained more than one phrase table, as we did
+HLDMs and LDMs are created in two steps: 1) using \code{dmcount} to count occurrences of the
+different types of distortion instances over the training corpus,
+and 2) using \code{dmestm} to estimate scores from these counts.
+If you trained more than one phrase table, as we did
 above, the first step is repeated for each phrase table.
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment}
    > \textbf{make ldm}
-   parallelize.pl -nolocal -psub -1 -n 4 -np 4 -w 100000 \bs
+   parallerize.pl -rp "-j 4" -n 4 -np 4 -w 100000 \bs
       -s ../../corpora/tm-train_fr.lc.gz -s ../../corpora/tm-train_en.lc.gz \bs
-      -s ../wal/tm-train.hmm3.fr2en.align.gz \bs
+      -s ./../wal/tm-train.hmm3.fr2en.align.gz \bs
       -merge 'merge_multi_column_counts -' \bs
       'dmcount -ext -v -m 8 -hier \bs
          ../../corpora/tm-train_fr.lc.gz ../../corpora/tm-train_en.lc.gz \bs
-         ../wal/tm-train.hmm3.fr2en.align.gz | li-sort.sh > hldm.hmm3.counts.gz'
+         ./../wal/tm-train.hmm3.fr2en.align.gz | li-sort.sh > hldm.hmm3.counts.gz'
    parallelize.pl [...] 'dmcount [...] > hldm.ibm4.counts.gz'
    parallelize.pl [...] 'dmcount [...] > hldm.ibm2.counts.gz'
    merge_multi_column_counts -fillup - \bs
@@ -1376,13 +1376,9 @@ phrase tables.  As mentioned before, you can use \code{make time-mem} to see
 your resource usage after the process has completed to plan your resource
 allocation.
 
-We generally observe a fair gain in translation quality (as measured by BLEU)
-when using HLDMs, although you will need to determine, depending on your
-situation, whether this gain is worth the added memory and time requirements.
-
 If you need to reduce the memory footprint of \code{dmestm}, you can turn on
-singleton filtering, which will remove from the count files all phrase pairs
-that occur only once, before doing the estimation.  As a result, you will need
+singleton filtering to remove all phrase pairs
+that occur only once from the HLDM count file.  As a result, you will need
 a lot less memory, but the model might not be as good. It's a trade-off that
 you can measure empirically on your data.  To turn on singleton filtering, edit
 \code{models/ldm/Makefile.params} and uncomment the line defining
@@ -1390,37 +1386,31 @@ you can measure empirically on your data.  To turn on singleton filtering, edit
 
 \tip\margintip The commands for step 1 illustrate the use of one of our generic
 utilities: \code{parallelize.pl}.  This script can be used to parallelize the
-execution of any command where each input line is processed independently.  It
-takes care of splitting the input(s) into chunks, running the chunks in
-parallel, and combining the outputs.  In this
-example the outputs from all instances of \code{dmcount} are merged using
-\code{merge_multi_column_counts}, a tool that adds counts together when it sees
-the same key in two files.  The default is to concatenate the parts together,
-which is appropriate for programs that produce one line of output per line of
-input.  Run \code{parallelize.pl -h} for more details.\tipend
+execution of any command where each input line is processed independently.
+Run \code{parallelize.pl -h} for more details.\tipend
 
 \subsection{Sparse Models} \label{sparse}
 
-\PS 3.0 brings in sparse models from our recent research successes.
-Taking advantage of MIRA (see \S\ref{COW}) and it ability to deal with a lot
+\PS 3.0 introduced sparse models, one our research successes.
+Taking advantage of MIRA (see \S\ref{COW}) and its ability to deal with a lot
 more features than our previous tuning algorithm, the sparse models introduce a
-large number of decoder features that let the decoder make more fine-grained
+large number of decoder features that support finer-grained
 decisions about what constitutes a good translation. The main sparse feature
 set constitutes the Discriminative Hierarchical Distortion Model (DHDM), which
 can, for example, make reordering choices based on the presence of a highly
 frequent word at the beginning or at the end of a phrase pair. Thus, the model
-could learn that a particular preposition triggers reordering. Other sparse
+can learn that a particular preposition triggers reordering. Other sparse
 features pay attention to various characteristics of phrase pairs that might
 indicate how reliable they are.\footnote{The annotated bibliography included
 with the \PS user manual summarizes the literature on sparse features,
 discussing how they work and what they mean. See, in particular, Hopkins and
 May (EMNLP 2011), Cherry and Foster (NAACL 2012), and Cherry (NAACL-HLT 2013).
-You can also refer to \code{doc/sparse-features.README} for the nitty-gritty of
+\code{doc/sparse-features.README} provides the nitty-gritty of
 sparse features in \PS.}
 
 Turning on sparse features increases the quality of the translations produced
-by \PS, at a minimal computing cost, and is always recommended. Therefore
-sparse features are now turned on by default.\footnote{By default, only the
+by \PS, at a minimal computing cost. It is always recommended and is the
+default.\footnote{By default, only the
 fast sparse features sets are enabled: \code{hopmay} and \code{fastdhdm}. A
 third set is available, \code{otherdhdm}, but it significantly slows down
 decoding and is not worth the very small gain it provides. The choice of sparse
@@ -1432,32 +1422,32 @@ Training sparse models:
 \begin{alltt}
    > \textbf{cd toy.experiment}
    > \textbf{make sparse}
-   [...]
    make[2]: Entering directory `.../toy.experiment/models/sparse'
    cat sparse-specs-fastdhdm sparse-specs-hopmay > model.specs
    rm -f data.* build-model.cmds model
    build-sparse-model.sh -cmdfile build-model.cmds -model model -config model.specs \bs
       -corp ../../corpora/tm-train \bs
       -srclang fr -tgtlang en -srcext lc.gz -tgtext lc.gz
-   run-parallel.sh build-model.cmds 4 >& log.data
-   echo "This file exists just so make dependencies work." > data
+   run-parallel.sh -j 4 build-model.cmds 4 >& log.data
+   echo "This file exists just to make dependencies work." > data
    palminer -v -pop -m model >& log.model.templates
+   sed -i 's/\.mmcls\$//' model.templates
 \end{alltt}
 \end{small}
 
 To build sparse models, we first list all the sparse feature sets we want in
 \code{model.specs} by concatenating the relevant template spec files.
 
-Then we use the command \code{build-sparse-model.sh} to list the feature
+Then we use \code{build-sparse-model.sh} to list the feature
 templates implied by the feature sets we chose (see file \code{model}), and to build all
-the data files required for those feature templates. Actually, not quite: it
+the data files required for those feature templates. Well, not quite: it
 outputs \code{build-model.cmds}, which lists all the commands to run to build
 these data files, and then we use \code{run-parallel.sh} to run them in
 parallel.
 
-Finally, the program \code{palminer} expands the model into its complete list
-of features, enumerating the features for each template, saving the (not very
-legible) results in several files matching \code{model.*}.
+Finally, \code{palminer} expands the model into its complete list
+of features, enumerating the features for each template, saving the
+results in several files matching \code{model.*}.
 
 
 If you're interested in the inner-workings of sparse features, it's worth
@@ -1496,6 +1486,7 @@ to build the data files required to define all these features:
 \begin{alltt}
    > \textbf{cat build-model.cmds}
    [The following output is abbreviated to highlight the key elements:]
+   count_unal_words -l 2 .../jpt.* | sort -nr -k2,2 | head -50 | cut -d' ' -f1 > data.tunal_.._jpt_50
    echo -e '1 1\bs{}n2 2\bs{}n3 4\bs{}n5 8\bs{}n9 16\bs{}n17 32\bs{}n33 64\bs{}n...\bs{}n10001 0' > data.bins11
    get_voc -sc ../../corpora/tm-train_en.lc.gz | head -80 | cut -d' ' -f1 > data.tvoc...
    get_voc -sc ../../corpora/tm-train_en.lc.gz | head -80 | cut -d' ' -f1 | ... > data.tvoci...
@@ -1505,7 +1496,6 @@ to build the data files required to define all these features:
    mkcls -c20 -n2 -Vdata.mkcls...tm-train_fr.lc.gz_20_2 -p<(zcat -f .../tm-train_fr.lc.gz) opt
    mkcls -c50 -n2 -Vdata.mkcls...tm-train_en.lc.gz_50_2 -p<(zcat -f .../tm-train_en.lc.gz) opt
    mkcls -c50 -n2 -Vdata.mkcls...tm-train_fr.lc.gz_50_2 -p<(zcat -f .../tm-train_fr.lc.gz) opt
-   count_unal_words -l 2 .../jpt.* | sort -nr -k2,2 | head -50 | cut -d' ' -f1 > data.tunal_.._jpt_50
 \end{alltt}
 \end{small}
 
@@ -2950,7 +2940,6 @@ command that dereferences symbolic links.
 \begin{alltt}
    > \textbf{cd toy.experiment}
    > \textbf{make portageLive}
-   [...]
    [lots of prerequisite stuff happens]
    [...]
    make -C models portageLive

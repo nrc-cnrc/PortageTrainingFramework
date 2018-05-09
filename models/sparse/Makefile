@@ -102,7 +102,7 @@ data: SHELL=${FRAMEWORK_SHELL}
 data: model
 	RP_PSUB_OPTS="-j 4 -N sparse$@" \
 	   run-parallel.sh -j 4 build-model.cmds ${PARALLELISM_LEVEL_SPARSE} >& log.$@
-	_LOCAL=1 echo "This file exists just so make dependencies work." > $@
+	_LOCAL=1 echo "This file exists just to make dependencies work." > $@
 
 model.templates: model data
 	palminer -v -pop -m model >& log.$@
