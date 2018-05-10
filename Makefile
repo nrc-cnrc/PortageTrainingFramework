@@ -115,14 +115,15 @@ OTHER_TARGETS += corpora
 # Create the Lexicalized Distortion Models (LDM).
 # Create the sparse model, which includes the discriminative hierarchical
 # distortion model (sparse / DHDM).
+# Create the NNJM
 # Create models for truecasing (TC).
 # Create the Translation Model (TM).
-.PHONY: models lm mixlm wcl coarselm bilm ldm sparse tc tm
-models lm mixlm wcl coarselm bilm ldm sparse tc tm: SHELL=${LOCAL_SHELL}
-models lm mixlm wcl coarselm bilm ldm sparse tc tm: %: corpora
+.PHONY: models lm mixlm wcl coarselm bilm ldm sparse nnjm tc jpt tm
+models lm mixlm wcl coarselm bilm ldm sparse nnjm tc jpt tm: SHELL=${LOCAL_SHELL}
+models lm mixlm wcl coarselm bilm ldm sparse nnjm tc jpt tm: %: corpora
 	${MAKE} -C models $@ DO_UPDATE_PRETRAINED_LINKS=1
 
-OTHER_TARGETS += models lm mixlm wcl coarselm bilm ldm sparse tc tm
+OTHER_TARGETS += models lm mixlm wcl coarselm bilm ldm sparse nnjm tc jpt tm
 
 
 .PHONY: tune_main
