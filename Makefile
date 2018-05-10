@@ -118,12 +118,13 @@ OTHER_TARGETS += corpora
 # Create the NNJM
 # Create models for truecasing (TC).
 # Create the Translation Model (TM).
-.PHONY: models lm mixlm wcl coarselm bilm ldm sparse nnjm tc jpt tm
-models lm mixlm wcl coarselm bilm ldm sparse nnjm tc jpt tm: SHELL=${LOCAL_SHELL}
-models lm mixlm wcl coarselm bilm ldm sparse nnjm tc jpt tm: %: corpora
+MODEL_TARGETS = models lm mixlm ibm wal wcl coarselm bilm ldm sparse nnjm tc jpt tm
+.PHONY: ${MODEL_TARGETS}
+${MODEL_TARGETS}: SHELL=${LOCAL_SHELL}
+${MODEL_TARGETS}: %: corpora
 	${MAKE} -C models $@ DO_UPDATE_PRETRAINED_LINKS=1
 
-OTHER_TARGETS += models lm mixlm wcl coarselm bilm ldm sparse nnjm tc jpt tm
+OTHER_TARGETS += ${MODEL_TARGETS}
 
 
 .PHONY: tune_main
