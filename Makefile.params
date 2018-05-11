@@ -764,7 +764,8 @@ WCL_NCLS_LIST := $(strip ${WCL_NCLS_LIST})
 # By default, we assume that the user wants to use the corpora listed in
 # TRAIN_LM and MIXLM to build the word classes.
 ifdef WCL_NCLS_LIST
-   TRAIN_WCL ?= $(sort ${TRAIN_LM} ${MIXLM} ${TRAIN_TM} ${MIXTM})
+   TRAIN_WCL ?= $(sort ${TRAIN_LM} ${MIXLM} ${TRAIN_TM} ${MIXTM} ${TRAIN_COARSELM} ${TRAIN_BILM} \
+						     ${NNJM_TRAIN_CORPUS} ${NNJM_FINE_TUNING_TRAIN_CORPUS})
 endif
 TRAIN_WCL := $(strip ${TRAIN_WCL})
 
