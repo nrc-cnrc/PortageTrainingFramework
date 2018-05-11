@@ -46,6 +46,8 @@ models/decode/logs/
 
 models/ibm/*/
 
+models/jpt/JPTPAR.*
+
 models/ldm/*.bkoff
 
 models/mixlm/models
