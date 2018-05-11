@@ -1679,9 +1679,9 @@ one of their components likes.  The linear combination allows models to
 be used in a kind of fall-back way: if the in-domain model knows the text and
 likes it, we accept it, but if the in-domain model is faced with unseen
 material, we'll still trust the other models and accept text they find
-acceptable.  In contrast, you could also combine multiple LMs and TMs in the
+acceptable.  Alternatively, you could combine multiple LMs and TMs in the
 log-linear model: in that case, the models all have to agree that a hypothesis
-is good before it gets an overall good score.  Thus, the log-linear combination
+is good before it gets a good score overall.  Thus, the log-linear combination
 is more like a system where each model has a veto on all
 decisions.\footnote{This characterisation is over-simplistic: decoder weight
 tuning (\S\ref{COW}) still adjusts how much the decoder will care about each
@@ -1689,16 +1689,16 @@ model's opinion.}
 
 For the tutorial, let's assume
 you have three domains or translation memories that you will use
-together to create a system specialized for the first domain.  The first set of
-training files, as well as the dev and test sets, should come from the primary
-domain (in-domain text), while the other training sets are from the other two
+together to create a system specialized for the first domain.  The first
+training corpus, as well as the dev and test sets, should come from the primary
+domain (in-domain text), while the other training corpora are from the other two
 domains (out-of-domain text).  We assume that new text you plan to submit to
 this system will be in domain, which is why we optimize the system for
 in-domain text.
 
 To simulate this scenario, we've added three tiny corpora to
 \verb"$"\url{PORTAGE/test-suite/tutorial-data/mix}.
-They don't actually come from different domains here, but we'll pretend they do
+These toy files don't actually come from different domains, but we'll pretend they do
 for the sake of our tutorial, and we'll pretend only the first one is in
 domain.  You should copy these files into your \code{corpora} directory, adding
 them to the files already there:
@@ -1718,45 +1718,44 @@ them to the files already there:
 
 Mixture models are meant to replace regular LMs and TMs. In a given setup, you
 should either follow the instructions in \S\ref{LM} or those in \S\ref{MIXLM}
-below, but not both; you should either follow \S\ref{TM} or \S\ref{MIXTM}, but
-not both.  If you create regular LMs and
-TMs as well as mixture LMs and TMs, things will work anyway, but tuning and
+below, but not both
+(i.e., define only one of \code{PRIMARY_LM}, \code{TRAIN_LM} or \code{MIXLM});
+you should either follow \S\ref{TM} or \S\ref{MIXTM}, but
+not both
+(i.e., define only one of \code{TRAIN_TM} or \code{MIXTM}).
+If you create regular LMs and
+TMs as well as mixture LMs and TMs, the software will run anyway, but tuning and
 decoding will pick up and use both sets of models, which is not usually
 desirable.
 
-When you configure your systems, edit the top-level \code{Makefile.params} and
-set one of \code{PRIMARY_LM}, \code{TRAIN_LM} or \code{MIXLM}, and either \code{TRAIN_TM} or
-\code{MIXTM}, making sure the variables you don't need are not defined. In some
-circumstances, combining regular and mixture models might be appropriate; in
-that case, you would define both sets of variables, but make sure you know what
-you're doing if you work that way.
-
-Our recommendation now is that you should always use the generic LM as
+Since \PS 3.0, our recommendation is that you should always use the generic LM as
 background model if it is available for your target language.  The framework
-now has variable \code{PRIMARY_LM} to support this recommendation: if the generic
+has variable \code{PRIMARY_LM} to support this recommendation: if the generic
 LM exists, it is combined as a MixLM with your in-domain LM; otherwise your
 in-domain LM is used on its own.
+If you specify several corpora in \code{PRIMARY_LM}, they will be combined in a MixLM,
+with the generic LM added in if it exists.
+
 
 \subsubsection{Mixture Language Models} \label{MIXLM}
 
 The first mixture models we will look at are the mixture language models
 (MixLMs).  To tell the framework to use them, edit
-\code{Makefile.params} and modify the \code{MIXLM} variable to list the stems
+\code{Makefile.params} and modify the \code{PRIMARY_LM} variable to list the stems
 of the three training sets for LMs: \code{lm-train1 lm-train2 lm-train3}.  For
 Mixture LMs, it's also often useful to include an additional language model
 trained on the union of all the corpora together.  Here, \code{lm-train} is
 in fact the union of the three pretend domains, so we'll throw in
-\code{lm-train} at the end of \code{MIXLM}:
+\code{lm-train} at the end of \code{PRIMARY_LM}:
 \begin{small}
 \begin{alltt}
-   MIXLM = lm-train1 lm-train2 lm-train3 lm-train
+   PRIMARY_LM = lm-train1 lm-train2 lm-train3 lm-train
 \end{alltt}
 \end{small}
 
-Having done this, you should also comment out the definition of
-\code{PRIMARY_LM} (or \code{TRAIN_LM} if you followed \S\ref{regularLM} instead of
-\S\ref{LM+generic-default}), since we'll use our own defined mixture LM instead
-of the default mixture LM or a regular LM.\footnote{
+Having done this, you should comment out the definition of \code{TRAIN_LM} and \code{MIXLM} if they were defined.
+Note: to exclude NRC's generic LM at this step, use \code{MIXLM} instead and leave \code{PRIMARY_LM}
+undefined.\footnote{
 When you change the values of \code{PRIMARY\us{}LM}, \code{TRAIN\us{}LM} and/or
 \code{MIXLM} in a framework where you already did some training, you should run
 \code{make clean} in directories \code{models/lm} and \code{models/mixlm}, otherwise
@@ -1764,9 +1763,9 @@ results might not be correct.
 }
 
 This change also implicitly changes the definitions of \code{TRAIN_TC} and
-\code{TRAIN_COARSELM}. \code{TRAIN_COARSELM} will now default to the corpora
-listed in \code{MIXLM}, thus would train coarse LMs for each of the three domain
-corpora, plus the global one. We recommend training coarse LMs on the
+\code{TRAIN_COARSELM}. \code{TRAIN_COARSELM} will now default to all the corpora
+listed in \code{PRIMARYLM} (or \code{MIXLM}), thus would train four pairs of coarse LMs.
+We recommend training coarse LMs only on the
 union of the corpora (i.e., the global corpus) by explicitly setting:
 \begin{small}
 \begin{alltt}
@@ -1784,7 +1783,7 @@ but we'll break it down a bit.
 \begin{alltt}
    > \textbf{cd toy.experiment}
    > \textbf{make corpora}
-   [commands to lowercase lm-train?_*]
+   [commands to tokenize and lowercase lm-train?_*]
    > \textbf{cd toy.experiment/models/lm}
    > \textbf{make clean}
    [removes trained LMs in models/lm, so they don't interfere with the mixlm]
@@ -1795,10 +1794,12 @@ but we'll break it down a bit.
    [commands to create lm-train2_fr-kn-5g.lm.gz and .tplm]
    [commands to create lm-train3_fr-kn-5g.lm.gz and .tplm]
    [commands to create lm-train_fr-kn-5g.lm.gz and .tplm]
+   ln -sf /home/portage/PortageII-4.0/generic-model/generic-2.0/lm/generic-2.0_fr.tplm .
    echo "`basename models/mixlm/lm-train1_fr*.tplm` \bs
          `basename models/mixlm/lm-train2_fr*.tplm` \bs
          `basename models/mixlm/lm-train3_fr*.tplm` \bs
-         `basename models/mixlm/lm-train_fr*.tplm`" "" \bs
+         `basename models/mixlm/lm-train_fr*.tplm`" \bs
+         "generic-2.0_fr.tplm" \bs
       | tr " " "\bs{}n" > components_fr
    mx-calc-distances.sh -v em components_fr ../../corpora/dev1_fr.lc > dev1.distances
    mx-dist2weights -v normalize dev1.distances > dev1.weights
@@ -1806,15 +1807,15 @@ but we'll break it down a bit.
 \end{alltt}
 \end{small}
 
-The first command above, \code{make corpora}, asks the framework to do the
-lowercasing of the new files we just added there.  \code{make clean} in
-\code{lm} removes the models created in \S\ref{LM} if any. Then \code{make all}
-in \code{mixlm} does a
-lot of work.  It creates the three source-side per-domain language models, as
+The first command above, \code{make corpora}, asks the framework to tokenize and
+lowercase the new files we just added there.  \code{make clean} in
+\code{lm} and \code{mixlm} removes any LMs created before. Then \code{make all}
+in \code{mixlm} does
+the real work.  It creates the three source-side per-domain language models, as
 well as the global one.  The source-side language models are used to tune the
 weights of the component LMs in the MixLM: \code{mx-calc-distances.sh} uses the
 EM algorithm to find the component weights that allow the source-side MixLM to
-best model the source side of our dev set, here \code{dev1_fr.lc}.  Since the
+best model the source side of our dev set.  Since the
 dev set is in domain, we typically expect the in-domain component to get the
 highest weight.
 
@@ -1824,45 +1825,48 @@ highest weight.
    [commands to create lm-train2_en-kn-5g.lm.gz and .tplm]
    [commands to create lm-train3_en-kn-5g.lm.gz and .tplm]
    [commands to create lm-train_en-kn-5g.lm.gz and .tplm]
+   ln -sf /home/portage/PortageII-4.0/generic-model/generic-2.0/lm/generic-2.0_en.tplm .
    echo "`basename models/mixlm/lm-train1_en*.tplm` \bs
          `basename models/mixlm/lm-train2_en*.tplm` \bs
          `basename models/mixlm/lm-train3_en*.tplm` \bs
-         `basename models/mixlm/lm-train_en*.tplm`" "" \bs
+         `basename models/mixlm/lm-train_en*.tplm`" \bs
+         "generic-2.0_en.tplm" \bs
       | tr " " "\bs{}n" > components_en
    mx-mix-models.sh mixlm dev1.weights components_en \bs
       ../../corpora/dev1_fr.lc > dev1.mixlm
 \end{alltt}
 \end{small}
 
-Having tuned the weights on the source-side, the target-side component LMs are
-created and the mixture model is written by pasting the weights in
+Having tuned the weights on the source-side, the commands above create the target-side component LMs
+and write the mixture model is written by pasting the weights in
 \code{dev1.weights} onto the target-side components in \code{components_en}:
 \begin{small}
 \begin{alltt}
    > \textbf{cat dev1.mixlm}
-   lm-train1_en-kn-5g.tplm     3.50733e-05
-   lm-train2_en-kn-5g.tplm     0.000873166
-   lm-train3_en-kn-5g.tplm     0.287847
-   lm-train_en-kn-5g.tplm      0.711245
+   lm-train1_en-kn-5g.tplm 0.000108441
+   lm-train2_en-kn-5g.tplm 0.0019232
+   lm-train3_en-kn-5g.tplm 0.0785128
+   lm-train_en-kn-5g.tplm  0.073998
+   generic-2.0_en.tplm     0.845458
 \end{alltt}
 \end{small}
 
 As mentioned earlier, we would have expected the in-domain component
 \code{lm-train1}, to have
 the highest weight.  This didn't actually happen here because our toy data
-violates our assumptions: the EM algorithm recognized that \code{lm-train}
-better models the dev set and gave it the highest weight.  With real data,
+violates our assumptions: the EM algorithm recognized that the generic LM best
+models the dev set and gave it the highest weight, followed somewhat arbitrarily by
+\code{lm-train3} and \code{lm-train}.  With real data,
 you should get more reasonable results.
 
 The file \code{dev1.mixlm} is our mixture language model, adapted for the
 dev set \code{dev1}.  When we tune decoder weights, we'll use it as is.  When
-we use this model on new data, we might use the weights tuned on
+we use this model on new data, we usually use the weights tuned on
 \code{dev1}: we call this using a static mixture model, which works well as
-long as the new data is similar enough to the dev data.  Or we might tune
+long as the new data is similar enough to the dev data.  We could also tune
 mixture weights specifically for the new document or test set: we call this
 using a dynamic mixture model because the weights are dynamically adjusted to
-new text, which works well as long as the new document is large enough,
-containing scores to hundreds of sentences.
+new text, which works well as long as the new document is large enough.
 
 \subsubsection{Mixture Translation Models} \label{MIXTM}
 
@@ -1876,21 +1880,20 @@ set \code{MIXTM} to the three per-domain corpora:
 \end{alltt}
 \end{small}
 
-For the MixLM, putting the in-domain corpus first was not actually critical,
-but here it is: the word-alignment model from the first corpus is assumed to be
-in domain.
+Here, putting the in-domain corpus first is critical:
+the word-alignment model from the first corpus is assumed to be
+in domain, while the others are not.
 
-As with MixLMs, you should remove the definition of \code{TRAIN_TM}, since the
+As with MixLMs, you should keep only one TM variable active: either \code{MIXTM} or \code{TRAIN_TM}, but not both.
+So you should remove or comment out the definition of \code{TRAIN_TM}, since the
 MixTM replaces the regular TM.
-Unfortunately, doing so disables the default definition of \code{TRAIN_SPARSE}
-so we must set it explicity:
+This disables the default definition of \code{TRAIN_SPARSE}
+so we must set it explicity to the concatenation of all the parallel corpora:
 \begin{small}
 \begin{alltt}
    TRAIN_SPARSE = tm-train
 \end{alltt}
 \end{small}
-Note that we recommend using the concatenation of all the parallel corpora for
-the sparse model, not just the in-domain corpus, hence we used \code{tm-train}.
 
 \begin{small}
 \begin{alltt}
@@ -1902,9 +1905,9 @@ the sparse model, not just the in-domain corpus, hence we used \code{tm-train}.
    [removes trained TMs in models/tm, so they don't interfere with the mixtm]
    > \textbf{cd toy.experiment/models}
    > \textbf{make tm}
-   [commands to create IBM1, IBM2, HMM, and IBM4 models for each component corpus in ibm]
-   [commands to create *.align.gz files for each corpus and alignment method in wal]
-   [commands to create jpt.* files for each corpus, for each alignment method]
+   [commands to create IBM1, IBM2, HMM, and IBM4 models for each component corpus, in ibm]
+   [commands to create *.align.gz files for each corpus and alignment method, in wal]
+   [commands to create jpt.* files for each corpus, for each alignment method, in jpt]
    [in jpt/:]
    merge_multi_column_counts -a jpt.merged.tm-train1.fr-en.gz \bs
       jpt.ibm4.tm-train1.fr-en.gz jpt.hmm3.tm-train1.fr-en.gz jpt.ibm2.tm-train1.fr-en.gz
@@ -1933,7 +1936,7 @@ generate JPTs; combine the counts from the JPTs and finish with
 from each component corpus, separately.
 
 Note that \code{make} will not run the commands in the order shown here: we've
-reordered them so that the discussion can follow the macro-logic of the MixTM
+reordered them so that the discussion can follow the high-level logic of the MixTM
 model, whereas \code{make} does everything in one directory before moving
 to the next.
 
@@ -1945,7 +1948,7 @@ to the next.
    merge_multi_column_counts -a jpt.merged.dev1.fr-en.gz \bs
       jpt.ibm4.dev1.fr-en.gz jpt.hmm3.dev1.fr-en.gz jpt.ibm2.dev1.fr-en.gz
    [in tm/mixtm/:]
-   train_tm_mixture -v -o cpt.mix.fr2en.gz \bs
+   train_tm_mixture -write-count -write-al top -v -o cpt.mix.fr2en.gz \bs
       cpt.merged.hmm3-kn3-zn.tm-train1.fr2en.gz \bs
       cpt.merged.hmm3-kn3-zn.tm-train2.fr2en.gz \bs
       cpt.merged.hmm3-kn3-zn.tm-train3.fr2en.gz \bs
@@ -2089,7 +2092,7 @@ will be slightly different if you followed any of the optional paths above.}
    LMs: models/mixlm/dev1.mixlm
    Coarse LMs:
       DynMap;wordClasses-models/wcl/en.200.classes;models/coarselm/lm-train_en-200-ukn-8g.tplm
-      DynMap;wordClasses-models/wcl/en.800.classes;models/coarselm/lm-train_en-800-ukn-8g.tplm  
+      DynMap;wordClasses-models/wcl/en.800.classes;models/coarselm/lm-train_en-800-ukn-8g.tplm
    NNJMs: models/nnjm/fine_tuned/model
 
    cat canoe.ini.template \bs
@@ -2911,7 +2914,7 @@ convenient for translating new text.  You can use the \code{translate.pl} script
 for new text. It is aware of the way this framework works and where it puts its
 models, so it makes it easy to carry out the whole translation pipeline:
 tokenization, lowercasing, decoding, truecasing, detokenization, with optional
-plugins you can use to insert ad hoc code to handle special cases correctly. 
+plugins you can use to insert ad hoc code to handle special cases correctly.
 See \code{translate.pl -h} for details.  The \code{translate.sh} script you will
 find in the framework calls \code{translate.pl} with some of the options
 automatically filled in from the parameters you set in \code{Makefile.params}.
