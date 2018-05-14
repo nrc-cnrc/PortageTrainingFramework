@@ -73,6 +73,8 @@ all:  ${PT_TYPES:_cpt=_wal}
 all:  $(and ${USE_LDM}, ldm_wal)
 all:  $(and ${USE_HLDM}, hldm_wal)
 all:  $(and ${USE_BILM}, bilm_wal)
+all:  $(and ${NNJM_TRAIN_CORPUS}, nnjm_wal)
+all:  $(and ${NNJM_FINE_TUNING_TRAIN_CORPUS}, nnjm_wal)
 
 
 MAIN_TARGETS :=  all clean help
@@ -266,19 +268,19 @@ with open(".Makefile.deps", "w") as df:
    addModelsToMetaTarget(wamType("hldm"), "${TRAIN_HLDM}", wams)
 
    #####################################
-   # Expected: { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam
-   print("# { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam", file=df)
+   # Expected: { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wal
+   print("# { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wal", file=df)
    wams = "$(filter ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
    addModelsToMetaTarget(wamType(), "${TRAIN_TM}", wams)
 
    #####################################
-   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam
-   print("# NNJM { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam", file=df)
+   # { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wal
+   print("# NNJM { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wal", file=df)
    #wams = "$(filter ${NNJM_WAM_TYPE}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
    wams = "${NNJM_WAM_TYPE}"
    addModelsToMetaTarget(wamType(), "${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS} ${NNJM_TRAIN_CORPUS} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS} ${NNJM_FINE_TUNING_TRAIN_CORPUS}", wams)
 
-   print("# Not Expected { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wam", file=df)
+   print("# Not Expected { ibm1, ibm2, ibm4, hmm1, hmm2, hmm3, fast_align }_wal", file=df)
    wams = "$(filter-out ${PT_TYPES:_cpt=}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})"
    addModelsToMetaTarget(wamType(), "${TRAIN_TM}", wams, expected=False)
 
@@ -307,6 +309,15 @@ with open(".Makefile.deps", "w") as df:
    print("# FORCE ALIGN", file=df)
    wams = "${IBM4_MODEL_PFX}"
    addModelsToMetaTarget(wamType("ibm4_force_align"), "${FORCE_ALIGN_SET}", wams)
+
+   #####################################
+   # NNJM
+   print("# NNJM", file=df)
+   wams = "${NNJM_WAM_TYPE}"
+   if "${NNJM_TRAIN_CORPUS}".strip():
+      addModelsToMetaTarget(wamType("nnjm"), "${NNJM_TRAIN_CORPUS} ${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS}", wams)
+   if "${NNJM_FINE_TUNING_TRAIN_CORPUS}".strip():
+      addModelsToMetaTarget(wamType("nnjm"), "${NNJM_FINE_TUNING_TRAIN_CORPUS} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}", wams)
 
    print("EXPECTED_FILES :=", *sorted(expectedFiles), file=df)
 endef
