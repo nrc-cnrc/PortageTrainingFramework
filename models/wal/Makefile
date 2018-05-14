@@ -197,22 +197,9 @@ with open(".Makefile.deps", "w") as df:
    # TODO: do we really need to align TUNE_MIXTM_FINAL and TUNE_BILM?
    # If so should not we be using tm-train WAM like the NNJM?
    print("# mixtm, NNJM and BiLM tuning", file=df)
-   for corp in set("${TUNE_MIXTM_FINAL} ${TUNE_BILM} ".split()):
+   for corp in set("${TUNE_MIXTM_FINAL} ${TUNE_BILM} ${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}".split()):
       for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
          createRules(corp, wam, corp+"${L1}", corp+"${L2}")
-
-   # Special case for NNJM.
-   # TODO: Against which model should be force align NNJM sets?
-   # TODO: Augmenting which_wam to return the proper WAM for NNJM would allow us to fold the next two paragraphs into the preceding two.
-   print("# NNJM", file=df)
-   for corp in set("$(filter-out ${ALL_WAMS}, ${NNJM_TRAIN_CORPUS} ${NNJM_FINE_TUNING_TRAIN_CORPUS})".split()):
-      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
-         createRules(corp, wam, corp+"${L1X}", corp+"${L2X}")
-
-   for corp in set("${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}".split()):
-      for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
-         createRules(corp, wam, corp+"${L1}", corp+"${L2}")
-
 
    ########################################
    # For IBM4.
