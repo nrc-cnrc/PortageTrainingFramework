@@ -196,8 +196,8 @@ with open(".Makefile.deps", "w") as df:
    # Special case for mixtm and BiLM tuning.
    # TODO: do we really need to align TUNE_MIXTM_FINAL and TUNE_BILM?
    # If so should not we be using tm-train WAM like the NNJM?
-   print("# mixtm and BiLM tuning", file=df)
-   for corp in set("${TUNE_MIXTM_FINAL} ${TUNE_BILM}".split()):
+   print("# mixtm, NNJM and BiLM tuning", file=df)
+   for corp in set("${TUNE_MIXTM_FINAL} ${TUNE_BILM} ".split()):
       for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
          createRules(corp, wam, corp+"${L1}", corp+"${L2}")
 
@@ -207,21 +207,11 @@ with open(".Makefile.deps", "w") as df:
    print("# NNJM", file=df)
    for corp in set("$(filter-out ${ALL_WAMS}, ${NNJM_TRAIN_CORPUS} ${NNJM_FINE_TUNING_TRAIN_CORPUS})".split()):
       for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
-         alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
-         source = corp + "${L1X}"
-         target = corp + "${L2X}"
-         al1 = "{wam}.{corp}.${L2_GIVEN_L1X}".format(corp="$(firstword ${TRAIN_TM})", wam=wam)
-         al2 = "{wam}.{corp}.${L1_GIVEN_L2X}".format(corp="$(firstword ${TRAIN_TM})", wam=wam)
-         writeDeps(alignmentFileName, source, target, al1, al2)
+         createRules(corp, wam, corp+"${L1X}", corp+"${L2X}")
 
    for corp in set("${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}".split()):
       for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
-         alignmentFileName = "{c}.{m}.${L1_2_L2}.align.gz".format(m=wam, c=corp)
-         source = corp + "${L1}"
-         target = corp + "${L2}"
-         al1 = "{wam}.{corp}.${L2_GIVEN_L1X}".format(corp="$(firstword ${TRAIN_TM})", wam=wam)
-         al2 = "{wam}.{corp}.${L1_GIVEN_L2X}".format(corp="$(firstword ${TRAIN_TM})", wam=wam)
-         writeDeps(alignmentFileName, source, target, al1, al2)
+         createRules(corp, wam, corp+"${L1}", corp+"${L2}")
 
 
    ########################################
