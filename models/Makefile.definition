@@ -16,7 +16,7 @@ ALL_TMS ?= $(strip ${TRAIN_TM} ${MIXTM})
 ALL_TMS := $(sort ${ALL_TMS})
 
 # sort is used to remove duplicate or else dependencies are duplicated.
-ALL_WAMS ?= $(strip ${ALL_TMS} ${TRAIN_LDM} ${TRAIN_HLDM} ${MIXTM_TRAIN_MIX} ${TRAIN_BILM})
+ALL_WAMS ?= $(strip ${ALL_TMS} ${TRAIN_LDM} ${TRAIN_HLDM} ${MIXTM_TRAIN_MIX} ${TRAIN_BILM} ${NNJM_TRAIN_CORPUS} ${NNJM_FINE_TUNING_TRAIN_CORPUS})
 ALL_WAMS := $(sort ${ALL_WAMS})
 
 # sort is used to remove duplicate or else dependencies are duplicated.
