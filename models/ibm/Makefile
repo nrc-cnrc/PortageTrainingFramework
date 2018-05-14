@@ -61,6 +61,7 @@ all:  ${PT_TYPES:_cpt=_wam}
 all:  $(if ${USE_LDM}, ldm_wam)
 all:  $(if ${USE_HLDM}, hldm_wam)
 all:  $(if ${USE_BILM}, bilm_wam)
+all:  nnjm_wam
 
 
 MAIN_TARGETS :=  all clean help
@@ -90,6 +91,9 @@ indicator_wam:  ${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}.${L2_GIVEN_L1X}  ${${MERGED_
 endif
 
 fast_align_wam:  # Dependencies for sub cpt are defined in the python code.
+
+nnjm_wam: # Dependencies in python code
+	@true
 
 
 ########################################
@@ -247,7 +251,7 @@ with open(".Makefile.deps", "w") as df:
             forwardName  = forwardModel(corp, wam)
             backwardName = backwardModel(corp, wam)
             print("{target}_wam:  {f}  {b}".format(target=target(wam), f=forwardName, b=backwardName), file=df)
-	    if expected:
+            if expected:
                expectedFiles.add(forwardName)
                expectedFiles.add(backwardName)
                if forwardName.startswith("ibm2"):
@@ -303,6 +307,11 @@ with open(".Makefile.deps", "w") as df:
    # BILM
    wams = "$(foreach c, ${MERGED_CPT_JPT_TYPES}, ${${c}_MODEL_PFX})"
    addModelsToMetaTarget(wamType("bilm"), "${TRAIN_BILM}", wams)
+
+   #####################################
+   # NNJM
+   wams = "${NNJM_WAM_TYPE}"
+   addModelsToMetaTarget(wamType("nnjm"), "${NNJM_TRAIN_CORPUS} ${NNJM_FINE_TUNING_TRAIN_CORPUS}", wams)
 
    print("EXPECTED_FILES :=", *sorted(expectedFiles), file=df)
 endef
