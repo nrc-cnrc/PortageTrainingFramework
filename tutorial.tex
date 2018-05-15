@@ -2007,8 +2007,6 @@ variable.  The source-side pre-trained language models are also required,
 to tune the mixture weights, and should have the same name except for the
 language code.
 
-%\TODO{Have default tutorial use generic LM. For 3.1?}
-
 Similarly, generic phrase tables and pre-trained phrase tables from other
 domains can be included in your MixTMs by adding the name(s) of the of the CPT
 file(s) to \code{MIXTM_PRETRAINED_TMS}.  In this case all the CPTs (the one
@@ -2021,8 +2019,8 @@ still be the first one listed in \code{MIXTM}.
 
 The language and translation models are the main sources of information used
 for translation, which is performed by the \code{canoe} decoder.  Optionally,
-we might have trained an HLDM as an additional source of information, and we
-might have included alignment indicator features.  To get reasonable
+we might have trained other models as additional sources of information.
+To get reasonable
 translation quality, the weights on all sources of information
 need to be tuned. The tuning process is carried out by a script called
 \code{tune.py}, which runs \code{canoe} several times, refining the weights at
@@ -2034,7 +2032,7 @@ dev set.
 We use Batch Lattice MIRA\footnote{In this document, when we say ``MIRA'',
 we mean ``Batch Lattice MIRA'' unless otherwise specified.}, a state-of-the-art
 tuning algorithm developed at NRC, to perform decoder weight optimization.
-This is launched using our tuning script, \code{tune.py}, which also supports
+\code{tune.py} supports MIRA and
 a variety of other tuning algorithms.
 MIRA has several advantages over our previous tuning algorithm, Powell's:
 it supports much larger feature sets, it is much more stable, and it
@@ -2068,12 +2066,11 @@ replaced automatically:
 \begin{itemize}
 \item \code{<SL>}:   source language code, e.g. ``fr'';
 \item \code{<TL>}:   target language code, e.g., ``en'';
-\item \code{<CPTS>}: all CPTs trained above and found in the
-                     \code{models/tm} directory; and
-\item \code{<LMS>}:  all language models trained above and found in
-                     the \code{models/lm} directory, as well as all MixLMs found
-                     in \code{models/mixlm}, and all coarse LMs found in
-                     \code{models/coarselm}.
+\item \code{<CPTS>}: all CPTs trained above and found in \code{models/tm/}; and
+\item \code{<LMS>}:  all language models found in
+                     the \code{models/lm/} plus all MixLMs found
+                     in \code{models/mixlm/} plus all coarse LMs found in
+                     \code{models/coarselm/}.
 \item If \code{USE_HLDM} or \code{USE_LDM} is set in \code{Makefile.params},
 special processing is also done to insert the necessary (H)LDM parameters into
 the \code{canoe.ini} file.
@@ -2107,6 +2104,7 @@ will be slightly different if you followed any of the optional paths above.}
         -sparse-model models/sparse/model -force-shift-reduce " - \bs
       > canoe.ini
    configtool check canoe.ini
+   Warning: Cannot find local SparseModel weights file; using remote one, which might not be tuned.
    [...]
    ok
 \end{alltt}
@@ -2302,7 +2300,7 @@ line for each sparse feature template showing the range of feature IDs, the sum
 of their weights and the template specification.
 
 While \code{tune.py} is working, it saves lattices or $n$-best lists, and other
-intermediate files, to a temporary work directory called \code{foos}. If you
+intermediate files, to its temporary work directory, \code{foos}. If you
 wish to prevent these (large) files from being automatically cleaned upon
 completion, remove the \code{rm} command executed after \code{tune.py} in
 \code{Makefile}; you can find that line by searching for \code{foos}.
@@ -2341,7 +2339,7 @@ the weights tuned on the development corpus:
 \begin{small}
 \begin{alltt}
    > \textbf{grep weight canoe.ini.cow}
-   [weight-l] 0.866507:0.655232:0.305486
+   [weight-l] 1:0.655232:0.305486
    [weight-t] 0.308211:0.223461
    [weight-f] 0.207032:0.202139
    [weight-d] 0.4037:0.3889:0.1811:0.7207:0.7390:0.3564:0.3785
@@ -2353,30 +2351,29 @@ the weights tuned on the development corpus:
 
 The set of \code{weight-} parameters above provide the decoder features weights:
 \begin{itemize}
-\item the language model (\code{weight-l}),
-\item the backward probability estimates in the translation model (\code{weight-t}),
-\item the forward probability estimates in the translation model (\code{weight-f}),
-\item if we were using them, the adirectional features (alignment indicator features) in the translation model (\code{weight-a}),
-\item the distortion models (basic + HLDM) (\code{weight-d}),
-\item the sentence-length penalty (if positive) or bonus (if negative) (\code{weight-w}), and
-\item the special sparse weight (\code{weight-sparse}, always 1).
-\end{itemize}
-The language model often obtains one of the highest weights, as is the case
-here.\footnote{A note of warning about the LM weight: following Doug Paul's
+\item the regular and coarse language models (\code{weight-l})---the
+regular language model often obtains one of the highest weights, as is the case
+here;\footnote{A note of warning about the LM weight: following Doug Paul's
 ``ARPA'' LM format, all LM formats we know use base-10 log probs (including
 ours). But \code{canoe} interprets them as natural logs: throughout \PS, logs
 are natural.  This known bug has minimal impact: correcting for it requires
-either multiplying all LM scores by $log(10) \approx 2.3$, or equivalently
-multiplying the LM weight itself by $log(10)$. During optimization,
-\code{tune.py} and \code{rescore.py} implicitly do the latter, so this problem
-is self-fixing.  We continue to prefer not to fix this bug to avoid breaking
-backward compatibility with all previously trained models.  But if you want to
+either multiplying all LM scores by $ln(10) \approx 2.3$, or equivalently
+multiplying LM weights themselves by $ln(10)$, which is what
+\code{tune.py} and \code{rescore.py} implicitly do during optimization.
+We prefer not to fix this bug to avoid breaking
+previously trained models.  But to
 compare the relative importance given to LMs vs.\ other models, you should
-mentally divide the LM weights by 2.3.}
-
-The \code{weight-sparse} value is always 1 because the real sparse feature
+mentally divide LM weights by 2.3.}
+\item the backward probability estimates in the translation model (\code{weight-t});
+\item the forward probability estimates in the translation model (\code{weight-f});
+\item if we were using them, the adirectional features (alignment indicator features) in the translation model (\code{weight-a});
+\item the distortion models (basic + HLDM) (\code{weight-d});
+\item the sentence-length penalty (if positive) or bonus (if negative) (\code{weight-w});
+\item the sparse model weight (\code{weight-sparse}) is always 1 because the real sparse feature
 weights are in a separate file, \code{rmodels_sparse_model.wts.gz}, with a
-weight for each of the 8720 sparse features used in this tutorial.
+weight for each of the 8720 sparse features used in this tutorial; and
+\item the NNJM weight (\code{weight-nnjm}).
+\end{itemize}
 
 \subsection{Training a Confidence Estimation Model} \label{CE}
 
