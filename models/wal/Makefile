@@ -170,6 +170,15 @@ def which_wam(c):
 
    if len("${MIXTM_USE_GLOBAL_WORD_ALIGNMENT_MODEL}") and c in mixWamCorpora:
       return "mixwam"
+
+   # Special case for dev and test corpora for NNJM
+   if "${NNJM_TRAIN_CORPUS}".strip() and c in set("${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS}".split()):
+      print ("# nnjm dev 2", file=df)
+      return "${NNJM_TRAIN_CORPUS}".strip()
+   if "${NNJM_FINE_TUNING_TRAIN_CORPUS}".strip() and c in set("${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}".split()):
+      print ("# nnjm fine tune dev", file=df)
+      return "${NNJM_FINE_TUNING_TRAIN_CORPUS}".strip()
+
    return c
 
 def writeDeps(alignmentFileName, source, target, d1, d2):
@@ -195,7 +204,7 @@ with open(".Makefile.deps", "w") as df:
       for wam in set("$(filter-out ${IBM4_MODEL_PFX} ${FAST_ALIGN_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
          createRules(corp, wam, corp+"${L1X}", corp+"${L2X}")
 
-   # Special case for mixtm and BiLM tuning.
+   # Special case for mixtm, BiLM and NNJM tuning.
    # TODO: do we really need to align TUNE_MIXTM_FINAL and TUNE_BILM?
    # If so should not we be using tm-train WAM like the NNJM?
    print("# mixtm, NNJM and BiLM tuning", file=df)
@@ -219,10 +228,17 @@ with open(".Makefile.deps", "w") as df:
    # For IBM4.
    # For the devs & tests, we want to use the first TRAIN_TM (aka IBM4_FORCE_ALIGN_WAM) as IBM4 model.
    print("# IBM4 devs & tests", file=df)
-   for corp in set("$(filter-out ${TUNE_MIXTM_FINAL} ${ALL_WAMS}, ${FORCE_ALIGN_SET})".split()):
+   for corp in set("$(filter-out ${TUNE_MIXTM_FINAL} ${ALL_WAMS} ${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}, ${FORCE_ALIGN_SET})".split()):
       for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
          print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corp, A="${IBM4_FORCE_ALIGN_WAM}"), file=df)
 
+   for corp in set("$(filter-out ${TUNE_MIXTM_FINAL} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}, ${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS})".split()):
+      for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
+         print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corp, A="${NNJM_TRAIN_CORPUS}"), file=df)
+
+   for corp in set("$(filter-out ${TUNE_MIXTM_FINAL}, ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS})".split()):
+      for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
+         print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corp, A="${NNJM_FINE_TUNING_TRAIN_CORPUS}"), file=df)
 
    ########################################
    # FAST ALIGN
