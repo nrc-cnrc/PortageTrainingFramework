@@ -1851,7 +1851,7 @@ and write the mixture model is written by pasting the weights in
 \end{alltt}
 \end{small}
 
-As mentioned earlier, we would have expected the in-domain component
+We would have expected the in-domain component,
 \code{lm-train1}, to have
 the highest weight.  This didn't actually happen here because our toy data
 violates our assumptions: the EM algorithm recognized that the generic LM best
@@ -2643,16 +2643,15 @@ text in easier ways.
 
 \subsubsection{Decoding Only} \label{Decoding}
 
-As mentioned before, there are three options for translating. The simplest is
+There are three options for translating. The simplest is
 to decode using the configuration file produced by \code{tune.py} and stop.
-To do so, make sure \code{DO_RESCORING} is not set in \code{Makefile.params}.
-\footnote{You can accomplish the same result by adding \code{DO\us{}RESCORING=}
-to the make command line, i.e., type \\
-\hspace*{.2in}\code{make translate DO\us{}RESCORING=} \\
+To do so, make sure \code{DO_RESCORING} is not set in \code{Makefile.params}.\footnote{You
+can accomplish the same result by typing
+\code{make translate DO\us{}RESCORING=}
 instead of just \code{make translate} (notice there is nothing after the
-\code{=} sign). This syntax can always be used to temporarily override a
+\code{=} sign). This syntax overrides a
 variable definition on a given call to \code{make}: adding \code{V=} undefines
-\code{V}, while adding \code{V=value} sets V to the given value.}
+\code{V}, while adding \code{V=\emph{value}} sets V to the given value.}
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment/translate}
@@ -2677,7 +2676,7 @@ containing one line for each source line in \code{test*.rule}, as well as
 \code{test*.out.pal} and \code{test*.out.oov}, needed for truecasing.
 
 If you look at the output files, remember that we trained this toy system on a
-trivial amount of data.  Translation quality is expected to be horrendous.  You
+trivial amount of data.  You
 need a lot more data to get good results.
 
 \subsubsection{Decoding plus Confidence Estimation} \label{CETrans}
@@ -2695,24 +2694,24 @@ then the CE model trained in \S\ref{CE}.  The program
    ln -fs models/confidence/ce_model.cem
    Generating translate/test1.ce
    translate.pl -with-ce -n 1 -notok -nl s -tc -encoding UTF-8 -src fr -tgt en \bs
-      -f canoe.ini.cow.test1 -model ce_model.cem ../corpora/test1_fr.al > test1.ce
+      -src-country CA -f canoe.ini.cow.test1 -model ce_model.cem \bs
+      ../corpora/test1_fr.al > test1.ce
    [repeat for test2]
 \end{alltt}
 \end{small}
-The main output file, \code{test.ce}, is different from the \code{test.out}
-file we saw in the two previous steps in that 1) a confidence estimate is added
+The output files \code{test*.ce} are different from \code{test*.out}
+in that 1) a confidence estimate is added
 at the beginning of each line, and 2) the output has already been
-truecased and detokenized. The translations are the same as in
-\code{test.out}, with some postprocessing performed on them.
+truecased and detokenized.
 
 \subsubsection{Decoding plus Rescoring} \label{RATTrans}
 
 If you executed the commands in the \emph{Decoding Only} section above, please
 run \code{make clean} before proceeding.  To run this variant, edit
-\code{Makefile.params} and set (or uncomment the line) \code{DO_RESCORING = 1},
+\code{Makefile.params} to set \code{DO_RESCORING = 1}
 and comment out \code{TC_USE_SRC_MODELS = 1}.  We recommend using the new
-truecasing workflow, but we have to disable it temporarily since it is not yet
-compatible with rescoring, as we mentioned before.
+truecasing workflow, but we have to disable it here since it is not
+compatible with rescoring.
 
 The third option for translating is to generate $n$-best lists and rescore
 them using the model generated in \S\ref{RAT}. To do this, we first run
@@ -2740,9 +2739,9 @@ mode, performs both steps for us:
 \end{alltt}
 \end{small}
 This produces both \code{test*.out}, the 1-best output of the decoder, and
-\code{test*.rat}, the best translation according to the rescoring model.  The
-files \code{test*.out} should be identical to the ones produced in
-\S\ref{Decoding}, although they might differ in minor ways because of
+\code{test*.rat},\footnote{``rat'' stands for Rescore and Translate} the best translation according to the rescoring model.
+The files \code{test*.out} should be nearly identical to the ones produced in
+\S\ref{Decoding}, but not always exactly, due to
 rounding differences.
 
 Before continuing, comment out \code{DO_RESCORING = 1} and set
@@ -2752,15 +2751,15 @@ incompatible with the new truecasing workflow.
 
 \subsubsection{Truecasing and Detokenization} \label{Truecasing}
 
-If you inspect the \code{test.out}, and/or \code{test.rat} output files, you
+If you inspect \code{test*.out} and/or \code{test*.rat}, you
 will notice that they contain lowercase, tokenized text.  Two postprocessing steps
-are required to restore normal case and normally spaced text: truecasing and
-detokenization.  The \code{test.ce} output file, on the other hand, already
+are required to restore normal text: truecasing and
+detokenization.  \code{test*.ce} already
 contains truecased, detokenized text, because \code{translate.pl} itself
 performs the steps we're about to do.
 
 Truecasing is done by the \code{truecase.pl} script using the truecasing models
-trained previously:
+we trained:
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment/translate}
@@ -2783,13 +2782,8 @@ If you are using rescoring, \code{make tc} will also truecase the rescored
 output, generating \code{test*.rat.tc}.
 
 Detokenization is done by the script \code{udetokenize.pl}, a rule-based
-detokenizer for French, English, Spanish and Danish text.\footnote{The encoding
-is UTF-8, as everywhere else in this framework. The old \code{(de)tokenize.pl}
-scripts still process latin1 and cp-1252 text, but the framework no longer
-supports their use.}
-Other languages are not supported at this point but may already be handled
-partly correctly by this script. However, a third-party detokenizer can be used
-if you have one.
+detokenizer for French, English, Spanish and Danish.
+For other languages, specify your detokenizer for language \emph{ll} by setting variable \code{DETOKENIZER_\emph{ll}} in \code{Makefile.params}.
 
 \begin{small}
 \begin{alltt}
@@ -2803,12 +2797,8 @@ if you have one.
 \end{alltt}
 \end{small}
 
-Detokenization is not performed here on the \code{test*.ce} files because
-it was already done by \code{translate.pl} along with truecasing.
-
 If you are using rescoring, \code{make detok} will also detokenize the
-rescoring output, generating \code{test*.rat.tc.detok} and
-\code{test*.rat.detok}.
+rescoring output.
 
 \subsection{Testing} \label{Testing}
 
