@@ -2377,17 +2377,21 @@ weight for each of the 8720 sparse features used in this tutorial; and
 
 \subsection{Training a Confidence Estimation Model} \label{CE}
 
+\textbf{Warning:} Confidence Estimation will significantly slow down your PortageLive (see \S\ref{PLive}) server.
+Enable only if you really want it for a batch document translation process,
+and if your users are not waiting interactively for translations from PortageLive.
+
 If you are using confidence estimation (CE), the final training step is
 to create a model to estimate the confidence of the system on its own output.
 This model uses features about the source text, the target text, translation
 memory information if available, and so on, to come up with a confidence score
-between 0 and 1. As we mentioned before, it is critical that the dev set used to
+between 0 and 1. It is critical that the dev set used to
 tune the CE model be completely unseen data. It can't have been part of your
 training data or the dev set you used to tune the decoder weights.  Otherwise
 the confidence estimates produced will be completely useless.
 
 Edit \code{Makefile.params} in the main \code{toy.experiment} directory and set
-\code{DO_CE} to \code{1} (by uncommenting the appropriate line).  If you run
+\code{DO_CE = 1}.  If you run
 \code{make confidence} in the main directory, all necessary steps will be done
 automatically.  As usual, we'll break it down a bit.
 
@@ -2406,8 +2410,8 @@ models we need for CE: specifically, we need an LM for the source language.
 \end{small}
 This command will build the required source-side LM using the toolkit you
 selected earlier.  If, however, you followed the instructions in
-\S\ref{LM+generic-default} to train a mixLM, as recommended, the source language
-LM has already been trained.
+\S\ref{LM+generic-default} or \S\ref{MIXLM} to train a MixLM, the source language
+LM has already been trained and \code{make} will tell you it has nothing to do.
 
 Now we can work on the CE model itself. Note that our CE module does not
 currently work with rescoring, only with decoding. We train a confidence
