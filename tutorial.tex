@@ -2804,10 +2804,10 @@ rescoring output.
 
 Translation quality can be evaluated automatically using the BLEU metric, which
 is a measure of how well the translation matches one or more reference
-translations that are known to be correct (normally human translations). It is
-based on the number of short word sequences that the translation has in common
+translations. It is
+based on the number of $n$-grams that the translation has in common
 with the references, and varies between 0 for no matches to 1 for a perfect
-match. BLEU is calculated by the program \code{bleumain}:
+match. BLEU is calculated by \code{bleumain}:
 \begin{small}
 \begin{alltt}
    > \textbf{cd toy.experiment/translate}
@@ -2832,15 +2832,15 @@ decimals. The full output from \code{bleumain}, saved in \code{*.bleu},
 contains match statistics of various orders, followed by the global BLEU score
 with a 95\% confidence interval, shown above.
 
-The result above can also be obtained by typing \code{make eval}, or
-\code{make all}, in your \code{toy.experiment} directory.
+The results above can be obtained directly by typing \code{make eval} or
+\code{make all} in your \code{toy.experiment} directory.
 
 Here, we calculate only the BLEU scores on the lowercase output, using the
 lowercase reference, but you can get BLEU scores for the truecased output by
-(manually) giving the truecase translation and reference(s) to \code{bleumain}.
+(manually) giving the (tokenized) truecase translation and reference(s) to \code{bleumain}.
 
-These results indicate that the translation produced by rescoring is trivially better
-than the one produced by plain decoding. Given the small size of the test set,
+These results indicate that the translations produced by rescoring is trivially better
+than the ones produced by plain decoding. Given the small size of the test set,
 it is unlikely that the difference is statistically significant. To test
 this hypothesis, we can use \code{bleucompare}, which does a comparison using
 pairwise bootstrap resampling:
@@ -2858,7 +2858,7 @@ pairwise bootstrap resampling:
 \end{small}
 This indicates that the difference is indeed not significant for \code{test1}.
 or \code{test2}, even at the p=0.1 level, which would not
-usually be considered significant anyway.  (Note that you may get completely
+usually be considered significant anyway.  (Expect
 different results here, since the training corpus used is much too small to
 produce predictable results.)
 
@@ -2867,25 +2867,25 @@ running \code{summarize-canoe-results.py *} in the parent directory of your
 experiments again, it will show more interesting output.\tipend
 
 Once again, if you produced BLEU scores for the rescoring output, as shown
-here, run \code{make clean} here before proceeding to \S\ref{PLive}.
+here, run \code{make clean} in \code{translate/} before proceeding to \S\ref{PLive}.
 
 \section{Translating New Text} \label{NewText}
 
-The translation methods shown in the previous section work well with the test
-sets you dropped into the \code{corpora} directory, but this workflow is not
-convenient for translating new text.  You can use the \code{translate.pl} script
-for new text. It is aware of the way this framework works and where it puts its
+The translation methods shown in the previous section only work well with the test
+sets you dropped into the \code{corpora} directory.
+For new text, use the \code{translate.pl} script.
+It is aware of the way this framework works and where it puts its
 models, so it makes it easy to carry out the whole translation pipeline:
 tokenization, lowercasing, decoding, truecasing, detokenization, with optional
 plugins you can use to insert ad hoc code to handle special cases correctly.
-See \code{translate.pl -h} for details.  The \code{translate.sh} script you will
-find in the framework calls \code{translate.pl} with some of the options
+See \code{translate.pl -h} for details.  The \code{translate.sh} script
+at the root of the framework calls \code{translate.pl} with some of the options
 automatically filled in from the parameters you set in \code{Makefile.params}.
 See \code{./translate.sh -h} for details.
 
 \section{PortageLive} \label{PLive}
 
-Now that we have a fully trained and tested system, you might want to deploy it
+Now that we have a fully trained and tested system, you can deploy it
 on a PortageLive translation server.
 
 The PortageLive models are optimized in various ways for a run-time
@@ -2897,14 +2897,19 @@ accessed via memory-mapped I/O.
 The result is a system that will run faster and with less memory on the
 run-time server than equivalent requests would within the framework.
 
-There is a \code{make} target in the framework to facilitate this process:
-\code{make portageLive}.  This target, run directly from the top framework
-directory, (\code{toy.experiment}), will cause all models to be converted to
-their tightly-packed equivalents, and
-filtered as required, and it will create a directory structure with symbolic
-links to all the model files needed on a run-time translation server.  You can
-then copy this structure to your run-time server by using a recursive copy
+This process is automated:
+run \code{make portageLive} from the framework
+root to convert all models to
+their tightly-packed equivalents,
+filtering them as required, and to create a directory structure with symbolic
+links to the files needed on a run-time translation server.  You can
+then copy this structure to your run-time server with a recursive copy
 command that dereferences symbolic links.
+
+If you get any errors here, it may be due to inconsistent settings used in various subdirectories while you
+worked through the tutorial.
+You might have to run \code{make clean} in some subdirectories, or maybe even at the framework root,
+before continuing.
 
 \begin{small}
 \begin{alltt}
