@@ -7,10 +7,10 @@
 # @author Samuel Larkin
 #
 # Traitement multilingue de textes / Multilingual Text Processing
-# Tech. de l'information et des communications / Information and Communications Tech.
+# Centre de recherche en technologies numériques / Digital Technologies Research Centre
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, 2012, 2015, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, 2012, 2015, Her Majesty in Right of Canada
+# Copyright 2008, 2012, 2015, 2018, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2012, 2015, 2018, Her Majesty in Right of Canada
 
 # Mandatory include: master config file.
 include Makefile.params

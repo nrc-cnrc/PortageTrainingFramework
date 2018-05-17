@@ -6,10 +6,10 @@
 # @author Samuel Larkin and Darlene Stewart and Eric Joanis
 #
 # Traitement multilingue de textes / Multilingual Text Processing
-# Tech. de l'information et des communications / Information and Communications Tech.
+# Centre de recherche en technologies numériques / Digital Technologies Research Centre
 # Conseil national de recherches Canada / National Research Council Canada
-# Copyright 2008, 2012, 2015, 2016, Sa Majeste la Reine du Chef du Canada
-# Copyright 2008, 2012, 2015, 2016, Her Majesty in Right of Canada
+# Copyright 2008, 2012, 2015, 2016, 2018, Sa Majeste la Reine du Chef du Canada
+# Copyright 2008, 2012, 2015, 2016, 2018, Her Majesty in Right of Canada
 
 # Print the PortageII Copyright no matter where we start from -- but only once.
 ifeq (${MAKELEVEL},0)
