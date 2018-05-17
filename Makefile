@@ -276,6 +276,12 @@ endif
 ifdef USE_SPARSE
 DU_DIRS += models/sparse
 endif
+ifneq (${NNJM_TRAIN_CORPUS},)
+DU_DIRS += models/nnjm/trained
+endif
+ifneq (${NNJM_FINE_TUNING_TRAIN_CORPUS},)
+DU_DIRS += models/nnjm/fine_tuned
+endif
 DU_DIRS += models/decode*
 ifdef DO_CE
 DU_DIRS += models/confidence*/*.cem
