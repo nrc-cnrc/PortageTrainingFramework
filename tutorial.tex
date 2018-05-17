@@ -2898,13 +2898,11 @@ The result is a system that will run faster and with less memory on the
 run-time server than equivalent requests would within the framework.
 
 This process is automated:
-run \code{make portageLive} from the framework
-root to convert all models to
+running \code{make portageLive} from the framework
+root converts all models to
 their tightly-packed equivalents,
-filtering them as required, and to create a directory structure with symbolic
-links to the files needed on a run-time translation server.  You can
-then copy this structure to your run-time server with a recursive copy
-command that dereferences symbolic links.
+filtering them as required, and creates a directory structure with symbolic
+links to the files needed on a run-time translation server.
 
 If you get any errors here, it may be due to inconsistent settings used in various subdirectories while you
 worked through the tutorial.
@@ -2935,16 +2933,17 @@ before continuing.
 \end{alltt}
 \end{small}
 
-The three sample copy commands (\code{rsync}, \code{scp}, \code{cp}) in the
-output printed at the end of the execution show you how to perform a deep copy
-of the structure created, which will expand symbolic links during the copy.
+The three suggested copy commands (\code{rsync}, \code{scp}, \code{cp}) at the end of the
+output show you how to perform a deep copy
+of the structure created with symbolic link expansion.
 Instructions are also provided for calling \code{plive-optimize-pretrained.sh},
 which facilitates loading into shared memory a single copy of the pre-trained
 (generic) models for use by all your translation systems running on the
 PortageLive server.
+Make sure you've installed the generic models in \code{/opt/PortageII/models/pretrained/} as instructed in
+\code{generic-model/REAME} first.
 
-You can use \code{du -hL} to find out the total size that structure without
-actually expanding it:
+You can use \code{du -hL} to find out the total size that structure before copying it:
 \begin{small}
 \begin{alltt}
    > \textbf{du -hL models/portageLive}
@@ -2974,6 +2973,8 @@ actually expanding it:
 \end{alltt}
 \end{small}
 
+You'll notice here that the biggest model is the pretrained generic LM---hence the importance of runing
+\code{plive-optimize-pretrained.sh} to make sure you only use of copy of it on your PortageLive server.
 
 \section{Resource Summary} \label{ResourceSummary}
 
@@ -3015,64 +3016,7 @@ Resource summary for \$PORTAGE/toy.experiment:
       decode                                              WALL TIME: 9m46s    CPU TIME: 21m15s    PCPU: 107\%   VSZ: 16.727G   RSS: 3.233G
          log.hmm3.tm-train.en_given_fr                    WALL TIME: 2m27s    CPU TIME: 57s       PCPU: 40\%    VSZ: 0.103G    RSS: 0.016G
          log.hmm3.tm-train.fr_given_en                    WALL TIME: 2m15s    CPU TIME: 55s       PCPU: 42\%    VSZ: 0.103G    RSS: 0.016G
-         log.ibm1.tm-train.en_given_fr                    WALL TIME: 2m1s     CPU TIME: 19s       PCPU: 31\%    VSZ: 0.101G    RSS: 0.015G
-         log.ibm1.tm-train.fr_given_en                    WALL TIME: 2m1s     CPU TIME: 18s       PCPU: 44\%    VSZ: 0.102G    RSS: 0.015G
-         log.ibm2.tm-train.en_given_fr                    WALL TIME: 2m2s     CPU TIME: 16s       PCPU: 28\%    VSZ: 0.104G    RSS: 0.017G
-         log.ibm2.tm-train.fr_given_en                    WALL TIME: 2m4s     CPU TIME: 15s       PCPU: 18\%    VSZ: 0.102G    RSS: 0.015G
-         log.ibm4.tm-train.en_given_fr                    WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
-         log.ibm4.tm-train.fr_given_en                    WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
-            en2fr.cooc.log                                WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
-            en_given_fr.gizacfg.log                       WALL TIME: 1m1s     CPU TIME: 3m32s     PCPU: 354\%   VSZ: 0.540G    RSS: 0.060G
-            en.lc.vcb.classes.log                         WALL TIME: 6s       CPU TIME: 5s        PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
-            fr2en.cooc.log                                WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
-            fr_given_en.gizacfg.log                       WALL TIME: 58s      CPU TIME: 3m24s     PCPU: 359\%   VSZ: 0.543G    RSS: 0.051G
-            fr.lc.log                                     WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
-            fr.lc.vcb.classes.log                         WALL TIME: 7s       CPU TIME: 6s        PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
-            fr.lc.vcb.log                                 WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
-         tm-train                                         WALL TIME: 2m12s    CPU TIME: 7m7s      PCPU: 334\%   VSZ: 0.543G    RSS: 0.060G
-      ibm                                                 WALL TIME: 15m2s    CPU TIME: 10m8s     PCPU: 95\%    VSZ: 0.543G    RSS: 0.060G
-         log.jpt.hmm3.tm-train.fr-en                      WALL TIME: 40s      CPU TIME: 21s       PCPU: 69\%    VSZ: 0.256G    RSS: 0.025G
-         log.jpt.ibm2.tm-train.fr-en                      WALL TIME: 32s      CPU TIME: 8s        PCPU: 89\%    VSZ: 0.256G    RSS: 0.026G
-         log.jpt.ibm4.tm-train.fr-en                      WALL TIME: 34s      CPU TIME: 10s       PCPU: 99\%    VSZ: 0.255G    RSS: 0.027G
-         log.jpt.merged.tm-train.fr-en                    WALL TIME: 20s      CPU TIME: 19s       PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
-            log.jpt.hmm3.tm-train.fr-en                   WALL TIME: 40s      CPU TIME: 21s       PCPU: 66\%    VSZ: 0.255G    RSS: 0.026G
-            log.jpt.ibm2.tm-train.fr-en                   WALL TIME: 32s      CPU TIME: 11s       PCPU: 59\%    VSZ: 0.256G    RSS: 0.029G
-            log.jpt.ibm4.tm-train.fr-en                   WALL TIME: 34s      CPU TIME: 10s       PCPU: 88\%    VSZ: 0.255G    RSS: 0.026G
-            log.jpt.merged.tm-train.fr-en                 WALL TIME: 19s      CPU TIME: 18s       PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
-         save                                             WALL TIME: 2m5s     CPU TIME: 1m0s      PCPU: 75\%    VSZ: 0.256G    RSS: 0.029G
-      jpt                                                 WALL TIME: 4m11s    CPU TIME: 1m59s     PCPU: 79\%    VSZ: 0.256G    RSS: 0.029G
-         log.hldm.hmm3.counts                             WALL TIME: 24s      CPU TIME: 11s       PCPU: 57\%    VSZ: 0.155G    RSS: 0.013G
-         log.hldm.ibm2.counts                             WALL TIME: 27s      CPU TIME: 0s                     VSZ: 0.119G    RSS: 0.009G
-         log.hldm.ibm4.counts                             WALL TIME: 24s      CPU TIME: 0s                     VSZ: 0.153G    RSS: 0.011G
-         log.hldm.ibm4+hmm3+ibm2.fr2en                    WALL TIME: 37s      CPU TIME: 30s       PCPU: 83\%    VSZ: 0.387G    RSS: 0.282G
-         log.hldm.ibm4+hmm3+ibm2.fr2en.tpldm              WALL TIME: 29s      CPU TIME: 46s       PCPU: 92\%    VSZ: 0.042G    RSS: 0.007G
-      ldm                                                 WALL TIME: 2m21s    CPU TIME: 1m27s     PCPU: 82\%    VSZ: 0.387G    RSS: 0.282G
-         log.lm-train_en-kn-5g.binlm                      WALL TIME: 10s      CPU TIME: 9s        PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en-kn-5g.lm                         WALL TIME: 3s       CPU TIME: 3s        PCPU: 118\%   VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_fr-kn-5g.binlm                      WALL TIME: 11s      CPU TIME: 10s       PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_fr-kn-5g.lm                         WALL TIME: 4s       CPU TIME: 4s        PCPU: 112\%   VSZ: 0.042G    RSS: 0.007G
-         log.tplm.lm-train_en-kn-5g                       WALL TIME: 5s       CPU TIME: 5s        PCPU: 90\%    VSZ: 0.045G    RSS: 0.008G
-         log.tplm.lm-train_fr-kn-5g                       WALL TIME: 6s       CPU TIME: 5s        PCPU: 90\%    VSZ: 0.042G    RSS: 0.007G
-      lm                                                  WALL TIME: 39s      CPU TIME: 35s       PCPU: 99\%    VSZ: 0.045G    RSS: 0.008G
-         log.rescore-model                                WALL TIME: 1m47s    CPU TIME: 6m16s     PCPU: 96\%    VSZ: 0.094G    RSS: 0.011G
-      rescore                                             WALL TIME: 1m47s    CPU TIME: 6m16s     PCPU: 96\%    VSZ: 0.094G    RSS: 0.011G
-         log.data                                         WALL TIME: 1m17s    CPU TIME: 1m51s     PCPU: 43\%    VSZ: 0.224G    RSS: 0.065G
-         log.model.templates                              WALL TIME: 0s       CPU TIME: 0s                     VSZ: 0.000G    RSS: 0.000G
-      sparse                                              WALL TIME: 1m17s    CPU TIME: 1m51s     PCPU: 43\%    VSZ: 0.224G    RSS: 0.065G
-         log.lm-train_en-kn-3g.binlm                      WALL TIME: 3s       CPU TIME: 2s        PCPU: 99\%    VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en-kn-3g.lm                         WALL TIME: 1s       CPU TIME: 1s        PCPU: 115\%   VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en.map                              WALL TIME: 1s       CPU TIME: 0s        PCPU: 89\%    VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en.map.tppt                         WALL TIME: 6s       CPU TIME: 1s        PCPU: 14\%    VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en.nc1                              WALL TIME: 2s       CPU TIME: 1s        PCPU: 94\%    VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en.nc1.binlm                        WALL TIME: 3s       CPU TIME: 2s        PCPU: 97\%    VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en.nc1.lm                           WALL TIME: 2s       CPU TIME: 1s        PCPU: 118\%   VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_en.tokss                            WALL TIME: 2s       CPU TIME: 1s        PCPU: 97\%    VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_fr.nc1.binlm                        WALL TIME: 4s       CPU TIME: 3s        PCPU: 98\%    VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_fr.nc1.lm                           WALL TIME: 2s       CPU TIME: 1s        PCPU: 116\%   VSZ: 0.042G    RSS: 0.007G
-         log.lm-train_fr.tokss                            WALL TIME: 3s       CPU TIME: 2s        PCPU: 97\%    VSZ: 0.042G    RSS: 0.007G
-         log.tplm.lm-train_en-kn-3g                       WALL TIME: 3s       CPU TIME: 2s        PCPU: 82\%    VSZ: 0.080G    RSS: 0.013G
-         log.tplm.lm-train_fr.nc1                         WALL TIME: 3s       CPU TIME: 2s        PCPU: 83\%    VSZ: 0.081G    RSS: 0.013G
-      tc                                                  WALL TIME: 35s      CPU TIME: 18s       PCPU: 78\%    VSZ: 0.081G    RSS: 0.013G
+      [...]
          log.cpt.merged.hmm3-kn3-zn.tm-train.fr2en        WALL TIME: 1m29s    CPU TIME: 1m27s     PCPU: 99\%    VSZ: 0.203G    RSS: 0.110G
          log.cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt   WALL TIME: 40s      CPU TIME: 1m9s      PCPU: 94\%    VSZ: 0.111G    RSS: 0.019G
       tm                                                  WALL TIME: 2m9s     CPU TIME: 2m36s     PCPU: 97\%    VSZ: 0.203G    RSS: 0.110G
@@ -3087,12 +3031,7 @@ Resource summary for \$PORTAGE/toy.experiment:
       wcl                                                 WALL TIME: 55s      CPU TIME: 51s       PCPU: 100\%   VSZ: 0.042G    RSS: 0.007G
    models                                                 WALL TIME: 41m5s    CPU TIME: 50m33s    PCPU: 93\%    VSZ: 16.727G   RSS: 3.233G
       log.test1.ce                                        WALL TIME: 24s      CPU TIME: 22s       PCPU: 93\%    VSZ: 0.042G    RSS: 0.007G
-      log.test1.out                                       WALL TIME: 33s      CPU TIME: 19s       PCPU: 68\%    VSZ: 0.042G    RSS: 0.007G
-      log.test1.out.tc                                    WALL TIME: 4s       CPU TIME: 1s        PCPU: 34\%    VSZ: 0.042G    RSS: 0.007G
-      log.test1.rat                                       WALL TIME: 6m56s    CPU TIME: 6m45s     PCPU: 100\%   VSZ: 0.108G    RSS: 0.027G
-      log.test2.ce                                        WALL TIME: 24s      CPU TIME: 22s       PCPU: 97\%    VSZ: 0.042G    RSS: 0.007G
-      log.test2.out                                       WALL TIME: 33s      CPU TIME: 20s       PCPU: 69\%    VSZ: 0.042G    RSS: 0.007G
-      log.test2.out.tc                                    WALL TIME: 2s       CPU TIME: 1s        PCPU: 73\%    VSZ: 0.042G    RSS: 0.007G
+      [...]
       log.test2.rat                                       WALL TIME: 8m22s    CPU TIME: 8m12s     PCPU: 100\%   VSZ: 0.110G    RSS: 0.028G
    translate                                              WALL TIME: 17m18s   CPU TIME: 16m21s    PCPU: 98\%    VSZ: 0.110G    RSS: 0.028G
 TIME-MEM                                                  WALL TIME: 58m23s   CPU TIME: 1h6m54s   PCPU: 94\%    VSZ: 16.727G   RSS: 3.233G
@@ -3117,11 +3056,11 @@ The memory figures might be a bit misleading: they reflect the maximum
 RAM/virtual memory needed by any one component within a run.  In the case of a
 process that is parallelized, say, 10 ways, the figure reflects the most memory
 any one of the 10 parallel processes used, not the total used at any given
-time.  When using this output to plan hardware resources, you should take into
+time.  To plan hardware resources, you should take into
 account the parallelism level you want to use for each step.
 
 The numbers here are not very interesting because we ran on such a small
-system, but they'll be a lot more informative when you run on real data.
+system, but they will be informative when you run on real data.
 
 The second type of resource summary you can produce is the disk space occupied
 by the models.  When you run \code{make summary}, you will first get the
@@ -3134,15 +3073,7 @@ by the models.  When you run \code{make summary}, you will first get the
 
    Disk usage for all models:
    4.7M    models/ibm/ibm1.tm-train.en_given_fr.gz
-   4.6M    models/ibm/ibm1.tm-train.fr_given_en.gz
-   3.8M    models/ibm/ibm2.tm-train.en_given_fr.gz
-   144K    models/ibm/ibm2.tm-train.en_given_fr.pos.gz
-   3.8M    models/ibm/ibm2.tm-train.fr_given_en.gz
-   148K    models/ibm/ibm2.tm-train.fr_given_en.pos.gz
-   456K    models/ibm/ibm4.tm-train.en_given_fr.gz
-   480K    models/ibm/ibm4.tm-train.fr_given_en.gz
-   4.0K    models/ibm/hmm3.tm-train.en_given_fr.dist.gz
-   2.0M    models/ibm/hmm3.tm-train.en_given_fr.gz
+   [...]
    4.0K    models/ibm/hmm3.tm-train.fr_given_en.dist.gz
    2.1M    models/ibm/hmm3.tm-train.fr_given_en.gz
    11M     models/jpt/jpt.hmm3.tm-train.fr-en.gz
@@ -3152,11 +3083,7 @@ by the models.  When you run \code{make summary}, you will first get the
    40M     models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.gz
    47M     models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
    164K    models/coarselm/lm-train_en-200.lc.gz
-   4.9M    models/coarselm/lm-train_en-200-ukn-8g.binlm.gz
-   7.1M    models/coarselm/lm-train_en-200-ukn-8g.lm.gz
-   7.9M    models/coarselm/lm-train_en-200-ukn-8g.tplm
-   188K    models/coarselm/lm-train_en-800.lc.gz
-   5.6M    models/coarselm/lm-train_en-800-ukn-8g.binlm.gz
+   [...]
    8.5M    models/coarselm/lm-train_en-800-ukn-8g.lm.gz
    8.9M    models/coarselm/lm-train_en-800-ukn-8g.tplm
    4.0K    models/mixlm/dev1.mixlm
@@ -3169,35 +3096,14 @@ by the models.  When you run \code{make summary}, you will first get the
    16M     models/tc
    84M     models/ldm
    1.8M    models/sparse
+   280M    models/nnjm/fine_tuned
    3.4M    models/decode
    12K     models/confidence/ce_model.cem
    372K    translate
-   318M    total
+   598M    total
 
    Disk usage for portageLive models:
-   8.0K    models/portageLive/plugins/fixedTerms
-   12K     models/portageLive/plugins
-   38M     models/portageLive/models/ldm/hldm.ibm4+hmm3+ibm2.fr2en.tpldm
-   38M     models/portageLive/models/ldm
-   1.1M    models/portageLive/models/wcl
-   1.9M    models/portageLive/models/tc/nc1-lm.fr.tplm
-   504K    models/portageLive/models/tc/tc-map.en.tppt
-   1.8M    models/portageLive/models/tc/tc-lm.en.tplm
-   4.2M    models/portageLive/models/tc
-   280M    models/portageLive/models/nnjm/fine_tuned
-   280M    models/portageLive/models/nnjm
-   47M     models/portageLive/models/tm/cpt.merged.hmm3-kn3-zn.tm-train.fr2en.tppt
-   47M     models/portageLive/models/tm
-   725M    models/portageLive/models/mixlm/generic-2.0_en.tplm
-   4.9M    models/portageLive/models/mixlm/lm-train_en-kn-5g.tplm
-   729M    models/portageLive/models/mixlm
-   4.1M    models/portageLive/models/ibm
-   776K    models/portageLive/models/sparse
-   9.0M    models/portageLive/models/coarselm/lm-train_en-800-ukn-8g.tplm
-   7.9M    models/portageLive/models/coarselm/lm-train_en-200-ukn-8g.tplm
-   17M     models/portageLive/models/coarselm
-   1.1G    models/portageLive/models
-1.1G    models/portageLive
+   [output from du -hL models/portageLive, as shown in the previous section]
 \end{alltt}
 \end{small}
 
