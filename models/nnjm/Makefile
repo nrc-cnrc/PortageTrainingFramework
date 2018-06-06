@@ -197,6 +197,7 @@ pretrained: SHELL=${LOCAL_SHELL}
 # If we were to fine tune a NNJM, since no training corpora was provided by the
 # user, we will fine tune the pretrained model.
 NNJM_FINE_TUNING_PRETRAINED_MODEL := $(firstword ${PRETRAINED_NNJMS_LIST})/nnjm
+NNJM_FINE_TUNING_OPTS = -link-cls
 $(firstword ${PRETRAINED_NNJMS_LIST})/nnjm.pkl:  $(firstword ${PRETRAINED_NNJMS_LIST})
 
 ${PRETRAINED_NNJMS_LIST}:  SHELL=${LOCAL_SHELL}
@@ -345,6 +346,7 @@ fine_tuned/nnjm.bin:  ${NNJM_FINE_TUNING_PRETRAINED_MODEL}.bin
 		-pre-trained-nnjm  $(or $(dir $(filter %.bin, $^)), $(error You need to define a pretrained nnjm model.)) \
 		${NNJM_TRAIN_NNJM_OPTS} \
 		${NNJM_GENEX_OPTS} \
+		${NNJM_FINE_TUNING_OPTS} \
 		$(and $(strip ${NNJM_FINE_TUNING_TEST_CORPUS}), $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPUS}, $^), -test $(call get_corpora, ${NNJM_FINE_TUNING_TEST_CORPUS}, $^)) \
 		-dev $(call get_corpora, ${NNJM_FINE_TUNING_DEV_CORPUS}, $^) \
 		$(or $(call get_train, $(filter-out %${CLS_X}, $^)), $(error You need to define NNJM_FINE_TUNING_TRAIN_CORPUS)) \
