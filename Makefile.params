@@ -153,7 +153,7 @@ TRAIN_TM      ?= tm-train
 #  	- define NNJM_FINE_TUNING_TRAIN_CORPUS to point to your in-domain data
 #  	- define NNJM_PRETRAINED_NNJM to point to the pre-trained model
 #  	- leave NNJM_TRAIN_CORPUS empty.
-# Recommendation: 2-pass tuning is best. Use the NRC's generic model if your
+# Recommendation: 2-pass training is best. Use the NRC's generic model if your
 # language pair is en-fr (mode 3), or use the largest generic corpus your have
 # access to (mode 2).
 
