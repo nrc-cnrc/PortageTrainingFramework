@@ -6,7 +6,7 @@
 [weight-w] -1
 [ttable-limit] 30
 [ttable-threshold] 0
-[ttable-prune-type] full
+[ttable-prune-type] backward-weights
 [stack] 2000
 [beam-threshold] 0.001
 [distortion-limit] 7
