@@ -196,8 +196,8 @@ NNJM_FINE_TUNING_TEST_CORPUS ?= ${NNJM_TEST_CORPUS} # Test corpus, optional
 
 # TRAIN_SPARSE is used to train sparse features
 # It should point to the concatenation of all your TRAIN_TM and MIXTM corpora in use.
-# TODO: Automate creating that concatenation.
-# For the time being, by default we use the first corpus listed in TRAIN_TM;
+# Warning: you must create that concatenated corpus manually or outside the framework.
+# By default we use the first corpus listed in TRAIN_TM;
 # if you want to use a different corpus, uncomment and define TRAIN_SPARSE.
 # => TRAIN_SPARSE = first word of TRAIN_TM
 #TRAIN_SPARSE ?= sparse-train
