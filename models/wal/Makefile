@@ -64,6 +64,8 @@ vpath %/${L1_GIVEN_L2}.A3.final.part0  ${WAL_DIR_PFX}../ibm/
 
 
 $(info PT_TYPES: ${PT_TYPES})
+$(info FORCE_ALIGN_SET: ${FORCE_ALIGN_SET})
+$(info MIXTM_TRAIN_MIX: ${MIXTM_TRAIN_MIX})
 ########################################
 # ALL
 # Define all the work to be done.
@@ -227,18 +229,18 @@ with open(".Makefile.deps", "w") as df:
 
    # For IBM4.
    # For the devs & tests, we want to use the first TRAIN_TM (aka IBM4_FORCE_ALIGN_WAM) as IBM4 model.
+   # Priority cascade: if a dev or test set is used in multiple cases, we prioritize NNJM fine
+   # tuning, else NNJM, else the normal IBM4_FORCE_ALIGN_WAM.
    print("# IBM4 devs & tests", file=df)
-   for corp in set("$(filter-out ${TUNE_MIXTM_FINAL} ${ALL_WAMS} ${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}, ${FORCE_ALIGN_SET})".split()):
-      for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
-         print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corp, A="${IBM4_FORCE_ALIGN_WAM}"), file=df)
-
-   for corp in set("$(filter-out ${TUNE_MIXTM_FINAL} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}, ${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS})".split()):
-      for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
-         print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corp, A="${NNJM_TRAIN_CORPUS}"), file=df)
-
-   for corp in set("$(filter-out ${TUNE_MIXTM_FINAL}, ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS})".split()):
-      for wam in set("$(filter ${IBM4_MODEL_PFX}, ${POSSIBLE_WORD_ALIGNMENT_MODELS})".split()):
+   for corp in set("${FORCE_ALIGN_SET} ${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS} ${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}".split()):
+      if corp in set("${TUNE_MIXTM_FINAL}".split()):
+         pass # TUNE_MIXTM_FINAL must not have MIXTM_TRAIN_MIX overridden.
+      elif corp in set("${NNJM_FINE_TUNING_DEV_CORPUS} ${NNJM_FINE_TUNING_TEST_CORPUS}".split()) and "${NNJM_FINE_TUNING_TRAIN_CORPUS}".strip() != "":
          print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corp, A="${NNJM_FINE_TUNING_TRAIN_CORPUS}"), file=df)
+      elif corp in set("${NNJM_DEV_CORPUS} ${NNJM_TEST_CORPUS}".split()) and "${NNJM_TRAIN_CORPUS}".strip() != "":
+         print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corp, A="${NNJM_TRAIN_CORPUS}"), file=df)
+      else:
+         print("{c}/%:  override MIXTM_TRAIN_MIX:={A}".format(c=corp, A="${IBM4_FORCE_ALIGN_WAM}"), file=df)
 
    ########################################
    # FAST ALIGN
