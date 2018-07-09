@@ -105,7 +105,7 @@ unittest_mix_cpt:  export MERGED_CPT_ZN_MODEL = HMM3
 unittest_mix_cpt:  export MERGED_CPT_JPT_TYPES = IBM2 HMM3
 unittest_mix_cpt:
 	${MAKE} -Bt jpt
-	mkdir -p mixtm && [[ "`${MAKE} -Bn all | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh merge_multi_column_counts train_tm_mixture)`" =~ "8 18 8 4 1" ]]
+	mkdir --parents mixtm && [[ "`${MAKE} -Bn all | $(call UNITTEST0_FILTER, align-words cat.sh gen-jpt-parallel.sh merge_multi_column_counts train_tm_mixture)`" =~ "8 18 8 4 1" ]]
 
 # 3 align-words
 # 6 cat.sh

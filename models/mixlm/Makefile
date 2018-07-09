@@ -236,7 +236,7 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/mixlm
 portageLive: SHELL=${LOCAL_SHELL}
 ifdef MIXLM_COMPONENTS
 portageLive:  ${TPLMS}
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	mkdir --parents ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../mixlm/, $+) .
 	sed -e 's/.binlm${GZ}/.tplm/g' ${TUNE_DECODE}${PLIVE_DECODE_VARIANT}.mixlm \

@@ -367,7 +367,7 @@ endif
 %.testcase:
 	echo "TESTCASE:  $@"
 	${MAKE} clean &> /dev/null
-	mkdir -p ${ALL_WAMS}
+	mkdir --parents ${ALL_WAMS}
 	${MAKE} -j 11 ${TESTCASE_OPTS} all
 
 

@@ -316,7 +316,7 @@ MIX_CPT_META_DEPS := $(filter-out mix_cpt, ${PT_TYPES})
 .PHONY: mix_cpt
 mix_cpt: SHELL=${LOCAL_SHELL}
 mix_cpt:  | ${MIX_CPT_META_DEPS}
-	mkdir -p mixtm
+	mkdir --parents mixtm
 	cd mixtm && ${MAKE} -f ../Makefile pretrained_cpt TM_PRETRAINED_TMS="${MIXTM_PRETRAINED_TMS}"
 	cd mixtm && ${MAKE} -f ../Makefile ${mix_cpt_list}
 	ln -sf $(addprefix mixtm/, ${mix_cpt_list}) .
@@ -344,16 +344,16 @@ ${CPT_MIX_PFX}.${L2_2_L1X}:  ${JPT_MERGED_PFX}.${TUNE_MIXTM_FINAL}.${JOINTX}
 # Create JPT groups based on their word alignment type.
 j2m j2mr:  SHELL=${LOCAL_SHELL}
 j2m j2mr:
-	mkdir -p $@
+	mkdir --parents $@
 
 j2m/%: SHELL=${LOCAL_SHELL}
 j2m/%:  $(foreach c, ${ALL_TMS}, ${${CPT_DEP_TAG}_MODEL_PFX}.%.$c.${JOINTX})
-	mkdir -p $@
+	mkdir --parents $@
 	cd $@ && for f in $+; do ln -fs ../../$$f `basename $${f/${${CPT_DEP_TAG}_MODEL_PFX}./${JPT_MODEL_PFX}.}`; done
 
 j2mr/%: SHELL=${LOCAL_SHELL}
 j2mr/%:  $(foreach c, ${ALL_TMS}, ${${CPT_DEP_TAG}_MODEL_PFX}.%.$c.${RJOINTX})
-	mkdir -p $@
+	mkdir --parents $@
 	cd $@ && for f in $+; do ln -fs ../../$$f `basename $${f/${${CPT_DEP_TAG}_MODEL_PFX}./${JPT_MODEL_PFX}.}`; done
 
 INDICATOR_MODEL_PFX = ${CPT_INDICATOR_PFX}${PI_SMOOTHERS_DESCRIPTION}.${${MERGED_CPT_ZN_MODEL}_MODEL_PFX}

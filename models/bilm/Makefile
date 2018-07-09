@@ -333,7 +333,7 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/bilm
 
 ${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
 ${PORTAGE_LIVE_DEST_DIR}:
-	mkdir -p $@
+	mkdir --parents $@
 
 .PHONY: portageLive
 portageLive:  SHELL=${LOCAL_SHELL}

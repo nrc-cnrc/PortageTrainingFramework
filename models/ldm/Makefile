@@ -270,7 +270,7 @@ PortageLive:  portageLive
 
 ifneq ("", "${USE_LDM}${USE_HLDM}")
 portageLive:
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	mkdir --parents ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../ldm/, $+) .
 else

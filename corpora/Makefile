@@ -471,7 +471,7 @@ endef
 ########################################
 ifeq ("${SRC_LANG}","ch")
 ../models/portageLive/plugins:
-	mkdir -p $@
+	mkdir --parents $@
 ../models/portageLive/plugins/predecode_plugin:  | ../models/portageLive/plugins
 	echo -e '#!/bin/bash\n$(or ${MARK_RULE_${SRC_LANG}}, ${MARK_RULE_DEFAULT})' > $@
 	chmod +x $@

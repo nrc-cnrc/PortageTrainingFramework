@@ -130,7 +130,7 @@ ${HMM3_MODEL_PFX}.%.gz:  ${IBM1_MODEL_PFX}.%.gz
 # Fast Align
 ${FAST_ALIGN_MODEL_PFX}: SHELL=${LOCAL_SHELL}
 ${FAST_ALIGN_MODEL_PFX}:
-	mkdir -p $@
+	mkdir --parents $@
 
 ${FAST_ALIGN_MODEL_PFX}/mixwam.${SRC_LANG}_${TGT_LANG}.glued:  SHELL=${LOCAL_SHELL}
 ${FAST_ALIGN_MODEL_PFX}/mixwam.${SRC_LANG}_${TGT_LANG}.glued:  | ${FAST_ALIGN_MODEL_PFX}
@@ -170,7 +170,7 @@ ${FAST_ALIGN_MODEL_PFX}.%.${L1_GIVEN_L2X}:
 $(sort 1wam ${ALL_WAMS}):  SHELL=${LOCAL_SHELL}
 #$(addsuffix /,$(sort 1wam ${ALL_WAMS})):  %:
 $(sort 1wam ${ALL_WAMS}):  %:
-	mkdir -p $@
+	mkdir --parents $@
 
 
 .PHONY:  debug_giza

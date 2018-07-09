@@ -194,7 +194,7 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/lm
 portageLive: SHELL=${LOCAL_SHELL}
 ifneq ($(strip ${TRAIN_LM} $(notdir ${LM_PRETRAINED_TGT_LMS})),)
 portageLive: $(addsuffix .tplm, ${LM_NAMES}) $(notdir ${LM_PRETRAINED_TGT_LMS:.binlm${GZ}=.tplm})
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	mkdir --parents ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../lm/, $+) .
 else

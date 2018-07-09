@@ -105,7 +105,7 @@ $(addsuffix /${L1_2_L2}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS}):  %/${L1_2_
 $(addsuffix /${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz, ${ALL_WAMS}):  %/${L2_2_L1}.${IBM4_MODEL_PFX}.alignment.gz:  %/${L1_GIVEN_L2}.gizacfg
 %.${IBM4_MODEL_PFX}.alignment.gz:  SHELL=${LOCAL_SHELL}
 %.${IBM4_MODEL_PFX}.alignment.gz:
-	mkdir -p $*
+	mkdir --parents $*
 	set -o pipefail; \
 	merge_alignment.py ${<:gizacfg=A3.final.part}* \
 	| gzip > $@
@@ -133,7 +133,7 @@ $(info FORCE ALIGNING IBM4: ${FORCE_ALIGN_SET})
 
 ${FORCE_ALIGN_SET}:  SHELL=${LOCAL_SHELL}
 ${FORCE_ALIGN_SET}:  %:
-	mkdir -p $@
+	mkdir --parents $@
 
 # TODO:  where should we put these rules?
 # When creating the filtered version of a corpora we need to change file

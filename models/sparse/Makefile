@@ -140,7 +140,7 @@ portageLive_mmcls:  model  | ${PORTAGE_LIVE_DEST_DIR}
 
 ${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
 ${PORTAGE_LIVE_DEST_DIR}:
-	mkdir -p $@
+	mkdir --parents $@
 
 clean.${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
 clean.${PORTAGE_LIVE_DEST_DIR}:  clean.%:  | %

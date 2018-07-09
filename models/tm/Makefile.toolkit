@@ -198,7 +198,7 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/tm
 .PHONY: portageLive
 portageLive: SHELL=${LOCAL_SHELL}
 portageLive:
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	mkdir --parents ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../tm/, $+) .
 

@@ -165,7 +165,7 @@ ldm.counts.tune.%.gz: $(addprefix ${TUNE_SET},${L1} ${L2})
 	| gzip > $@
 
 tune-dms.cmds: ldm.counts.ibm2.gz ldm.counts.hmm1.gz ldm.counts.tune.hmm1+ibm2.gz
-	mkdir -p ${TUNE_RESULTS_DIR}
+	mkdir --parents ${TUNE_RESULTS_DIR}
 	for wtu in 5 10 15 20; do for wtg in 5 10 15 20; do for wt1 in 5 10 15 20; do for wt2 in 5 10 15 20; do \
 		echo -n "test -f ${TUNE_RESULTS_DIR}/res.tune.$$wtu.$$wtg.$$wt1.$$wt2 || "; \
 		echo "(zcat -f $(wordlist 1,2,$+) | dmestm -eval $(word 3,$+) -wtu $$wtu  -wtg $$wtg  -wt1 $$wt1  -wt2 $$wt2  > /dev/null ) &> ${TUNE_RESULTS_DIR}/res.tune.$$wtu.$$wtg.$$wt1.$$wt2"; \

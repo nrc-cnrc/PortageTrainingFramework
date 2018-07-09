@@ -133,7 +133,7 @@ unlock:
 .PHONY: hide_logs_sub
 hide_logs_sub: SHELL=${LOCAL_SHELL}
 hide_logs_sub:
-	mkdir -p .logs
+	mkdir --parents .logs
 	-mv log.* run-parallel-logs-* .logs
 	-ls * | egrep '\.[joe][0-9]{1,6}' | xargs -i mv {} .logs
 

@@ -157,13 +157,13 @@ ${CE_MODEL_NAME}${CEMX}: ce-notm${INIX} ${TUNE_CE_SRC} ${TUNE_CE_TGT}
 ifdef DO_CE
 portageLive: SHELL=${LOCAL_SHELL}
 portageLive: ${CE_MODEL_NAME}${CEMX}
-	mkdir -p ../portageLive
-	mkdir -p tmp.live && tar -C tmp.live -zxvf $<
+	mkdir --parents ../portageLive
+	mkdir --parents tmp.live && tar -C tmp.live -zxvf $<
 	sed --in-place -e 's/binlm.gz/tplm/' tmp.live/model
 	MODELS=(`egrep -o '[^/]+\.tplm' tmp.live/model | tr "\n" " "`); \
 	if [[ $$MODELS ]]; then \
 		${MAKE} -C ../../${LM_DIR} -f ../lm/Makefile $${MODELS[@]}; \
-		mkdir -p ../portageLive/${LM_DIR}; \
+		mkdir --parents ../portageLive/${LM_DIR}; \
 		MODELS=($${MODELS[@]/#/$(subst /,\/,../../../../${LM_DIR}/)}); \
 		echo "LM files:" $${MODELS[@]} >&2; \
 		cd ../portageLive/${LM_DIR} && ln -fs $${MODELS[@]} .; \
@@ -173,7 +173,7 @@ portageLive: ${CE_MODEL_NAME}${CEMX}
 		MODELS=($${MODELS[@]/%.gz/*}); \
 		MODELS=($${MODELS[@]/#/$(subst /,\/,../../../../${IBM_DIR}/)}); \
 		echo "TM files:" $${MODELS[@]} >&2; \
-		mkdir -p ../portageLive/${IBM_DIR}; \
+		mkdir --parents ../portageLive/${IBM_DIR}; \
 		cd ../portageLive/${IBM_DIR} && ln -fs $${MODELS[@]} .; \
 	fi
 	sed --in-place -e 's#tm/mixtm#tm#' tmp.live/model

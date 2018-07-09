@@ -266,7 +266,7 @@ pretrained.are.memory.mapped:  $(addsuffix .is.memory.mapped, ${NNJM_PRETRAINED_
 # Portage Live
 ${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
 ${PORTAGE_LIVE_DEST_DIR}:
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	mkdir --parents ${PORTAGE_LIVE_DEST_DIR}
 
 .PHONY:  portageLive
 portageLive:  SHELL=${LOCAL_SHELL}

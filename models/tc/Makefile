@@ -171,7 +171,7 @@ ifdef TC_USE_SRC_MODELS
 portageLive: ${TRAIN_TC}_${SRC_LANG}.nc1.tplm
 endif
 portageLive:
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	mkdir --parents ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../tc/$(filter %.tppt, $+) tc-map.${TGT_LANG}.tppt
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs ../../../tc/$(filter %3g.tplm, $+) tc-lm.${TGT_LANG}.tplm

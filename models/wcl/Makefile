@@ -164,7 +164,7 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/wcl
 
 ${PORTAGE_LIVE_DEST_DIR}:  SHELL=${LOCAL_SHELL}
 ${PORTAGE_LIVE_DEST_DIR}:
-	mkdir -p $@
+	mkdir --parents $@
 
 
 .PHONY:  portageLive

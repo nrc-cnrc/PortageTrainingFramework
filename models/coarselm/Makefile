@@ -218,7 +218,7 @@ PORTAGE_LIVE_DEST_DIR ?= ../portageLive/models/coarselm
 portageLive: SHELL=${LOCAL_SHELL}
 ifneq (${TRAIN_COARSELM},)
 portageLive: $(addsuffix .tplm, ${LM_NAMES})
-	mkdir -p ${PORTAGE_LIVE_DEST_DIR}
+	mkdir --parents ${PORTAGE_LIVE_DEST_DIR}
 	${RM} -r ${PORTAGE_LIVE_DEST_DIR}/*
 	cd ${PORTAGE_LIVE_DEST_DIR} && ln -fs $(addprefix ../../../coarselm/, $+) .
 else

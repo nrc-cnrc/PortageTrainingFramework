@@ -335,7 +335,7 @@ EXPECTED_FILES = ${DECODING_MODEL}
 train: ${DECODING_MODEL}
 ${DECODING_MODEL}: SHELL=${FRAMEWORK_SHELL}
 ${DECODING_MODEL}: ${UNTUNED_DECODING_MODEL} ${TUNE_DECODE_SRC} ${TUNE_DECODE_TGTS}
-	_LOCAL=1 mkdir -p foos
+	_LOCAL=1 mkdir --parents foos
 	RP_PSUB_OPTS="-${DECODE_CPUS} -N tune.decode.model" \
 	time-mem filter_models -z -r -tm-soft-limit cpt.${TUNE_DECODE} $(and ${LDM}${HLDM}, -ldm) < $(filter %${TUNE_DECODE_SRC},$+) >& log.cpt.${TUNE_DECODE}.FILT
 	RP_PSUB_OPTS="-${MERT_CPUS} -N tune.decode.model" \
@@ -386,7 +386,7 @@ MAIN_TARGETS += portageLive
 
 ${PORTAGE_LIVE_DEST_DIR}: SHELL=${LOCAL_SHELL}
 ${PORTAGE_LIVE_DEST_DIR}:
-	mkdir -p $@
+	mkdir --parents $@
 
 .PHONY: portageLive_models
 portageLive_models_%: SHELL=${LOCAL_SHELL}
