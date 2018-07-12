@@ -746,7 +746,9 @@ TUNE_BILM := $(strip ${TUNE_BILM})
 # Defining NNJM_NCLS triggers word class training too.
 # If defined, NNJM_NCLS must contain integer values.
 # We recommend using a 400-class for NNJM.
+ifneq ("${NNJM_TRAIN_CORPUS}${NNJM_FINE_TUNING_TRAIN_CORPUS}","")
 NNJM_NCLS ?= 400
+endif
 
 # NNJM specific options that should stay empty.
 NNJM_TRAIN_NNJM_OPTS ?=
