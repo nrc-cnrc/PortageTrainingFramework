@@ -1035,6 +1035,10 @@ $(error You must define NNJM_FINE_TUNING_DEV_CORPUS when you have defined NNJM_F
 endif
 endif
 
+ifneq (${MIXTM_PRETRAINED_TMS:.tppt=},${MIXTM_PRETRAINED_TMS})
+$(error You must provide .gz MIXTM_PRETRAINED_TMS and not .tppt files.)
+endif
+
 
 ########################################
 # Finally, output a blank line.
