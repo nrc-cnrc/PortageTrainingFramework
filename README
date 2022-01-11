@@ -7,7 +7,16 @@ Copyright 2008-2022, Her Majesty in Right of Canada
 MIT License - see LICENSE
 
 
-                      PortageII experimental framework
+               Structure d'entraînement pour Portage-SMT-TAS
+
+La structure d'entraînement pour Portage-SMT-TAS ici présente est conçue pour
+remplir une double fonction: elle se veut le point de départ pour les travaux
+expérimentaux avec Portage-SMT-TAS, ainsi que le point de départ, une fois
+configurée correctement, pour l'entraînement de systèmes de traduction
+automatique de production.
+
+
+                     Portage-SMT-TAS training framework
 
 Framework authors: Samuel Larkin, Darlene Stewart and Eric Joanis, with
 suggestions by George Foster
@@ -19,6 +28,9 @@ starting point.  In practice, our settings change all the time, at NRC, as we
 continue our research on Statistical Machine Translation, so no framework can
 truly represent the current state of the art.  Nonetheless, we've tried to
 present in this framework our currently recommended practice.
+
+This is also the basis framework used to train production SMT systems with
+PortageII, when properly configured.
 
 A detailed tutorial is now available to accompany this framework. Please see
 tutorial.pdf. (Run "make doc" if you only see tutorial.tex.)
