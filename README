@@ -54,8 +54,13 @@ MITLM's toolkit.
 
 TRAINING:
 
-You will need to copy or symlink your training files in corpora.  Your files
-should have the pattern <PREFIX>_<LANG>.raw, where <LANG> is two letters
+Start each system you want to train from a fresh copy of the framework:
+   cp -pr $PORTAGE/framework <new-framework-instance>
+or
+   git clone https://github.com/nrc-cnrc/PortageTrainingFramework.git <new-framework-instance>
+
+Then you will need to copy or symlink your training files into corpora.  Your
+files should have the pattern <PREFIX>_<LANG>.raw, where <LANG> is two letters
 representing the language for that file.  These files should contain one
 sentence per line, in original truecase, tokenized and sentence aligned with
 the matching lines in the other language, except for the file used for the

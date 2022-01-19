@@ -178,13 +178,22 @@ models within the hierarchy itself.  The philosophy of the framework is that
 each experiment is done in a separate copy, where you might do various
 customizations depending on what each experiment is intended to test.
 
-For example:\footnote{At NRC, clone the framework repository into
-\code{toy.experiment} instead.}
+For example:
 \begin{small}
 \begin{alltt}
    > \textbf{mkdir experiments}
    > \textbf{cd experiments}
    > \textbf{cp -pr \$PORTAGE/framework toy.experiment}
+   > \textbf{cd toy.experiment}
+\end{alltt}
+\end{small}
+
+Alternatively, you can clone the framework repository directly from GitHub:
+\begin{small}
+\begin{alltt}
+   > \textbf{mkdir experiments}
+   > \textbf{cd experiments}
+   > \textbf{git clone https://github.com/nrc-cnrc/PortageTrainingFramework.git toy.experiment}
    > \textbf{cd toy.experiment}
 \end{alltt}
 \end{small}
@@ -318,7 +327,8 @@ tokenizer, a sentence aligner and sample corpus pre-processing scripts with
 Processing} in the user manual.
 
 If your data exists in the form of a translation memory or an aligned bitext,
-our \code{tmx-prepro} module (\code{\$PORTAGE/tmx-prepro}) can help you extract
+our \code{tmx-prepro} module (see \code{\$PORTAGE/tmx-prepro} or
+\url{https://github.com/nrc-cnrc/PortageTMXPrepro}) can help you extract
 your data and prepare it for training \PS.
 
 This tutorial starts from sentence-aligned plain text, as you would get from
