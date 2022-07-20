@@ -162,7 +162,7 @@ IS_SMALL_SET = $(findstring $(basename $@), $(addsuffix _${SRC_LANG}, ${SMALL_SE
                                             $(addsuffix _${TGT_LANG}, ${SMALL_SETS}))
 
 # CORPUS_SHELL always uses minimal resources per worker when submitting to the cluster
-CORPUS_SHELL = $(if ${IS_SMALL_SET},${LOCAL_SHELL},$(if ${USING_CLUSTER},${FRAMEWORK_SHELL} -psub "-cpus 1 -mem 4",${FRAMEWORK_SHELL}))
+CORPUS_SHELL = $(if ${IS_SMALL_SET},${LOCAL_SHELL},$(if ${USING_CLUSTER},${FRAMEWORK_SHELL} -psub '-cpus 1 -mem 4',${FRAMEWORK_SHELL}))
 # Don't run time-mem when processing small files.
 TIME_MEM = $(if ${IS_SMALL_SET},,time-mem)
 LOG_STDERR = $(if ${IS_SMALL_SET},,2> log.$(@:${GZ}=))
